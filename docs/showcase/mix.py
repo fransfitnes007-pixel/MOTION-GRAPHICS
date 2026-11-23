@@ -42,12 +42,12 @@ def riser(dur=1.2):
 def blip(f=2400):
     n = int(.08 * SR); t = t_(n); y = np.sin(2 * np.pi * f * t) * np.exp(-t / .02); return y * np.minimum(1, t / .001)
 
-T = dict(prompt=.28, one2=1.16, finished=1.5, video=2.0, thisis=2.9, kit=3.56, open=4.9, claude=6.94, reels=8.04, tiktoks=8.76, shorts=9.58,
+T = dict(prompt=.28, one2=1.16, finished=1.5, video=2.0, thisis=2.9, kit=3.58, open=4.9, claude=6.74, reels=8.04, tiktoks=8.76, shorts=9.58,
   ugc=10.24, demos=11.36, launch=12.44, dash=13.32, idents=14.24, everyf=15.26, everys=16.28, fromone=17.0, over=18.64, n300=18.82, pieces=19.9,
   builtin=20.48, kinetic=21.24, trans=22.24, dashb=23.18, endc=24.08, micro=25.24, bestapps=26.56, phone=27.46, every=27.72, code=29.04, exact=30.88,
   brand=31.96, file=33.0, logo=33.94, scene=34.72, endcard=35.2, follows=35.66, writes=36.66, records=37.66, pins=38.8, words=40.14, then=40.8,
   clicks=42.08, swishes=42.8, booms=43.34, exactf=44.14, show=45.4, viral=45.82, measures=46.9, cuts=47.4, pace=48.08, sound=48.92, rebuilds=49.62,
-  format=50.76, clone=52.04, brandit=52.8, ship=53.5, mrk=54.34, created=55.48, gk=56.12, net=56.66, end=57.2)
+  format=50.76, clone=52.04, brandit=52.8, ship=53.5, mrk=54.44, created=55.32, gk=55.96, net=56.48, end=57.0)
 SC = [T["thisis"], T["reels"], T["over"], T["every"], T["brand"], T["writes"], T["then"], T["show"], T["clone"], T["mrk"]]
 sfx = np.zeros((N, 2))
 for i, a in enumerate(SC): put(swish(d=1 if i % 2 else -1), a - .16, .16, buf=sfx)

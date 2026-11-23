@@ -6,7 +6,7 @@ Make motion-graphics videos with Claude Code: Instagram Reels, TikToks, YouTube 
 
 **▶ The 62-second showcase, with sound:**
 
-https://github.com/user-attachments/assets/89baa632-2abe-4bee-9ec7-241fbf07413b
+https://github.com/user-attachments/assets/a635e51f-ae3a-49c3-8d3e-e540e5399195
 
 The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Full quality: [`docs/media/showcase.mp4`](docs/media/showcase.mp4). Source: [`docs/showcase/`](docs/showcase/).
 
@@ -34,15 +34,15 @@ Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 
 
 You need [Claude Code](https://claude.com/claude-code), Node 18+, Python 3.9+ and ffmpeg. Google Chrome is used for rendering (or set `BROWSER_CHANNEL=chromium` after `npx playwright install chromium`).
 
-**As a plugin** (skills and commands load in every project). Replace `<owner>` with the GitHub account that hosts this repository:
+**As a plugin** (skills and commands load in every project):
 ```
-/plugin marketplace add <owner>/motion-reel-kit
+/plugin marketplace add fransfitnes007-pixel/MOTION-GRAPHICS
 /plugin install motion-reel-kit@motion-reel-kit
 ```
 
 **Or clone it** and open Claude Code inside the folder:
 ```bash
-git clone https://github.com/<owner>/motion-reel-kit.git
+git clone https://github.com/fransfitnes007-pixel/MOTION-GRAPHICS.git motion-reel-kit
 cd motion-reel-kit
 cd engine && npm install && cd ..
 pip install -r requirements.txt && playwright install chromium
