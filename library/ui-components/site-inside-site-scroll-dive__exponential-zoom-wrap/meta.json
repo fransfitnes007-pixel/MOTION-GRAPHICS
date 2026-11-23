@@ -1,0 +1,38 @@
+{
+  "slug": "site-inside-site-scroll-dive__exponential-zoom-wrap",
+  "visual_name": "Site inside site scroll dive",
+  "code_name": "Exponential zoom that wraps every level",
+  "category": "ui-components",
+  "summary": "A cream landing page whose lower half is a browser window showing the same page, and scrolling dives into that window again and again; the headline changes each level and the dive never ends.",
+  "tags": [
+    "21st",
+    "3d",
+    "browser-window",
+    "hero",
+    "light",
+    "scroll"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "css-transform"
+  ],
+  "duration_sec": 9.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "inception scroll",
+    "site in a site",
+    "recursive page",
+    "infinite zoom scroll",
+    "droste",
+    "scroll loop"
+  ],
+  "credit": {
+    "idea": "Scroll Loop Inception",
+    "author": "serafimcloud",
+    "url": "https://21st.dev/@serafimcloud/components/scroll-loop-inception",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

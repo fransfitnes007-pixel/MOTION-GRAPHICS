@@ -1,0 +1,132 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Scroll locked hero demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#05070d;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.a{position:absolute}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'THE CITY OPENS',
+  line: 'Every door in the city is already open.',
+  credit: 'by studio.name',
+  scrollLabel: 'SCROLL',
+  carColor: '#3b4262',            // metal of the doors and walls
+  glow: '#e8a850',                // warm light behind the doors
+  // scripted scroll position 0..1: [second, value]
+  scroll: [[0, 0], [1.0, 0], [5.8, 1], [7.8, 1], [11.0, 0], [12, 0]],
+  titleFadeBy: 0.16,              // progress at which the title has gone
+  lineFrom: 0.72,                 // progress where the second line starts to appear
+}
+const DUR = 12
+window.DUR = DUR
+const DW = 1280, DH = 800, U = Math.min(W / DW, H / DH)
+stage.style.background = '#05070d'
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, overflow: 'hidden', background: '#05070d' })
+const seeded = (n) => { const x = Math.sin(n * 127.1 + 4.3) * 43758.5453; return x - Math.floor(x) }
+// ---- city (behind everything)
+const city = el('div', 'a', root); S(city, { left: 0, top: 0, width: DW + 'px', height: DH + 'px', transformOrigin: '50% 58%' })
+city.innerHTML = `<div class="a" style="inset:0;background:linear-gradient(180deg,#06101f,#102440 58%,#2a2f4a 80%)"></div>`
+const VPX = 640, VPY = 480
+const bld = (x, w, top, shade, seed, lit) => { const d = el('div', 'a', city); S(d, { left: x + 'px', top: top + 'px', width: w + 'px', height: DH - top + 'px', background: `linear-gradient(180deg,${shade},#05070d)` })
+  const cols = Math.floor(w / 18)
+  let cells = ''; for (let r = 0; r < Math.floor((DH - top) / 22); r++) for (let c = 0; c < cols; c++) if (seeded(seed + r * 31 + c * 7) < lit) cells += `<i style="position:absolute;left:${6 + c * 18}px;top:${8 + r * 22}px;width:8px;height:11px;background:${seeded(seed + r + c) > .8 ? '#9fd8ff' : '#ffd88a'};opacity:${.45 + seeded(seed + r * 3 + c) * .5}"></i>`
+  d.innerHTML = cells; return d }
+// far, mid, near layers
+;[[470, 70, 330, '#14223e'], [545, 60, 360, '#16284a'], [720, 90, 340, '#14233f'], [815, 70, 300, '#182a4c'], [380, 90, 380, '#101c34']].forEach(([x, w, top, c], i) => bld(x, w, top, c, 100 + i * 17, .35))
+;[[250, 130, 170, '#1a2c52'], [385, 110, 250, '#1d3158'], [800, 150, 130, '#1b2e55'], [660, 120, 290, '#182a4e']].forEach(([x, w, top, c], i) => bld(x, w, top, c, 300 + i * 13, .5))
+;[[-20, 250, 60, '#1c2f58'], [200, 160, 210, '#203562'], [900, 170, 200, '#203562'], [1040, 260, 40, '#1c2f58']].forEach(([x, w, top, c], i) => bld(x, w, top, c, 500 + i * 11, .55))
+const sign = (x, y, w, h, c) => { const d = el('div', 'a', city); S(d, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', background: c, boxShadow: `0 0 14px ${c}`, borderRadius: '2px' }) }
+sign(840, 360, 44, 14, '#ff9a2e'); sign(880, 352, 22, 18, '#ff9a2e'); sign(790, 370, 30, 12, '#3fd0ff'); sign(330, 330, 24, 12, '#ff9a2e'); sign(1000, 470, 26, 40, '#ff4fa8'); sign(170, 520, 24, 36, '#3fd0ff')
+const road = el('div', 'a', city); road.innerHTML = `<svg width="${DW}" height="${DH}" viewBox="0 0 ${DW} ${DH}"><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2138"/><stop offset="1" stop-color="#0c0f1a"/></linearGradient></defs><polygon points="${VPX - 40},${VPY} ${VPX + 40},${VPY} ${DW + 240},${DH} ${-240},${DH}" fill="url(#rg)"/><g id="lanes" fill="none" stroke-linecap="round"></g></svg>`
+const lanes = road.querySelector('#lanes')
+// ---- car interior (in front): doors and side walls
+const car = el('div', 'a', root); S(car, { left: 0, top: 0, width: DW + 'px', height: DH + 'px', transformOrigin: '50% 52%' })
+const warm = el('div', 'a', car); S(warm, { left: '340px', top: '40px', width: '600px', height: '720px', background: `linear-gradient(180deg,#d9b277,${CONFIG.glow} 60%,#8c5a2a)` })
+// interior wall frame (fixed, left and right)
+const side = (x, w) => { const s = el('div', 'a', car); S(s, { left: x + 'px', top: 0, width: w + 'px', height: DH + 'px', background: `linear-gradient(180deg,#4a5278,${CONFIG.carColor} 40%,#2c3350)` }); return s }
+const wallL = side(0, 340), wallR = side(940, 340)
+const winL = el('div', 'a', wallL); S(winL, { left: '10px', top: '60px', width: '200px', height: '420px', borderRadius: '40px', background: 'linear-gradient(180deg,#1c2338,#2a2a35 55%,#b88a48 56%,#8f6a3a)', boxShadow: '0 0 0 12px #4b5379,inset 0 0 40px rgba(0,0,0,.5)' })
+const winR = el('div', 'a', wallR); S(winR, { left: '110px', top: '60px', width: '210px', height: '420px', borderRadius: '30px', background: 'linear-gradient(180deg,#232b42,#171c2c)', boxShadow: '0 0 0 12px #4b5379,inset 0 0 40px rgba(0,0,0,.5)' })
+const seat = (x) => { const s = el('div', 'a', car); S(s, { left: x + 'px', top: '580px', width: '260px', height: '220px', borderRadius: '24px 24px 0 0', background: 'linear-gradient(180deg,#1f2c5e,#141c3e)' }); return s }
+const seatL = seat(0), seatR = seat(1020)
+// doors
+const mkDoor = (x) => { const d = el('div', 'a', car); S(d, { left: x + 'px', top: '10px', width: '300px', height: '790px', background: `linear-gradient(180deg,#5a6288,${CONFIG.carColor} 30%,#2a304a)`, boxShadow: 'inset 0 0 0 3px rgba(255,255,255,.05)' })
+  d.innerHTML = `<div class="a" style="left:40px;top:50px;width:215px;height:560px;border-radius:70px;background:linear-gradient(180deg,#232a40,#161b2c);box-shadow:0 0 0 14px #46507a,inset 0 0 50px rgba(0,0,0,.6);overflow:hidden"><div class="rain" style="position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(255,255,255,.3) 1px,transparent 2px) 0 0/22px 31px,radial-gradient(circle at 60% 70%,rgba(255,255,255,.25) 1px,transparent 2px) 0 0/17px 27px"></div></div><div class="a" style="left:${x < 600 ? 270 : 10}px;top:640px;width:20px;height:40px;border-radius:5px;background:#252b45"></div>`
+  return d }
+const doorL = mkDoor(340), doorR = mkDoor(640)
+const handleL = el('div', 'a', car); S(handleL, { left: '300px', top: '480px', width: '10px', height: '200px', borderRadius: '5px', background: 'linear-gradient(90deg,#aab,#667)' })
+const handleR = el('div', 'a', car); S(handleR, { left: '970px', top: '480px', width: '10px', height: '200px', borderRadius: '5px', background: 'linear-gradient(90deg,#aab,#667)' })
+// text
+const title = el('div', 'a', root, CONFIG.title); S(title, { left: 0, width: '100%', textAlign: 'center', top: '348px', font: '700 62px/1 -apple-system,"SF Pro Display",Helvetica,Arial,sans-serif', letterSpacing: '-1.5px', color: '#fff', textShadow: '0 2px 24px rgba(0,0,0,.35)' })
+const line = el('div', 'a', root, CONFIG.line); S(line, { left: 0, width: '100%', textAlign: 'center', top: '382px', font: '400 18px -apple-system,Helvetica,Arial,sans-serif', color: '#fff', letterSpacing: '.2px' })
+const scrollL = el('div', 'a', root, CONFIG.scrollLabel + '<div style="width:1px;height:26px;background:#fff;margin:8px auto 0;opacity:.7"></div>'); S(scrollL, { left: '600px', width: '80px', textAlign: 'center', top: '700px', font: '500 10px -apple-system,Helvetica,sans-serif', letterSpacing: '.3em', color: '#fff' })
+const credit = el('div', 'a', root, CONFIG.credit); S(credit, { right: '28px', bottom: '16px', font: '10px ui-monospace,Menlo,monospace', color: 'rgba(255,255,255,.7)' })
+const prog = el('div', 'a', root); S(prog, { left: 0, bottom: 0, height: '3px', background: '#fff' })
+const along = (pts, t) => { if (t <= pts[0][0]) return pts[0][1]; for (let i = 0; i < pts.length - 1; i++) if (t < pts[i + 1][0]) return lerp(pts[i][1], pts[i + 1][1], eio(seg(t, pts[i][0], pts[i + 1][0]))); return pts[pts.length - 1][1] }
+function render(t) {
+  const p = along(CONFIG.scroll, t)
+  // doors slide apart in the first 40%
+  const open = eio(seg(p, .06, .42))
+  S(doorL, { transform: `translateX(${-open * 300}px)` }); S(doorR, { transform: `translateX(${open * 300}px)` })
+  // warm light fades into the city view
+  const city_v = eo(seg(p, .28, .5))
+  S(warm, { opacity: 1 - city_v })
+  // camera moves forward: interior frame grows and clears, city settles
+  const fw = eio(seg(p, .4, .88))
+  S(car, { transform: `scale(${1 + 1.5 * fw})`, opacity: 1 - eo(seg(p, .78, .92)) })
+  S(city, { transform: `scale(${1.12 - .12 * eo(seg(p, .3, 1))}) translateY(${(1 - eo(seg(p, .3, 1))) * 14}px)` })
+  S(handleL, { opacity: 1 - open }); S(handleR, { opacity: 1 - open })
+  // traffic streaks: dashes run toward the viewer
+  let g = ''
+  for (let i = 0; i < 6; i++) { const lane = (i - 2.5) / 3, xb = VPX + lane * 1100; const col = i < 3 ? '#fff2d8' : '#ff3b2a'
+    g += `<line x1="${VPX + lane * 20}" y1="${VPY}" x2="${xb}" y2="${DH + 20}" stroke="${col}" stroke-width="${3 + Math.abs(lane) * 2}" stroke-dasharray="26 ${70 + i * 8}" stroke-dashoffset="${-(t * (140 + i * 20))}" opacity=".8"/>` }
+  lanes.innerHTML = g
+  // text
+  const tv = 1 - eo(seg(p, 0, CONFIG.titleFadeBy))
+  S(title, { opacity: tv, filter: `blur(${(1 - tv) * 14}px)`, transform: `scale(${1 + (1 - tv) * .06})` })
+  const lv = eo(seg(p, CONFIG.lineFrom, CONFIG.lineFrom + .12))
+  S(line, { opacity: lv, filter: `blur(${(1 - lv) * 8}px)` })
+  S(scrollL, { opacity: 1 - eo(seg(p, 0, .05)) })
+  S(prog, { width: p * DW + 'px', opacity: p > .001 ? .9 : 0 })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

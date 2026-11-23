@@ -1,0 +1,27 @@
+{
+  "slug": "colour-poster-slam-sequence__flat-colour-cuts-cropped-type",
+  "visual_name": "Colour poster slam sequence",
+  "code_name": "Flat colour cuts cropped type",
+  "category": "motion-graphics",
+  "summary": "Four flat-colour full-frame posters cut every 0.6 s, each with one giant word cropped by the frame edges, a small caption and a 2-frame white flash on the cut.",
+  "aliases": [
+    "poster cuts",
+    "colour block words",
+    "flat colour flash cuts",
+    "giant word cuts",
+    "beat cut posters"
+  ],
+  "tags": [
+    "kinetic-type",
+    "transition",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d"
+  ],
+  "duration_sec": 3,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

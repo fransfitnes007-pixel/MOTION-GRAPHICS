@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"; IN=../media/showcase.mp4; OUT=../media/showcase-preview.gif
 # the five strongest moments, about 17 s
-SEG="3.45:6.4 9.4:12.9 16.95:19.9 38.4:41.6 43.95:46.8"
+SEG="2.9:6.9 8.0:12.2 15.1:18.4 25.2:27.7 52.0:55.3 55.4:59.0"
 i=0; : > clips/preview_list.txt
 for s in $SEG; do a=${s%:*}; b=${s#*:}; i=$((i+1))
   ffmpeg -y -loglevel error -ss "$a" -to "$b" -i "$IN" -an -vf "fps=10,scale=640:-2:flags=lanczos" "clips/pv_$i.mp4"

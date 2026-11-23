@@ -1,0 +1,26 @@
+{
+  "slug": "iris-transition__circle-mask-open-close",
+  "visual_name": "Iris transition",
+  "code_name": "Circle mask open and close",
+  "category": "motion-graphics",
+  "summary": "A circular iris opens from black on scene one, closes down onto its glowing subject, then opens from that same point on scene two and closes on the centre; a thin ring rides the iris edge.",
+  "aliases": [
+    "iris wipe",
+    "iris in",
+    "iris out",
+    "circle wipe",
+    "circle reveal transition"
+  ],
+  "tags": [
+    "transition",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-clip-path",
+    "circle-mask"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

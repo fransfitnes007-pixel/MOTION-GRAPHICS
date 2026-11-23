@@ -1,0 +1,114 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>glass-panel-fly-through__perspective-z-stack-blur</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;perspective-origin:50% 50%}
+.world{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.orb{position:absolute;border-radius:50%}
+.panel{position:absolute;border-radius:30px;overflow:hidden;color:#f2f2f4;
+ background:linear-gradient(150deg,rgba(255,255,255,.20) 0%,rgba(255,255,255,.07) 46%,rgba(255,255,255,.12) 100%);
+ border:1.5px solid rgba(255,255,255,.24);
+ box-shadow:0 50px 110px rgba(0,0,0,.55),inset 0 1.5px 0 rgba(255,255,255,.38),inset 0 0 60px rgba(120,160,255,.07);
+ backface-visibility:hidden;will-change:transform,filter,opacity}
+.panel .sheen{position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.10) 48%,rgba(255,255,255,0) 62%)}
+.pad{position:absolute;left:0;top:0;width:900px;transform-origin:0 0;padding:44px 48px}
+.lab{font-size:22px;letter-spacing:.22em;text-transform:uppercase;font-weight:500;color:rgba(242,242,244,.58)}
+.big{font-size:104px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-top:18px}
+.row{display:flex;align-items:center;gap:22px;height:78px;border-bottom:1px solid rgba(255,255,255,.10)}
+.dot{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.22);flex:none}
+.bar{height:14px;border-radius:7px;background:rgba(255,255,255,.26)}
+.acc{background:#6aa8ff}
+.btn{display:inline-block;padding:24px 54px;border-radius:60px;background:#6aa8ff;color:#0b0b10;font-size:34px;font-weight:800;box-shadow:0 18px 40px rgba(106,168,255,.35)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6
+window.DUR = DUR
+const N = 5, GAP = 440, P = 1100                         // panels, z gap between them, perspective distance
+const T0 = .7, T1 = 4.0, FADE_IN = .6, OUT0 = 5.3, OUT1 = 5.9
+const PW = TALL ? 960 : 1200, PH = TALL ? 900 : 720, PS = PW / 900     // panels are authored at 900 wide, scaled by PS
+const OX = TALL ? [0, 60, -80, 60, 0] : [0, 210, -230, 170, 0], OY = TALL ? [0, -110, 120, -90, 0] : [0, -110, 120, -90, 0]
+S(stage, { perspective: P + 'px' })
+
+// background light: two soft pools that drift with the camera
+const orbA = el('div', 'orb'), orbB = el('div', 'orb')
+S(orbA, { width: px(W * .8), height: px(W * .8), left: px(-W * .1), top: px(H * .05), background: 'radial-gradient(closest-side,rgba(70,110,255,.42),rgba(70,110,255,0))' })
+S(orbB, { width: px(W * .7), height: px(W * .7), left: px(W * .45), top: px(H * .4), background: 'radial-gradient(closest-side,rgba(140,90,255,.26),rgba(140,90,255,0))' })
+
+const world = el('div', 'world'); S(world, { left: px(CX), top: px(CY) })
+const content = [
+  `<div class="pad"><div class="lab">Overview</div><div class="big">$1,234,567</div><div style="display:flex;gap:16px;align-items:flex-end;height:210px;margin-top:40px">${[.35,.5,.42,.66,.58,.8,.72,.95].map((v,i)=>`<div style="flex:1;height:${v*100}%;border-radius:12px;background:${i==7?'#6aa8ff':'rgba(255,255,255,.26)'}"></div>`).join('')}</div></div>`,
+  `<div class="pad"><div class="lab">Activity</div>${[0,1,2,3,4].map(i=>`<div class="row"><div class="dot"></div><div style="flex:1"><div class="bar" style="width:${70-i*8}%"></div><div class="bar" style="width:${40-i*3}%;margin-top:10px;opacity:.6"></div></div><div class="bar ${i==1?'acc':''}" style="width:90px"></div></div>`).join('')}</div>`,
+  `<div class="pad"><div class="lab">Growth</div><svg viewBox="0 0 800 330" style="width:100%;margin-top:16px"><defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6aa8ff" stop-opacity=".45"/><stop offset="1" stop-color="#6aa8ff" stop-opacity="0"/></linearGradient></defs><path d="M0 270 C90 250 130 200 220 210 S370 120 450 140 S600 60 680 70 L800 30 L800 330 L0 330Z" fill="url(#gf)"/><path d="M0 270 C90 250 130 200 220 210 S370 120 450 140 S600 60 680 70 L800 30" fill="none" stroke="#6aa8ff" stroke-width="7" stroke-linecap="round"/><circle cx="680" cy="70" r="12" fill="#f2f2f4"/></svg></div>`,
+  `<div class="pad"><div class="lab">Team</div><div style="display:flex;gap:26px;margin-top:34px">${[0,1,2,3].map(i=>`<div style="flex:1;text-align:center"><div style="width:100%;aspect-ratio:1;border-radius:50%;background:linear-gradient(140deg,rgba(255,255,255,.34),rgba(255,255,255,.08))"></div><div class="bar" style="width:70%;margin:20px auto 0"></div></div>`).join('')}</div><div class="bar" style="width:60%;margin-top:46px"></div><div class="bar" style="width:42%;margin-top:14px;opacity:.6"></div></div>`,
+  `<div class="pad" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center"><div class="lab">Ready</div><div class="big" style="font-size:132px">Acme</div><div style="font-size:34px;color:rgba(242,242,244,.62);margin:20px 0 46px">Your headline goes here</div><div class="btn">Subscribe</div></div>`
+]
+const panels = content.map((h, i) => {
+  const p = el('div', 'panel', world, h + '<div class="sheen"></div>')
+  const pad = p.querySelector('.pad'); S(pad, { transform: 'scale(' + PS + ')', height: px(PH / PS) })
+  S(p, { width: px(PW), height: px(PH), left: px(-PW / 2 + OX[i]), top: px(-PH / 2 + OY[i]), transform: 'translateZ(' + (-i * GAP) + 'px)' })
+  return p
+})
+
+function render(t) {
+  const m = eio(seg(t, T0, T1))
+  const cz = lerp(-340, (N - 1) * GAP, m)                       // camera push, in panel-gap units below
+  const k = cz / GAP, i0 = clamp(Math.floor(k), 0, N - 2), f = clamp(k - i0, 0, 1), fs_ = f * f * (3 - 2 * f)
+  const cxw = lerp(OX[i0], OX[i0 + 1], fs_), cyw = lerp(OY[i0], OY[i0 + 1], fs_)
+  const settle = 1 - eo(seg(t, T1 - .2, T1 + .9))
+  const tiltY = (9 * Math.sin(t * 1.15) + 4) * settle * (1 - .6 * seg(t, T0, T0 + .5) * 0) , tiltX = 5 * Math.cos(t * .9) * settle
+  const inA = eo(seg(t, 0, FADE_IN)), outA = 1 - ei(seg(t, OUT0, OUT1))
+  world.style.transform = `translate3d(${(-cxw * .0).toFixed(2)}px,0,0) rotateX(${tiltX.toFixed(3)}deg) rotateY(${tiltY.toFixed(3)}deg) translate3d(${(-cxw).toFixed(2)}px,${(-cyw).toFixed(2)}px,${cz.toFixed(2)}px)`
+  panels.forEach((p, i) => {
+    const z = cz - i * GAP                                       // panel z in camera space; 0 is the focus plane
+    const passed = seg(z, 60, 600), ahead = seg(-z, 0, 1500)
+    const blur = passed * 30 + ahead * 9
+    const op = (1 - passed) * (1 - .55 * ahead) * inA * outA
+    p.style.opacity = op.toFixed(3)
+    p.style.filter = blur < .05 ? 'none' : `blur(${blur.toFixed(2)}px)`
+    p.style.display = z > P * .86 || op <= .002 ? 'none' : ''
+  })
+  S(orbA, { transform: `translate(${-cxw * .08}px,${-cyw * .08 - cz * .02}px)`, opacity: .55 + .45 * inA })
+  S(orbB, { transform: `translate(${cxw * .06}px,${cyw * .06 + cz * .03}px)`, opacity: .55 + .45 * inA })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

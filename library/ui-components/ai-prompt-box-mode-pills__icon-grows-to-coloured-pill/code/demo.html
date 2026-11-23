@@ -1,0 +1,130 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0b;color:#e8e8ea}
+.pbox{position:absolute;background:#1f2023;border:1px solid #34353a;border-radius:30px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.ph{position:absolute;font-size:22px;color:#8d8d95;white-space:nowrap}
+.slot{position:absolute;height:38px;border-radius:19px;border:1px solid transparent;overflow:hidden;white-space:nowrap}
+.slot .ic{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.slot .pl{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;gap:7px;padding-left:12px;font-size:15px}
+.div{position:absolute;width:1px;height:22px;background:linear-gradient(#0000,#8b8bff80,#0000)}
+.mic{position:absolute;width:46px;height:46px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}
+.cur{position:absolute;left:0;top:0;width:24px;height:24px;pointer-events:none}
+svg{display:block}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// AI prompt box: a toolbar of icon buttons that grow into coloured pills when switched on (Search, Think, Canvas), with the placeholder text following the mode.
+const CONFIG = {
+  placeholders: { none: 'Ask me anything...', search: 'Search the web...', think: 'Think deeply...' },
+  modes: [
+    { key: 'search', label: 'Search', color: '#38bdf8', bg: 'rgba(14,165,233,.14)', line: 'rgba(56,189,248,.45)', pill: 104 },
+    { key: 'think',  label: 'Think',  color: '#a78bfa', bg: 'rgba(139,92,246,.16)', line: 'rgba(167,139,250,.5)', pill: 98 },
+    { key: 'canvas', label: 'Canvas', color: '#fb923c', bg: 'rgba(249,115,22,.15)', line: 'rgba(251,146,60,.5)', pill: 112 },
+  ],
+  // scripted clicks: [time, mode index, 1 = on / 0 = off, 'auto' = switched by another click, no cursor]. Search and Think replace each other, Canvas is independent
+  events: [[.9, 0, 1], [2.4, 0, 0, 'auto'], [2.4, 1, 1], [3.6, 2, 1], [4.8, 2, 0], [5.4, 1, 0]],
+  box: { w: 1160, h: 148 },           // px
+  growSec: .28,                       // icon to pill morph
+  dur: 6.6,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const bx = CX - C.box.w / 2, by = CY - C.box.h / 2
+const box = el('div', 'pbox'); S(box, { left: px(bx), top: px(by), width: px(C.box.w), height: px(C.box.h) })
+const phs = Object.keys(C.placeholders).map((k) => { const e = el('div', 'ph', box, C.placeholders[k]); S(e, { left: '38px', top: '28px' }); return [k, e] })
+const I = {
+  clip: '<path d="M20 11 11.5 19.5a4.5 4.5 0 0 1-6.4-6.4L13.5 4.7a3 3 0 0 1 4.2 4.2L9.3 17.3a1.5 1.5 0 0 1-2.1-2.1L14.7 7.7" fill="none" stroke="#a9a9b0" stroke-width="1.6" stroke-linecap="round"/>',
+  globe: '<circle cx="12" cy="12" r="9" fill="none" stroke="C" stroke-width="1.6"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="C" stroke-width="1.6"/>',
+  gear: '<circle cx="12" cy="12" r="3.2" fill="none" stroke="C" stroke-width="1.6"/><circle cx="12" cy="12" r="8.6" fill="none" stroke="C" stroke-width="1.6" stroke-dasharray="3.4 2.3"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" fill="none" stroke="C" stroke-width="1.6"/><path d="m10 11-2 2 2 2m4-4 2 2-2 2" fill="none" stroke="C" stroke-width="1.5" stroke-linecap="round"/>',
+  mic: '<rect x="9" y="3" width="6" height="12" rx="3" fill="none" stroke="#111" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"/>',
+}
+const svg = (p, c, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24">${p.replace(/C"/g, c + '"')}</svg>`
+const toolY = by + C.box.h - 24 - 38 + 0
+const clip = el('div', 'abs', stage, svg(I.clip, '#a9a9b0', 26)); S(clip, { left: px(bx + 38), top: px(by + 84) })
+const icons = ['globe', 'gear', 'folder']
+const slots = C.modes.map((m, i) => {
+  const s = el('div', 'slot', stage)
+  s.innerHTML = `<div class="ic">${svg(I[icons[i]], '#a9a9b0')}</div><div class="pl" style="color:${m.color}">${svg(I[icons[i]], m.color, 18)}<span>${m.label}</span></div>`
+  return s
+})
+const divs = [0, 1].map(() => el('div', 'div'))
+const mic = el('div', 'mic', stage, svg(I.mic, '#111', 24)); S(mic, { left: px(bx + C.box.w - 46 - 22), top: px(by + C.box.h - 46 - 22) })
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="24" height="24"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+function prog(t, mi) {   // 0 icon .. 1 pill, for mode mi
+  let v = 0, te = -9; for (const [tt, m, on] of C.events) if (m === mi && t >= tt) { v = on; te = tt }
+  const k = eo(seg(t, te, te + C.growSec)); return v ? k : 1 - k
+}
+function layout(t) {
+  let x = bx + 38 + 26 + 22; const out = []
+  C.modes.forEach((m, i) => { const p = prog(t, i), w = lerp(40, m.pill, p); out.push({ x, w, p }); x += w + (i < 2 ? 26 : 0) })
+  return out
+}
+function render(t) {
+  const L = layout(t), y = by + C.box.h - 38 - 24 - 3
+  // placeholder: last on-event among search/think decides the text
+  let mode = 'none'; for (const [tt, m, on] of C.events) if (t >= tt && m < 2) mode = on ? C.modes[m].key : 'none'
+  phs.forEach(([k, e]) => S(e, { opacity: k === mode ? 1 : 0 }))
+  C.modes.forEach((m, i) => {
+    const { x, w, p } = L[i]
+    S(slots[i], { left: px(x), top: px(y), width: px(w), background: `rgba(0,0,0,0)`, borderColor: 'transparent' })
+    S(slots[i], { background: p > .01 ? m.bg : 'transparent', borderColor: p > .01 ? m.line : 'transparent' })
+    S(slots[i].children[0], { opacity: 1 - p }); S(slots[i].children[1], { opacity: p })
+  })
+  divs.forEach((d, i) => S(d, { left: px(L[i].x + L[i].w + 12), top: px(y + 8) }))
+  // cursor
+  const evs = C.events.filter((e) => e[3] !== 'auto').map(([tt, m]) => [tt, m])
+  const tgt = (tt, m) => { const L2 = layout(tt - .02); return [L2[m].x + L2[m].w / 2, y + 19] }
+  const stops = [[0, CX + 380, CY + 160], ...evs.map(([tt, m]) => [tt, ...tgt(tt, m)]), [C.dur - .2, CX + 380, CY + 160]]
+  let cx = stops[0][1], cy = stops[0][2]
+  for (let j = 0; j < stops.length - 1; j++) if (t >= stops[j][0] && t <= stops[j + 1][0]) {
+    const u = eio(seg(t, Math.max(stops[j][0], stops[j + 1][0] - .8), stops[j + 1][0])); cx = lerp(stops[j][1], stops[j + 1][1], u); cy = lerp(stops[j][2], stops[j + 1][2], u)
+  }
+  if (t > stops[stops.length - 1][0]) { cx = stops[stops.length - 1][1]; cy = stops[stops.length - 1][2] }
+  let press = 0; for (const [tt] of C.events) press = Math.max(press, clamp(1 - Math.abs(t - tt) / .12))
+  S(cur, { transform: `translate(${cx}px,${cy}px) scale(${1 - .18 * press})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

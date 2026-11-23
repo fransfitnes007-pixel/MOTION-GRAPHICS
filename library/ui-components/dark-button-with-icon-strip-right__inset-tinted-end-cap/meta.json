@@ -1,0 +1,37 @@
+{
+  "slug": "dark-button-with-icon-strip-right__inset-tinted-end-cap",
+  "visual_name": "Dark button with icon strip on the right",
+  "code_name": "Inset tinted end cap",
+  "category": "ui-components",
+  "summary": "A near-black 'Next' button whose right end is a lighter tinted strip holding a faded chevron, with a notification bell button beside it in the demo.",
+  "tags": [
+    "hover",
+    "cta",
+    "dark",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "lucide"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "next button",
+    "button with icon strip",
+    "split button",
+    "highlighted icon button",
+    "notification button",
+    "buttons"
+  ],
+  "credit": {
+    "idea": "Button",
+    "author": "originui",
+    "url": "https://21st.dev/@originui/components/button/button-with-highlighted-right-icon",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

@@ -1,0 +1,122 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>splash bubbles pop</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6.8
+window.DUR = DUR
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const g = cvs.getContext('2d')
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const rnd = (i, s = 1) => { let h = (Math.imul(i + 1, 374761393) + Math.imul(s, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296 }
+const rrect = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r) }
+const circ = (x, y, r) => { g.beginPath(); g.arc(x, y, Math.max(0, r), 0, Math.PI * 2) }
+const txt = (s, x, y, size, wt, col, al = 'center') => { g.font = `${wt} ${size}px ${FONT}`; g.textAlign = al; g.textBaseline = 'middle'; g.fillStyle = col; g.fillText(s, x, y) }
+// simulated finger: a = opacity, press 0..1 (shrinks), rip 0..1 ripple progress (<0 or >1 = none)
+function finger(x, y, a, press, rip) {
+  if (a <= .01) return
+  g.save(); g.globalAlpha = a
+  if (rip >= 0 && rip < 1) { g.strokeStyle = `rgba(255,255,255,${.55 * (1 - rip)})`; g.lineWidth = 5 * (1 - rip) + 1; circ(x, y, lerp(34, 120, eo(rip))); g.stroke() }
+  const r = 38 * (1 - .2 * press)
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 24; g.shadowOffsetY = 8
+  const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.62)'); gr.addColorStop(1, 'rgba(255,255,255,.30)')
+  g.fillStyle = gr; circ(x, y, r); g.fill(); g.shadowColor = 'transparent'
+  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2.5; g.stroke(); g.restore()
+}
+const tapPress = (t, tt) => seg(t, tt - .14, tt) * (1 - seg(t, tt + .05, tt + .22))
+const tapRip = (t, tt) => t < tt ? -1 : seg(t, tt, tt + .6)
+
+const WORD = 'Acme', FS = TALL ? 210 : 250, WY = CY - 10
+g.font = `800 ${FS}px ${FONT}`
+const LW = [...WORD].map((c) => g.measureText(c).width), TW = LW.reduce((a, b) => a + b, 0)
+const LX = []; { let x = CX - TW / 2; for (let j = 0; j < WORD.length; j++) { LX.push(x + LW[j] / 2); x += LW[j] } }
+const NB = 18
+// bubbles: key bubbles rise to a letter and pop there; the rest pop anywhere
+const BUB = []
+for (let j = 0; j < WORD.length; j++) BUB.push({ key: j, x: LX[j], y0: H + 90 + j * 30, ty: WY, b: .2 + .3 * j, tp: 2.3 + .55 * j, r0: 22, r1: Math.min(110, LW[j] * .62 + 20), sw: 34, ph: j * 1.7 })
+for (let k = 0; k < NB; k++) { const tp = 1.1 + rnd(k, 3) * 3.6; BUB.push({ key: -1, x: W * (.06 + .88 * rnd(k, 1)), y0: H + 70, ty: H * (.1 + .75 * rnd(k, 2)), b: rnd(k, 4) * .7, tp, r0: 10 + rnd(k, 5) * 12, r1: 26 + rnd(k, 6) * 52, sw: 20 + rnd(k, 7) * 30, ph: rnd(k, 8) * 6 }) }
+function pos(b, t) {
+  const p = seg(t, b.b, b.tp), q = 1 - Math.pow(1 - p, 1.7)
+  return [b.x + Math.sin(t * 2.3 + b.ph) * b.sw * (1 - q * .7), lerp(b.y0, b.ty, q), lerp(b.r0, b.r1, eo(p)) * (1 + .035 * Math.sin(t * 9 + b.ph))]
+}
+function render(t) {
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0b0b10'); bg.addColorStop(1, '#0d2230'); g.fillStyle = bg; g.fillRect(0, 0, W, H)
+  const gl = g.createRadialGradient(CX, H, 20, CX, H, H * .8); gl.addColorStop(0, 'rgba(40,190,210,.28)'); gl.addColorStop(1, 'rgba(40,190,210,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H)
+  const exit = 1 - eio(seg(t, 6.0, 6.6))
+  // wordmark, letter by letter
+  g.save(); g.globalAlpha = exit
+  for (let j = 0; j < WORD.length; j++) {
+    const tp = BUB[j].tp, p = spring(seg(t, tp, tp + .7), 6, 12), a = eo(seg(t, tp, tp + .16)); if (a <= .005) continue
+    g.save(); g.globalAlpha *= a; g.translate(LX[j], WY + lerp(40, 0, p)); g.scale(lerp(.55, 1, p), lerp(.55, 1, p))
+    const lg = g.createLinearGradient(0, -FS * .4, 0, FS * .4); lg.addColorStop(0, '#ffffff'); lg.addColorStop(1, '#9fe7f2')
+    g.shadowColor = `rgba(80,220,240,${.5 * (1 - seg(t, tp + .3, tp + 1.2))})`; g.shadowBlur = 50; txt(WORD[j], 0, 0, FS, 800, lg); g.restore()
+  }
+  const ta = eo(seg(t, 4.5, 5.1)); if (ta > .01) txt('Say hello to something new', CX, WY + FS * .62, 48 * (TALL ? .85 : 1), 520, `rgba(214,240,248,${.7 * ta})`)
+  g.restore()
+  // bubbles + pops
+  g.save(); g.globalAlpha = exit
+  for (const b of BUB) {
+    if (t < b.b) continue
+    const [x, y, r] = pos(b, t)
+    if (t < b.tp) {
+      const fa = Math.min(1, (t - b.b) / .3)
+      const fg = g.createRadialGradient(x - r * .3, y - r * .35, r * .1, x, y, r); fg.addColorStop(0, `rgba(190,245,255,${.1 * fa})`); fg.addColorStop(.75, `rgba(90,200,230,${.07 * fa})`); fg.addColorStop(1, `rgba(150,235,255,${.38 * fa})`)
+      g.fillStyle = fg; circ(x, y, r); g.fill(); g.strokeStyle = `rgba(190,245,255,${.55 * fa})`; g.lineWidth = 2.5; circ(x, y, r); g.stroke()
+      g.strokeStyle = `rgba(255,255,255,${.7 * fa})`; g.lineWidth = Math.max(2, r * .07); g.lineCap = 'round'; g.beginPath(); g.arc(x, y, r * .72, Math.PI * 1.08, Math.PI * 1.4); g.stroke()
+    } else {
+      const age = t - b.tp, pr = seg(age, 0, .5)
+      if (pr < 1) {
+        g.strokeStyle = `rgba(190,245,255,${.85 * (1 - pr)})`; g.lineWidth = 5 * (1 - pr) + 1; circ(x, y, r * (1 + .75 * eo(pr))); g.stroke()
+        for (let d = 0; d < 9; d++) {
+          const ang = (d / 9 + rnd(d, 20 + (b.key + 2) * 3) * .1) * Math.PI * 2, sp = 1.6 + rnd(d, 30 + b.ph * 7) * 1.0, ds = seg(age, 0, .7)
+          const dx = Math.cos(ang) * r * (1 + sp * eo(ds)), dy = Math.sin(ang) * r * (1 + sp * eo(ds)) + 120 * age * age
+          g.fillStyle = `rgba(200,248,255,${(1 - ds) * .9})`; circ(x + dx, y + dy, (4 + rnd(d, 40) * 5) * (1 - ds)); g.fill()
+        }
+      }
+    }
+  }
+  g.restore()
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

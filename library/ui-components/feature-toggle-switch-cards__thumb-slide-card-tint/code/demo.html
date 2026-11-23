@@ -1,0 +1,122 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Feature toggle switch cards</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff}
+.card{position:absolute;width:360px;height:115px;border-radius:24px;border:1px solid #e6e6e8}
+.ico{position:absolute;left:18px;top:18px;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;border:1px solid #e3e3e5}
+.ico svg{width:22px;height:22px;fill:none;stroke:#111;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ttl{position:absolute;left:72px;top:16px;font-size:22px;font-weight:600;color:#0c0c0c;white-space:nowrap}
+.dsc{position:absolute;left:72px;top:46px;width:200px;font-size:19px;line-height:23px;color:#777;font-weight:500}
+.sw{position:absolute;right:18px;top:17px;width:44px;height:26px;border-radius:13px}
+.th{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  cards: [   // title, description, icon, starting state
+    { t: 'Analytics', d: 'Track page views and user interactions', ic: 'chart', on: false },
+    { t: 'Error Logging', d: 'Capture and report runtime errors', ic: 'bug', on: true },
+    { t: 'CDN Caching', d: 'Serve static assets from edge network', ic: 'globe', on: true },
+    { t: 'Auto Backup', d: 'Daily snapshots of your database', ic: 'db', on: false },
+  ],
+  switchOn: '#1b1b1d', switchOff: '#e7e7e9',   // track colours
+  cardOn: '#fafafa', cardOff: '#ffffff',        // card fill
+  tileOn: '#e6e6e8', tileOff: '#ffffff',        // icon tile fill
+  slideSec: .22,                                 // thumb travel and tint time
+  // scripted clicks [time, card index]
+  clicks: [[1.15, 0], [1.8, 0], [2.55, 2], [3.15, 2], [4.5, 3], [5.1, 3], [5.75, 1], [7.0, 1]],
+}
+const DUR = 8
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const ICONS = {
+  chart: '<path d="M3 3v18h18M8 17v-5M13 17V7M18 17v-8"/>',
+  bug: '<path d="M8 2l1.9 1.9M16 2l-1.9 1.9M9 7.1V6a3 3 0 0 1 6 0v1.1"/><path d="M12 20a6 6 0 0 1-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3a6 6 0 0 1-6 6zM12 20v-9M6.5 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 21c0-2.1-1.7-3.9-3.8-4M22 13h-4.5M3 5a4 4 0 0 0 3.5 4M21 5a4 4 0 0 1-3.5 4"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',
+  db: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+}
+const box = fitBox(760, 270, .8)
+const cs = CONFIG.cards.map((c, i) => {
+  const e = el('div', 'card', box); S(e, { left: (i % 2 ? 383 : 0) + 'px', top: (i < 2 ? 0 : 138) + 'px' })
+  const ic = el('div', 'ico', e, `<svg viewBox="0 0 24 24">${ICONS[c.ic]}</svg>`)
+  el('div', 'ttl', e, c.t); el('div', 'dsc', e, c.d)
+  const sw = el('div', 'sw', e); const th = el('div', 'th', sw)
+  return { e, ic, sw, th, c }
+})
+const cur = makeCursor(box)
+const sx = (i) => (i % 2 ? 383 : 0) + 360 - 18 - 22, sy = (i) => (i < 2 ? 0 : 138) + 30
+// cursor visits each click target a little before the click
+const cp = [[0, 450, 140]]
+CONFIG.clicks.forEach(([ct, i], n) => { cp.push([ct - .5, sx(i) - 6, sy(i) + 4], [ct + .25, sx(i) - 6, sy(i) + 4]) })
+cp.push([DUR, 450, 140])
+const stateOf = (i, t) => { let on = CONFIG.cards[i].on; for (const [ct, w] of CONFIG.clicks) if (w === i && t >= ct) on = !on; return on }
+const lastClick = (i, t) => { let l = -9; for (const [ct, w] of CONFIG.clicks) if (w === i && t >= ct) l = ct; return l }
+const mixc = (a, b, m) => { const p = (h) => [1, 3, 5].map((k) => parseInt(h.substr(k, 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, k) => (v + (B[k] - v) * m) | 0).join(',')})` }
+function render(t) {
+  cs.forEach((c, i) => {
+    const on = stateOf(i, t), l = lastClick(i, t)
+    const q = l < 0 ? 1 : eo(clamp((t - l) / CONFIG.slideSec))
+    const m = on ? q : 1 - q                      // 0 = off look, 1 = on look
+    const mm = l < 0 ? (on ? 1 : 0) : m
+    S(c.e, { background: mixc(CONFIG.cardOff, CONFIG.cardOn, mm) })
+    S(c.ic, { background: mixc(CONFIG.tileOff, CONFIG.tileOn, mm) })
+    S(c.sw, { background: mixc(CONFIG.switchOff, CONFIG.switchOn, mm) })
+    S(c.th, { left: px(3 + 18 * mm) })
+  })
+  const [x, y] = kfp(t, cp)
+  const press = CONFIG.clicks.some(([ct]) => t > ct - .06 && t < ct + .1)
+  setCursor(cur, x, y, press)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

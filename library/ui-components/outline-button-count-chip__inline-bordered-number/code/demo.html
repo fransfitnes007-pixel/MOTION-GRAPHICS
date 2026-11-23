@@ -1,0 +1,97 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>outline-button-count-chip__inline-bordered-number</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fdfdfd;color:#0a0a0a}
+.btn{position:absolute;display:flex;align-items:center;white-space:nowrap;background:#fff;border:1px solid #e2e2e2;font-weight:500;color:#0a0a0a;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.chip{display:inline-flex;align-items:center;border:1px solid #e2e2e2;color:#737373;font-weight:500;background:transparent}
+.lbl{position:absolute;font-size:13px;color:#8a8a8f;white-space:nowrap}
+.cursor{position:absolute;width:18px;height:22px;pointer-events:none;z-index:50}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  label: 'Messages',        // button text
+  count: '18',              // number shown in the chip
+  zoom: 2.2,                // size multiplier for the hero button (1 = real 36px height)
+  radius: 8,                // button corner radius in px (before zoom)
+  border: '#e2e2e2',        // outline colour
+  hover: '#f4f4f5',         // fill on hover
+  ring: 'rgba(120,120,130,.35)', // focus ring colour
+  others: [['Inbox', '99+'], ['Drafts', '3'], ['Archive', '1,204']],  // smaller variants under the hero button
+}
+DUR = 6; window.DUR = DUR
+
+function makeBtn(label, count, z, x, y) {
+  const b = el('div', 'btn'); const hgt = 36 * z
+  S(b, { left: px(x), top: px(y), height: hgt + 'px', padding: `0 ${16 * z}px`, borderRadius: CONFIG.radius * z + 'px', fontSize: 14 * z + 'px', gap: 0 })
+  b.appendChild(document.createTextNode(label))
+  const c = el('span', 'chip', b, count)
+  S(c, { height: 20 * z + 'px', padding: `0 ${4 * z}px`, marginLeft: 12 * z + 'px', marginRight: -4 * z + 'px', borderRadius: 4 * z + 'px', fontSize: 10 * z + 'px', fontFamily: 'inherit' })
+  return b
+}
+const hero = makeBtn(CONFIG.label, CONFIG.count, CONFIG.zoom, 0, 0)
+const hw = hero.offsetWidth, hh = hero.offsetHeight
+S(hero, { left: px(CX - hw / 2), top: px(CY - hh / 2 - 40) })
+const hx = CX - hw / 2, hy = CY - hh / 2 - 40
+// smaller variants row
+const row = CONFIG.others.map(([l, c]) => makeBtn(l, c, 1, 0, 0))
+const widths = row.map(b => b.offsetWidth); const total = widths.reduce((a, b) => a + b, 0) + 24 * (row.length - 1)
+let rx = CX - total / 2
+row.forEach((b, i) => { S(b, { left: px(rx), top: px(CY + 120) }); rx += widths[i] + 24 })
+const lb = el('div', 'lbl', stage, 'outline button with a number chip'); S(lb, { left: px(CX - 100), top: px(CY + 176) })
+const cur = el('div', 'cursor', stage, '<svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1l13 12-6 1 4 7-3 1.5-4-7-4 4z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>')
+
+function render(t) {
+  // 0.8-1.8 cursor enters, hover from 1.8, press 2.6-2.8 (ring stays), leave 4.2-5.0
+  const enter = eo(seg(t, .8, 1.8)), leave = eo(seg(t, 4.2, 5.2))
+  const target = [hx + hw * .42, hy + hh * .6], start = [hx + hw + 120, hy + hh + 140]
+  const p = [lerp(start[0], target[0], enter), lerp(start[1], target[1], enter)]
+  const out = [lerp(p[0], start[0] - 60, leave), lerp(p[1], start[1], leave)]
+  const hovered = t > 1.75 && t < 4.6
+  const pressed = t > 2.6 && t < 2.8
+  const focused = t > 2.6 && t < 4.4
+  S(hero, { background: hovered ? CONFIG.hover : '#fff', transform: pressed ? 'scale(.985)' : 'none', boxShadow: focused ? `0 0 0 ${3 * CONFIG.zoom / 2}px ${CONFIG.ring}, 0 1px 2px rgba(0,0,0,.05)` : '0 1px 2px rgba(0,0,0,.05)', borderColor: focused ? '#8f8f98' : CONFIG.border })
+  S(cur, { left: px(leave > 0 ? out[0] : p[0]), top: px(leave > 0 ? out[1] : p[1]), transform: `scale(${pressed ? .88 : 1})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

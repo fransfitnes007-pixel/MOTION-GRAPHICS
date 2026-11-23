@@ -1,0 +1,86 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>larsen66-border-beam</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0d0d0f;color:#caccd2}
+.cd{position:absolute;width:348px;height:122px;border-radius:20px;background:#1d1d1d;box-shadow:inset 0 0 0 1px rgba(44,47,54,.52),inset 0 0 50px 0 rgba(255,255,255,.02);overflow:hidden}
+.chip{position:absolute;height:24px;border-radius:36px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.02),inset 0 1px 0 0 rgba(255,255,255,.04);display:flex;align-items:center;font-size:12px;line-height:14px;color:#caccd2;gap:4px}
+.ring{position:absolute;inset:0;border-radius:20px;padding:1.6px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);pointer-events:none}
+.haze{position:absolute;inset:0;border-radius:20px;padding:7px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);filter:blur(12px);pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 2.2,                       // the card is 348px wide in life
+  period: 3.6,                     // seconds for the colours to go once round the border
+  // colour stops in degrees clockwise from the top, 'transparent' leaves that part of the border dark
+  stops: [
+    ['rgba(245,158,66,0)', 0], ['#f59e42', 8], ['#e0529c', 22], ['#c04bd6', 40], ['rgba(192,75,214,0)', 62],
+    ['rgba(76,125,255,0)', 150], ['#4c7dff', 172], ['#6bb0ff', 190], ['rgba(107,176,255,0)', 212],
+    ['rgba(79,209,109,0)', 262], ['#4fd16d', 282], ['#38c9a8', 296], ['rgba(56,201,168,0)', 318], ['rgba(245,158,66,0)', 360],
+  ],
+  ringWidth: 1.6, hazeOpacity: .3,   // sharp border line and the soft inner glow
+  text: 'Build anything...', chips: ['Agent', 'Auto'],
+}
+const DUR = 3.6
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+const card = el('div', 'cd', root); S(card, { left: px(640 - 174), top: px(400 - 61) })
+const at = el('div', 'chip', card, '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10.400 5.600v3a1.800 1.800 0 0 0 3.600 0v-.600a6 6 0 1 0-2.350 4.750M10.400 8a2.400 2.400 0 1 1-4.800 0 2.400 2.400 0 0 1 4.800 0z" stroke="#808388" stroke-width="1.500" stroke-linecap="round" stroke-linejoin="round"/></svg>'); S(at, { left: '8px', top: '7px', padding: '0 4px' })
+el('div', 'abs', card, CONFIG.text).style.cssText += ';left:11px;top:46px;font-size:13px;line-height:16px;color:#4e4e4e'
+const chev = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="transform:rotate(90deg)"><path d="M7 11L10 8L7 5" stroke="#8B9099" stroke-width="1.500" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/></svg>'
+const c1 = el('div', 'chip', card, CONFIG.chips[0] + chev); S(c1, { left: '8px', top: '91px', padding: '0 6px 0 8px' })
+const c2 = el('div', 'chip', card, CONFIG.chips[1] + chev); S(c2, { left: '82px', top: '91px', padding: '0 6px 0 8px' })
+const up = el('div', 'chip', card, '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 12.670V3.330M12.670 8L8 3.330 3.330 8" stroke="#8B8B8B" stroke-width="1.500" stroke-linecap="round" stroke-linejoin="round"/></svg>'); S(up, { left: '313px', top: '89px', width: '28px', height: '28px', justifyContent: 'center' })
+const haze = el('div', 'haze', card), ring = el('div', 'ring', card)
+const grad = (a) => `conic-gradient(from ${a}deg at 50% 50%, ${CONFIG.stops.map(([c, d]) => `${c} ${d}deg`).join(',')})`
+
+function render(t) {
+  const a = (t / CONFIG.period * 360) % 360
+  ring.style.background = grad(a); ring.style.padding = CONFIG.ringWidth + 'px'
+  haze.style.background = grad(a); haze.style.opacity = CONFIG.hazeOpacity
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

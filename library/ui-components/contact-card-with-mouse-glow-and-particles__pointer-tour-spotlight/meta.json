@@ -1,0 +1,38 @@
+{
+  "slug": "contact-card-with-mouse-glow-and-particles__pointer-tour-spotlight",
+  "visual_name": "Contact card with mouse glow and drifting dots",
+  "code_name": "Pointer tour and spotlight",
+  "category": "ui-components",
+  "summary": "A white contact card: four grey tag chips orbit a small logo and a red pointer visits them one by one; hover the card and a pale green glow follows the mouse while grey dots drift up.",
+  "tags": [
+    "card",
+    "cta",
+    "hover",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "canvas",
+    "tailwind"
+  ],
+  "duration_sec": 9.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "highlighter",
+    "spotlight card",
+    "contact card",
+    "mouse glow",
+    "particles card",
+    "book a call"
+  ],
+  "credit": {
+    "idea": "Highlighter",
+    "author": "designali-in",
+    "url": "https://21st.dev/@designali-in/components/highlighter",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

@@ -1,0 +1,154 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>chrome-headline-light-sweep__canvas-gradient-metal-specular</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5
+window.DUR = DUR
+const WORD = 'LAUNCH'
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const T_SLAM = .5, T_SW0 = 1.7, T_SW1 = 3.0, T_OUT0 = 4.2, T_OUT1 = 4.85
+
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const ctx = cvs.getContext('2d')
+const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c }
+const base = mk(), work = mk(), refl = mk()
+
+// font size: as big as fits 86% of the width
+let fs = 420 * K
+{ const m = ctx; m.font = `900 ${fs}px ${FONT}`; const w = m.measureText(WORD).width; if (w > W * .86) fs *= W * .86 / w }
+const capH = fs * .72, yTop = CY - capH / 2 - fs * .02, yBot = yTop + capH
+
+// ---- static liquid-chrome fill, built once (vertical metal gradient with a dark horizon band) ----
+{
+  const b = base.getContext('2d')
+  b.font = `900 ${fs}px ${FONT}`; b.textAlign = 'center'; b.textBaseline = 'alphabetic'
+  const g = b.createLinearGradient(0, yTop, 0, yBot)
+  ;[[0, '#fbfdff'], [.14, '#c5d0e2'], [.30, '#7e8ca6'], [.44, '#2a3346'], [.485, '#07090e'],   // dark horizon band
+    [.53, '#07090e'], [.57, '#6f84a6'], [.66, '#dfeaf8'], [.78, '#fbfdff'], [.9, '#8393ae'], [1, '#3b475c']]
+    .forEach(([p, c]) => g.addColorStop(p, c))
+  const bx = CX, by = yBot - capH * .0
+  b.shadowColor = 'rgba(0,0,0,.6)'; b.shadowBlur = 40 * K; b.shadowOffsetY = 14 * K
+  b.fillStyle = g; b.fillText(WORD, bx, by)
+  b.shadowColor = 'transparent'
+  b.globalCompositeOperation = 'source-atop'
+  // soft blue environment tint at the bottom, warm kicker at the top
+  const tint = b.createLinearGradient(0, yTop, 0, yBot)
+  tint.addColorStop(0, 'rgba(255,230,200,.18)'); tint.addColorStop(.5, 'rgba(0,0,0,0)'); tint.addColorStop(1, 'rgba(70,120,255,.28)')
+  b.fillStyle = tint; b.fillRect(0, 0, W, H)
+}
+
+function shake(t) {
+  const u = t - T_SLAM; if (u < 0 || u > .6) return [0, 0]
+  const a = 15 * K * Math.exp(-u * 8.5)
+  return [a * (Math.sin(u * 131) * .6 + Math.sin(u * 77 + 1.3) * .4), a * (Math.sin(u * 109 + .7) * .6 + Math.sin(u * 61) * .4)]
+}
+
+function render(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.filter = 'none'
+  ctx.fillStyle = '#0b0b10'; ctx.fillRect(0, 0, W, H)
+  // backdrop: cool pool of light behind the word, floor horizon
+  const lift = .35 + .65 * eo(seg(t, T_SLAM, T_SLAM + .5)) * (1 - seg(t, T_OUT0, T_OUT1))
+  let g = ctx.createRadialGradient(CX, CY + capH * .1, 0, CX, CY + capH * .1, W * .62)
+  g.addColorStop(0, `rgba(58,84,150,${.34 * lift})`); g.addColorStop(.55, `rgba(22,30,60,${.22 * lift})`); g.addColorStop(1, 'rgba(11,11,16,0)')
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
+
+  // timeline
+  const slam = seg(t, T_SLAM, T_SLAM + .42)
+  const a = clamp((t - T_SLAM) / .06) * (1 - ei(seg(t, T_OUT0, T_OUT1)))
+  if (a <= 0) return
+  const drift = 1 + .03 * eo(seg(t, T_SLAM + .4, T_OUT0)) - .03 * ei(seg(t, T_OUT0, T_OUT1))
+  const sc = (slam < 1 ? 1.55 - .55 * spring(slam, 6.5, 10) : 1) * drift
+  const [dx, dy] = shake(t)
+  const sp = clamp((t - T_SW0) / (T_SW1 - T_SW0)), sx = lerp(-.25 * W, 1.25 * W, eio(sp)), sI = Math.sin(Math.PI * sp)
+
+  // letters + moving specular, composited inside the glyph shapes only
+  const w = work.getContext('2d')
+  w.setTransform(1, 0, 0, 1, 0, 0); w.globalCompositeOperation = 'source-over'; w.clearRect(0, 0, W, H); w.drawImage(base, 0, 0)
+  if (sp > 0 && sp < 1) {
+    w.globalCompositeOperation = 'source-atop'
+    const bw = W * .2, skew = -.5
+    w.setTransform(1, 0, skew, 1, sx - skew * CY, 0)
+    let sg = w.createLinearGradient(-bw, 0, bw, 0)
+    sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.45, `rgba(255,255,255,${.55 * sI})`); sg.addColorStop(.5, `rgba(255,255,255,${.98 * sI})`); sg.addColorStop(.55, `rgba(255,255,255,${.55 * sI})`); sg.addColorStop(1, 'rgba(255,255,255,0)')
+    w.fillStyle = sg; w.fillRect(-bw, 0, bw * 2, H)
+    const bw2 = W * .05
+    sg = w.createLinearGradient(-bw2, 0, bw2, 0); sg.addColorStop(0, 'rgba(210,225,255,0)'); sg.addColorStop(.5, `rgba(235,244,255,${sI})`); sg.addColorStop(1, 'rgba(210,225,255,0)')
+    w.fillStyle = sg; w.fillRect(-bw2, 0, bw2 * 2, H)
+    w.setTransform(1, 0, 0, 1, 0, 0)
+  }
+  // reflection on the floor, built from the lit letters
+  const r = refl.getContext('2d'); r.setTransform(1, 0, 0, 1, 0, 0); r.globalCompositeOperation = 'source-over'; r.clearRect(0, 0, W, H)
+  r.setTransform(1, 0, 0, -1, 0, 2 * yBot + fs * .06); r.drawImage(work, 0, 0); r.setTransform(1, 0, 0, 1, 0, 0)
+  r.globalCompositeOperation = 'destination-in'
+  const fg = r.createLinearGradient(0, yBot, 0, yBot + capH * .55); fg.addColorStop(0, 'rgba(0,0,0,.28)'); fg.addColorStop(1, 'rgba(0,0,0,0)')
+  r.fillStyle = fg; r.fillRect(0, 0, W, H)
+
+  ctx.globalAlpha = a
+  ctx.translate(CX + dx, CY + dy); ctx.scale(sc, sc); ctx.translate(-CX, -CY)
+  ctx.drawImage(refl, 0, 0)
+  // soft bloom: blurred copy added over itself, stronger while the streak passes
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'
+  ctx.filter = `blur(${28 * K}px)`; ctx.globalAlpha = a * (.16 + .55 * sI); ctx.drawImage(work, 0, 0)
+  ctx.filter = `blur(${8 * K}px)`; ctx.globalAlpha = a * (.10 + .25 * sI); ctx.drawImage(work, 0, 0)
+  ctx.restore()
+  ctx.globalAlpha = a; ctx.drawImage(work, 0, 0)
+
+  // light streak: an anamorphic flare riding the sweep, plus a thin hot line
+  if (sp > 0 && sp < 1) {
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    const fl = ctx.createRadialGradient(sx, CY, 0, sx, CY, W * .3)
+    fl.addColorStop(0, `rgba(190,215,255,${.5 * sI})`); fl.addColorStop(1, 'rgba(190,215,255,0)')
+    ctx.save(); ctx.translate(sx, CY); ctx.scale(1, .055); ctx.translate(-sx, -CY)
+    ctx.fillStyle = fl; ctx.fillRect(sx - W * .3, CY - W * .3 / .055, W * .6, W * .6 / .055)
+    ctx.restore()
+    ctx.globalAlpha = a * sI * .85; ctx.fillStyle = 'rgba(235,244,255,1)'; ctx.fillRect(sx - W * .08, CY - 1.2 * K, W * .16, 2.4 * K)
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,38 @@
+{
+  "slug": "plan-picker-dialog-two-cards__white-border-select-check-badge",
+  "visual_name": "Plan picker dialog with two cards",
+  "code_name": "White border select with check badge",
+  "category": "ui-components",
+  "summary": "A dark dialog 'Choose Your Plan' with a Basic and a Pro card; the chosen one gets a white outline and a white check badge on its corner, and a white Confirm Selection button sits under them.",
+  "tags": [
+    "modal",
+    "card",
+    "cta",
+    "dark",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "tailwind",
+    "radix-dialog"
+  ],
+  "duration_sec": 7.4,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "modal pricing",
+    "pricing modal",
+    "plan picker",
+    "upgrade plan",
+    "choose your plan",
+    "pricing dialog"
+  ],
+  "credit": {
+    "idea": "Modal Pricing",
+    "author": "kokonutd",
+    "url": "https://21st.dev/@kokonutd/components/modal-pricing",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

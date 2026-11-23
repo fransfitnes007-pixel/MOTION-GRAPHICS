@@ -1,0 +1,218 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Factory demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#030304;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.p3{position:absolute;transform-style:preserve-3d}
+.face{position:absolute}
+.ui{position:absolute;font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;color:#d8d8dc;white-space:nowrap}
+.mono{letter-spacing:.14em;text-transform:uppercase;font-size:9px;color:#6d6d74}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  accent: '#ff7a1a',            // orange used on lids, cards and the active button
+  title: 'Workshop Machine',    // top-left product name
+  subtitle: 'Interactive workshop',
+  eyebrow: 'The machine you will build',
+  stationNames: ['Capture', 'Assemble', 'Preview', 'Orders', 'Checkout'], // tooltip headings
+  stationText: ['Raw input goes onto the belt.', 'Parts are joined in order.', 'A live page shows the result.', 'Customers and their requests.', 'Payment received. The machine runs.'],
+  tabs: ['Assembled', 'Cutaway', 'Stations', 'One order'],
+  views: ['Overview', 'Side', 'Top', 'Station', 'Flight'],
+  cards: 6,                     // cards riding the belt
+  beltPeriod: 14,               // seconds for a card to lap the belt
+  zoomIn: 1.2,                 // camera scale at the close-up
+  rotX: 57,                     // camera pitch in degrees
+}
+const DUR = 9
+window.DUR = DUR
+stage.style.background = '#030304'
+const DW = 1280, DH = 844, U = Math.min(W / DW, H / DH)
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, overflow: 'hidden' })
+const ACC = CONFIG.accent
+
+// ---- 3D helpers: plane is x right, y toward viewer, z up ----
+const g3 = (parent, x, y, z, extra) => { const d = el('div', 'p3', parent); S(d, Object.assign({ left: 0, top: 0, width: 0, height: 0, transform: `translate3d(${x}px,${y}px,${z}px)` }, extra || {})); return d }
+const face = (parent, w, h, css, tr, origin) => { const d = el('div', 'face', parent); S(d, Object.assign({ width: w + 'px', height: h + 'px', transform: tr || '', transformOrigin: origin || '0 0' }, css)); return d }
+// box with top-left (0,0) at its parent; w along x, d along y, h up. cols = [top, south(y=d), east/west]
+const box = (parent, x, y, z, w, d, h, cols, rad) => {
+  const b = g3(parent, x, y, z)
+  const r = rad ? { borderRadius: rad + 'px' } : {}
+  face(b, w, d, Object.assign({ background: cols[0] }, r), `translateZ(${h}px)`)
+  face(b, w, h, { background: cols[1] }, `translateY(${d}px) translateZ(${h}px) rotateX(-90deg)`)
+  face(b, w, h, { background: cols[1] }, `translateZ(${h}px) rotateX(-90deg)`)
+  face(b, h, d, { background: cols[2] }, `translateX(${w}px) rotateY(-90deg)`)
+  face(b, h, d, { background: cols[2] }, `rotateY(-90deg)`)
+  return b
+}
+// upright panel with bottom centre at (x,y), facing the viewer, optionally turned about z
+const stand = (parent, x, y, z, w, h, css, rz) => {
+  const d = el('div', 'face', parent)
+  S(d, Object.assign({ left: x - w / 2 + 'px', top: y - h + 'px', width: w + 'px', height: h + 'px', transformOrigin: '50% 100%', transform: `translateZ(${z}px) rotateZ(${rz || 0}deg) rotateX(-90deg)`, backfaceVisibility: 'visible' }, css))
+  return d
+}
+
+// ---- scene ----
+const view = el('div', 'abs', root); S(view, { left: 0, top: 0, width: DW + 'px', height: DH + 'px', perspective: '2400px', perspectiveOrigin: '50% 45%' })
+const cam = el('div', 'p3', view); S(cam, { left: DW / 2 + 'px', top: DH * .47 + 'px', width: 0, height: 0 })
+const world = el('div', 'p3', cam)
+const SW = 1000, SD = 640
+const slabOff = g3(world, -SW / 2, -SD / 2, 0)
+// slab
+const slab = box(slabOff, 0, 0, -34, SW, SD, 34, ['linear-gradient(150deg,#47505f 0%,#2a303b 38%,#1b1e26 70%,#15171d)', '#101216', '#0b0c10'], 26)
+face(slab, SW - 20, SD - 20, { left: '10px', top: '10px', border: '1px solid rgba(255,255,255,.07)', borderRadius: '18px' }, 'translateZ(34.5px)')
+face(slab, SW, 3, { background: '#8a7a4a', opacity: .55 }, `translateY(${SD}px) translateZ(26px) rotateX(-90deg)`)
+// screws
+;[[34, 34], [SW - 34, 34], [34, SD - 34], [SW - 34, SD - 34]].forEach(([x, y]) => face(slab, 12, 12, { left: x - 6 + 'px', top: y - 6 + 'px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%,#aaa,#333)' }, 'translateZ(35px)'))
+// plate text
+const flat = (x, y, html, css) => { const d = face(slabOff, 600, 60, Object.assign({ left: x + 'px', top: y + 'px', color: '#6e7480', fontWeight: 800, letterSpacing: '.04em' }, css), 'translateZ(.6px)'); d.innerHTML = html; return d }
+flat(40, SD - 118, 'STARTER', { fontSize: '46px', color: '#8c94a3', letterSpacing: '.02em' })
+flat(40, SD - 62, 'site &middot; database &middot; admin in 35 minutes', { fontSize: '19px', color: '#6a7281', fontWeight: 500 })
+face(slabOff, 250, 60, { left: SW - 300 + 'px', top: SD - 120 + 'px', background: 'rgba(8,9,12,.8)', borderRadius: '4px', color: ACC, fontSize: '13px', lineHeight: '60px', textAlign: 'right', paddingRight: '24px', letterSpacing: '.1em' }, 'translateZ(.8px)').textContent = 'No. 001'
+
+// belt (flat SVG on the slab)
+const CXb = 500, CYb = 330, RX = 300, RY = 118
+const belt = face(slabOff, SW, SD, { left: 0, top: 0 }, 'translateZ(3px)')
+belt.innerHTML = `<svg width="${SW}" height="${SD}" viewBox="0 0 ${SW} ${SD}"><ellipse cx="${CXb}" cy="${CYb}" rx="${RX}" ry="${RY}" fill="none" stroke="#08090b" stroke-width="40"/><ellipse id="ticks" cx="${CXb}" cy="${CYb}" rx="${RX}" ry="${RY}" fill="none" stroke="#3b404b" stroke-width="30" stroke-dasharray="4 8"/><ellipse cx="${CXb}" cy="${CYb}" rx="${RX + 19}" ry="${RY + 19}" fill="none" stroke="#e6e8ee" stroke-width="5"/><ellipse cx="${CXb}" cy="${CYb}" rx="${RX - 19}" ry="${RY - 19}" fill="none" stroke="#e6e8ee" stroke-width="5"/></svg>`
+const ticks = belt.querySelector('#ticks')
+const TLEN = Math.PI * (3 * (RX + RY) - Math.sqrt((3 * RX + RY) * (RX + 3 * RY)))
+
+// stations
+const WH = ['#f1f1f3', '#d4d5da', '#a9abb3'], BK = ['#262932', '#15171c', '#0d0e11'], OR = [ACC, '#d65a0a', '#a8430a']
+// projector (left)
+box(slabOff, 90, 200, 0, 170, 120, 22, WH, 4)
+box(slabOff, 100, 210, 22, 20, 100, 90, WH)
+box(slabOff, 230, 210, 22, 20, 100, 90, WH)
+box(slabOff, 96, 206, 112, 160, 108, 26, OR, 4)
+stand(slabOff, 150, 205, 114, 80, 80, { background: '#1a1b20', border: '3px solid #e9e9ec', borderRadius: '4px' }, 0).innerHTML = `<div style="margin:12px;height:calc(100% - 24px);background:${ACC};border-radius:3px"></div>`
+;[[120, 300], [150, 300]].forEach(([x, y], i) => { stand(slabOff, x + 10, y - 80, 150 + i * 40, 54, 54, { background: 'radial-gradient(circle,#2b2c31 0 14%,#9a9ca5 15% 20%,#2b2c31 21% 55%,#6c6e77 56% 62%,#22232a 63%)', borderRadius: '50%' }, 0) })
+// black machine with pins
+box(slabOff, 300, 130, 0, 190, 80, 56, BK, 6)
+box(slabOff, 306, 134, 56, 178, 30, 14, WH, 4)
+for (let i = 0; i < 4; i++) box(slabOff, 320 + i * 48, 144, 70, 8, 8, 26, WH, 4)
+// monitor
+box(slabOff, 560, 140, 0, 26, 26, 70, ['#555', '#2a2a2e', '#1a1a1d'])
+const mon = stand(slabOff, 500, 160, 70, 250, 170, { background: '#f2f2f4', border: '6px solid #fafafa', boxShadow: '0 0 0 2px #1b1b1e inset', borderRadius: '6px' }, 0)
+mon.innerHTML = `<div style="margin:8px;height:calc(100% - 16px);background:#fbfaf7;position:relative;font-family:-apple-system,system-ui,sans-serif"><div style="position:absolute;left:12px;top:12px;width:78px;height:110px;background:${ACC};border-radius:4px"><div style="margin:30px auto;width:36px;height:36px;border-radius:50%;border:5px solid #1a1a1a"></div></div><div style="position:absolute;left:104px;top:20px;font-weight:800;font-size:17px;line-height:19px;color:#111">Your idea.<br>Already live.</div><div style="position:absolute;left:104px;top:68px;width:96px;height:5px;background:#ccc;border-radius:3px"></div><div style="position:absolute;left:104px;top:80px;width:70px;height:5px;background:#ddd;border-radius:3px"></div><div style="position:absolute;left:104px;top:100px;width:70px;height:20px;background:#111;border-radius:3px"></div></div>`
+// cabinet (right)
+box(slabOff, 730, 230, 0, 190, 110, 14, BK, 6)
+box(slabOff, 745, 240, 14, 160, 90, 128, BK, 12)
+box(slabOff, 735, 232, 142, 180, 100, 20, OR, 6)
+const cab = stand(slabOff, 825, 340, 30, 130, 100, { background: '#16211f', border: '2px solid #0c1413', borderRadius: '4px', fontFamily: '-apple-system,system-ui,sans-serif', color: '#9fb', fontSize: '8px' }, 0)
+cab.innerHTML = `<div style="padding:8px 10px;letter-spacing:.1em">YOUR ORDERS</div>` + [0, 1, 2].map((i) => `<div style="margin:5px 8px;height:16px;border-radius:4px;background:#202e2b;border:1px solid #2c3f3b"></div>`).join('')
+// register (inside loop)
+box(slabOff, 410, 310, 0, 180, 110, 36, WH, 6)
+box(slabOff, 424, 320, 36, 120, 76, 14, BK, 8)
+const KEY = []
+for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) box(slabOff, 438 + c * 32, 330 + r * 20, 50, 24, 14, 5, r === 0 && c === 2 ? OR : WH, 3)
+box(slabOff, 560, 316, 36, 52, 46, 34, BK, 4)
+stand(slabOff, 590, 322, 56, 40, 48, { background: '#fff', border: '1px solid #ddd' }, 0)
+// +$29 sign
+box(slabOff, 650, 220, 0, 8, 8, 60, ['#aaa', '#888', '#666'])
+const sign = stand(slabOff, 690, 226, 58, 130, 50, { background: '#12201a', border: '2px solid #0b1410', color: '#d8ffe0', font: '800 24px -apple-system,system-ui,sans-serif', lineHeight: '46px', textAlign: 'center' }, 0)
+sign.textContent = '+ $29'
+// cards
+const cards = []
+for (let i = 0; i < CONFIG.cards; i++) {
+  const c = stand(slabOff, 0, 0, 3, 50, 66, { background: '#fff', border: '1px solid #e2e2e2', boxShadow: '0 0 0 2px #f4f4f4' }, 0)
+  c.innerHTML = `<div style="margin:5px;height:38px;background:${ACC};border-radius:3px;position:relative"><div style="position:absolute;left:16px;top:9px;border-left:16px solid #111;border-top:10px solid transparent;border-bottom:10px solid transparent"></div></div><div style="margin:0 6px;height:5px;background:#ddd;border-radius:3px"></div><div style="margin:5px 6px;width:30px;height:5px;background:#eee;border-radius:3px"></div>`
+  cards.push(c)
+}
+
+// ---- UI chrome ----
+const logo = el('div', 'ui', root); S(logo, { left: '16px', top: '16px', width: '34px', height: '34px', borderRadius: '8px', background: '#1b1a18', border: '1px solid #3a2a1a' }); logo.innerHTML = `<svg viewBox="0 0 34 34" width="34" height="34"><path d="M10 11 L17 24 L24 11" fill="none" stroke="${ACC}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+el('div', 'ui', root, CONFIG.title).style.cssText += ';left:58px;top:16px;font-size:13px;font-weight:600;color:#fff'
+el('div', 'ui mono', root, CONFIG.subtitle).style.cssText += ';left:58px;top:34px;font-size:8px'
+const run = el('div', 'ui', root, `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${ACC};margin-right:8px;vertical-align:1px"></span>Machine running`); run.style.cssText += ';right:82px;top:28px;font-size:10px;color:#c9c9cd'
+el('div', 'ui mono', root, 'Series 001').style.cssText += ';right:16px;top:30px'
+el('div', 'ui mono', root, `<span style="display:inline-block;width:16px;height:1px;background:${ACC};vertical-align:3px;margin-right:12px"></span>${CONFIG.eyebrow}`).style.cssText += ';left:300px;top:88px'
+el('div', 'ui mono', root, '5 modules / 1 system').style.cssText += ';right:300px;top:88px'
+const vt = el('div', 'ui mono', root, 'Prototype 01 - from idea to payment'); vt.style.cssText += ';right:2px;top:150px;transform-origin:100% 0;transform:rotate(90deg) translateX(100%) translateY(-100%);writing-mode:vertical-rl;font-size:7px'
+const bar = el('div', 'ui', root); S(bar, { left: '425px', top: '706px', width: '430px', height: '42px', borderRadius: '9px', background: 'rgba(26,26,29,.94)', border: '1px solid #2c2c30' })
+CONFIG.tabs.forEach((tx, i) => { const b = el('div', 'ui', bar, tx); S(b, { left: 4 + i * 106 + 'px', top: '4px', width: '104px', height: '32px', borderRadius: '6px', textAlign: 'center', lineHeight: '32px', fontSize: '11px', background: i === 0 ? ACC : 'transparent', color: i === 0 ? '#fff' : '#a8a8ae', fontWeight: i === 0 ? 600 : 400 }) })
+const vrow = el('div', 'ui', root); S(vrow, { left: '0', top: '766px', width: DW + 'px', textAlign: 'center', fontSize: '10px' })
+const vEls = []
+vrow.innerHTML = `<span class="mono" style="margin-right:18px">View</span>` + CONFIG.views.map((v, i) => `<span class="vv" style="margin:0 12px;color:#777">${v}</span>`).join('') + `<span style="margin-left:14px;color:#999">II</span>`
+const vv = [...vrow.querySelectorAll('.vv')]
+el('div', 'ui', root, 'made with a code agent').style.cssText += ';left:16px;bottom:18px;font-size:9px;color:#6a6a70'
+el('div', 'ui mono', root, 'Designed by you').style.cssText += ';left:560px;bottom:18px;font-size:8px'
+el('div', 'ui', root, 'Rotate. Zoom. Explore.').style.cssText += ';right:16px;bottom:18px;font-size:9px;color:#8a8a90'
+// tooltip + pointer
+const tip = el('div', 'ui', root); S(tip, { width: '190px', padding: '9px 12px', borderRadius: '7px', background: 'rgba(24,24,27,.96)', border: '1px solid #34343a', zIndex: 9, whiteSpace: 'normal' })
+const tipH = el('div', 'ui', tip); S(tipH, { position: 'relative', fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' })
+const tipT = el('div', 'ui', tip); S(tipT, { position: 'relative', fontSize: '9.5px', color: '#8c8c93', marginTop: '3px', whiteSpace: 'normal', lineHeight: '1.35' })
+const cur = el('div', 'abs', root, '<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7 17.5 L10.5 25 L14 23.5 L10.5 16.5 L17 16.5 Z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>'); S(cur, { zIndex: 10 })
+
+const along = (pts, t) => {
+  if (t <= pts[0][0]) return pts[0].slice(1)
+  for (let i = 0; i < pts.length - 1; i++) if (t < pts[i + 1][0]) { const u = eio(seg(t, pts[i][0], pts[i + 1][0])); return pts[i].slice(1).map((v, k) => lerp(v, pts[i + 1][k + 1], u)) }
+  return pts[pts.length - 1].slice(1)
+}
+// camera keyframes [t, scale, rotZ, panX, panY, rotX]
+const CAM = [[0, .5, 20, 0, 0, 57], [3.0, .52, 22, 0, 0, 57], [4.8, CONFIG.zoomIn, 12, -30, 20, 56], [6.6, CONFIG.zoomIn * 1.05, 8, -90, 40, 55], [7.6, CONFIG.zoomIn, 10, -70, 30, 56], [9, .5, 20, 0, 0, 57]]
+// pointer + tooltip: [t, x, y] and windows [station, a, b]
+const PTR = [[0, 1000, 560], [1.4, 800, 330], [2.8, 790, 330], [3.2, 720, 400], [4.3, 1000, 600], [5.3, 700, 430], [6.8, 560, 520], [8.2, 620, 560], [9, 1000, 560]]
+const TIPS = [[3, 1.6, 2.9, 790, 300], [1, 5.4, 6.2, 560, 380], [4, 6.3, 8.0, 540, 480]]
+
+function render(t) {
+  const c = along(CAM, t)
+  S(world, { transform: `scale(${c[0]}) rotateX(${c[4]}deg) rotateZ(${c[1]}deg) translate3d(${c[2]}px,${c[3]}px,0)` })
+  // belt motion
+  const k = t / CONFIG.beltPeriod
+  ticks.setAttribute('stroke-dashoffset', (-(t * 34)).toFixed(2))
+  for (let i = 0; i < cards.length; i++) {
+    const u = ((k + i / cards.length) % 1) * Math.PI * 2
+    const x = CXb + RX * Math.cos(u), y = CYb + RY * Math.sin(u)
+    S(cards[i], { left: x - 25 + 'px', top: y - 66 + 'px' })
+  }
+  // chrome state
+  const view_i = t < 3 ? 0 : t < 5 ? 3 : 3
+  vv.forEach((e, i) => { e.style.color = i === view_i ? '#fff' : '#777' })
+  const [px, py] = along(PTR, t)
+  S(cur, { left: px + 'px', top: py + 'px' })
+  let on = 0
+  TIPS.forEach(([si, a, b, x, y]) => {
+    const v = seg(t, a, a + .25) * (1 - seg(t, b, b + .25))
+    if (v > on) { on = v; tipH.innerHTML = `<span style="color:${ACC};font-size:10px;margin-right:6px">0${si + 1}</span>${CONFIG.stationNames[si]}`; tipT.textContent = CONFIG.stationText[si]; S(tip, { left: x + 'px', top: y + 'px' }) }
+  })
+  S(tip, { opacity: on, transform: `translateY(${(1 - on) * 6}px)` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

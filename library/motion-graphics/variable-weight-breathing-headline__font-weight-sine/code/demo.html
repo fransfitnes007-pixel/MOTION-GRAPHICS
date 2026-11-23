@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Variable weight breathing headline</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay[wght].ttf);font-weight:400 900}
+#stage{background:#0b0b10;color:#fff}
+.fill{position:absolute;left:0;top:0;width:100%;height:100%}
+.word{position:absolute;left:0;width:100%;text-align:center;font-family:PF,Georgia,serif;white-space:nowrap;line-height:1;letter-spacing:-.02em}
+.word span{display:inline-block}
+.sub{position:absolute;left:0;width:100%;text-align:center;font-weight:500;color:#8c8ca6;letter-spacing:.01em}
+.gauge{position:absolute;height:6px;border-radius:3px;background:rgba(255,255,255,.1)}
+.gauge i{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px rgba(165,180,252,.25),0 6px 16px rgba(0,0,0,.6)}
+.gl{position:absolute;font:600 22px/1 ui-monospace,'SF Mono',Menlo,monospace;color:#8c8ca6;letter-spacing:.06em}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const pr = (t, a, d) => seg(t, a, a + d)          // progress 0..1 of a move that starts at a and lasts d seconds
+const DUR = 6
+window.DUR = DUR
+const bg = el('div', 'fill'); bg.style.background = 'radial-gradient(60% 55% at 50% 48%,#1b1a33 0%,#0b0b10 75%)'
+const TXT = 'Breathe'
+const FS = TALL ? 250 : 300
+const word = el('div', 'word'); S(word, { fontSize: px(FS), top: px(CY - FS * .62) })
+const ls = [...TXT].map(ch => el('span', '', word, ch))
+const sub = el('div', 'sub'); S(sub, { fontSize: px(34 * K), top: px(CY + FS * .62) }); sub.textContent = 'One variable font, weight 400 to 900'
+const gW = Math.min(W * .4, 560), gy = CY + FS * .62 + 120 * K
+const g = el('div', 'gauge'); S(g, { left: px(CX - gW / 2), top: px(gy), width: px(gW) })
+const th = el('i', '', g)
+const g0 = el('div', 'gl', stage, '400'), g1 = el('div', 'gl', stage, '900'), gv = el('div', 'gl', stage, '')
+S(g0, { left: px(CX - gW / 2 - 70), top: px(gy - 8) }); S(g1, { left: px(CX + gW / 2 + 24), top: px(gy - 8) })
+const P = 3                                              // breath period in seconds: DUR / 2 so the loop is exact
+
+function render(t) {
+  const ph = 2 * Math.PI * t / P
+  ls.forEach((e, i) => {
+    const wv = 650 + 250 * Math.sin(ph - i * .55)        // 400 to 900, a wave travelling along the word
+    e.style.fontWeight = wv.toFixed(1)
+    const k = (wv - 400) / 500
+    e.style.color = 'rgb(' + (150 + 105 * k | 0) + ',' + (155 + 100 * k | 0) + ',' + (200 + 55 * k | 0) + ')'
+  })
+  S(word, { transform: 'scale(' + (1 + .012 * Math.sin(ph - 1.6)) + ')', textShadow: '0 0 ' + (60 + 40 * Math.sin(ph)) + 'px rgba(130,140,255,.35)' })
+  const wc = 650 + 250 * Math.sin(ph - 3 * .55)
+  th.style.left = ((wc - 400) / 500 * 100) + '%'
+  gv.textContent = 'wght ' + Math.round(wc); S(gv, { left: px(CX - 40), top: px(gy + 30), width: '120px' })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

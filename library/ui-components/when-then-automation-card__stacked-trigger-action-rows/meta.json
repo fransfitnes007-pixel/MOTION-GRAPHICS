@@ -1,0 +1,34 @@
+{
+  "slug": "when-then-automation-card__stacked-trigger-action-rows",
+  "visual_name": "When-Then automation card",
+  "code_name": "Stacked trigger and action rows",
+  "category": "ui-components",
+  "summary": "A white rounded card holding two outlined rows, \"WHEN app / event\" on top and \"THEN app / event\" below, joined by a small grey circle with a down arrow.",
+  "tags": [
+    "21st",
+    "card",
+    "form",
+    "light"
+  ],
+  "tech": [
+    "react",
+    "tailwind"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "when then",
+    "trigger to action",
+    "automation",
+    "zap",
+    "workflow card"
+  ],
+  "credit": {
+    "idea": "Trigger To Action",
+    "author": "ziegfiroyt",
+    "url": "https://21st.dev/@ziegfiroyt/components/automation1",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

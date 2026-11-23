@@ -1,0 +1,182 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Plinko effort picker</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#000;color:#fff}
+.col{position:absolute;top:0;bottom:0;background:#090909}
+.pn{position:absolute;left:0;top:0;width:684px;height:540px;border-radius:30px;background:linear-gradient(#1f1f23,#17171a);border:1px solid #2a2a2f;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.tt{position:absolute;left:24px;top:24px;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.st{position:absolute;left:24px;top:56px;font-size:19px;color:#9a9aa2;white-space:nowrap}
+.ag{position:absolute;left:410px;top:24px;width:186px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:24px;font-weight:600}
+.xx{position:absolute;left:620px;top:38px;width:26px;height:26px}
+.bd{position:absolute;left:24px;top:107px;width:636px;height:284px;border-radius:20px;background:#141416;overflow:hidden}
+.peg{position:absolute;width:15px;height:15px;border-radius:50%;margin:-7.5px 0 0 -7.5px;background:#5a5a5e}
+.bl{position:absolute;top:216px;width:1px;height:68px;background:#242427}
+.bf{position:absolute;left:0;right:0;top:216px;height:1px;background:#242427}
+.lb{position:absolute;top:411px;width:106px;text-align:center;font-size:18px;line-height:18px;color:#6c6c73;margin-left:-53px}
+.ub{position:absolute;width:41px;height:3px;border-radius:2px;background:#8b6df0;margin-left:-20px}
+.tr{position:absolute;left:24px;top:475px;width:636px;height:48px;border-radius:24px;background:#2a2a2d;box-shadow:inset 0 2px 6px rgba(0,0,0,.5);overflow:hidden}
+.tf{position:absolute;left:0;top:0;bottom:0;border-radius:24px;background:linear-gradient(90deg,#6a4fc6,#8f74ee)}
+.sd{position:absolute;top:22px;width:5px;height:5px;border-radius:50%;margin-left:-2.5px;background:rgba(255,255,255,.35)}
+.th{position:absolute;top:469px;width:54px;height:54px;border-radius:50%;background:#fff;margin-left:-27px;box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.ml{position:absolute;left:152px;top:549px;width:378px;height:64px;border-radius:32px;background:#1d1d20;border:1px solid #2a2a2f;display:flex;align-items:center;justify-content:center;gap:12px;font-size:18px;color:#e8e8ea}
+.ml span{color:#8d8d95;font-size:17px}
+.ball{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:radial-gradient(circle,#fff 0 3px,#cfc2ff 4px 8px,#8f6bff 11px,rgba(143,107,255,0) 15px)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'Reasoning effort',
+  levels: ['Auto', 'Light', 'Medium', 'High', 'Extra High', 'Ultra'],   // one bin and one slider stop each
+  model: '5.6 Sol',
+  start: 3,                       // level the ball is resting in when the loop begins
+  // each drop: click time, then the peg columns it hits, then the bin it lands in
+  drops: [
+    { click: .7, pegs: [638, 585, 532, 585, 638], bin: 2 },    // lands on Medium
+    { click: 5.0, pegs: [638, 691, 744, 691, 638], bin: 3 },   // lands on High
+  ],
+  hitSec: [.5, .4, .4, .4, .4, .5],   // time for each leg: top to first peg, peg to peg, last peg to bin
+  startDelay: .2,                     // seconds from click to the ball appearing
+  accent: '#8b6df0',                  // purple used for the fill, underline and glow
+  pegFlashSec: .3,
+}
+const DUR = 8
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const OX = 296, OY = 155
+const gx = (x) => x - OX, gy = (y) => y - OY
+const box = fitBox(765, 932, 1)
+// page columns like the original (dark centre strip)
+const colBg = el('div', 'col', box); S(colBg, { left: '0', width: '765px' })
+const pn = el('div', 'pn', box); S(pn, { left: px(OX - 255), top: px(OY) })
+const wrapAll = pn   // everything below lives in panel coordinates
+el('div', 'tt', pn, CONFIG.title)
+const sub = el('div', 'st', pn)
+const ag = el('div', 'ag', pn)
+el('div', 'xx', pn, '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#c9c9ce" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>')
+const bd = el('div', 'bd', pn)
+// pegs: rows alternate 5 and 6; x in clip pixels
+const rows = [[426, 532, 638, 744, 850], [373, 479, 585, 691, 797, 903], [426, 532, 638, 744, 850], [373, 479, 585, 691, 797, 903], [426, 532, 638, 744, 850]]
+const pegY = [281, 320, 359, 399, 438]
+const pegs = []
+rows.forEach((r, ri) => r.forEach((x) => { const p = el('div', 'peg', bd); S(p, { left: gx(x) - 24 + 'px', top: pegY[ri] - 262 + 'px' }); pegs.push({ e: p, x, y: pegY[ri], ri }) }))
+for (let k = 0; k < 5; k++) { const l = el('div', 'bl', bd); l.style.left = gx(426 + 106 * k) - 24 + 'px' }
+el('div', 'bf', bd)
+const binX = (i) => 373 + 106 * i
+const lbls = CONFIG.levels.map((n, i) => { const l = el('div', 'lb', pn, n.replace(' ', '<br>')); S(l, { left: gx(binX(i)) + 'px', top: (n.includes(' ') ? 411 : 411) + 'px' }); return l })
+const ubTop = el('div', 'ub', pn); S(ubTop, { top: '388px' }); const ubBot = el('div', 'ub', pn); S(ubBot, { top: '450px' })
+const tr = el('div', 'tr', pn); const tf = el('div', 'tf', tr)
+CONFIG.levels.forEach((n, i) => { const d = el('div', 'sd', tr); d.style.left = gx(binX(i)) - 24 + 'px' })
+const th = el('div', 'th', pn)
+const ml = el('div', 'ml', pn)
+// ball: ghost trail + head, placed inside the board
+const ghosts = [0, 1, 2, 3].map(() => el('div', 'ball', bd)); const ball = el('div', 'ball', bd)
+const cur = makeCursor(box)
+// ---- trajectories (pure functions of time) ----
+function ballAt(d, t) {                 // position within drop d at time t, or null if not in flight
+  const t0 = d.click + CONFIG.startDelay; if (t < t0) return null
+  const px_ = [d.pegs[0], ...d.pegs, binX(d.bin)], py_ = [250, ...pegY, 512]
+  let a = t - t0
+  for (let i = 0; i < CONFIG.hitSec.length; i++) {
+    const dur = CONFIG.hitSec[i]
+    if (a <= dur) {
+      const u = a / dur, hop = i === 0 ? 0 : 16
+      const xa = px_[i], xb = px_[i + 1], ya = py_[i] - (i < 5 && i > 0 ? 14 : 0), yb = py_[i + 1] - (i + 1 <= 5 ? 14 : 0)
+      return { x: lerp(xa, xb, i === 0 ? 1 : eo(u) * .5 + u * .5), y: ya + (yb - ya) * u * u - hop * 4 * u * (1 - u) * (1 - u), i, hit: false }
+    }
+    a -= dur
+  }
+  return { x: binX(d.bin), y: 512, i: 6 }
+}
+const dropEnd = (d) => d.click + CONFIG.startDelay + CONFIG.hitSec.reduce((p, c) => p + c, 0)
+const hitTimes = CONFIG.drops.map((d) => { let a = d.click + CONFIG.startDelay, arr = []; CONFIG.hitSec.slice(0, 5).forEach((s, i) => { a += s; arr.push([a, d.pegs[i], pegY[i]]) }); return arr })
+function render(t) {
+  // which drop is current
+  let cur_ = null, last = null
+  CONFIG.drops.forEach((d) => { if (t >= d.click) cur_ = d; if (t >= dropEnd(d)) last = d })
+  const flying = cur_ && t < dropEnd(cur_) && t >= cur_.click
+  const lvl = last ? last.bin : CONFIG.start
+  const prevLvl = (() => { let p = CONFIG.start; CONFIG.drops.forEach((d) => { if (t >= dropEnd(d)) p = d.bin }); return p })()
+  // slider thumb: follows the landing with a spring after the drop ends
+  let thumbX = binX(CONFIG.start), fromX = binX(CONFIG.start)
+  CONFIG.drops.forEach((d) => { if (t >= dropEnd(d)) { const q = spring(seg(t, dropEnd(d) + .05, dropEnd(d) + .65), 6, 9); thumbX = lerp(fromX, binX(d.bin), q) } if (t >= dropEnd(d)) fromX = binX(d.bin) })
+  S(th, { left: gx(thumbX) + 'px' }); S(tf, { width: gx(thumbX) - 24 + 'px' })
+  const shown = lvl
+  lbls.forEach((l, i) => { l.style.color = i === prevLvl && !flying ? '#fff' : (i === prevLvl ? '#fff' : '#6c6c73'); l.style.fontWeight = i === prevLvl ? 700 : 500 })
+  S(ubTop, { left: gx(binX(prevLvl)) + 'px', opacity: 1 }); S(ubBot, { left: gx(binX(prevLvl)) + 'px', opacity: 1 })
+  sub.textContent = flying ? 'Ball in play...' : `Landed on ${CONFIG.levels[prevLvl]}. Thinking effort...`
+  ml.innerHTML = `${CONFIG.model} <span>${flying ? 'Choosing...' : CONFIG.levels[prevLvl]} &#8963;</span>`
+  S(ag, { background: flying ? 'rgba(90,70,170,.28)' : '#4a3d7d', border: `1px solid ${flying ? 'rgba(120,100,210,.45)' : '#6f5bc0'}`, color: flying ? '#9d9ab0' : '#fff' })
+  ag.innerHTML = `<i style="width:8px;height:8px;border-radius:50%;background:${flying ? '#8a8a96' : '#fff'};display:block"></i>${flying ? 'Dropping' : 'Again'}<svg width="14" height="14" viewBox="0 0 24 24" fill="${flying ? '#8a8a96' : '#fff'}"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>`
+  // ball
+  let pos = null
+  if (cur_) pos = ballAt(cur_, t)
+  const resting = !flying
+  const restBin = prevLvl
+  const bpos = flying && pos ? pos : { x: binX(restBin), y: 512 }
+  const glow = resting ? .6 + .4 * Math.sin(t * 2.5) : 1
+  const place = (e, x, y, o, sc = 1) => S(e, { left: px(gx(x) - 24), top: px(y - 262), opacity: o, transform: `scale(${sc})` })
+  place(ball, bpos.x, bpos.y, 1, resting ? 1 : 1)
+  ghosts.forEach((g, k) => { const pp = flying && cur_ ? ballAt(cur_, t - .03 * (k + 1)) : null; if (pp && flying) place(g, pp.x, pp.y, .22 - k * .05, .85 - k * .12); else S(g, { opacity: 0 }) })
+  // peg flashes
+  pegs.forEach((p) => { let f = 0; hitTimes.forEach((arr) => arr.forEach(([ht, hx, hy]) => { if (hx === p.x && hy === p.y && t >= ht && t < ht + CONFIG.pegFlashSec) f = Math.max(f, 1 - (t - ht) / CONFIG.pegFlashSec) })); const c = Math.round(90 + 110 * f); p.e.style.background = `rgb(${c},${Math.round(90 + 76 * f)},${Math.round(94 + 150 * f)})` })
+  // cursor: rests near the button, presses it at each drop, drifts off between
+  const bc = [OX - 255 + 410 + 93, OY + 52]
+  const path = [[0, bc[0] + 30, bc[1] + 35]]
+  CONFIG.drops.forEach((d) => path.push([d.click - .4, bc[0] - 8, bc[1] + 6], [d.click + .3, bc[0] - 8, bc[1] + 6], [d.click + 1.2, bc[0] + 40, bc[1] + 50]))
+  path.push([DUR, bc[0] + 30, bc[1] + 35]); path.sort((a, b) => a[0] - b[0])
+  const [mx, my] = kfp(t, path)
+  setCursor(cur, mx, my, CONFIG.drops.some((d) => t > d.click - .05 && t < d.click + .12))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,27 @@
+{
+  "slug": "anticipation-then-launch__pull-back-release",
+  "visual_name": "Anticipation then launch",
+  "code_name": "Pull back, hold, release",
+  "category": "motion-graphics",
+  "summary": "A rounded block on an elastic band pulls back and trembles, then is released, stretches across the frame, overshoots a target ring and settles with shock rings.",
+  "aliases": [
+    "slingshot",
+    "pull back and fire",
+    "wind up",
+    "anticipation",
+    "launch animation"
+  ],
+  "tags": [
+    "dark",
+    "hero",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "spring"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

@@ -1,0 +1,81 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>cnippet-dev-v-alert-7</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fefefe;color:#0a0a0a}
+.al{position:absolute;box-sizing:border-box;border-radius:14px;border:1px solid #f0aaaa;background:#faf4f3}
+.ti{position:absolute;white-space:nowrap}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 1.85,                          // the alert is about 512px wide in life
+  w: 512, h: 74,
+  title: 'Error!', text: 'Please try again. If the problem persists, contact support.',
+  bg: '#faf4f3', border: '#f0aaaa', icon: '#dc2626',   // swap these three for a warning or info alert
+  showAt: .3, hideAt: 3.4,             // seconds the alert slides in and starts to leave
+  rise: 10,                            // px it rises while fading in
+}
+const DUR = 4.4
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+const al = el('div', 'al', root); S(al, { width: px(CONFIG.w), height: px(CONFIG.h), left: px(640 - CONFIG.w / 2), top: px(400 - CONFIG.h / 2), background: CONFIG.bg, borderColor: CONFIG.border })
+const ic = el('div', 'abs', al, `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="${CONFIG.icon}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path id="bang" d="M12 7.500v5.500" /><path d="M12 16.500h.01" stroke-width="2.600"/></svg>`); S(ic, { left: '17px', top: '17px' })
+const t1 = el('div', 'ti', al, CONFIG.title); S(t1, { left: '46px', top: '14px', fontSize: '15.5px', fontWeight: 500 })
+const t2 = el('div', 'ti', al, CONFIG.text); S(t2, { left: '46px', top: '38px', fontSize: '14.5px', color: '#707074' })
+
+function render(t) {
+  const C = CONFIG
+  const p = eo(seg(t, C.showAt, C.showAt + .45)), out = 1 - eo(seg(t, C.hideAt, C.hideAt + .45))
+  S(al, { opacity: p * out, transform: `translateY(${(1 - p) * C.rise}px)` })
+  const pop = spring(seg(t, C.showAt + .1, C.showAt + .65), 7, 11)
+  S(ic, { transform: `scale(${.5 + .5 * pop})`, transformOrigin: '50% 50%' })
+  // the exclamation mark gives a small shake once the alert has landed
+  const sh = seg(t, C.showAt + .55, C.showAt + 1.0)
+  ic.firstChild.style.transform = `rotate(${Math.sin(sh * 6.283 * 2.5) * 7 * (1 - sh)}deg)`; ic.firstChild.style.transformOrigin = '50% 50%'
+  S(t1, { opacity: eo(seg(t, C.showAt + .1, C.showAt + .5)) }); S(t2, { opacity: eo(seg(t, C.showAt + .2, C.showAt + .6)) })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

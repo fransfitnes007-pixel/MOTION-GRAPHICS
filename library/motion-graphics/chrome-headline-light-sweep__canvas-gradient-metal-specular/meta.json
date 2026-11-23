@@ -1,0 +1,28 @@
+{
+  "slug": "chrome-headline-light-sweep__canvas-gradient-metal-specular",
+  "visual_name": "Chrome headline light sweep",
+  "code_name": "Canvas gradient metal specular",
+  "category": "motion-graphics",
+  "summary": "A huge liquid-chrome headline slams in with a scale punch and camera shake, then a diagonal light streak sweeps across it with a bloom and a floor reflection.",
+  "aliases": [
+    "chrome title",
+    "liquid metal text",
+    "shiny headline",
+    "light sweep title",
+    "metal slam"
+  ],
+  "tags": [
+    "kinetic-type",
+    "hero",
+    "dark",
+    "logo"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

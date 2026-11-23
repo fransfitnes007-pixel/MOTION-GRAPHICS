@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>olewandowski1-how-it-works-2</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.badge{position:absolute;border:1px solid #e4e4e7;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:600}
+.h1{position:absolute;font-size:44px;font-weight:800;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
+.lead{position:absolute;font-size:18.5px;line-height:1.5;color:#6b6b72;width:830px}
+.tile{position:absolute;width:46px;height:46px;background:#f5f5f6;border:1px solid #e4e4e7;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.ln{position:absolute;width:1px;background:#e4e4e7;transform-origin:50% 0}
+.st{position:absolute;font-size:19px;font-weight:650;letter-spacing:-.01em}
+.sd{position:absolute;font-size:16.5px;line-height:1.38;color:#6b6b72;width:720px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  badge: 'How It Works',
+  heading: 'Up and running in four steps',
+  lead: 'Acme is designed for momentum. Go from sign-up to a working team setup without a single support ticket.',
+  steps: [
+    { t: 'Create your account', d: 'Sign up in under two minutes, no card needed. Your workspace is ready the moment you confirm your email.', i: 'user' },
+    { t: 'Configure your workflow', d: 'Pick a ready-made template or define your own pipeline. It adapts to how your team already works.', i: 'gear' },
+    { t: 'Invite your team', d: 'Send role-based invites in bulk. Colleagues join with one click and get the right permissions automatically.', i: 'team' },
+    { t: 'Ship with confidence', d: 'Run automated checks, review the audit trail and deploy knowing every stage is covered.', i: 'rocket' },
+  ],
+  left: 190, top: 70,       // block origin on the 1280x800 board
+  pitch: 128,               // px between steps
+  stagger: .4,              // seconds between steps appearing
+}
+const DUR = 7
+window.DUR = DUR
+const ICONS = {
+  user: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3.2 2.4-5.2 5.5-5.2M17 9v6M14 12h6"/>',
+  gear: '<path d="M12 3.5l7 4v8l-7 4-7-4v-8z"/><circle cx="12" cy="11.5" r="2.6"/>',
+  team: '<circle cx="12" cy="6.5" r="2.2"/><circle cx="6" cy="10" r="2"/><circle cx="18" cy="10" r="2"/><path d="M8.5 19c0-3 1.4-4.6 3.5-4.6s3.5 1.600 3.500 4.600M2.5 17c0-2 1-3.200 2.500-3.500M21.500 17c0-2-1-3.200-2.500-3.500"/>',
+  rocket: '<path d="M12 3.500c3 2.500 4 6 4 9l-4 3.500-4-3.500c0-3 1-6.500 4-9z"/><path d="M8 14l-2 4h12l-2-4M12 17v3"/>',
+}
+const L = CONFIG.left, T = CONFIG.top
+const bd = el('div', 'badge', root, CONFIG.badge); S(bd, { left: px(L), top: px(T) })
+const h1 = el('div', 'h1', root, CONFIG.heading); S(h1, { left: px(L), top: px(T + 52) })
+const ld = el('div', 'lead', root, CONFIG.lead); S(ld, { left: px(L), top: px(T + 122) })
+const y0 = T + 238
+const rows = CONFIG.steps.map((s, i) => {
+  const y = y0 + i * CONFIG.pitch
+  const tile = el('div', 'tile', root, `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[s.i]}</svg>`); S(tile, { left: px(L), top: px(y) })
+  const ln = i < CONFIG.steps.length - 1 ? el('div', 'ln', root) : null
+  if (ln) S(ln, { left: px(L + 23), top: px(y + 46 + 6), height: px(CONFIG.pitch - 46 - 12) })
+  const st = el('div', 'st', root, s.t); S(st, { left: px(L + 98), top: px(y - 2) })
+  const sd = el('div', 'sd', root, s.d); S(sd, { left: px(L + 98), top: px(y + 30) })
+  return { tile, ln, st, sd }
+})
+const fade = (e, p, dy = 14) => S(e, { opacity: p, transform: `translateY(${(1 - p) * dy}px)` })
+
+function render(t) {
+  const out = 1 - eo(seg(t, 6.2, 6.8))
+  S(root, { opacity: out })
+  fade(bd, eo(seg(t, 0, .45))); fade(h1, eo(seg(t, .12, .6))); fade(ld, eo(seg(t, .26, .75)))
+  rows.forEach((r, i) => {
+    const a = .7 + i * CONFIG.stagger
+    fade(r.tile, eo(seg(t, a, a + .45))); fade(r.st, eo(seg(t, a + .06, a + .5))); fade(r.sd, eo(seg(t, a + .12, a + .6)))
+    if (r.ln) S(r.ln, { opacity: 1, transform: `scaleY(${eo(seg(t, a + .3, a + CONFIG.stagger + .2))})` })
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,93 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;background-image:radial-gradient(#e6e6e9 1.3px,transparent 1.5px);background-size:30px 30px;font-family:'Helvetica Neue',Helvetica,Arial,-apple-system,sans-serif;color:#000}
+.persp{position:absolute;left:0;top:0;width:100%;height:100%;perspective:1000px;overflow:hidden}
+.ttl{position:absolute;left:0;right:0;text-align:center}
+.dev{position:absolute;background:#222;border:4px solid #6c6c6c;border-radius:34px;padding:22px;box-shadow:0 0 #0000004d,0 9px 20px #0000004a,0 37px 37px #00000042,0 84px 50px #00000026,0 149px 60px #0000000a,0 233px 65px #00000003}
+.bez{position:absolute;inset:22px;background:#f3f3f5;border-radius:18px;padding:12px}
+.scr{position:absolute;left:12px;right:12px;top:12px;bottom:12px;background:#12131b;border-radius:12px;overflow:hidden;color:#cfd1dc;font-family:-apple-system,'SF Pro Text',system-ui,sans-serif}
+.sb{position:absolute;left:0;top:0;bottom:0;width:23%;background:#15161f;border-right:1px solid #22232e}
+.row{position:absolute;left:0;right:0;height:34px;border-bottom:1px solid #1e1f2a;font-size:14px;line-height:34px;white-space:nowrap}
+.grp{position:absolute;left:0;right:0;height:34px;background:#171822;font-size:14px;line-height:34px;padding-left:22px}
+.bar{position:absolute;right:6px;width:5px;border-radius:3px;background:#c9c9cd}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Container scroll: as the page scrolls, a dark tablet frame that starts tilted back (20 degrees) and slightly large rotates flat and scales to 1 while the headline above it drifts up faster than the page. The scroll is scripted.
+const CONFIG = {
+  eyebrow: 'Unleash the power of', headline: ['Scroll', 'Animations'],
+  eyebrowPx: 44, headlinePx: 104,       // type sizes
+  titleY: 200,                          // page y of the headline block at scroll 0
+  cardY: 512, card: { w: 880, h: 900 }, // page y of the card top at scroll 0 and its size
+  scrollDist: 480,                      // px the page scrolls over the animation
+  rotFrom: 20, scaleFrom: 1.05,         // card rotateX (deg) and scale at scroll 0
+  titleExtra: -100,                     // extra px the headline moves up over the scroll, on top of the page scroll
+  perspective: 1000,
+  hold0: .2, down: 1.0, hold1: 1.6, up: 1.5,   // seconds: rest, scroll down, hold, scroll back
+  dur: 6,
+  rows: [['In Progress', 2], ['ENG-101', 'Release new website'], ['ENG-102', 'Design translucent assets'], ['Backlog', 3], ['ENG-103', 'Update documentation'], ['ENG-104', 'Batch loading of partial stores'], ['ENG-105', 'Fix CSS in roadmap team graph'], ['Icebox', 2], ['ENG-106', 'Enable data transmission beams'], ['ENG-107', 'Tease the upcoming product release'], ['ENG-108', 'Replace isometric screenshots'], ['ENG-109', 'Add magical details']],
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const persp = el('div', 'persp'); S(persp, { perspective: C.perspective + 'px' })
+const e1 = el('div', 'ttl', persp, C.eyebrow); S(e1, { fontSize: C.eyebrowPx + 'px', fontWeight: 600, lineHeight: '1.1' })
+const e2 = el('div', 'ttl', persp, C.headline.join('<br>')); S(e2, { fontSize: C.headlinePx + 'px', fontWeight: 700, lineHeight: '1', letterSpacing: '-.02em', marginTop: '6px' })
+const dev = el('div', 'dev', persp); S(dev, { width: px(C.card.w), height: px(C.card.h), left: px(CX - C.card.w / 2) })
+const bez = el('div', 'bez', dev), scr = el('div', 'scr', bez)
+el('div', 'sb', scr, `<div style="position:absolute;left:18px;top:16px;font-size:13px;font-weight:600">&#9679; Workspace</div><div style="position:absolute;left:12px;right:12px;top:52px;height:30px;border-radius:7px;background:#1d1e29;font-size:12px;line-height:30px;padding-left:10px;color:#aaa">New issue</div>${['Inbox', 'My issues', 'Views', 'Roadmaps', 'Teams'].map((n, i) => `<div style="position:absolute;left:18px;top:${106 + i * 32}px;font-size:13px;color:#b9bbc8">&#9633;&nbsp; ${n}</div>`).join('')}${['Favorites', 'GitHub Integration', 'Warp Mode', 'Your teams', 'Design', 'Engineering'].map((n, i) => `<div style="position:absolute;left:18px;top:${290 + i * 32}px;font-size:12px;color:${i % 3 ? '#b9bbc8' : '#777'}">${n}</div>`).join('')}`)
+const main = el('div', 'abs', scr); S(main, { left: '23%', right: 0, top: 0, bottom: 0 })
+main.innerHTML = `<div style="position:absolute;left:24px;top:18px;font-size:14px;font-weight:600">Project Orbit &nbsp;<span style="color:#888">&#9734;</span></div><div style="position:absolute;left:24px;top:56px;height:26px;border-radius:6px;background:#1d1e29;font-size:12px;line-height:26px;padding:0 12px;color:#bbb">Engineering &nbsp;89%</div><div style="position:absolute;left:150px;top:56px;font-size:12px;line-height:26px;color:#999">+ Filter</div>` + C.rows.map((r, i) => typeof r[1] === 'number' ? `<div class="grp" style="top:${96 + i * 34}px"><b style="font-weight:600">${r[0]}</b> <span style="color:#777">${r[1]}</span></div>` : `<div class="row" style="top:${96 + i * 34}px"><span style="color:#777;margin-left:22px;font-size:12px">${r[0]}</span><span style="margin-left:12px;color:#e3e4ee">${r[1]}</span></div>`).join('')
+const sbar = el('div', 'bar', stage); S(sbar, { height: '120px' }); stage.appendChild(sbar)
+function render(t) {
+  const a = C.hold0, b = a + C.down, c = b + C.hold1, d = c + C.up
+  const p = t < a ? 0 : t < b ? eio(seg(t, a, b)) : t < c ? 1 : t < d ? 1 - eio(seg(t, c, d)) : 0
+  const s = p * C.scrollDist
+  const rot = lerp(C.rotFrom, 0, p), sc = lerp(C.scaleFrom, 1, p)
+  S(e1, { top: px(C.titleY - s + p * C.titleExtra) }); S(e2, { top: px(C.titleY + C.eyebrowPx + 6 - s + p * C.titleExtra) })
+  S(dev, { top: px(C.cardY - s), transform: `rotateX(${rot}deg) scale(${sc})`, transformOrigin: '50% 0%' })
+  S(sbar, { top: px(8 + p * (H - 140)) })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

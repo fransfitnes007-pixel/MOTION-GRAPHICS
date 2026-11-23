@@ -1,0 +1,89 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fdfdfd;color:#000}
+.mt{position:absolute;left:0;right:0;top:0;bottom:0}
+.mt span{position:absolute;left:0;right:0;top:50%;text-align:center;font-weight:800;line-height:1;white-space:nowrap;letter-spacing:-.01em}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  texts: ['Hello', 'Design', 'Text', 'Animation', 'Smooth', 'Transition'],  // words that morph, in order, then loop
+  morphTime: 1.5,       // seconds one word takes to dissolve into the next
+  cooldown: .5,         // seconds the new word rests, crisp, before the next morph
+  fontSize: 150,        // px on the 1280x800 canvas
+  color: '#000',
+  threshold: [255, -140], // alpha multiplier and offset of the SVG threshold; raise the offset for a thinner blob edge
+  blurPx: .6,
+}
+const DUR = CONFIG.texts.length * (CONFIG.morphTime + CONFIG.cooldown)
+window.DUR = DUR
+const svgf = el('div', 'abs', stage, `<svg width="0" height="0" style="position:absolute"><defs><filter id="thr"><feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${CONFIG.threshold[0]} ${CONFIG.threshold[1]}"/></filter></defs></svg>`)
+const mt = el('div', 'mt', root); S(mt, { filter: `url(#thr) blur(${CONFIG.blurPx}px)` })
+const t1 = el('span', '', mt), t2 = el('span', '', mt)
+;[t1, t2].forEach((e) => S(e, { fontSize: CONFIG.fontSize + 'px', color: CONFIG.color, marginTop: px(-CONFIG.fontSize / 2) }))
+function render(t) {
+  const n = CONFIG.texts.length, per = CONFIG.morphTime + CONFIG.cooldown
+  const k = Math.floor(t / per), u = t - k * per
+  t1.textContent = CONFIG.texts[k % n]; t2.textContent = CONFIG.texts[(k + 1) % n]
+  if (u >= CONFIG.morphTime) { S(t2, { filter: 'none', opacity: '1' }); S(t1, { filter: 'none', opacity: '0' }); return }
+  const f = Math.max(u / CONFIG.morphTime, 1e-4), inv = Math.max(1 - f, 1e-4)
+  S(t2, { filter: `blur(${Math.min(8 / f - 8, 100)}px)`, opacity: Math.pow(f, .4) })
+  S(t1, { filter: `blur(${Math.min(8 / inv - 8, 100)}px)`, opacity: Math.pow(inv, .4) })
+  cur.style.display = 'none'
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

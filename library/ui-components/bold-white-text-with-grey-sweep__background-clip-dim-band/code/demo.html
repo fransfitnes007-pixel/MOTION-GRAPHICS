@@ -1,0 +1,75 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>bold-white-text-with-grey-sweep__background-clip-dim-band</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0a;color:#fafafa}
+.sh{position:absolute;left:0;right:0;text-align:center;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+.sh span{-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.cap{position:absolute;left:0;right:0;text-align:center;font-size:14px;color:#55555c;letter-spacing:.02em}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  text: 'Introducing the future',   // the line that shimmers
+  size: 76,                         // font size in px
+  base: '#fafafa',                  // resting text colour
+  dim: '#6c6c6c',                   // colour at the middle of the sweeping band
+  bandWidth: .30,                   // half-width of the band as a fraction of the text width
+  period: 3.0,                      // seconds per loop
+  sweepStart: .5, sweepEnd: 2.0,    // seconds inside the loop when the band travels
+  from: -.3, to: 1.3,               // band centre start and end, as a fraction of the text width
+  bg: '#0a0a0a',
+}
+DUR = CONFIG.period; window.DUR = DUR
+S(stage, { background: CONFIG.bg })
+const h = el('div', 'sh', stage); S(h, { top: px(CY - CONFIG.size * .62), fontSize: px(CONFIG.size * K) })
+const sp = el('span', '', h, CONFIG.text)
+const cap = el('div', 'cap', stage, 'text-clip gradient, band moves left to right'); S(cap, { top: px(CY + CONFIG.size * .9) })
+
+function render(t) {
+  const p = seg(t % CONFIG.period, CONFIG.sweepStart, CONFIG.sweepEnd)
+  const c = lerp(CONFIG.from, CONFIG.to, p) * 100, w = CONFIG.bandWidth * 100
+  // soft band: base, ramp down to dim at the centre, ramp back up
+  sp.style.backgroundImage = `linear-gradient(90deg, ${CONFIG.base} 0%, ${CONFIG.base} ${c - w}%, ${CONFIG.dim} ${c}%, ${CONFIG.base} ${c + w}%, ${CONFIG.base} 100%)`
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

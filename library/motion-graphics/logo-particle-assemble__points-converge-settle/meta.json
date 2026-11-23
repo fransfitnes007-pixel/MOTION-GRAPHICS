@@ -1,0 +1,29 @@
+{
+  "slug": "logo-particle-assemble__points-converge-settle",
+  "visual_name": "Logo particle assemble",
+  "code_name": "Points converge settle",
+  "category": "motion-graphics",
+  "summary": "1,200 glowing points swirl in from the edges, converge into a big monogram letter, settle with a jitter and flash into the solid letter.",
+  "aliases": [
+    "particles form letter",
+    "logo from dots",
+    "dust to logo",
+    "particle logo reveal",
+    "swirl into monogram"
+  ],
+  "tags": [
+    "logo",
+    "kinetic-type",
+    "dark",
+    "end-card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "seeded-rng"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

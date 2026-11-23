@@ -4,7 +4,7 @@ event times, the voiceover, then muxed onto the silent render.  Usage: python3 m
 Everything is generated here from sine waves and filtered noise: no samples, nothing to license."""
 import json, os, subprocess, sys
 import numpy as np, scipy.io.wavfile as wf, scipy.signal as sg
-HERE = os.path.dirname(os.path.abspath(__file__)); SR = 48000; DUR = 49.5; N = int(DUR * SR)
+HERE = os.path.dirname(os.path.abspath(__file__)); SR = 48000; DUR = 62; N = int(DUR * SR)
 rng = np.random.default_rng(11)
 t_ = lambda n: np.arange(n) / SR
 def filt(x, kind, f, o=2): return sg.sosfilt(sg.butter(o, f, btype=kind, fs=SR, output="sos"), x)
@@ -42,26 +42,31 @@ def riser(dur=1.2):
 def blip(f=2400):
     n = int(.08 * SR); t = t_(n); y = np.sin(2 * np.pi * f * t) * np.exp(-t / .02); return y * np.minimum(1, t / .001)
 
-T = {k: v for k, v in [l.split(":") for l in "prompt:.22 one:1.04 video:1.92 kit:3.42 open:4.72 claude:5.78 inside:6.72 n240:7.62 pieces:9.08 kinetic:9.94 trans:10.96 dash:11.86 endc:12.64 every:13.54 exact:15.94 micro:16.84 best:18.02 rebuilt:18.62 brand:20.44 file:21.16 logo:22.1 scene:22.78 endcard:23.24 follows:23.7 writes:24.6 records:25.68 pins:26.74 words:27.88 then:28.22 clicks:29.58 swishes:30.1 booms:30.72 exactf:31.44 show:32.52 viral:32.96 cuts:34.4 pace:35.06 sound:35.76 rebuilds:36.54 reels:38.28 tiktoks:39.02 shorts:39.86 longform:40.54 clone:41.8 brandit:42.5 ship:43.34 end:43.9".split()]}
-T = {k: float(v) for k, v in T.items()}
-SC = [2.86, 6.72, 13.54, 16.84, 20.16, 24.6, 28.22, 32.52, 38.28, 41.8, 43.9]
+T = dict(prompt=.28, one2=1.16, finished=1.5, video=2.0, thisis=2.9, kit=3.56, open=4.9, claude=6.94, reels=8.04, tiktoks=8.76, shorts=9.58,
+  ugc=10.24, demos=11.36, launch=12.44, dash=13.32, idents=14.24, everyf=15.26, everys=16.28, fromone=17.0, over=18.64, n300=18.82, pieces=19.9,
+  builtin=20.48, kinetic=21.24, trans=22.24, dashb=23.18, endc=24.08, micro=25.24, bestapps=26.56, phone=27.46, every=27.72, code=29.04, exact=30.88,
+  brand=31.96, file=33.0, logo=33.94, scene=34.72, endcard=35.2, follows=35.66, writes=36.66, records=37.66, pins=38.8, words=40.14, then=40.8,
+  clicks=42.08, swishes=42.8, booms=43.34, exactf=44.14, show=45.4, viral=45.82, measures=46.9, cuts=47.4, pace=48.08, sound=48.92, rebuilds=49.62,
+  format=50.76, clone=52.04, brandit=52.8, ship=53.5, mrk=54.34, created=55.48, gk=56.12, net=56.66, end=57.2)
+SC = [T["thisis"], T["reels"], T["over"], T["every"], T["brand"], T["writes"], T["then"], T["show"], T["clone"], T["mrk"]]
 sfx = np.zeros((N, 2))
 for i, a in enumerate(SC): put(swish(d=1 if i % 2 else -1), a - .16, .16, buf=sfx)
-for k in range(40): put(tick(), T["prompt"] + k * .0175 + rng.uniform(-.004, .004), .09, rng.uniform(-.2, .2), sfx)   # prompt typing
-put(click(1300), T["one"], .2, buf=sfx); put(swish(.5, 900, 6000), T["video"] - .4, .14, buf=sfx)
-put(thud(190, 60, .12), T["kit"] - .1, .32, buf=sfx); put(riser(.9), T["kit"] - 1.0, .06, buf=sfx)
-for k in range(36): put(tick(), T["open"] - .1 + k * 1.25 / 36, .07, rng.uniform(-.2, .2), sfx)
-for i in range(4): put(click(1500 + i * 120), T["claude"] + i * .14, .17, -.4 + i * .27, sfx)
-for k in range(30): put(tick(), T["n240"] - .3 + 1.3 * (k / 29) ** .6, .06, buf=sfx)
-put(thud(150, 50, .1), T["pieces"] - .3, .22, buf=sfx)
-for a in ("kinetic", "trans", "dash", "endc"): put(click(1700), T[a], .18, rng.uniform(-.3, .3), sfx)
+for k in range(42): put(tick(), .05 + k * 1.25 / 42 + rng.uniform(-.004, .004), .09, rng.uniform(-.2, .2), sfx)   # the prompt typing, slower now
+put(click(1300), T["finished"] - .1, .2, buf=sfx); put(swish(.5, 900, 6000), T["finished"] + .1, .14, buf=sfx)
+put(thud(190, 60, .12), T["kit"] - .2, .32, buf=sfx); put(riser(.9), T["kit"] - 1.1, .06, buf=sfx)
+for k in range(54): put(tick(), T["open"] - .2 + k * 2.3 / 54, .06, rng.uniform(-.2, .2), sfx)
+for i in range(4): put(click(1500 + i * 120), T["claude"] + .1 + i * .14, .17, -.4 + i * .27, sfx)
+# the format wall: a thud-click per format landing, a riser into the pull-back, a boom on "every format"
+for a in ("reels", "tiktoks", "shorts", "ugc", "demos", "launch", "dash", "idents"): put(thud(200, 75, .06), T[a] - .04, .22, rng.uniform(-.4, .4), sfx); put(click(1700), T[a], .16, buf=sfx)
+put(riser(1.2), T["everyf"] - 1.1, .09, buf=sfx); put(thud(120, 42, .2), T["everyf"], .45, buf=sfx); put(click(1900), T["fromone"], .18, buf=sfx)
+for k in range(30): put(tick(), T["over"] - .1 + 1.4 * (k / 29) ** .6, .06, buf=sfx)
+put(thud(150, 50, .1), T["pieces"] - .2, .22, buf=sfx)
+for a in ("kinetic", "trans", "dashb", "endc"): put(click(1700), T[a], .18, rng.uniform(-.3, .3), sfx)
+put(swish(.5, 1400, 7000), T["micro"] - .2, .14, buf=sfx)
+for i in range(8): put(click(1300 + i * 90), T["micro"] - .1 + i * .07, .11, -.6 + i * .17, sfx)
 put(click(1500), T["every"], .16, buf=sfx); put(blip(2600), T["exact"], .12, .3, sfx)
-for i in range(4): put(click(1000 + i * 160, ), T["micro"] + i * .14, .16, -.45 + i * .3, sfx)
-put(click(1600), T["best"] - .1, .15, buf=sfx); put(click(1800), T["rebuilt"], .15, buf=sfx)
-put(swish(.5, 1400, 7000), T["rebuilt"] - .15, .14, buf=sfx)
-for i in range(8): put(click(1300 + i * 90), T["rebuilt"] + i * .06 + .05, .1, -.6 + i * .17, sfx)
-for k in range(9): put(tick(), T["brand"] + .2 + k * .05, .07, buf=sfx)          # deleting
-for k in range(4): put(tick(), T["file"] - .1 + k * .1, .08, buf=sfx)             # typing Acme
+for k in range(9): put(tick(), T["brand"] + .3 + k * .06, .07, buf=sfx)
+for k in range(4): put(tick(), T["file"] - .1 + k * .1, .08, buf=sfx)
 for a, d in (("logo", 1), ("scene", -1), ("endcard", 1)): put(swish(.3, 2500, 7500, d), T[a] - .05, .1, buf=sfx)
 put(click(1900), T["follows"] - .1, .16, buf=sfx)
 for k in range(60): put(tick(), T["writes"] + k * .02, .05, buf=sfx)
@@ -75,11 +80,10 @@ put(blip(2200), T["exactf"], .13, buf=sfx)
 put(riser(1.4), T["viral"], .07, buf=sfx)
 for a in ("cuts", "pace", "sound"): put(click(1500), T[a], .18, .3, sfx)
 put(swish(.45, 1200, 7000), T["rebuilds"] - .1, .16, buf=sfx)
-for a, p in (("reels", -.5), ("tiktoks", -.15), ("shorts", .15), ("longform", .5)): put(thud(200, 80, .05), T[a], .2, p, sfx); put(click(1600), T[a] + .02, .12, p, sfx)
 for a in ("clone", "brandit", "ship"): put(thud(170, 48, .14), T[a], .42, buf=sfx)
-put(boom(), T["end"], .8, buf=sfx)
-for k in range(31): put(tick(), T["end"] + 1.0 + k * .03, .06, buf=sfx)
-for i in range(3): put(click(1500), T["end"] + 1.6 + i * .12, .14, -.3 + i * .3, sfx)
+put(boom(), T["mrk"], .8, buf=sfx)
+for k in range(31): put(tick(), T["mrk"] + .6 + k * .03, .06, buf=sfx)
+put(thud(140, 50, .14), T["gk"] - .1, .3, buf=sfx); put(blip(2000), T["net"], .12, buf=sfx)
 
 # ---------- music bed: 112 bpm, A minor (Am F C G), soft kick, pad, plucked arp; stops for the slams, returns on the end card
 bpm = 112; beat = 60 / bpm; bed = np.zeros((N, 2))
@@ -103,7 +107,7 @@ if v.ndim > 1: v = v.mean(1)
 if sr != SR: v = sg.resample_poly(v, SR, sr)
 env = np.convolve(np.abs(np.pad(v, (0, max(0, N - len(v))))[:N]), np.ones(int(.08 * SR)) / int(.08 * SR), "same")
 duck = 1 - .55 * np.clip(env / (np.percentile(env[env > 1e-4], 70) + 1e-9), 0, 1)
-tt = t_(N); gate = np.where((tt > T["clone"] - .05) & (tt < T["end"]), .15, 1.0); gate = np.convolve(gate, np.ones(2400) / 2400, "same")
+tt = t_(N); gate = np.where((tt > T["clone"] - .05) & (tt < T["mrk"]), .15, 1.0); gate = np.convolve(gate, np.ones(2400) / 2400, "same")
 fade_in = np.minimum(1, tt / 1.5); fade_out = np.clip((DUR - tt) / 1.2, 0, 1)
 bed *= (duck * gate * fade_in * fade_out)[:, None]
 out = bed * .9 + sfx * 1.0; out[:len(v)] += np.stack([v, v], 1)[:N] * 1.0

@@ -1,0 +1,117 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>value prop text flip</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+#stage{background:radial-gradient(ellipse at 50% 40%,#1b1b27 0%,#0b0b10 70%)}
+.vcard{position:absolute;border-radius:48px;background:linear-gradient(160deg,#20202c,#14141c);box-shadow:0 40px 90px rgba(0,0,0,.55),0 0 0 1.5px rgba(255,255,255,.07) inset}
+.panel{position:absolute;perspective:1500px}
+.half{position:absolute;left:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.half .tx{position:absolute;left:0;width:100%;text-align:center;font-weight:720;color:#f4f4f8;white-space:nowrap;letter-spacing:-.5px}
+.half .sh{position:absolute;inset:0;background:#000;opacity:0}
+.hinge{position:absolute;left:0;width:100%;height:2px;background:rgba(0,0,0,.3);box-shadow:0 1px 0 rgba(255,255,255,.07)}
+.pin{position:absolute;width:16px;height:16px;border-radius:50%;background:#0b0b10;box-shadow:0 0 0 2px #2a2a38}
+.dot{position:absolute;height:14px;border-radius:7px;background:#fff}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6.6
+window.DUR = DUR
+const LINES = ['Save hours every week', 'Stay in sync, effortlessly', 'Ship with confidence']
+const CYC = 2.2, HOLD = 1.6
+const VW = TALL ? 980 : 1240, VH = 740, FSZ = TALL ? 58 : 80
+const PW = VW - 120, PH = 230
+const vc = el('div', 'vcard'); S(vc, { left: px(CX - VW / 2), top: px(CY - VH / 2), width: px(VW), height: px(VH) })
+const icv = el('canvas', 'abs', vc); icv.width = 360; icv.height = 360; S(icv, { left: px(VW / 2 - 120), top: '34px', width: '240px', height: '240px' })
+const ictx = icv.getContext('2d')
+const panel = el('div', 'panel', vc); S(panel, { left: px(60), top: px(322), width: px(PW), height: px(PH) })
+function half(top, bg) {
+  const h = el('div', 'half', panel); S(h, { top: top ? '0px' : px(PH / 2), width: px(PW), height: px(PH / 2), background: bg, borderRadius: top ? '26px 26px 0 0' : '0 0 26px 26px', transformOrigin: top ? '50% 100%' : '50% 0%' })
+  const tx = el('div', 'tx', h); S(tx, { top: top ? '0px' : px(-PH / 2), height: px(PH), lineHeight: px(PH), fontSize: px(FSZ) })
+  const sh = el('div', 'sh', h); return { h, tx, sh, key: '' }
+}
+const TOPG = 'linear-gradient(#262634,#1c1c27)', BOTG = 'linear-gradient(#171720,#1e1e2a)'
+const sTop = half(true, TOPG), sBot = half(false, BOTG), fTop = half(true, TOPG), fBot = half(false, BOTG)
+el('div', 'hinge', panel).style.top = px(PH / 2 - 1.5)
+el('div', 'pin', panel).style.cssText = `left:-8px;top:${PH / 2 - 8}px`; el('div', 'pin', panel).style.cssText = `right:-8px;top:${PH / 2 - 8}px`
+const dots = [0, 1, 2].map(() => el('div', 'dot', vc))
+const setTx = (o, s) => { if (o.key !== s) { o.key = s; o.tx.textContent = s } }
+// icon: three outlines as polar radius functions, morphed point by point
+const NPT = 90
+const SHP = [(th) => .78, (th) => .84 * Math.pow(Math.pow(Math.abs(Math.cos(th)), 4.5) + Math.pow(Math.abs(Math.sin(th)), 4.5), -1 / 4.5), (th) => .74 + .26 * Math.cos(5 * th + Math.PI)]   // circle, rounded square, 5-lobe star
+const HUE = [['#5aa9ff', '#2a5bd6'], ['#b283ff', '#6a3fd0'], ['#4fe3b0', '#1a9a78']]
+function icon(a, b, m, spin, sc) {
+  ictx.clearRect(0, 0, 360, 360); ictx.save(); ictx.translate(180, 180); ictx.scale(sc, sc); ictx.rotate(spin)
+  const pts = []; for (let k = 0; k < NPT; k++) { const th = k / NPT * Math.PI * 2 - Math.PI / 2, r = lerp(SHP[a](th), SHP[b](th), m) * 150; pts.push([Math.cos(th) * r, Math.sin(th) * r]) }
+  const path = (k = 1) => { ictx.beginPath(); pts.forEach(([x, y], i) => i ? ictx.lineTo(x * k, y * k) : ictx.moveTo(x * k, y * k)); ictx.closePath() }
+  const mix = (c1, c2) => { const f = (h, i) => parseInt(h.slice(1 + 2 * i, 3 + 2 * i), 16); return '#' + [0, 1, 2].map((i) => Math.round(lerp(f(c1, i), f(c2, i), m)).toString(16).padStart(2, '0')).join('') }
+  const c0 = mix(HUE[a][0], HUE[b][0]), c1 = mix(HUE[a][1], HUE[b][1])
+  ictx.shadowColor = c1 + 'aa'; ictx.shadowBlur = 40; ictx.shadowOffsetY = 12
+  const gr = ictx.createLinearGradient(0, -150, 0, 150); gr.addColorStop(0, c0); gr.addColorStop(1, c1); ictx.fillStyle = gr; ictx.lineJoin = 'round'; ictx.strokeStyle = gr; ictx.lineWidth = 30; path(.86); ictx.fill(); ictx.stroke(); ictx.shadowColor = 'transparent'
+  ictx.fillStyle = 'rgba(255,255,255,.22)'; path(.5); ictx.fill()
+  ictx.restore()
+}
+
+function render(t) {
+  const c = Math.floor(t / CYC), tc = t - c * CYC, cur = c % 3, nxt = (c + 1) % 3
+  const f = seg(tc, HOLD, CYC)                       // flip progress 0..1
+  const fa = eio(seg(f, 0, .42)), fb = seg(f, .42, 1)
+  const ang1 = -90 * ei(seg(f, 0, .4)), ang2 = 90 * (1 - spring(seg(f, .38, 1), 7, 13))
+  const flipping = f > 0
+  setTx(sTop, flipping ? LINES[nxt] : LINES[cur]); setTx(sBot, LINES[cur]); setTx(fTop, LINES[cur]); setTx(fBot, LINES[nxt])
+  vis(fTop.h, flipping && f < .4); vis(fBot.h, f >= .38)
+  fTop.h.style.transform = `rotateX(${ang1.toFixed(2)}deg)`; fBot.h.style.transform = `rotateX(${ang2.toFixed(2)}deg)`
+  fTop.sh.style.opacity = (.55 * seg(f, 0, .4)).toFixed(3); fBot.sh.style.opacity = (.5 * Math.max(0, ang2 / 90)).toFixed(3)
+  sTop.sh.style.opacity = (flipping ? .35 * (1 - seg(f, 0, .4)) : 0).toFixed(3); sBot.sh.style.opacity = (flipping ? .4 * seg(f, .2, .4) * (1 - seg(f, .4, .8)) : 0).toFixed(3)
+  // icon morph in sync with the flip
+  const m = eio(seg(f, .05, .85)), pop = 1 - .16 * Math.sin(Math.PI * seg(f, .05, .85))
+  icon(cur, nxt, m, m * Math.PI * 2 / 3, pop)
+  // page dots
+  const act = cur + m * ((nxt - cur + (nxt < cur ? 3 : 0)) % 3 === 1 ? 1 : 1)
+  for (let i = 0; i < 3; i++) {
+    const w = i === cur ? lerp(44, 14, m) : i === nxt ? lerp(14, 44, m) : 14
+    S(dots[i], { width: px(w), opacity: (i === cur ? lerp(1, .3, m) : i === nxt ? lerp(.3, 1, m) : .3).toFixed(3) })
+  }
+  let x = CX - VW / 2 + VW / 2 - (44 + 14 + 14 + 24) / 2 - VW / 2 + VW / 2
+  x = VW / 2 - (44 + 14 + 14 + 2 * 14) / 2
+  for (let i = 0; i < 3; i++) { dots[i].style.left = px(x); dots[i].style.top = px(VH - 84); x += parseFloat(dots[i].style.width) + 14 }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

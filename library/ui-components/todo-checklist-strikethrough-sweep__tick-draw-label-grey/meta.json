@@ -1,0 +1,38 @@
+{
+  "slug": "todo-checklist-strikethrough-sweep__tick-draw-label-grey",
+  "visual_name": "Todo checklist with strike-through sweep",
+  "code_name": "Tick draw label grey",
+  "category": "ui-components",
+  "summary": "Three plain todo rows on white; ticking one draws a check, greys the label and sweeps a strike-through across it from left to right.",
+  "tags": [
+    "21st",
+    "cursor",
+    "form",
+    "hover",
+    "light"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 5.4,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "todo list item",
+    "to do item",
+    "todo",
+    "checklist",
+    "strike through",
+    "walkthrough checklist",
+    "dashboard walkthrough checklist"
+  ],
+  "credit": {
+    "idea": "Todo List Item",
+    "author": "serafimcloud",
+    "url": "https://21st.dev/@serafimcloud/components/to-do-item",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

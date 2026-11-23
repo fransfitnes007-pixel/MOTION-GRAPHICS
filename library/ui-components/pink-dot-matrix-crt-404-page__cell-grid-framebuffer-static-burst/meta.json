@@ -1,0 +1,36 @@
+{
+  "slug": "pink-dot-matrix-crt-404-page__cell-grid-framebuffer-static-burst",
+  "visual_name": "Pink dot-matrix CRT 404 page",
+  "code_name": "Cell-grid framebuffer with static bursts",
+  "category": "ui-components",
+  "summary": "A retro pink phosphor screen made of round dots showing \"PAGE NOT FOUND\", a big extruded 404, palm trees and a pyramid button; the message changes channel through bursts of static and the pyramid lights up on hover.",
+  "tags": [
+    "background",
+    "dark",
+    "hover",
+    "cursor",
+    "hero",
+    "21st"
+  ],
+  "tech": [
+    "react"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "crt",
+    "404 page",
+    "retro 404",
+    "phosphor screen",
+    "dot matrix",
+    "vaporwave 404"
+  ],
+  "credit": {
+    "idea": "Retro CRT 404 Page",
+    "author": "kedhareswer",
+    "url": "https://21st.dev/@kedhareswer/components/phosphor-crt-404",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

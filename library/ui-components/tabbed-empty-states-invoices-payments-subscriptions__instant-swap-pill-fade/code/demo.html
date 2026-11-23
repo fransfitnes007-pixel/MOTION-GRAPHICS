@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>shadcnui-blocks-empty-state-03</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.tab{position:absolute;height:34px;border-radius:9px;display:flex;align-items:center;gap:3px;padding:0 8px;font-size:14.5px;font-weight:500;white-space:nowrap}
+.panel{position:absolute;border-radius:13px;border:1px dashed #e3e3e6;background:#fafafa}
+.t{position:absolute;left:0;width:100%;text-align:center}
+.b{position:absolute;height:37px;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14.5px;font-weight:500;white-space:nowrap}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 1.75,                              // the block is about 500px wide in life
+  tabs: [
+    { name: 'Invoices', icon: 'receipt', title: 'No Invoices Yet', text: "You haven't created any invoices yet.\nGet started by creating your first invoice.", buttons: [['Create Invoice', 'plus', true], ['Import Invoice', 'import', false]] },
+    { name: 'Payments', icon: 'badge', title: 'No Payments Yet', text: "You haven't received any payments yet. Payments\nwill appear here once your invoices are paid.", buttons: [['Record Payment', 'plus', true]] },
+    { name: 'Subscriptions', icon: 'card', title: 'No Subscriptions Yet', text: "You don't have any active subscriptions. Create\nrecurring billing plans for your customers.", buttons: [['Create Subscription', 'plus', true]] },
+  ],
+  clicks: [[1.1, 1], [2.9, 2], [4.7, 0]],   // time (s) and the tab clicked
+  pillFade: .18,                            // seconds the selected-tab highlight takes to move
+  width: 503, panelH: 308,
+}
+const DUR = 6.4
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+const X0 = 640 - CONFIG.width / 2, Y0 = 400 - (34 + 14 + CONFIG.panelH) / 2
+const IC = {
+  receipt: '<path d="M6 3h12v18l-2-1.500-2 1.500-2-1.500-2 1.500-2-1.500L6 21z"/><path d="M14.500 9.500c-.500-.800-1.500-1-2.500-1-1.500 0-2.500.700-2.500 1.700 0 2.500 5 1 5 3.500 0 1-1 1.800-2.500 1.800-1 0-2-.300-2.500-1.200M12 7v10"/>',
+  badge: '<path d="M12 2.500l2.500 1.800 3-.200 1 2.800 2.500 1.700-.800 3 .800 3-2.500 1.700-1 2.800-3-.200-2.500 1.800-2.500-1.800-3 .200-1-2.800-2.500-1.700.800-3-.800-3 2.500-1.700 1-2.800 3 .200z"/><path d="M14.500 9.700c-.500-.800-1.500-1.200-2.500-1.200-1.500 0-2.500.800-2.500 1.800 0 2.500 5 1 5 3.500 0 1-1 1.800-2.500 1.800-1 0-2-.400-2.500-1.200M12 7v10"/>',
+  card: '<rect x="3" y="5.500" width="18" height="13" rx="2.500"/><path d="M3 10h18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  import: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 7v7m-3-3 3 3 3-3"/>',
+}
+const svg = (k, s = 18, c = 'currentColor', w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`
+// tab strip
+let tx = 0
+const tabs = CONFIG.tabs.map((tb) => { const e = el('div', 'tab', root, svg(tb.icon, 18) + `<span>${tb.name}</span>`); S(e, { left: px(X0 + tx), top: px(Y0) }); const w = e.offsetWidth; tx += w + 6; return e })
+const panel = el('div', 'panel', root); S(panel, { left: px(X0), top: px(Y0 + 48), width: px(CONFIG.width), height: px(CONFIG.panelH) })
+const tile = el('div', 'abs', panel); S(tile, { left: px(CONFIG.width / 2 - 20), top: '52px', width: '40px', height: '40px', borderRadius: '11px', background: '#f1f1f2', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+const ttl = el('div', 't', panel); S(ttl, { top: '104px', fontSize: '17.5px', fontWeight: 500 })
+const txt = el('div', 't', panel); S(txt, { top: '137px', fontSize: '14px', lineHeight: '23px', color: '#737378', whiteSpace: 'pre' })
+const btnWrap = el('div', 'abs', panel); S(btnWrap, { left: '0', top: '212px', width: '100%', height: '38px' })
+let lastShown = -1
+function show(i) {       // content swaps instantly, like the original
+  if (i === lastShown) return; lastShown = i
+  const c = CONFIG.tabs[i]
+  tile.innerHTML = svg(c.icon, 20, '#111'); ttl.textContent = c.title; txt.textContent = c.text
+  btnWrap.innerHTML = ''
+  const items = c.buttons.map(([label, ic, primary]) => { const b = el('div', 'b', btnWrap, svg(ic, 16, primary ? '#fff' : '#111', 1.9) + `<span>${label}</span>`); S(b, primary ? { background: '#171717', color: '#fff', padding: '0 16px' } : { background: '#fff', color: '#111', border: '1px solid #e4e4e7', boxShadow: '0 2px 4px rgba(0,0,0,.08)', padding: '0 15px' }); return b })
+  const total = items.reduce((a, b) => a + b.offsetWidth, 0) + (items.length - 1) * 12
+  let x = (CONFIG.width - total) / 2
+  items.forEach((b) => { S(b, { left: px(x), top: '0' }); x += b.offsetWidth + 12 })
+}
+// scripted cursor: keys = [{t, x, y, click?}], eased between keys; a click shows a short press ring
+const cursorEl = el('div', 'abs', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.8L10.4 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const ringEl = el('div', 'abs', root); S(ringEl, { width: '34px', height: '34px', marginLeft: '-17px', marginTop: '-17px', borderRadius: '50%', border: '2px solid rgba(120,120,140,.6)', pointerEvents: 'none' })
+function cursorAt(t, keys) {
+  let i = 0; while (i < keys.length - 1 && t >= keys[i + 1].t) i++
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)]
+  const k = b === a ? 0 : eio(seg(t, a.t, b.t))
+  let press = 0; for (const q of keys) if (q.click && t >= q.t && t < q.t + .35) press = 1 - (t - q.t) / .35
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), press }
+}
+function drawCursor(c) {
+  S(cursorEl, { left: px(c.x - 5), top: px(c.y - 3), transform: `scale(${1 - .12 * c.press})`, zIndex: 99 })
+  S(ringEl, { left: px(c.x), top: px(c.y), opacity: c.press * .9, transform: `scale(${.5 + (1 - c.press) * 1.2})`, zIndex: 98 })
+}
+
+cursorEl.firstChild.setAttribute('width', 16); cursorEl.firstChild.setAttribute('height', 16)
+S(ringEl, { width: '22px', height: '22px', marginLeft: '-11px', marginTop: '-11px', borderWidth: '1.5px' })
+const tabCentre = (i) => ({ x: X0 + parseFloat(tabs[i].style.left) - X0 + tabs[i].offsetWidth / 2 + 6, y: Y0 + 22 })
+const keys = [{ t: 0, x: X0 + 120, y: Y0 + 90 }]
+CONFIG.clicks.forEach(([t, i]) => { const p = tabCentre(i); keys.push({ t: t - .5, x: p.x - 10, y: p.y - 4 }); keys.push({ t, x: p.x, y: p.y, click: 1 }) })
+keys.push({ t: 5.8, x: X0 + 200, y: Y0 + 120 }, { t: DUR, x: X0 + 120, y: Y0 + 90 })
+
+function render(t) {
+  let cur = 0, since = -9, prev = 0
+  for (const [ct, i] of CONFIG.clicks) { if (ct > t) break; prev = cur; cur = i; since = ct }
+  show(cur)
+  const k = eo(seg(t - since, 0, CONFIG.pillFade))
+  tabs.forEach((e, i) => {
+    const on = i === cur ? k : (i === prev ? 1 - k : 0)
+    S(e, { background: `rgba(244,244,245,${on})`, color: `rgb(${Math.round(120 - 109 * on)},${Math.round(120 - 109 * on)},${Math.round(124 - 113 * on)})` })
+  })
+  drawCursor(cursorAt(t, keys))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

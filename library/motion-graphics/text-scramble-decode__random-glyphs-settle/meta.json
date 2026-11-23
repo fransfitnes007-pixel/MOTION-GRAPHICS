@@ -1,0 +1,26 @@
+{
+  "slug": "text-scramble-decode__random-glyphs-settle",
+  "visual_name": "Text scramble decode",
+  "code_name": "Random glyphs settle",
+  "category": "motion-graphics",
+  "summary": "A mono headline appears as flickering random glyphs that lock into the real letters left to right with a glow, hold, then scramble and vanish; a progress bar tracks the decode.",
+  "aliases": [
+    "text scramble",
+    "decode text",
+    "hacker text",
+    "matrix text reveal",
+    "glitch text in"
+  ],
+  "tags": [
+    "kinetic-type",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "seeded-hash"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

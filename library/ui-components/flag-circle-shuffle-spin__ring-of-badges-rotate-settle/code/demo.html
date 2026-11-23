@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>flag circle shuffle spin</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6.4
+window.DUR = DUR
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const g = cvs.getContext('2d')
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const rnd = (i, s = 1) => { let h = (Math.imul(i + 1, 374761393) + Math.imul(s, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296 }
+const rrect = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r) }
+const circ = (x, y, r) => { g.beginPath(); g.arc(x, y, Math.max(0, r), 0, Math.PI * 2) }
+const txt = (s, x, y, size, wt, col, al = 'center') => { g.font = `${wt} ${size}px ${FONT}`; g.textAlign = al; g.textBaseline = 'middle'; g.fillStyle = col; g.fillText(s, x, y) }
+// simulated finger: a = opacity, press 0..1 (shrinks), rip 0..1 ripple progress (<0 or >1 = none)
+function finger(x, y, a, press, rip) {
+  if (a <= .01) return
+  g.save(); g.globalAlpha = a
+  if (rip >= 0 && rip < 1) { g.strokeStyle = `rgba(255,255,255,${.55 * (1 - rip)})`; g.lineWidth = 5 * (1 - rip) + 1; circ(x, y, lerp(34, 120, eo(rip))); g.stroke() }
+  const r = 38 * (1 - .2 * press)
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 24; g.shadowOffsetY = 8
+  const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.62)'); gr.addColorStop(1, 'rgba(255,255,255,.30)')
+  g.fillStyle = gr; circ(x, y, r); g.fill(); g.shadowColor = 'transparent'
+  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2.5; g.stroke(); g.restore()
+}
+const tapPress = (t, tt) => seg(t, tt - .14, tt) * (1 - seg(t, tt + .05, tt + .22))
+const tapRip = (t, tt) => t < tt ? -1 : seg(t, tt, tt + .6)
+
+const N = 12, R = TALL ? 330 : 350, BR = 54, TOP = -Math.PI / 2, SL = Math.PI * 2 / N
+const RCY = CY + 10, TAP = 1.3, T0 = 1.35, T1 = 4.1, TL = 4.1
+const PAL = [['#e0413a', '#ffffff', '#2a4fc9'], ['#1f9d6b', '#ffffff', '#f3c13a'], ['#2b59c3', '#f3c13a', '#ffffff'], ['#f2f2f2', '#d6343b', '#2b2f6b'], ['#f08a24', '#ffffff', '#1f9d6b'], ['#6a3fc4', '#ffd54a', '#ffffff'], ['#18a0b8', '#ffffff', '#ec5b84'], ['#d6343b', '#ffd54a', '#101018'], ['#2f3a8f', '#ffffff', '#d6343b'], ['#2aa55a', '#ffffff', '#101018'], ['#ec5b84', '#ffffff', '#2b59c3'], ['#f3c13a', '#101018', '#d6343b']]
+const NAMES = ['Aurelia', 'Brevia', 'Calora', 'Dorvik', 'Elmara', 'Fenwick', 'Galdria', 'Hestia', 'Ivoria', 'Jandor', 'Kestrel', 'Lumeria']
+const PERM = [5, 9, 2, 11, 0, 7, 3, 10, 6, 1, 8, 4]       // badge i ends in slot PERM[i]
+const WIN = PERM.indexOf(0)                                // the badge that lands at the top
+
+function rotAt(tt) { const p = seg(tt, T0, T1), s = seg(tt, T1, T1 + .55); return 4 * Math.PI * (1 - Math.pow(1 - p, 3.5)) + .07 * Math.sin(s * Math.PI * 2) * (1 - s) }
+const shAt = (tt) => eio(seg(tt, 1.6, 3.7))
+function place(i, tt) {
+  const sh = shAt(tt), slot = i + (PERM[i] - i) * sh
+  const ang = TOP + slot * SL + rotAt(tt), r = R + (i % 2 ? 1 : -1) * 46 * Math.sin(Math.PI * sh)
+  return [CX + Math.cos(ang) * r, RCY + Math.sin(ang) * r]
+}
+function badge(x, y, r, i, a = 1) {
+  const [c1, c2, c3] = PAL[i], k = i % 6
+  g.save(); g.globalAlpha *= a
+  g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 22; g.shadowOffsetY = 8; g.fillStyle = c1; circ(x, y, r); g.fill(); g.shadowColor = 'transparent'
+  circ(x, y, r); g.clip(); const d = r * 2, x0 = x - r, y0 = y - r
+  if (k === 0) { g.fillStyle = c2; g.fillRect(x0, y0 + d / 3, d, d / 3); g.fillStyle = c3; g.fillRect(x0, y0 + 2 * d / 3, d, d / 3) }
+  else if (k === 1) { g.fillStyle = c2; g.fillRect(x0 + d / 3, y0, d / 3, d); g.fillStyle = c3; g.fillRect(x0 + 2 * d / 3, y0, d / 3, d) }
+  else if (k === 2) { g.fillStyle = c2; circ(x, y, r * .46); g.fill(); g.fillStyle = c3; circ(x, y, r * .2); g.fill() }
+  else if (k === 3) { g.fillStyle = c2; g.beginPath(); g.moveTo(x0 + d, y0); g.lineTo(x0 + d, y0 + d); g.lineTo(x0, y0 + d); g.closePath(); g.fill(); g.strokeStyle = c3; g.lineWidth = r * .24; g.beginPath(); g.moveTo(x0 + d, y0); g.lineTo(x0, y0 + d); g.stroke() }
+  else if (k === 4) { g.fillStyle = c2; g.fillRect(x, y0, r, r); g.fillRect(x0, y, r, r); g.fillStyle = c3; circ(x, y, r * .22); g.fill() }
+  else { g.fillStyle = c2; g.fillRect(x0 + d * .26, y0, r * .5, d); g.fillRect(x0, y - r * .25, d, r * .5); g.fillStyle = c3; g.fillRect(x0 + d * .26 + r * .14, y0, r * .22, d); g.fillRect(x0, y - r * .11, d, r * .22) }
+  const gl = g.createRadialGradient(x - r * .35, y - r * .4, 0, x - r * .35, y - r * .4, r * 1.3); gl.addColorStop(0, 'rgba(255,255,255,.38)'); gl.addColorStop(.55, 'rgba(255,255,255,0)'); gl.addColorStop(1, 'rgba(0,0,0,.28)')
+  g.fillStyle = gl; g.fillRect(x0, y0, d, d); g.restore()
+  g.save(); g.globalAlpha *= a; g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; circ(x, y, r - 1); g.stroke(); g.restore()
+}
+
+function render(t) {
+  const bg = g.createRadialGradient(CX, RCY, 40, CX, RCY, W * .75); bg.addColorStop(0, '#171722'); bg.addColorStop(1, '#0b0b10')
+  g.fillStyle = bg; g.fillRect(0, 0, W, H)
+  const ex = 1 - eio(seg(t, 5.7, 6.3)), win = spring(seg(t, TL, TL + .7), 6, 12), press = tapPress(t, TAP)
+  g.save(); g.globalAlpha = ex; g.translate(CX, RCY); g.scale(.94 + .06 * ex, .94 + .06 * ex); g.translate(-CX, -RCY)
+  // track + top marker
+  g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 2; circ(CX, RCY, R); g.stroke()
+  g.fillStyle = `rgba(255,255,255,${.28 + .5 * win})`; g.beginPath(); const my = RCY - R - BR * 1.7 - 16; g.moveTo(CX - 12, my - 8); g.lineTo(CX + 12, my - 8); g.lineTo(CX, my + 10); g.closePath(); g.fill()
+  // hub
+  const hs = (1 - .09 * press) * spring(seg(t, .2, .9), 6.5, 12)
+  g.save(); g.translate(CX, RCY); g.scale(hs, hs)
+  g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 36; g.shadowOffsetY = 12
+  const hg = g.createLinearGradient(0, -104, 0, 104); hg.addColorStop(0, '#34344a'); hg.addColorStop(1, '#1b1b28'); g.fillStyle = hg; circ(0, 0, 104); g.fill(); g.shadowColor = 'transparent'
+  g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 2; circ(0, 0, 103); g.stroke()
+  const rs = rotAt(t) * 1.2; g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.arc(0, 0, 74, rs, rs + 1.3); g.stroke(); g.beginPath(); g.arc(0, 0, 74, rs + Math.PI, rs + Math.PI + 1.3); g.stroke()
+  txt('SPIN', 0, 3, 34, 700, '#f4f4f8'); g.restore()
+  // ghosts while spinning
+  const gf = seg(t, 1.45, 1.9) * (1 - seg(t, 3.0, 3.9))
+  if (gf > .01) for (let k = 4; k >= 1; k--) for (let i = 0; i < N; i++) { const [x, y] = place(i, t - .026 * k); badge(x, y, BR * .96, i, .16 * gf / (k * .8)) }
+  // badges (winner last)
+  for (let n = 0; n < N; n++) {
+    const i = (n + WIN + 1) % N, s = spring(seg(t, .05 + .05 * i, .7 + .05 * i), 6.5, 12), [x, y] = place(i, t)
+    if (i === WIN) {
+      const gw = g.createRadialGradient(x, y, 0, x, y, BR * 3.3); gw.addColorStop(0, `rgba(255,214,120,${.7 * win})`); gw.addColorStop(1, 'rgba(255,214,120,0)'); g.fillStyle = gw; circ(x, y, BR * 3.3); g.fill()
+      const sc = 1 + .62 * win; badge(x, y, BR * s * sc, i)
+      g.strokeStyle = `rgba(255,255,255,${.85 * win})`; g.lineWidth = 4; circ(x, y, BR * sc + 9 + 10 * (1 - win)); g.stroke()
+    } else badge(x, y, BR * s, i)
+  }
+  // label pops under the winner
+  const lp = spring(seg(t, TL + .2, TL + .9), 6, 12), la = eo(seg(t, TL + .2, TL + .45))
+  if (la > .01) {
+    const [wx, wy] = place(WIN, TL + 1), ly = wy + BR * 1.62 + 52, lw = 230
+    g.save(); g.globalAlpha *= la; g.translate(wx, ly); g.scale(lp, lp)
+    g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 24; g.shadowOffsetY = 8; g.fillStyle = 'rgba(30,30,44,.92)'; rrect(-lw / 2, -30, lw, 60, 30); g.fill(); g.shadowColor = 'transparent'
+    g.strokeStyle = 'rgba(255,214,120,.55)'; g.lineWidth = 2; g.stroke(); txt(NAMES[WIN], 0, 2, 32, 650, '#fff4d6'); g.restore()
+  }
+  g.restore()
+  // finger
+  const fp = eio(seg(t, .75, 1.25)), fa = seg(t, .7, .95) * (1 - seg(t, 1.75, 2.05))
+  finger(lerp(CX + 330, CX + 6, fp), lerp(RCY + 400, RCY + 10, fp), fa, press, tapRip(t, TAP))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

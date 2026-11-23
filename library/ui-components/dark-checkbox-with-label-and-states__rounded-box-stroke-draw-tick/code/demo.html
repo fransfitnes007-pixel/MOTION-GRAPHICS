@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#131313;color:#f2f2f3}
+.tx{position:absolute;white-space:nowrap}
+.cur{position:absolute;width:26px;height:26px;pointer-events:none}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  label: 'Accept terms and conditions',          // label of the interactive checkbox
+  rows: [                                        // extra rows that show the other states
+    { text: 'Subscribe to the newsletter', state: 'checked' },
+    { text: 'Select all', state: 'indeterminate' },
+    { text: 'I am 21 or older', state: 'invalid', message: 'You must confirm your age to continue.' },
+  ],
+  accent: '#0485f7',                             // fill of a checked or indeterminate box
+  idleBorder: '#55555c', hoverBorder: '#8a8a92', // border colours
+  invalid: '#f0526a',                            // border and message colour when invalid
+  boxSize: 22, radius: 7,                        // px
+  clickOn: 1.0, clickOff: 3.3,                   // pointer clicks the first row on, then off (seconds)
+  popMs: 0.18, drawMs: 0.22,                     // fill pop and tick draw durations
+}
+const DUR = 5.2
+window.DUR = DUR
+const BW = 1200, BH = 900
+const U = Math.min(W / BW, H / BH)
+const root = el('div', 'abs', stage); S(root, { left: '50%', top: '50%', width: BW + 'px', height: BH + 'px', marginLeft: -BW / 2 + 'px', marginTop: -BH / 2 + 'px', transform: `scale(${U})` })
+const CXL = 470, SZ = CONFIG.boxSize
+const TICK = 'M5.5 12.5l4.2 4.2L18.5 7.5', DASH = 'M6 12h12'
+const mkRow = (y, text) => {
+  const box = el('div', 'tx', root); S(box, { left: px(CXL), top: px(y - SZ / 2), width: px(SZ), height: px(SZ), borderRadius: CONFIG.radius + 'px', border: '1.5px solid ' + CONFIG.idleBorder, background: '#1b1b1d' })
+  const svg = el('div', 'tx', box, `<svg width="${SZ - 3}" height="${SZ - 3}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="p" d="${TICK}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`); S(svg, { left: '0', top: '0' })
+  const lab = el('div', 'tx', root, text); S(lab, { left: px(CXL + SZ + 12), top: px(y - 10), fontSize: '16px' })
+  return { box, path: svg.querySelector('.p'), lab }
+}
+const Y0 = 400
+const first = mkRow(Y0, CONFIG.label)
+const others = CONFIG.rows.map((r, i) => ({ ...mkRow(Y0 + 74 * (i + 1), r.text), r }))
+others.forEach((o) => {
+  if (o.r.state === 'checked') { S(o.box, { background: CONFIG.accent, borderColor: CONFIG.accent }); o.path.setAttribute('stroke-dashoffset', 0) }
+  if (o.r.state === 'indeterminate') { S(o.box, { background: CONFIG.accent, borderColor: CONFIG.accent }); o.path.setAttribute('d', DASH); o.path.setAttribute('stroke-dashoffset', 0) }
+  if (o.r.state === 'invalid') {
+    S(o.box, { borderColor: CONFIG.invalid })
+    const m = el('div', 'tx', root, o.r.message); S(m, { left: px(CXL + SZ + 12), top: px(Y0 + 74 * 3 + 20), fontSize: '13.5px', color: CONFIG.invalid })
+  }
+})
+const cur = el('div', 'cur', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z" fill="#f5f5f5" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const mix = (c1, c2, k) => { const p = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)); const a = p(c1), b = p(c2); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(',')})` }
+
+function render(t) {
+  const C = CONFIG
+  // checked amount of the first row: 0 -> 1 on the first click, 1 -> 0 on the second
+  const on = eo(seg(t, C.clickOn + .05, C.clickOn + .05 + C.popMs)) * (1 - eo(seg(t, C.clickOff + .05, C.clickOff + .05 + C.popMs)))
+  const draw = eo(seg(t, C.clickOn + .1, C.clickOn + .1 + C.drawMs)) * (1 - eo(seg(t, C.clickOff + .05, C.clickOff + .05 + C.drawMs)))
+  // pointer
+  const P = [[0, 980, 640], [C.clickOn - .55, CXL + 12, Y0 + 4], [C.clickOff - .8, CXL + 12, Y0 + 4], [C.clickOff - .8, CXL + 12, Y0 + 4], [C.clickOff + .5, 800, 560], [DUR, 980, 700]]
+  P[1][1] = CXL + 90; P[2][1] = CXL + 90
+  let X = P[0][1], Y = P[0][2]
+  for (let i = 0; i < P.length - 1; i++) if (t >= P[i][0] && t <= P[i + 1][0] && P[i + 1][0] > P[i][0]) { const e = eio(seg(t, P[i][0], P[i + 1][0])); X = lerp(P[i][1], P[i + 1][1], e); Y = lerp(P[i][2], P[i + 1][2], e) }
+  const over = X > CXL - 12 && X < CXL + 330 && Math.abs(Y - Y0) < 24
+  const hov = over ? 1 : 0
+  S(first.box, { background: mix('#1b1b1d', C.accent, on), borderColor: on > 0 ? mix(C.idleBorder, C.accent, on) : (hov ? C.hoverBorder : C.idleBorder), transform: `scale(${1 - .08 * Math.sin(Math.PI * seg(t, C.clickOn, C.clickOn + .25)) - .08 * Math.sin(Math.PI * seg(t, C.clickOff, C.clickOff + .25))})` })
+  first.path.setAttribute('stroke-dashoffset', 1 - draw)
+  const dip = (c) => 1 - seg(Math.abs(t - c - .05), 0, .1)
+  S(cur, { left: px(X), top: px(Y), transform: `scale(${1 - .15 * Math.max(dip(C.clickOn), dip(C.clickOff))})`, opacity: seg(t, 0, .12) * (1 - seg(t, DUR - .3, DUR)) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

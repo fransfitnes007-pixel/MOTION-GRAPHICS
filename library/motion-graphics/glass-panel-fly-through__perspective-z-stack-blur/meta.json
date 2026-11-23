@@ -1,0 +1,30 @@
+{
+  "slug": "glass-panel-fly-through__perspective-z-stack-blur",
+  "visual_name": "Glass panel fly-through",
+  "code_name": "Perspective Z stack blur",
+  "category": "motion-graphics",
+  "summary": "Five frosted glass UI panels stacked in depth; the camera flies forward through them, each blurring and fading as it passes, and ends on the last panel in focus.",
+  "aliases": [
+    "fly through screens",
+    "glass cards flythrough",
+    "camera through panels",
+    "depth stack",
+    "z-axis tunnel"
+  ],
+  "tags": [
+    "3d",
+    "card",
+    "transition",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "css-filter"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

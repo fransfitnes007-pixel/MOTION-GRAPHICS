@@ -1,0 +1,149 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Icon folder demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#121212;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.pill{position:absolute;height:36px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#a3a3a8;font-size:17px;line-height:34px;text-align:center;white-space:nowrap}
+.tile{position:absolute;border-radius:36px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.lbl{position:absolute;padding:4px 10px;border-radius:9px;background:rgba(20,20,22,.92);border:1px solid rgba(255,255,255,.1);color:#e8e8ea;font-size:13px;white-space:nowrap;transform:translateX(-50%)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'Design',                                     // folder heading
+  tags: ['Wireframe', 'Motion', 'Heatmap', 'Compose'], // pill text, one per tile (4 tiles)
+  tileColors: ['#2a2a2e', '#c9f23a', '#ff5a1f', '#16167a'], // tile backgrounds, left to right
+  tileSize: 138,                                      // px of the big tiles, on a 960x720 canvas
+  spread: 70,                                         // px between tile centres when open (video: 125 at 4 tiles)
+  bg: '#121212',                                      // page colour
+  riseAt: 0.35,                                       // seconds before the folder opens by itself
+  riseStagger: 0.07,                                  // seconds between tiles rising
+  liftPx: 118,                                        // how far a hovered tile climbs out of the folder
+  hoverFolderPx: 16,                                  // extra rise of all tiles when the pointer is over the folder
+  cursor: true,                                       // draw the scripted pointer
+}
+const DUR = 12
+window.DUR = DUR
+stage.style.background = CONFIG.bg
+const DW = 960, DH = 720, U = Math.min(W / DW, H / DH)
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})` })
+S(root, { backgroundImage: 'radial-gradient(circle, rgba(255,255,255,.035) 0 1px, transparent 1.4px)', backgroundSize: '20px 13px' })
+
+const FX = 160, FW = 640 // folder left + width
+const svg = (inner, w, h, parent, style) => { const d = el('div', 'abs', parent); S(d, Object.assign({ width: w + 'px', height: h + 'px' }, style || {})); d.innerHTML = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible">${inner}</svg>`; return d }
+const folder = el('div', 'abs', root); S(folder, { left: 0, top: 0, width: DW + 'px', height: DH + 'px' })
+// back panel: tab sits high on the right
+svg(`<defs><linearGradient id="bf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232326"/><stop offset=".6" stop-color="#1a1a1c" stop-opacity=".7"/><stop offset="1" stop-color="#121212" stop-opacity="0"/></linearGradient>
+<linearGradient id="bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".13"/><stop offset=".7" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<path d="M0,65 Q0,37 28,37 L305,37 C335,37 345,0 380,0 L612,0 Q640,0 640,28 L640,420 L0,420 Z" fill="url(#bf)" stroke="url(#bs)" stroke-width="1.5"/>`, FW, 420, folder, { left: FX + 'px', top: '155px' })
+// tiles
+const glyph = [
+  `<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="30" y="18" width="40" height="22" rx="11" fill="#ff5b3a"/><rect x="30" y="40" width="22" height="22" rx="11" fill="#a259ff"/><circle cx="62" cy="51" r="11" fill="#1abcfe"/><rect x="30" y="62" width="22" height="22" rx="11" fill="#0acf83"/></svg>`,
+  `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M28 70 C20 40 50 30 40 55 C34 70 62 76 70 62 C78 48 56 38 62 26" fill="none" stroke="#111" stroke-width="9" stroke-linecap="round"/></svg>`,
+  `<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M26 66 C40 52 50 62 62 44 C68 36 72 34 76 30" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/><path d="M24 48 C38 36 46 46 58 30" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".92"/></svg>`,
+  `<svg viewBox="0 0 100 100" width="100%" height="100%"><text x="50" y="66" font-size="52" font-weight="800" text-anchor="middle" fill="#a99bff" font-family="-apple-system,system-ui,sans-serif">Ae</text></svg>`,
+]
+const n = CONFIG.tags.length
+const tiles = [], labels = [], dock = []
+const T0 = [{ x: 280, y: 284, r: -10 }, { x: 410, y: 267, r: -4 }, { x: 540, y: 265, r: 4 }, { x: 665, y: 290, r: 8 }]
+for (let i = 0; i < n; i++) {
+  const d = el('div', 'tile', folder); d.innerHTML = glyph[i % 4]
+  S(d, { width: CONFIG.tileSize + 'px', height: CONFIG.tileSize + 'px', background: CONFIG.tileColors[i], zIndex: 10 + i })
+  tiles.push(d)
+  const l = el('div', 'lbl', folder, CONFIG.tags[i]); S(l, { zIndex: 50 }); labels.push(l)
+}
+// front panel with glow
+const glow = el('div', 'abs', folder); S(glow, { left: FX + 'px', top: '300px', width: FW + 'px', height: '150px', zIndex: 20, pointerEvents: 'none' })
+const front = svg(`<defs><linearGradient id="ff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1e21" stop-opacity=".98"/><stop offset=".55" stop-color="#19191b" stop-opacity=".93"/><stop offset="1" stop-color="#121212" stop-opacity="0"/></linearGradient>
+<linearGradient id="fs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".6" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<path d="M0,28 Q0,0 28,0 L270,0 C300,0 310,37 345,37 L612,37 Q640,37 640,65 L640,300 L0,300 Z" fill="url(#ff)" stroke="url(#fs)" stroke-width="1.5"/>`, FW, 300, folder, { left: FX + 'px', top: '305px', zIndex: 21 })
+glow.innerHTML = `<div class="abs" style="left:60px;top:0;width:200px;height:90px;background:radial-gradient(ellipse at 50% 0%,rgba(196,240,52,.5),transparent 70%);filter:blur(14px)"></div><div class="abs" style="left:420px;top:20px;width:200px;height:90px;background:radial-gradient(ellipse at 50% 0%,rgba(40,40,220,.45),transparent 70%);filter:blur(14px)"></div>`
+S(glow, { zIndex: 22, top: '318px' })
+const title = el('div', 'abs', folder, CONFIG.title); S(title, { left: '188px', top: '358px', fontSize: '30px', fontWeight: 500, color: '#fff', zIndex: 30, letterSpacing: '-.3px' })
+const pillX = [187, 277, 395, 484], pillW = [80, 108, 78, 123]
+const pills = CONFIG.tags.map((tx, i) => {
+  const w = 24 + tx.length * 9.3
+  const p = el('div', 'pill', folder, tx); return p
+})
+let px0 = 187
+pills.forEach((p) => { const w = parseFloat(p.textContent.length) * 9.3 + 28; S(p, { left: px0 + 'px', top: '419px', width: w + 'px', zIndex: 30 }); p._x = px0; p._w = w; px0 += w + 10 })
+// mini dock
+const dockEl = el('div', 'abs', folder); S(dockEl, { left: '598px', top: '508px', width: '180px', height: '48px', borderRadius: '24px', background: 'rgba(8,8,9,.85)', border: '1px solid rgba(255,255,255,.09)', zIndex: 30 })
+for (let i = 0; i < n; i++) { const m = el('div', 'abs', dockEl); m.innerHTML = glyph[i % 4]; S(m, { left: 8 + i * 42 + 'px', top: '6px', width: '34px', height: '34px', borderRadius: '10px', overflow: 'hidden', background: CONFIG.tileColors[i] }); dock.push(m) }
+// pointer
+const cur = el('div', 'abs', root, '<svg width="24" height="30" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7 17.5 L10.5 25 L14 23.5 L10.5 16.5 L17 16.5 Z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>'); S(cur, { zIndex: 99 })
+
+// script: pointer waypoints [t, x, y] and the tile hovered in each window [i, from, to]
+const PATH = [[0, 900, 640], [2.2, 900, 640], [3.0, 548, 497], [3.7, 312, 220], [4.9, 312, 225], [5.5, 410, 215], [6.5, 412, 210], [6.9, 540, 215], [7.8, 540, 212], [8.1, 668, 235], [9.4, 668, 232], [10.2, 700, 530], [11.6, 700, 530], [12, 700, 530]]
+const HOVER = [[0, 3.55, 5.2], [1, 5.3, 6.8], [2, 6.8, 8.0], [3, 8.0, 9.7]]
+const along = (pts, t) => {
+  if (t <= pts[0][0]) return [pts[0][1], pts[0][2]]
+  for (let i = 0; i < pts.length - 1; i++) if (t < pts[i + 1][0]) { const u = eio(seg(t, pts[i][0], pts[i + 1][0])); return [lerp(pts[i][1], pts[i + 1][1], u), lerp(pts[i][2], pts[i + 1][2], u)] }
+  const l = pts[pts.length - 1]; return [l[1], l[2]]
+}
+const bump = (t, a, b, f = .3) => seg(t, a, a + f) * (1 - seg(t, b, b + f))
+
+function render(t) {
+  const fade = eo(seg(t, 0, .45))
+  S(folder, { opacity: fade })
+  const [cx, cy] = along(PATH, t)
+  const overFolder = bump(t, 2.9, 10.0, .4)
+  for (let i = 0; i < n; i++) {
+    const o = i - (n - 1) / 2
+    const base = T0[i] || { x: 280 + i * 130, y: 280, r: 0 }
+    const x0 = base.x + (CONFIG.spread - 70) * o * 1.0
+    const rise = spring(seg(t, CONFIG.riseAt + i * CONFIG.riseStagger, CONFIG.riseAt + i * CONFIG.riseStagger + 1.0), 6, 9)
+    const rise2 = clamp(seg(t, CONFIG.riseAt + i * CONFIG.riseStagger, CONFIG.riseAt + i * CONFIG.riseStagger + .4))
+    const h = HOVER.reduce((a, hv) => a + (hv[0] === i ? bump(t, hv[1], hv[2], .3) : 0), 0)
+    const lift = eo(clamp(h))
+    const hidden = 118
+    let y = base.y + hidden * (1 - rise) - CONFIG.hoverFolderPx * eo(overFolder) - CONFIG.liftPx * lift
+    const sc = 1 + .12 * lift - (1 - rise2) * .1
+    const rot = lerp(base.r, 0, lift)
+    S(tiles[i], { left: x0 - CONFIG.tileSize / 2 + 'px', top: y - CONFIG.tileSize / 2 + 'px', opacity: rise2, transform: `rotate(${rot}deg) scale(${sc})`, zIndex: 10 + (lift > .01 ? 25 : i) })
+    S(labels[i], { left: x0 + 'px', top: y - CONFIG.tileSize / 2 * sc - 38 + 'px', opacity: lift, transform: `translateX(-50%) translateY(${(1 - lift) * 8}px)` })
+    const pl = pills[i]
+    S(pl, { borderColor: `rgba(255,255,255,${.08 + .5 * lift})`, background: `rgba(255,255,255,${.05 + .07 * lift})`, color: lift > .5 ? '#fff' : '#a3a3a8' })
+    S(dock[i], { transform: `scale(${1 + .12 * bump(t, 10.1, 11.5, .3)})` })
+  }
+  S(cur, { left: cx + 'px', top: cy + 'px', opacity: CONFIG.cursor ? eo(seg(t, 2.0, 2.4)) * (1 - seg(t, 11.6, 12)) : 0 })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

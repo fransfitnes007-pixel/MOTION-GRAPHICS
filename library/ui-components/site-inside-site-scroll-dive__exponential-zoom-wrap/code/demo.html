@@ -1,0 +1,135 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Site inside site scroll dive</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fcfbf7;font-family:Inter,-apple-system,'SF Pro Display',system-ui,sans-serif}
+.pg{position:absolute;left:0;top:0;width:1280px;height:1014px;background:#fcfbf7;transform-origin:0 0}
+.eb{position:absolute;left:0;width:1280px;top:130px;text-align:center;font:500 16px/24px ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#5b4bf0}
+.hd{position:absolute;left:0;width:1280px;top:166px;text-align:center;font-size:62px;line-height:76px;font-weight:500;letter-spacing:-.025em;color:#16130f}
+.sb{position:absolute;left:0;width:1280px;top:258px;text-align:center;font-size:20px;line-height:28px;color:#5a574f}
+.bn{position:absolute;left:544px;top:320px;width:192px;height:52px;border-radius:9px;background:linear-gradient(#d4361b,#bd2a12);color:#fff;font-size:19px;font-weight:600;display:grid;place-items:center;box-shadow:0 2px 6px rgba(190,42,18,.35)}
+.win{position:absolute;border-radius:0 0 6px 6px;overflow:hidden;background:#fcfbf7;box-shadow:0 22px 60px rgba(60,45,20,.16),0 4px 14px rgba(60,45,20,.08)}
+.bar{position:absolute;height:22px;background:#f4f0e6;border-bottom:1px solid #e6e0d2;border-radius:6px 6px 0 0}
+.url{position:absolute;left:198px;top:4px;width:190px;height:14px;border-radius:4px;background:#e9e4d8;font-size:8px;line-height:14px;text-align:center;color:#4a463e;white-space:nowrap}
+.dotc{position:absolute;top:8px;width:6px;height:6px;border-radius:50%}
+.exit{position:absolute;left:0;width:1280px;height:405px;top:1014px;background:#f3efe6;display:grid;place-items:center;font:500 13px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#6e675c}
+.ct{position:absolute;right:30px;bottom:22px;font:500 17px ui-monospace,Menlo,monospace;color:#6e675c;letter-spacing:.04em}
+.sc{position:absolute;left:0;width:1280px;top:957px;text-align:center;font:500 17px ui-monospace,Menlo,monospace;letter-spacing:.2em;color:#6e675c}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  levels: [   // copy for each level; the loop repeats them
+    ['This site contains itself.', 'The window below is this exact page.'],
+    ['You are inside the site now.', 'Same page, one level down.'],
+    ['Deeper. Still the same site.', 'Only the scale changed.'],
+    ['It loops forever.', 'Scroll back up to climb out.'],
+  ],
+  button: 'Get early access', url: 'yoursite.com', exitText: 'out of the loop', scrollHint: 'scroll',
+  win: { x: 346, y: 570, w: 586, h: 372 },   // the first nested window, in page pixels (page is 1280 x 1014)
+  depth: 5,                 // nested levels built; 5 is enough for one scale step of zoom
+  // dive timeline: [time, levels dived]; then the exit strip slides in and the dive plays backwards
+  dive: [[0, 0], [.6, 0], [2.0, 1], [3.0, 2], [3.9, 3], [4.4, 3], [5.9, 3], [7.3, 1.4], [8.3, 0], [9.5, 0]],
+  exitAt: [[0, 0], [4.3, 0], [4.9, 1], [5.4, 1], [5.9, 0]],   // [time, 0..1] page lifted to show the strip below
+}
+const DUR = 9.5
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const PH = 1014, WN = CONFIG.win
+const s = WN.h / PH                       // each nested page is drawn this much smaller
+const offX = (WN.w - 1280 * s) / 2        // the page is centred in its window
+const kk = 1 / s
+const ZO = [kk * (WN.x + offX) / (kk - 1), kk * WN.y / (kk - 1)]   // fixed point of the zoom
+const scene = fitBox(1280, 1014, 1); scene.style.overflow = 'hidden'
+const world = el('div', 'abs', scene); S(world, { left: 0, top: 0, width: '1280px', height: '1014px' })
+const root = el('div', 'abs', world); S(root, { left: 0, top: 0, width: '1280px', height: '1014px', transformOrigin: `${ZO[0]}px ${ZO[1]}px` })
+const exitStrip = el('div', 'exit', world, CONFIG.exitText)
+function build(parent, k) {
+  const pg = el('div', 'pg', parent)
+  const o = { eb: el('div', 'eb', pg), hd: el('div', 'hd', pg), sb: el('div', 'sb', pg), bn: el('div', 'bn', pg, CONFIG.button) }
+  const win = el('div', 'win', pg); S(win, { left: WN.x + 'px', top: WN.y + 'px', width: WN.w + 'px', height: WN.h + 'px' })
+  if (k < CONFIG.depth - 1) {
+    const inner = el('div', 'abs', win); S(inner, { left: offX + 'px', top: 0, transformOrigin: '0 0', transform: `scale(${s})`, width: '1280px', height: PH + 'px' })
+    o.child = build(inner, k + 1)
+    const bar = el('div', 'bar', pg); S(bar, { left: WN.x + 'px', top: WN.y - 22 + 'px', width: WN.w + 'px' })
+    ;[['#ff5f57', 10], ['#febc2e', 20], ['#28c840', 30]].forEach(([c, x]) => { const d = el('div', 'dotc', bar); S(d, { left: x + 'px', background: c }) })
+    o.url = el('div', 'url', bar); o.bar = bar
+  } else win.style.background = '#efe9db'
+  return o
+}
+const lv = build(root, 0)
+const hint = el('div', 'sc', root, CONFIG.scrollHint)
+const ctr = el('div', 'ct', scene)
+const cur = makeCursor(scene)
+const curPath = [[0, 838, 236], [1.5, 800, 300], [3.0, 700, 520], [4.4, 640, 600], [6.0, 700, 300], [8, 760, 420], [9.5, 838, 236]]
+const nLev = CONFIG.levels.length
+function paint(node, k, base, q) {
+  const [h, sub] = CONFIG.levels[(base + k) % nLev]
+  if (node.hd.textContent !== h) { node.hd.textContent = h; node.sb.textContent = sub; node.eb.textContent = 'loop ' + String((base + k) % 100).padStart(2, '0') }
+  if (node.bar) { S(node.bar, { opacity: clamp(q / .3) }); const u = CONFIG.url + ' ×' + (base + k + 1); if (node.url.textContent !== u) node.url.textContent = '🔒 ' + u }
+  if (node.child) paint(node.child, k + 1, base, q)
+}
+function render(t) {
+  const p = kf(t, CONFIG.dive, eio), base = Math.floor(p + 1e-6), q = p - base
+  const kz = Math.pow(1 / s, q)
+  S(root, { transform: `scale(${kz})` })
+  paint(lv, 0, base, q)
+  const ex = kf(t, CONFIG.exitAt, eio)
+  S(world, { transform: `translateY(${-ex * 405}px)` }); vis(exitStrip, ex > 0.001)
+  S(hint, { opacity: 1 - clamp(p / .25) })
+  const secs = Math.floor(p), frac = Math.round((p - secs) * 100)
+  ctr.textContent = `${secs}:${String(frac).padStart(2, '0')} / 3`
+  const [x, y] = kfp(t, curPath); setCursor(cur, x, y)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

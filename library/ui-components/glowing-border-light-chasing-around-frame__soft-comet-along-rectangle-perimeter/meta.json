@@ -1,0 +1,36 @@
+{
+  "slug": "glowing-border-light-chasing-around-frame__soft-comet-along-rectangle-perimeter",
+  "visual_name": "Light chasing around a glowing frame",
+  "code_name": "Soft comet along the rectangle perimeter",
+  "category": "ui-components",
+  "summary": "A dark navy screen with a thin rectangular frame that is only visible where a cyan and white light travels around it counter-clockwise, with a long soft tail.",
+  "tags": [
+    "background",
+    "loader",
+    "dark",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "webgl",
+    "shader"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "pulsing border",
+    "glowing border",
+    "border beam",
+    "shader border",
+    "light border",
+    "borders extras"
+  ],
+  "credit": {
+    "idea": "Pulsing Border",
+    "author": "paper-design",
+    "url": "https://21st.dev/@paper-design/components/pulsing-border",
+    "license": "Apache-2.0",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

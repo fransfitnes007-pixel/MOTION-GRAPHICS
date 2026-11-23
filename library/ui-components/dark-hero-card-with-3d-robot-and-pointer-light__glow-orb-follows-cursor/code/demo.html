@@ -1,0 +1,148 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.t{position:absolute;white-space:nowrap;font-family:-apple-system,"SF Pro Display",system-ui,sans-serif}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'Interactive 3D',
+  body: 'Bring your UI to life with beautiful 3D scenes. Create immersive experiences that capture attention and enhance your design.',
+  bg: '#fdfdfd', card: '#0b0b0b',
+  cardRect: [114, 144, 735, 341],    // x, y, width, height in the 960 x 624 frame
+  robot: { x: 673, y: 232 },         // head centre when zoomed out
+  zoomFrom: 2.3,                     // opening zoom on the head
+  zoomAt: 0.8, zoomSec: 1.1,         // when the camera pulls back
+  reach: 150,                        // how far a hand will stretch toward the light, px
+  lag: 0.14,                         // seconds the light trails the pointer
+  orbRadius: 40,
+  // pointer path inside the card, [seconds, x, y]
+  path: [[0, 900, 560], [1.9, 900, 120], [2.4, 700, 300], [3.0, 592, 354], [4.0, 790, 392], [5.0, 441, 235], [6.0, 563, 372], [7.0, 905, 330], [8.2, 905, 330]],
+}
+const DUR = 8.2
+window.DUR = DUR
+const SCENE = { w: 960, h: 624, bg: CONFIG.bg, cursor: 'dark', path: CONFIG.path }
+// ----- scene scaffold: a fixed-size scene scaled and centred to fit any stage size -----
+const sc = Math.min(W / SCENE.w, H / SCENE.h)
+const scene = el('div', 'abs'); S(scene, { left: '0', top: '0', width: SCENE.w + 'px', height: SCENE.h + 'px', transformOrigin: '0 0', transform: `translate(${(W - SCENE.w * sc) / 2}px,${(H - SCENE.h * sc) / 2}px) scale(${sc})` })
+stage.style.background = SCENE.bg
+// ----- icons (lucide, stroke 2) -----
+const LUC = {
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  zoomIn: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  chevDown: '<path d="m6 9 6 6 6-6"/>', sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+}
+const ic = (n, size = 16, sw = 2) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block">${LUC[n]}</svg>`
+// ----- scripted cursor: PATH is [[time, x, y, pressed?], ...] in scene units -----
+const cur = el('div', 'abs', scene, `<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7.5 17.5 L11 25.5 L14.5 24 L11 16.2 L18 16 Z" fill="${SCENE.cursor === 'light' ? '#fff' : '#111'}" stroke="${SCENE.cursor === 'light' ? '#000' : '#fff'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`)
+S(cur, { pointerEvents: 'none', zIndex: 99 })
+function curAt(t) {
+  const P = SCENE.path
+  if (t <= P[0][0]) return [P[0][1], P[0][2]]
+  for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (t <= b[0]) { const u = eio(seg(t, a[0], b[0])); return [lerp(a[1], b[1], u), lerp(a[2], b[2], u)] } }
+  const l = P[P.length - 1]; return [l[1], l[2]]
+}
+// smooth 0..1 value that is 1 between a and b, easing over f seconds each side
+const win = (t, a, b, f = .18) => eo(clamp(seg(t, a, a + f) - seg(t, b, b + f)))
+function drawCursor(t) { const [x, y] = curAt(t); S(cur, { left: px(x - 2), top: px(y - 2) }); return [x, y] }
+
+const [CXr, CYr, CWr, CHr] = CONFIG.cardRect
+const card = el('div', 't', scene); S(card, { left: CXr + 'px', top: CYr + 'px', width: CWr + 'px', height: CHr + 'px', background: CONFIG.card, borderRadius: '7px', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(0,0,0,.2)' })
+const h1 = el('div', 't', card, CONFIG.title); S(h1, { left: '21px', top: '125px', font: '700 36px/42px -apple-system,"SF Pro Display",system-ui,sans-serif', letterSpacing: '-.01em', background: 'linear-gradient(180deg,#fafafa,#a3a3a3)', webkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', webkitTextFillColor: 'transparent' })
+const p = el('div', 't', card, CONFIG.body.replace('immersive ', 'immersive<br>')); S(p, { left: '21px', top: '176px', fontSize: '12.5px', lineHeight: '17px', color: '#d4d4d4' })
+const NS = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', CWr); svg.setAttribute('height', CHr); svg.setAttribute('viewBox', `0 0 ${CWr} ${CHr}`); S(svg, { position: 'absolute', left: '0', top: '0' }); card.appendChild(svg)
+const hx = CONFIG.robot.x - CXr, hy = CONFIG.robot.y - CYr
+svg.innerHTML = `<defs>
+<linearGradient id="body" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#050505"/><stop offset=".25" stop-color="#2b2b2d"/><stop offset=".5" stop-color="#0a0a0b"/><stop offset=".8" stop-color="#1d1d1f"/><stop offset="1" stop-color="#050505"/></linearGradient>
+<radialGradient id="head" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#6a6a6e"/><stop offset=".22" stop-color="#262629"/><stop offset=".7" stop-color="#0b0b0c"/><stop offset="1" stop-color="#030303"/></radialGradient>
+<radialGradient id="orb" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".92"/><stop offset=".75" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="limb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a3a3d"/><stop offset=".5" stop-color="#0c0c0d"/><stop offset="1" stop-color="#1a1a1c"/></linearGradient></defs>
+<g id="rob"></g><circle id="orbc" r="${CONFIG.orbRadius * 1.5}" fill="url(#orb)" opacity="0"/>`
+const rob = svg.querySelector('#rob'), orb = svg.querySelector('#orbc')
+const mk = (tag, a, par = rob) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); par.appendChild(e); return e }
+// body parts drawn relative to the head centre (0,0); the group is moved and scaled each frame
+const legs = mk('path', { d: 'M-34 200 L-30 330 L-8 330 L-6 200 Z M34 200 L30 330 L8 330 L6 200 Z', fill: 'url(#limb)' })
+const torso = mk('path', { d: 'M-54 48 C-46 40 -24 36 0 36 C24 36 46 40 54 48 C56 92 44 144 28 200 L-28 200 C-44 144 -56 92 -54 48 Z', fill: 'url(#body)' })
+const waist = mk('rect', { x: -40, y: 196, width: 80, height: 20, rx: 6, fill: '#111' })
+const neck = mk('rect', { x: -14, y: 30, width: 28, height: 14, rx: 6, fill: '#1a1a1c' })
+const armL = mk('path', { fill: 'none', stroke: 'url(#limb)', 'stroke-width': 21, 'stroke-linecap': 'round' }), armR = mk('path', { fill: 'none', stroke: 'url(#limb)', 'stroke-width': 21, 'stroke-linecap': 'round' })
+const handL = mk('circle', { r: 13, fill: '#1b1b1d' }), handR = mk('circle', { r: 13, fill: '#1b1b1d' })
+const shL = mk('circle', { cx: -54, cy: 54, r: 17, fill: '#18181a' }), shR = mk('circle', { cx: 54, cy: 54, r: 17, fill: '#18181a' })
+const head = mk('ellipse', { cx: 0, cy: 0, rx: 29, ry: 34, fill: 'url(#head)' })
+const visor = mk('ellipse', { cx: 0, cy: 6, rx: 21, ry: 18, fill: '#050505' })
+const eyes = mk('path', { d: 'M-12 4 h8 M-12 9 h8 M4 4 h8 M4 9 h8', stroke: '#9a9aa0', 'stroke-width': 1.6, 'stroke-linecap': 'round' })
+const spec = mk('ellipse', { cx: -10, cy: -20, rx: 10, ry: 5, fill: '#fff', opacity: .35 })
+function arm(path, hand, sx, sy, side, ox, oy, orbX, orbY, on) {      // from the shoulder to a hand that reaches toward the orb
+  let tx = sx + side * 34, ty = sy + 110                               // rest pose: hanging out and down
+  if (on > 0 && orbX !== null) { let dx = orbX - sx, dy = orbY - sy; const L = Math.hypot(dx, dy), m = Math.min(L, CONFIG.reach); const gx = sx + dx / L * m, gy = sy + dy / L * m; tx = lerp(tx, gx, on); ty = lerp(ty, gy, on) }
+  const mx = (sx + tx) / 2 + side * 24, my = (sy + ty) / 2 + 28
+  path.setAttribute('d', `M${sx} ${sy} Q${mx} ${my} ${tx} ${ty}`); hand.setAttribute('cx', tx); hand.setAttribute('cy', ty)
+}
+function orbAt(t) { const q = curAt(t - CONFIG.lag); return q }
+function render(t) {
+  const [mx, my] = drawCursor(t)
+  const inside = (x, y) => x > CXr && x < CXr + CWr && y > CYr && y < CYr + CHr
+  // orb: appears when the pointer is in the card, trails it, fades after it leaves
+  const [ox, oy] = orbAt(t); let on = 0
+  for (let s = 0; s <= t + 1e-6; s += .05) { const q = curAt(s); const tg = inside(q[0], q[1]) ? 1 : 0; on += (tg - on) * (tg ? 1 - Math.exp(-.05 / .12) : 1 - Math.exp(-.05 / .18)) }
+  S(card, {}); orb.setAttribute('cx', ox - CXr); orb.setAttribute('cy', oy - CYr); orb.setAttribute('opacity', on.toFixed(3))
+  const z = lerp(CONFIG.zoomFrom, 1, eo(seg(t, CONFIG.zoomAt, CONFIG.zoomAt + CONFIG.zoomSec)))
+  const lookX = on * clamp((ox - CONFIG.robot.x) / 260, -1, 1) * 6, lookY = on * clamp((oy - CONFIG.robot.y) / 200, -1, 1) * 3
+  rob.setAttribute('transform', `translate(${hx} ${hy}) scale(${z.toFixed(3)}) translate(${(lookX * -.3).toFixed(2)} 0)`)
+  head.setAttribute('transform', `translate(${lookX.toFixed(2)} ${lookY.toFixed(2)})`); visor.setAttribute('transform', `translate(${(lookX * 1.4).toFixed(2)} ${lookY.toFixed(2)})`); eyes.setAttribute('transform', `translate(${(lookX * 1.8).toFixed(2)} ${lookY.toFixed(2)})`); spec.setAttribute('transform', `translate(${lookX.toFixed(2)} ${lookY.toFixed(2)})`)
+  // which arm reaches: the one on the orb's side
+  const onL = on * (ox < CONFIG.robot.x ? 1 : .0), onR = on * (ox >= CONFIG.robot.x ? 1 : .0)
+  arm(armL, handL, -54, 54, -1, ox, oy, (ox - CONFIG.robot.x) / z, (oy - CONFIG.robot.y) / z, onL)
+  arm(armR, handR, 54, 54, 1, ox, oy, (ox - CONFIG.robot.x) / z, (oy - CONFIG.robot.y) / z, onR)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

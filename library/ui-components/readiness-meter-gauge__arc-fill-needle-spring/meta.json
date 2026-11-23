@@ -1,0 +1,29 @@
+{
+  "slug": "readiness-meter-gauge__arc-fill-needle-spring",
+  "visual_name": "Readiness meter gauge",
+  "code_name": "Arc fill needle spring",
+  "category": "ui-components",
+  "summary": "A semicircular gauge fills with a gradient arc as a needle sweeps and springs past the value, a big number counts to 82, a Ready label fades in, then it drains back for the loop.",
+  "aliases": [
+    "gauge",
+    "speedometer",
+    "score meter",
+    "needle gauge",
+    "progress dial"
+  ],
+  "tags": [
+    "chart",
+    "stat-tile",
+    "counter",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "conic-gradient"
+  ],
+  "duration_sec": 6.8,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

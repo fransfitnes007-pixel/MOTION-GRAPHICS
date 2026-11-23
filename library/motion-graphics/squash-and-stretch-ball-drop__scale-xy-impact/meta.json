@@ -1,0 +1,26 @@
+{
+  "slug": "squash-and-stretch-ball-drop__scale-xy-impact",
+  "visual_name": "Squash and stretch ball drop",
+  "code_name": "Scale XY on impact",
+  "category": "motion-graphics",
+  "summary": "An orange ball falls from above the frame stretched tall, flattens on the floor, bounces six times with shrinking height, crouches and shoots back out the top.",
+  "aliases": [
+    "bouncing ball",
+    "squash and stretch",
+    "ball bounce",
+    "rubber ball drop",
+    "cartoon bounce"
+  ],
+  "tags": [
+    "dark",
+    "hero",
+    "kinetic-type"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 4.4,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

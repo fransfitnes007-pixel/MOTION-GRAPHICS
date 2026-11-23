@@ -1,0 +1,37 @@
+{
+  "slug": "endless-logo-row-sliding-sideways__duplicated-track-linear-loop",
+  "visual_name": "Endless logo row sliding sideways",
+  "code_name": "Duplicated track, linear loop",
+  "category": "ui-components",
+  "summary": "A single row of mixed logos on white sliding steadily to the right with no gaps, cut off by the edges of the screen.",
+  "tags": [
+    "marquee",
+    "carousel",
+    "logo",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 13.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "infinite slider",
+    "logo slider",
+    "logo row",
+    "logo ticker",
+    "marquee",
+    "logos"
+  ],
+  "credit": {
+    "idea": "Infinite Slider",
+    "author": "ibelick",
+    "url": "https://21st.dev/@ibelick/components/infinite-slider",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

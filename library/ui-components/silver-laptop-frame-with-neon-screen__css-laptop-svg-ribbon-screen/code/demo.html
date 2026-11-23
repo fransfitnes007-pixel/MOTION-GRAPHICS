@@ -1,0 +1,99 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>MacBook Pro demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#0a0a0c;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  script: 'Neon', title: 'Gradients',        // text on the screen
+  ribbons: [                                    // colour, width, base y (0 to 1), phase, sp = whole turns per loop (keep it a whole number so the loop is seamless)
+    { c: '#42ff2a', w: 150, y: .62, ph: 0.0, sp: 1 },
+    { c: '#1020ff', w: 70,  y: .44, ph: 1.7, sp: 1 },
+    { c: '#ff3a1e', w: 52,  y: .28, ph: 3.1, sp: 2 },
+    { c: '#d6ff6a', w: 30,  y: .36, ph: 2.4, sp: 1 },
+  ],
+  page: '#0a0a0c',
+  float: 4,                                     // px the laptop bobs
+}
+const DUR = 8
+window.DUR = DUR
+const DW = 960, DH = 822, U = Math.min(W / DW, H / DH)
+stage.style.background = CONFIG.page
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, backgroundImage: 'radial-gradient(rgba(255,255,255,.07) 1px,transparent 1.4px)', backgroundSize: '30px 30px' })
+const lap = el('div', 'abs', root); S(lap, { left: 0, top: 0, width: DW + 'px', height: DH + 'px' })
+// lid
+const lid = el('div', 'abs', lap); S(lid, { left: '172px', top: '203px', width: '606px', height: '409px', borderRadius: '18px 18px 4px 4px', background: 'linear-gradient(180deg,#bfbfc2,#8e8e92)', padding: '2px' })
+const bez = el('div', 'abs', lid); S(bez, { left: '2px', top: '2px', right: '2px', bottom: '2px', borderRadius: '16px 16px 3px 3px', background: '#050506' })
+const scr = el('div', 'abs', lap); S(scr, { left: '180px', top: '210px', width: '590px', height: '384px', borderRadius: '8px', overflow: 'hidden', background: '#020402' })
+const SWd = 590, SHt = 384
+scr.innerHTML = `<svg id="art" width="${SWd}" height="${SHt}" viewBox="0 0 ${SWd} ${SHt}" style="position:absolute;left:0;top:0"><defs><filter id="bl" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="22"/></filter><filter id="bl2" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="9"/></filter></defs><rect width="${SWd}" height="${SHt}" fill="#020402"/><g id="rb" filter="url(#bl)"></g><g id="rb2" filter="url(#bl2)" opacity=".55"></g></svg>`
+const rb = scr.querySelector('#rb'), rb2 = scr.querySelector('#rb2')
+const grain = el('div', 'abs', scr); S(grain, { inset: 0, background: 'radial-gradient(rgba(255,255,255,.12) .6px,transparent .9px)', backgroundSize: '3px 3px', mixBlendMode: 'overlay', opacity: .6 })
+const t1 = el('div', 'abs', scr, CONFIG.script); S(t1, { left: 0, width: '100%', textAlign: 'center', top: '158px', font: 'italic 400 34px "Snell Roundhand","Apple Chancery","Brush Script MT",cursive', color: '#f5ff4a' })
+const t2 = el('div', 'abs', scr, CONFIG.title); S(t2, { left: 0, width: '100%', textAlign: 'center', top: '186px', font: '400 30px/1 Georgia,"Times New Roman",serif', color: '#fff', letterSpacing: '-.5px', textShadow: '0 0 12px rgba(0,0,0,.4)' })
+const notch = el('div', 'abs', lap); S(notch, { left: '443px', top: '210px', width: '64px', height: '13px', borderRadius: '0 0 7px 7px', background: '#050506' })
+const cam = el('div', 'abs', notch); S(cam, { left: '29px', top: '4px', width: '5px', height: '5px', borderRadius: '50%', background: '#1a2230' })
+// hinge + base
+const hinge = el('div', 'abs', lap); S(hinge, { left: '172px', top: '598px', width: '606px', height: '14px', background: 'linear-gradient(180deg,#2a2a2c,#1a1a1c)' })
+const base = el('div', 'abs', lap); S(base, { left: '114px', top: '612px', width: '722px', height: '27px', borderRadius: '2px 2px 16px 16px', background: 'linear-gradient(180deg,#b9b9bb,#a2a2a5)', boxShadow: '0 14px 22px -8px rgba(0,0,0,.6)' })
+const dip = el('div', 'abs', base); S(dip, { left: '306px', top: 0, width: '110px', height: '9px', borderRadius: '0 0 9px 9px', background: 'linear-gradient(180deg,#8d8d90,#9b9b9e)' })
+const foot = [34, 686].map((x) => { const f = el('div', 'abs', base); S(f, { left: x + 'px', bottom: '-2px', width: '40px', height: '4px', borderRadius: '0 0 4px 4px', background: '#6c6c6f' }); return f })
+function ribbon(r, t, k) {
+  const pts = []
+  const n = 7
+  for (let i = 0; i <= n; i++) { const x = -40 + (SWd + 80) * i / n
+    const y = SHt * r.y + Math.sin(i * .9 + t / DUR * 6.2832 * r.sp + r.ph) * 62 + Math.sin(i * 1.7 - t / DUR * 6.2832 * r.sp + r.ph * 2) * 28 + (i / n - .5) * 90 * Math.sin(r.ph + t / DUR * 6.2832)
+    pts.push([x, y]) }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; d += ` C${x0 + (x1 - x0) / 2},${y0} ${x0 + (x1 - x0) / 2},${y1} ${x1},${y1}` }
+  return `<path d="${d}" fill="none" stroke="${r.c}" stroke-width="${r.w * k}" stroke-linecap="round"/>`
+}
+function render(t) {
+  rb.innerHTML = CONFIG.ribbons.map((r) => ribbon(r, t, 1)).join('')
+  rb2.innerHTML = CONFIG.ribbons.map((r) => ribbon(r, t, .35)).join('')
+  const b = Math.sin(t / DUR * Math.PI * 2) * CONFIG.float
+  S(lap, { transform: `translateY(${b}px)` })
+  S(t1, { transform: `translateY(${Math.sin(t / DUR * Math.PI * 4) * 2}px)` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

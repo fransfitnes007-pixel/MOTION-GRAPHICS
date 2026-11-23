@@ -1,0 +1,36 @@
+{
+  "slug": "how-it-works-four-step-icon-rail__bordered-tile-connector-line",
+  "visual_name": "How it works, four-step icon rail",
+  "code_name": "Bordered tile, connector line",
+  "category": "ui-components",
+  "summary": "A light 'How It Works' section: pill label, big bold heading, grey intro, then four steps down the page, each with a small bordered icon tile, a thin line to the next one, a bold title and two lines of grey text.",
+  "tags": [
+    "card",
+    "light",
+    "scroll",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "lucide"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "how it works",
+    "steps timeline",
+    "vertical steps",
+    "onboarding steps",
+    "how it works timeline",
+    "four steps"
+  ],
+  "credit": {
+    "idea": "How It Works Timeline",
+    "author": "olewandowski1",
+    "url": "https://21st.dev/@olewandowski1/components/how-it-works-2",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

@@ -1,0 +1,157 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+canvas{position:absolute;left:0;top:0}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  bg: '#000000',
+  sizeFrac: 0.45,                    // globe diameter as a share of the stage height
+  dots: 16000,                        // sample points on the sphere (land ones are drawn)
+  dotRadius: 0.95,                   // px at 800px stage height
+  dotColor: [222, 222, 222],         // land dot colour
+  sphere: ['#171717', '#0a0a0a'],    // body gradient, lit side to far side
+  tilt: 0.3,                         // radians the north pole leans toward the viewer
+  speed: 0.3,                        // radians per second; DUR is one full turn
+  startLon: -85,                     // longitude facing the viewer at t = 0
+  accent: [45, 212, 232],            // pin colour (rgb)
+  pulseSec: 2.0,                     // pin ring period
+  pins: [                            // lat, lon, time the pin pops in (s)
+    { lat: 40.7, lon: -74.0, at: 0.0 },
+    { lat: 47.6, lon: -52.7, at: 0.0 },
+    { lat: 37.8, lon: -122.4, at: 0.0 },
+    { lat: 21.3, lon: -157.8, at: 0.0 },
+  ],
+}
+const DUR = 2 * Math.PI / CONFIG.speed
+window.DUR = DUR
+// ----- coarse world land mask: polygons of [lon,lat,...] (hand-simplified, about 5 degree detail), used only to place dots -----
+const LAND = [
+  // North America
+  [-168,66,-162,70,-156,71.5,-141,69.7,-128,70,-115,68.5,-100,68,-95,72,-88,68.5,-86,66,-94,61,-93,57,-85,55,-82,52.5,-79,55,-77,60,-71,61,-65,60,-62,57,-56,52,-60,46.5,-66,44.5,-70,43.5,-70,41.8,-74,40.5,-76,38,-76,35,-81,31.5,-80,26,-81,25.2,-83,29,-85,29.8,-89,30,-94,29.5,-97.5,26,-97.8,22,-95.5,18.8,-91,18.5,-90.5,21,-87,21.5,-88,16,-84,15.8,-83,11,-79.5,9.5,-77.5,8.5,-80,7.5,-83,8.3,-86,11,-90,13.5,-94,16,-97,16,-105,19.5,-105.5,22.5,-109,26,-112,29.5,-114.7,31.7,-117,32.5,-120.5,34.5,-122.5,37.5,-124.3,40.5,-124,46,-124.7,48.4,-123,49,-127,51,-130,54.5,-135,58,-140,59.8,-147,61,-152,59,-157,57,-162,55,-164,58.5,-166,61.5,-162,64,-168,65.5],
+  [-114.7,31.5,-112.5,28.5,-110,24,-109.5,23,-112,25,-114.5,29,-115.5,30],
+  [-73,78,-60,82,-30,83.5,-20,81,-18,76,-22,70,-32,68,-42,60,-48,61,-53,67,-56,72,-66,76],
+  [-85,22,-80,23,-74,20,-78,20.5,-82,22.5],
+  // South America
+  [-77.5,8.5,-72,12,-68,10.5,-62,10.8,-60,8.5,-52,5,-50,0.5,-44,-2.5,-35,-5.5,-35,-9,-39,-14,-41,-22,-48,-26,-49,-29,-53,-34,-58,-34.5,-57,-38,-62,-39,-65,-42,-63.5,-46,-67.5,-46.5,-66,-50,-69,-52,-68.5,-55,-72,-54,-75,-50,-74,-43,-73.5,-37,-71.5,-30,-70.5,-18,-76,-14,-81,-6,-80,-2,-80.5,0.5,-77.5,3.5],
+  // Eurasia
+  [-9.5,37,-6,36.2,-1,37.2,0,39.5,3,42,6,43,8.5,44.3,10.5,43,12.5,41.5,15.5,38,16.5,38.9,18.5,40.2,16,41.5,14,42.5,12.5,44.5,13.5,45.5,15,44,19,41.5,21,38,22.5,36.5,24,38,23,40.5,26,40.8,26.5,38.5,27.5,36.8,30.5,36.5,36,36.5,36,34,35,32.5,34.5,31,34,29.5,35,28,36,26,39,22,42,16,43.5,12.7,45,12.8,52,16,55,17.5,57.5,19,59.5,22.5,56.5,24.5,56,26,54,24,51.5,24.2,51,26,50,26,48,29.5,48.5,30,50,30.2,51,28,54,26.5,56,27,57.5,25.5,61.5,25,66.5,25.3,68.5,23.5,70,21,72.8,19.5,73.5,16,75,12,77,8.3,78.5,9,80.2,13,80,15.5,83,17.5,86.5,20,87,21.5,89,22,91.5,22.5,92,20,94,17.5,94.5,16,97,16.5,98.2,13,98.5,10,100,7,102,6,103.5,3,104,1.5,103,1.4,101,3,100.3,6,100.5,9,103.5,10.5,105,8.6,106.5,10,109,12,109,15,106,18.5,108,21.5,110,21,112,22,117,23.5,119.5,25.5,122,29.5,121,32,119,35,122,37,120,37.5,119,39,121.5,40.5,124,40,126,37.5,126.5,34.5,129,35.5,129.5,37.5,128,39.5,131,42.5,133,43,136,44.5,140,48,141,52,140,54,142,59,150,59.5,156,61.5,163,62.5,168,64,178,65,180,68.5,170,70,160,69.5,150,71,140,72,130,71,115,73.5,108,76.5,100,76.5,95,76,87,74.5,80,73,72,72.5,68,69,60,69,55,68,44,68.5,41,66,36,66.5,34,64.5,40,64.5,44,66,33,69.5,28,71,20,70,14,67,11,64,6,62,5,59,8,58,8.5,57,10.5,57.5,10,55,8.5,54,7,53.5,5,53,4,51.5,2,51,1.5,50.2,-1.5,49.7,-4.5,48.5,-1.5,46.5,-1.2,44.5,-1.8,43.4,-9,43.2],
+  [-5.5,50,1.5,51,1.7,52.7,-0.3,54.5,-2,56,-1.8,57.7,-3,58.6,-5,58.5,-6,57,-5.5,55.5,-3,54.8,-4.8,52.5],
+  [-10,52,-6,52.2,-6,54.5,-8.5,55,-10,53.5], [-24,65.5,-18,66.5,-13.5,65,-18,63.4,-22.5,63.8],
+  [130,31.5,132,34,135,34,136.5,34.5,140,35,141,38,142,40,141,41.5,139.8,40,139.5,38,136.5,37,133.5,35.5,131,34.5], [140,42,143,42,145,43.5,142,45.5,141.5,43.5],
+  [120.5,18,122,17,122,14,124,13,121,14,120,16], [122,7.5,126,9,126,6.5,124,6.5], [80,9.5,82,7,81,6,80,6.5],
+  // Southeast Asia islands
+  [95.5,5.5,98,4,104,-1,106,-5.5,102,-4,98,0,95.5,3], [105.5,-6.5,114.5,-7.5,114.5,-8.5,106,-7.5], [109,1.5,111,2,115,5,118,6,119,1,116,-4,110,-3,109,-1],
+  [119.5,-1,125,1.5,121,-1.5,123,-4.5,121,-5,120.2,-3], [131,-1,138,-2,147,-6,150,-10,143,-9,138,-8,133,-4],
+  // Africa
+  [-5.5,35.8,-2,35.2,3,36.8,10,37.2,11,36,10.2,34,11,33,15,32.2,20,32,20,30.5,25,31.8,30,31.2,32.3,31.2,34,29.5,35,28,34.5,24,37,21,38.5,18,41,14.5,43.2,12.5,44,10.7,51,11.8,51,10,48,5,43,0.5,40,-3,39,-6.5,40.5,-11,40.5,-15,35,-20,35.5,-24,33,-26,32.5,-28.5,30,-31,27,-33.5,22,-34.3,18.5,-34.2,18,-31,15,-27,14.5,-22.5,11.8,-17.5,13.5,-12,12,-6,9,-1,9.5,3.5,8,4.5,5,6,1,6,-4,5.2,-8,4.4,-12,7.5,-14.5,10.5,-17.5,14.7,-16.5,18.5,-16,21.5,-13,27.5,-10,29.5,-9.5,32,-6.5,34],
+  [49,-12,50.5,-15.5,47.5,-24.5,45,-25.5,43.5,-22,44.5,-16.5,47,-14.5],
+  // Oceania
+  [113,-22,114,-26,115,-34,118,-35,123,-34,129,-31.5,132,-32,135,-34.5,138,-35,140,-38,144,-38.5,147,-39,150,-37,152.5,-32,153.5,-28,153,-25,149,-20.5,146,-19,145.5,-14.5,143.5,-14,142.5,-10.7,141.5,-13,141,-17,139,-17,136,-12,132,-11.5,130,-12.5,129,-15,126,-14,122,-17,120,-19.5,114,-21.8],
+  [145,-41,148,-41,147,-43.5,145.5,-43], [173,-35,175,-37,178,-37.7,176,-40,175,-41.5,174.5,-39.5,173.5,-38.5], [172.5,-40.5,174.5,-41.3,173,-43,171,-44.5,169,-46.6,166.5,-46,168,-44,171,-42.5],
+]
+const WATER = [  // seas drawn out of the Eurasia polygon
+  [47,45,50,46.5,53,45,53.5,41.5,54,39,53,37,50,37,49,40,47.5,43],
+  [28,41.2,28,44,30,45.5,33,46,35,45,38,47,41.5,42.5,41,41,36,41.7,32,41.3],
+]
+function inPoly(P, x, y) { let c = false; for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) { const xi = P[i], yi = P[i + 1], xj = P[j], yj = P[j + 1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c } return c }
+const BOX = LAND.map((P) => { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (let i = 0; i < P.length; i += 2) { a = Math.min(a, P[i]); b = Math.max(b, P[i]); c = Math.min(c, P[i + 1]); d = Math.max(d, P[i + 1]) } return [a, b, c, d] })
+function isLand(lon, lat) {
+  let hit = false
+  for (let k = 0; k < LAND.length && !hit; k++) { const b = BOX[k]; if (lon >= b[0] && lon <= b[1] && lat >= b[2] && lat <= b[3] && inPoly(LAND[k], lon, lat)) hit = true }
+  if (hit) for (const W of WATER) if (inPoly(W, lon, lat)) return false
+  return hit
+}
+
+const cv = document.createElement('canvas'); cv.width = W; cv.height = H; stage.appendChild(cv)
+stage.style.background = CONFIG.bg
+const g = cv.getContext('2d')
+const CXg = W / 2, CYg = H / 2 + H * 0.0, R = H * CONFIG.sizeFrac / 2, KS = H / 800
+const rad = Math.PI / 180
+// fibonacci sphere, keep only points on land (computed once)
+const land = []
+for (let i = 0; i < CONFIG.dots; i++) {
+  const y = 1 - 2 * (i + .5) / CONFIG.dots, r = Math.sqrt(1 - y * y), a = i * 2.399963229728653
+  const lat = Math.asin(y) / rad, lon = ((Math.atan2(Math.sin(a), Math.cos(a)) / rad) + 540) % 360 - 180
+  if (isLand(lon, lat)) land.push([lat * rad, lon * rad])
+}
+function project(lat, lon, phi) {      // lat, lon in radians; returns [x, y, z] with z > 0 facing the viewer
+  const l = lon + phi, cl = Math.cos(lat)
+  const x = cl * Math.sin(l), y = Math.sin(lat), z = cl * Math.cos(l)
+  const c = Math.cos(CONFIG.tilt), s = Math.sin(CONFIG.tilt)
+  return [x, y * c - z * s, y * s + z * c]
+}
+function render(t) {
+  g.fillStyle = CONFIG.bg; g.fillRect(0, 0, W, H)
+  const phi = (-CONFIG.startLon * rad) + CONFIG.speed * t
+  // body
+  const gr = g.createRadialGradient(CXg - R * .3, CYg - R * .3, R * .1, CXg, CYg, R)
+  gr.addColorStop(0, CONFIG.sphere[0]); gr.addColorStop(1, CONFIG.sphere[1])
+  g.fillStyle = gr; g.beginPath(); g.arc(CXg, CYg, R, 0, 6.2832); g.fill()
+  const rim = g.createRadialGradient(CXg, CYg, R * .94, CXg, CYg, R * 1.04); rim.addColorStop(0, 'rgba(255,255,255,0)'); rim.addColorStop(.5, 'rgba(255,255,255,.06)'); rim.addColorStop(1, 'rgba(255,255,255,0)')
+  g.fillStyle = rim; g.beginPath(); g.arc(CXg, CYg, R * 1.04, 0, 6.2832); g.fill()
+  // land dots
+  const dc = CONFIG.dotColor
+  for (let i = 0; i < land.length; i++) {
+    const p = project(land[i][0], land[i][1], phi)
+    if (p[2] <= 0.02) continue
+    const a = Math.min(1, .25 + .9 * Math.pow(p[2], .8))
+    g.fillStyle = `rgba(${dc[0]},${dc[1]},${dc[2]},${a.toFixed(3)})`
+    g.fillRect(CXg + p[0] * R - CONFIG.dotRadius * KS, CYg - p[1] * R - CONFIG.dotRadius * KS, CONFIG.dotRadius * 2 * KS, CONFIG.dotRadius * 2 * KS)
+  }
+  // pulsing pins
+  const ac = CONFIG.accent
+  CONFIG.pins.forEach((pin, i) => {
+    const p = project(pin.lat * rad, pin.lon * rad, phi)
+    const vis = clamp((p[2] - .05) / .25) * eo(seg(t, pin.at, pin.at + .5)); if (vis <= 0) return
+    const x = CXg + p[0] * R, y = CYg - p[1] * R, k = ((t / CONFIG.pulseSec) + i * .23) % 1
+    g.lineWidth = 1.2 * KS
+    g.strokeStyle = `rgba(${ac.join(',')},${.45 * vis})`; g.beginPath(); g.arc(x, y, 11 * KS, 0, 6.2832); g.stroke()
+    g.strokeStyle = `rgba(${ac.join(',')},${.5 * (1 - k) * vis})`; g.beginPath(); g.arc(x, y, (11 + 12 * k) * KS, 0, 6.2832); g.stroke()
+    g.fillStyle = `rgba(${ac.join(',')},${.18 * vis})`; g.beginPath(); g.arc(x, y, 17 * KS, 0, 6.2832); g.fill()
+    g.fillStyle = `rgba(${ac.join(',')},${vis})`; g.beginPath(); g.arc(x, y, 5.2 * KS, 0, 6.2832); g.fill()
+    g.fillStyle = `rgba(210,250,255,${vis})`; g.beginPath(); g.arc(x, y, 2.2 * KS, 0, 6.2832); g.fill()
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

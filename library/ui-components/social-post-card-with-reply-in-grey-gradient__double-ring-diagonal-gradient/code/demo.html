@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background-color:#fdfdfd;background-image:radial-gradient(circle,#e3e5ea 1px,transparent 1.4px);background-size:28px 28px}
+.t{position:absolute;white-space:nowrap;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  author: { name: 'Alex', handle: 'alex_dev', verified: true },
+  lines: ['All components can now be opened in the editor 🎉', '1. Click on ‘Open’', '2. Customize with prompts', '3. Deploy to your app'],
+  date: 'Jan 18, 2025',
+  reply: { name: 'Sam', handle: 'sam', date: 'Jan 18', text: 'Awesome.', verified: true },
+  gradient: ['#d9d9d9', '#f1f1f1'],  // inner card, top-left to bottom-right
+  outer: 'rgba(255,255,255,.75)',    // outer ring colour
+  radius: 22,
+  enter: 0.5,                        // seconds for the card to fade up at the start of the loop
+  accent: '#4da3ff',                 // verified badge
+}
+const DUR = 5
+window.DUR = DUR
+const SCENE = { w: 960, h: 720, bg: '#fdfdfd', cursor: 'dark', path: [[0, 880, 660], [.9, 880, 660], [1.7, 760, 270], [2.4, 640, 330], [3.2, 420, 520], [4.0, 150, 700], [5, 150, 700]] }
+// ----- scene scaffold: a fixed-size scene scaled and centred to fit any stage size -----
+const sc = Math.min(W / SCENE.w, H / SCENE.h)
+const scene = el('div', 'abs'); S(scene, { left: '0', top: '0', width: SCENE.w + 'px', height: SCENE.h + 'px', transformOrigin: '0 0', transform: `translate(${(W - SCENE.w * sc) / 2}px,${(H - SCENE.h * sc) / 2}px) scale(${sc})` })
+stage.style.background = SCENE.bg
+// ----- icons (lucide, stroke 2) -----
+const LUC = {
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  zoomIn: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  chevDown: '<path d="m6 9 6 6 6-6"/>', sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+}
+const ic = (n, size = 16, sw = 2) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block">${LUC[n]}</svg>`
+// ----- scripted cursor: PATH is [[time, x, y, pressed?], ...] in scene units -----
+const cur = el('div', 'abs', scene, `<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7.5 17.5 L11 25.5 L14.5 24 L11 16.2 L18 16 Z" fill="${SCENE.cursor === 'light' ? '#fff' : '#111'}" stroke="${SCENE.cursor === 'light' ? '#000' : '#fff'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`)
+S(cur, { pointerEvents: 'none', zIndex: 99 })
+function curAt(t) {
+  const P = SCENE.path
+  if (t <= P[0][0]) return [P[0][1], P[0][2]]
+  for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (t <= b[0]) { const u = eio(seg(t, a[0], b[0])); return [lerp(a[1], b[1], u), lerp(a[2], b[2], u)] } }
+  const l = P[P.length - 1]; return [l[1], l[2]]
+}
+// smooth 0..1 value that is 1 between a and b, easing over f seconds each side
+const win = (t, a, b, f = .18) => eo(clamp(seg(t, a, a + f) - seg(t, b, b + f)))
+function drawCursor(t) { const [x, y] = curAt(t); S(cur, { left: px(x - 2), top: px(y - 2) }); return [x, y] }
+
+stage.style.background = ''
+const ring = el('div', 't', scene); S(ring, { left: '88px', top: '115px', width: '784px', height: '490px', borderRadius: CONFIG.radius + 8 + 'px', background: CONFIG.outer, boxShadow: '0 0 0 1px rgba(0,0,0,.07), 0 18px 40px rgba(0,0,0,.16), inset 0 0 0 1px rgba(255,255,255,.7)' })
+const card = el('div', 't', scene); S(card, { left: '98px', top: '125px', width: '764px', height: '471px', borderRadius: CONFIG.radius + 'px', background: `linear-gradient(135deg,${CONFIG.gradient[0]} 0%,${CONFIG.gradient[1]} 100%)`, boxShadow: 'inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.05)', overflow: 'hidden' })
+const badge = (x, y) => `<svg class="t" style="left:${x}px;top:${y}px" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${CONFIG.accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"/><path d="m9 12 2 2 4-4"/></svg>`
+const T = (txt, o) => { const e = el('div', 't', card, txt); S(e, o); return e }
+const av1 = el('div', 't', card); S(av1, { left: '32px', top: '33px', width: '64px', height: '64px', borderRadius: '32px', background: 'radial-gradient(circle at 60% 70%,#d9873a 0%,#6b3d1c 40%,#1d1d22 80%)' })
+const n1 = T(CONFIG.author.name, { left: '115px', top: '34px', font: '700 26px/1.2 -apple-system,"SF Pro Display",system-ui,sans-serif', color: '#0b0b0b' })
+if (CONFIG.author.verified) card.insertAdjacentHTML('beforeend', badge(184, 34))
+T('@' + CONFIG.author.handle, { left: '115px', top: '65px', fontSize: '22px', color: '#2a2a2a' })
+T('<svg width="30" height="30" viewBox="0 0 24 24" fill="#111"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>', { left: '676px', top: '45px' })
+CONFIG.lines.forEach((l, i) => T(l, { left: '32px', top: 116 + i * 38 + 'px', fontSize: '26px', color: '#111' }))
+T(CONFIG.date, { left: '32px', top: '283px', fontSize: '22px', color: '#161616' })
+T('', { left: '32px', top: '336px', width: '698px', height: '1px', background: 'rgba(0,0,0,.14)' })
+const av2 = el('div', 't', card); S(av2, { left: '32px', top: '363px', width: '64px', height: '64px', borderRadius: '32px', background: 'radial-gradient(circle at 40% 40%,#7ad7ff 0 14%,#7b3fd0 40%,#d33f8d 85%)' })
+T(`<b style="font-weight:700;font-size:26px;color:#0b0b0b">${CONFIG.reply.name}</b>`, { left: '115px', top: '364px' })
+card.insertAdjacentHTML('beforeend', badge(112 + CONFIG.reply.name.length * 15.5 + 14, 366))
+T(`@${CONFIG.reply.handle} &#183; ${CONFIG.reply.date}`, { left: 115 + CONFIG.reply.name.length * 15.5 + 52 + 'px', top: '368px', fontSize: '22px', color: '#2a2a2a' })
+T(CONFIG.reply.text, { left: '115px', top: '408px', fontSize: '22px', color: '#111' })
+function render(t) {
+  const e = eo(seg(t, 0, CONFIG.enter)), o = 1 - seg(t, DUR - .4, DUR)
+  S(ring, { opacity: e * o, transform: `translateY(${(1 - e) * 14}px)` }); S(card, { opacity: e * o, transform: `translateY(${(1 - e) * 14}px)` })
+  drawCursor(t)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

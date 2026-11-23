@@ -1,0 +1,36 @@
+{
+  "slug": "folded-photo-wall-unfurls-flat__3d-tilt-to-flat-column-parallax",
+  "visual_name": "Photo wall that unfurls from a tilt to flat",
+  "code_name": "3D tilt to flat, column parallax",
+  "category": "ui-components",
+  "summary": "A black page with a wall of portrait photos in four columns, first folded back in 3D and slanted into a corner, which unfurls over about four seconds into a flat, full-screen grid as the columns slide into place.",
+  "tags": [
+    "scroll",
+    "3d",
+    "hero",
+    "dark",
+    "carousel",
+    "21st"
+  ],
+  "tech": [
+    "react"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "unfurl",
+    "unfurling gallery",
+    "photo wall",
+    "3d parallax gallery",
+    "perspective grid",
+    "scroll gallery"
+  ],
+  "credit": {
+    "idea": "3D Parallax Unfurling Gallery",
+    "author": "piyushxdev",
+    "url": "https://21st.dev/@piyushxdev/components/3d-parallax-unfurling-gallery",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

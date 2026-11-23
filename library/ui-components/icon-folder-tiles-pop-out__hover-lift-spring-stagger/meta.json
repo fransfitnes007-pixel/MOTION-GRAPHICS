@@ -1,0 +1,35 @@
+{
+  "slug": "icon-folder-tiles-pop-out__hover-lift-spring-stagger",
+  "visual_name": "Icon folder with tiles that pop out",
+  "code_name": "Hover lift, spring stagger",
+  "category": "ui-components",
+  "summary": "A dark glass folder titled \"Design\" that opens by itself so four colourful app tiles rise out of its pocket; pointing at a tile lifts it clear of the folder with a name label while its text pill lights up.",
+  "tags": [
+    "card",
+    "hover",
+    "dark",
+    "cursor",
+    "21st"
+  ],
+  "tech": [
+    "react"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "folder",
+    "icon folder",
+    "app folder",
+    "tiles pop out",
+    "folder hover",
+    "apps in a folder"
+  ],
+  "credit": {
+    "idea": "Icon Folder",
+    "author": "romanvasnev",
+    "url": "https://21st.dev/@romanvasnev/components/icon-folder",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

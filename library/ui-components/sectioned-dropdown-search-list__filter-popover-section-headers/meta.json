@@ -1,0 +1,36 @@
+{
+  "slug": "sectioned-dropdown-search-list__filter-popover-section-headers",
+  "visual_name": "Searchable country dropdown with section headings",
+  "code_name": "Filter popover with section headers",
+  "category": "ui-components",
+  "summary": "A dark input with a chevron that opens a rounded list of countries grouped under North America, Europe and Asia, separated by thin lines.",
+  "tags": [
+    "form",
+    "dark",
+    "hover",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "react-aria",
+    "heroui"
+  ],
+  "duration_sec": 9.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "combo box",
+    "combobox",
+    "country picker",
+    "dropdown with sections",
+    "checkout page",
+    "searchable select"
+  ],
+  "credit": {
+    "idea": "ComboBox",
+    "author": "hero_ui",
+    "url": "https://21st.dev/@hero_ui/components/heroui-combo-box/with-sections",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

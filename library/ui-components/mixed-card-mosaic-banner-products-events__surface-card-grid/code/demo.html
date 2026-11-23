@@ -1,0 +1,109 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#121212;color:#fff}
+.g{position:absolute;left:0;top:0;width:768px;display:grid;grid-template-columns:1fr 1fr;gap:12px;transform-origin:0 0}
+.c{background:#18181a;border-radius:24px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);position:relative;overflow:hidden}
+.c h3{font-size:14px;font-weight:600;color:#fafafa;line-height:20px}
+.c p{font-size:14px;color:#a1a1aa;line-height:20px}
+.pill{border-radius:999px;background:#fff;color:#09090b;font-size:12px;font-weight:500;padding:8px 12px;display:inline-block;white-space:nowrap}
+.x{position:absolute;right:12px;top:12px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#a1a1aa;border-radius:50%}
+.col{display:flex;flex-direction:column;gap:12px}
+.cap{font-size:12px;font-weight:500;letter-spacing:.18em;color:#a1a1aa;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:12px;padding:12px;flex-direction:row}
+.sq{width:48px;height:48px;border-radius:12px;flex:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  scale: 1.08,                 // size of the whole grid on the 1280x800 canvas
+  stagger: .07,                // seconds between each card appearing
+  accent: '#60a5fa',           // the "Go to settings" link
+  events: [['Bridging the Future', 'Today, 6:30 PM', ['#5ba8d8', '#ec6fa0']], ['Avocado Hackathon', 'Wed, 4:30 PM', ['#f6a5c0', '#7aa83a']], ['Sound Electro | Beyond art', 'Fri, 8:00 PM', ['#3aa6e0', '#f5a623']]],
+  groups: [['Indie Hackers', '148 members', 'By John', ['#f5e1e1', '#e8a0a0']], ['AI Builders', '362 members', 'By Martha', ['#f6c84a', '#c98a1a']]],
+}
+const DUR = 7
+window.DUR = DUR
+const X = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M3.47 3.47a.75.75 0 0 1 1.06 0L8 6.94l3.47-3.47a.75.75 0 1 1 1.06 1.06L9.06 8l3.47 3.47a.75.75 0 1 1-1.06 1.06L8 9.06l-3.47 3.47a.75.75 0 0 1-1.06-1.06L6.94 8 3.47 4.53a.75.75 0 0 1 0-1.06Z"/></svg>'
+const grad = (a, b) => `linear-gradient(135deg,${a},${b})`
+const robot = (n) => `<div style="height:144px;position:relative;background:linear-gradient(#e6e3df,#bdb8b2)"><div style="position:absolute;left:50%;top:14px;width:${n ? 84 : 78}px;height:${n ? 112 : 104}px;margin-left:-42px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 40% 30%,#fbfaf8,#d6d1ca 70%);box-shadow:inset -8px -10px 18px rgba(0,0,0,.14)"></div><div style="position:absolute;left:50%;top:44px;width:30px;height:38px;margin-left:-26px;border-radius:50%;background:#2a2a2c;opacity:.85"></div><div style="position:absolute;inset:auto 0 0 0;height:84px;background:linear-gradient(to top,rgba(0,0,0,.72),transparent)"></div></div>`
+const root2 = el('div', 'g', root)
+const cards = []
+const add = (parent, html, cls = 'c', style = '') => { const e = el('div', cls, parent, html); if (style) e.style.cssText += ';' + style; cards.push(e); return e }
+add(root2, `<div style="display:flex;gap:12px;padding:12px"><div style="width:120px;height:120px;border-radius:18px;background:#b7e4dd;flex:none;position:relative;overflow:hidden"><svg viewBox="0 0 120 120" width="120" height="120"><g transform="translate(60 62) scale(1.25) translate(-60 -62)"><path d="M62 24 C60 40 54 56 44 74 M62 24 C66 42 70 58 76 76" stroke="#8a8a2a" stroke-width="1.6" fill="none"/><circle cx="43" cy="82" r="14" fill="#b4101d"/><circle cx="77" cy="84" r="14" fill="#c2121f"/></g></svg></div><div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;position:relative"><div><h3 style="padding-right:30px">Become an ACME Creator!</h3><p style="margin-top:4px">Lorem ipsum dolor sit amet consectetur. Sed arcu donec id aliquam dolor sed amet faucibus etiam.</p></div><div style="display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:14px;font-weight:500;display:block">Only 10 spots</b><small style="font-size:12px;color:#a1a1aa">Submission ends Oct 10.</small></div><span class="pill" style="font-size:14px;padding:9px 16px">Apply Now</span></div></div></div><div class="x" style="right:16px;top:14px">${X}</div>`, 'c', 'grid-column:1/3')
+const left = el('div', 'col', root2), right = el('div', 'col', root2)
+add(left, `<div style="padding:12px"><div class="cap" style="margin-top:6px">Payment</div><h3 style="margin-top:6px">You can now withdraw on crypto</h3><p style="margin-top:6px">Add your wallet in settings to withdraw</p><div style="margin-top:14px;color:${CONFIG.accent};font-size:14px;font-weight:500">Go to settings</div></div><div class="x">${X}</div>`, 'c', 'flex:1')
+const gr = el('div', '', left, ''); gr.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;height:176px'
+CONFIG.groups.forEach(([n, m, by, [a, b]]) => add(gr, `<div style="padding:12px;display:flex;flex-direction:column;gap:8px"><div style="width:48px;height:48px;border-radius:14px;background:${grad(a, b)}"></div><div style="margin-top:4px"><h3>${n}</h3><p>${m}</p></div><div style="display:flex;gap:8px;align-items:center;font-size:12px"><span style="width:20px;height:20px;border-radius:50%;background:${grad('#f4a38c', '#d9534f')}"></span>${by}</div></div>`))
+const pr = el('div', '', right, ''); pr.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px'
+const titleOver = (a, b) => `<div style="position:absolute;left:14px;bottom:10px;color:#fff"><h3 style="color:#fff">NEO</h3><p style="color:rgba(255,255,255,.75);font-size:12px">${a}</p>${b ? `<p style="font-size:12px;color:#fff;margin-top:6px">${b}</p>` : ''}</div>`
+add(pr, `<div style="position:relative">${robot(0)}${titleOver('Home Robot', 'Available soon')}</div><div style="display:flex;justify-content:space-between;align-items:center;padding:14px 12px 16px"><span style="font-size:12px;font-weight:500">Get notified</span><span class="pill np">Notify me</span></div>`)
+add(pr, `<div style="position:relative">${robot(1)}${titleOver('$499/m', '')}</div><div style="display:flex;justify-content:flex-end;align-items:center;padding:14px 12px 16px"><span class="pill">Get now</span></div>`)
+CONFIG.events.forEach(([n, w, [a, b]]) => add(right, `<div class="sq" style="background:${grad(a, b)}"></div><div><h3>${n}</h3><p>${w}</p></div>`, 'c row', 'height:84px'))
+const np = root2.querySelector('.np')
+const H0 = root2.offsetHeight
+S(root2, { left: px(640 - 768 * CONFIG.scale / 2), top: px(400 - H0 * CONFIG.scale / 2), transform: `scale(${CONFIG.scale})` })
+const r = np.getBoundingClientRect(), rr = root.getBoundingClientRect()
+const nx = (r.left - rr.left) / U + r.width / U / 2, ny = (r.top - rr.top) / U + r.height / U / 2
+const P = [[0, 1180, 740, 0], [2.2, 1180, 740, 0], [3.3, nx, ny, 0], [5.2, nx, ny, 0], [6.4, 1180, 740, 0], [7, 1180, 740, 0]]
+function render(t) {
+  cards.forEach((c, i) => { const a = eo(seg(t, .1 + i * CONFIG.stagger, .1 + i * CONFIG.stagger + .5)); S(c, { opacity: a, transform: `translateY(${(1 - a) * 18}px)` }) })
+  const h = seg(t, 3.2, 3.4) * (1 - seg(t, 5.2, 5.4))
+  S(np, { background: h > .5 ? '#e4e4e7' : '#fff', transform: `scale(${1 - .05 * h})` })
+  putCursor(cursorAt(t, P))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

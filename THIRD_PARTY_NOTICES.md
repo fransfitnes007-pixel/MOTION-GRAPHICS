@@ -19,3 +19,16 @@ Recommended reading that is not bundled: [blader/humanizer](https://github.com/b
 The 12-piece interaction pack recreates common iOS micro-interaction patterns. [60fps.design](https://60fps.design), a catalogue of iOS app animations, was used to choose which patterns to build. None of its code, videos or images are included; every piece here is written from scratch.
 
 The showcase film's voiceover was generated with ElevenLabs.
+
+## Recreations credited to 21st.dev authors
+
+95 library pieces are original recreations, written from the public preview, of components published on [21st.dev](https://21st.dev) under the MIT or Apache-2.0 licence. Each piece's `meta.json` has a `credit` block (author, link, licence) and its `SKILL.md` ends with a Credit section. Components whose pages state no licence were not recreated.
+
+## Motion vocabulary and showreel research
+
+- The `motion-moves` skill uses the technique vocabulary that [motionvideo.xyz](https://motionvideo.xyz) catalogues as "Moves"; every explanation and demo here is written from scratch. motionvideo.xyz also publishes an MIT agent skill (github.com/motionvideohq/motionvideo.xyz) and a public catalogue API, which were read for structure only.
+- The `showreel-and-launch-film` skill was informed by the public catalogues of AI-made motion videos on motionvideo.xyz and revid.ai's ranked wall. Nothing from either is copied.
+
+## The showcase film
+
+`docs/media/showcase.mp4` and its preview credit growthkit.net, whose team made this kit, and show that team's own reels and films. Those clips and the G mark are theirs; everything else in the repository stays white-label.

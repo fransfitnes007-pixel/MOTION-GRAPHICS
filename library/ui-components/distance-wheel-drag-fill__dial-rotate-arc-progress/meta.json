@@ -1,0 +1,29 @@
+{
+  "slug": "distance-wheel-drag-fill__dial-rotate-arc-progress",
+  "visual_name": "Distance wheel drag fill",
+  "code_name": "Dial rotate arc progress",
+  "category": "ui-components",
+  "summary": "A finger drags a tick-marked dial around; it rotates with inertia, an outer arc fills proportionally, the km number ticks up and a micro-bounce lands on each 5 km step.",
+  "aliases": [
+    "rotary dial",
+    "distance picker",
+    "goal wheel",
+    "jog dial",
+    "circular slider"
+  ],
+  "tags": [
+    "cursor",
+    "chart",
+    "counter",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "spring-simulation"
+  ],
+  "duration_sec": 7.2,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

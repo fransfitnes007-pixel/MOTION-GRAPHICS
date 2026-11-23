@@ -1,0 +1,37 @@
+{
+  "slug": "ring-of-photo-cards-seen-from-outside__preserve-3d-cylinder-inertia",
+  "visual_name": "Ring of photo cards seen from outside",
+  "code_name": "Preserve-3d cylinder with inertia",
+  "category": "ui-components",
+  "summary": "Ten rounded photo cards stand around an invisible cylinder, front ones large and flat, side ones thin and angled; a drag flicks the ring round and it coasts to a stop.",
+  "tags": [
+    "3d",
+    "carousel",
+    "hover",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "css-3d"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "3d carousel",
+    "photo ring",
+    "cylinder carousel",
+    "3d gallery",
+    "rotating gallery",
+    "image ring"
+  ],
+  "credit": {
+    "idea": "3D Carousel",
+    "author": "cult-ui",
+    "url": "https://21st.dev/@cult-ui/components/3d-carousel",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

@@ -1,0 +1,184 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Phosphor CRT 404 demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#150a10;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.scan{position:absolute;left:0;top:0;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  header: 'PAGE NOT FOUND',
+  big: '404',
+  messages: ['SIGNAL LOST', 'THIS PAGE DRIFTED OFF', 'TRY ANOTHER CHANNEL'], // one per channel
+  button: 'TAKE ME HOME',
+  hint: 'CLICK THE SCREEN TO CHANGE THE CHANNEL',
+  cell: 8,                       // px per phosphor dot on the 1280 x 1040 canvas
+  hot: [255, 139, 187],          // brightest pink
+  mid: [214, 84, 138],           // body pink
+  deep: [96, 40, 68],            // shaded sides of the 404
+  dim: [44, 22, 32],             // unlit dots
+  bg: '#150a10',
+  channelSeconds: 3,             // seconds per channel
+  staticSeconds: 0.5,            // length of the noise burst at each change
+  glow: 0.55,                    // bloom strength
+}
+const CH = CONFIG.messages.length
+const DUR = CH * CONFIG.channelSeconds
+window.DUR = DUR
+const DW = 1280, DH = 1040, U = Math.min(W / DW, H / DH)
+stage.style.background = CONFIG.bg
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, overflow: 'hidden', background: CONFIG.bg })
+const C = CONFIG.cell, GW = DW / C, GH = DH / C
+const cv = document.createElement('canvas'); cv.width = DW; cv.height = DH; root.appendChild(cv); S(cv, { position: 'absolute', left: 0, top: 0 })
+const g = cv.getContext('2d')
+const fb = document.createElement('canvas'); fb.width = GW; fb.height = GH
+const f = fb.getContext('2d', { willReadFrequently: true })
+const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`
+const hint = el('div', 'abs', root, CONFIG.hint); S(hint, { right: '22px', top: '18px', font: '10px ui-monospace,Menlo,monospace', letterSpacing: '.26em', color: 'rgba(214,84,138,.55)' })
+const scan = el('div', 'scan', root); S(scan, { width: DW + 'px', height: DH + 'px', background: 'repeating-linear-gradient(180deg,rgba(0,0,0,.16) 0 2px,transparent 2px 4px),radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)' })
+
+// 5x7 bitmap font
+const FONT = { A: '01110 10001 10001 11111 10001 10001 10001', B: '11110 10001 10001 11110 10001 10001 11110', C: '01110 10001 10000 10000 10000 10001 01110', D: '11110 10001 10001 10001 10001 10001 11110', E: '11111 10000 10000 11110 10000 10000 11111', F: '11111 10000 10000 11110 10000 10000 10000', G: '01110 10001 10000 10111 10001 10001 01111', H: '10001 10001 10001 11111 10001 10001 10001', I: '01110 00100 00100 00100 00100 00100 01110', J: '00111 00010 00010 00010 00010 10010 01100', K: '10001 10010 10100 11000 10100 10010 10001', L: '10000 10000 10000 10000 10000 10000 11111', M: '10001 11011 10101 10101 10001 10001 10001', N: '10001 11001 10101 10011 10001 10001 10001', O: '01110 10001 10001 10001 10001 10001 01110', P: '11110 10001 10001 11110 10000 10000 10000', Q: '01110 10001 10001 10001 10101 10010 01101', R: '11110 10001 10001 11110 10100 10010 10001', S: '01111 10000 10000 01110 00001 00001 11110', T: '11111 00100 00100 00100 00100 00100 00100', U: '10001 10001 10001 10001 10001 10001 01110', V: '10001 10001 10001 10001 10001 01010 00100', W: '10001 10001 10001 10101 10101 11011 10001', X: '10001 10001 01010 00100 01010 10001 10001', Y: '10001 10001 01010 00100 00100 00100 00100', Z: '11111 00001 00010 00100 01000 10000 11111', '0': '01110 10001 10011 10101 11001 10001 01110', '1': '00100 01100 00100 00100 00100 00100 01110', '2': '01110 10001 00001 00010 00100 01000 11111', '3': '11110 00001 00001 01110 00001 00001 11110', '4': '00010 00110 01010 10010 11111 00010 00010', '5': '11111 10000 11110 00001 00001 10001 01110', '.': '00000 00000 00000 00000 00000 01100 01100', '!': '00100 00100 00100 00100 00100 00000 00100', '?': '01110 10001 00001 00110 00100 00000 00100', ' ': '00000 00000 00000 00000 00000 00000 00000' }
+const GL = {}; for (const k in FONT) GL[k] = FONT[k].split(' ')
+const textW = (s) => s.length * 6 - 1
+const pixText = (s, cx, y, col, a = 1) => { let x = Math.round(cx - textW(s) / 2); f.fillStyle = rgb(col, a); for (const ch of s) { const gl = GL[ch] || GL[' ']; for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++) if (gl[r][c] === '1') f.fillRect(x + c, y + r, 1, 1); x += 6 } }
+const sprite = (rows, x, y, col, a = 1) => { f.fillStyle = rgb(col, a); rows.forEach((row, r) => { for (let c = 0; c < row.length; c++) if (row[c] === '1') f.fillRect(x + c, y + r, 1, 1) }) }
+const HEART = ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000']
+const NOTE = ['00011', '00011', '00010', '00010', '01110', '11110', '01100'].map((s) => s)
+const NOTE2 = ['0111110', '0100010', '0100010', '0100010', '1100110', '1100110']
+const CLEF = ['00110', '01001', '01010', '00100', '01100', '10110', '10101', '10101', '01110', '00100']
+const hashN = (a, b, c) => { const x = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453; return x - Math.floor(x) }
+const bump = (t, a, b, ff = .35) => eo(seg(t, a, a + ff)) * (1 - eo(seg(t, b, b + ff)))
+const along = (pts, t) => {
+  if (t <= pts[0][0]) return [pts[0][1], pts[0][2]]
+  for (let i = 0; i < pts.length - 1; i++) if (t < pts[i + 1][0]) { const u = eio(seg(t, pts[i][0], pts[i + 1][0])); return [lerp(pts[i][1], pts[i + 1][1], u), lerp(pts[i][2], pts[i + 1][2], u)] }
+  const l = pts[pts.length - 1]; return [l[1], l[2]]
+}
+// pointer path in canvas px
+const PATH = [[0, 520, 380], [0.8, 620, 330], [2.0, 660, 470], [3.0, 760, 420], [4.2, 1000, 330], [5.4, 900, 380], [6.0, 700, 500], [7.0, 640, 830], [8.7, 660, 840], [9, 560, 400]]
+
+function drawDigit(ch, x, y, lit) {
+  const body = (dx, dy, col) => {
+    f.fillStyle = rgb(col); f.save(); f.translate(x + dx, y + dy)
+    if (ch === '0') { f.beginPath(); f.moveTo(3, 0); f.lineTo(25, 0); f.lineTo(28, 3); f.lineTo(28, 33); f.lineTo(25, 36); f.lineTo(3, 36); f.lineTo(0, 33); f.lineTo(0, 3); f.closePath(); f.moveTo(10, 9); f.lineTo(10, 27); f.lineTo(18, 27); f.lineTo(18, 9); f.closePath(); f.fill('evenodd') }
+    else { f.beginPath(); f.moveTo(17, 0); f.lineTo(28, 0); f.lineTo(28, 23); f.lineTo(28, 23); f.lineTo(28, 32); f.lineTo(27, 32); f.lineTo(27, 36); f.lineTo(17, 36); f.lineTo(17, 32); f.lineTo(0, 32); f.lineTo(0, 23); f.lineTo(9, 0); f.closePath(); f.moveTo(17, 9); f.lineTo(10, 23); f.lineTo(17, 23); f.closePath(); f.fill('evenodd') }
+    f.restore()
+  }
+  for (let k = 5; k >= 1; k--) body(-k * .8, k, CONFIG.deep)
+  body(0, 0, lit)
+}
+
+function render(t) {
+  const ch = Math.floor(t / CONFIG.channelSeconds) % CH, lt = t - Math.floor(t / CONFIG.channelSeconds) * CONFIG.channelSeconds
+  const noise = 1 - eo(seg(lt, 0, CONFIG.staticSeconds))
+  const hov = bump(t, 7.0, 8.7)
+  const fi = Math.floor(t * 24)
+  f.clearRect(0, 0, GW, GH)
+  const hot = CONFIG.hot, mid = CONFIG.mid
+  // header with double rules
+  const hy = 7
+  pixText(CONFIG.header, GW / 2, hy, hot)
+  const hw = textW(CONFIG.header) / 2
+  f.fillStyle = rgb(mid); f.fillRect(GW / 2 - hw - 14, hy + 2, 10, 1); f.fillRect(GW / 2 - hw - 14, hy + 5, 10, 1); f.fillRect(GW / 2 + hw + 4, hy + 2, 10, 1); f.fillRect(GW / 2 + hw + 4, hy + 5, 10, 1)
+  // 404
+  const bx = GW / 2 - 50, by = 18
+  const lit = [hot[0] * .92, hot[1] * .72, hot[2] * .8].map(Math.round)
+  for (let i = 0; i < 3; i++) drawDigit(CONFIG.big[i], bx + i * 36, by, lit)
+  // glint sweeping over the digits
+  f.save(); f.globalCompositeOperation = 'source-atop'; const gx = bx - 20 + ((t * 18) % 160); f.fillStyle = 'rgba(255,200,225,.5)'; f.beginPath(); f.moveTo(gx, by); f.lineTo(gx + 6, by); f.lineTo(gx - 6, by + 42); f.lineTo(gx - 12, by + 42); f.closePath(); f.fill(); f.restore()
+  // notes and clefs, bobbing
+  const bob = (i) => Math.round(Math.sin(t * 2.2 + i * 1.7) * 1.4)
+  sprite(CLEF, 24, 26 + bob(0), mid); sprite(NOTE, 12, 38 + bob(1), mid); sprite(NOTE2, 18, 54 + bob(2), mid)
+  sprite(NOTE, 136, 24 + bob(3), mid); sprite(NOTE2, 143, 40 + bob(4), mid); sprite(CLEF, 132, 58 + bob(5), mid)
+  // status line
+  const msg = CONFIG.messages[ch]
+  pixText(msg, GW / 2, 69, hot)
+  sprite(HEART, Math.round(GW / 2 - textW(msg) / 2 - 12), 70, hot); sprite(HEART, Math.round(GW / 2 + textW(msg) / 2 + 5), 70, hot)
+  // palms
+  const palm = (bx0, by0, tx, ty, dir, s) => {
+    f.strokeStyle = rgb(mid, .95); f.lineWidth = 1.6 * s; f.beginPath(); f.moveTo(bx0, by0); f.quadraticCurveTo((bx0 + tx) / 2 + dir * 6 * s, (by0 + ty) / 2, tx, ty); f.stroke()
+    f.strokeStyle = rgb(hot, .95); f.lineWidth = 1.5
+    for (let k = 0; k < 7; k++) { const a = -Math.PI * (.05 + k * .15) * dir + (dir < 0 ? Math.PI : 0) * 0; const L = 22 * s; const sway = Math.sin(t * 1.3 + k + dir) * .8
+      const ex = tx + Math.cos(Math.PI + dir * (.2 + k * .5) * (dir > 0 ? -1 : 1) * (dir > 0 ? 1 : 1)) * L * (k % 2 ? .85 : 1)
+      const ang = (k - 3) * .5 + (dir > 0 ? 0 : 0)
+      f.beginPath(); f.moveTo(tx, ty); f.quadraticCurveTo(tx + Math.sin(ang) * L * .7, ty - Math.cos(ang) * L * .5 - 2, tx + Math.sin(ang) * L * 1.05 + sway, ty - Math.cos(ang) * L * .35 + 11 * Math.abs(Math.sin(ang))); f.stroke() }
+  }
+  palm(32, 130, 40, 94, 1, 1); palm(128, 130, 120, 94, -1, 1); palm(9, 130, 14, 108, 1, .7); palm(152, 130, 148, 108, -1, .7)
+  // pyramid
+  const py = 92
+  const pl = lerp(1.0, 1.25, hov)
+  const grad = f.createLinearGradient(0, py, 0, 130); grad.addColorStop(0, rgb(mid.map((v) => Math.min(255, v * pl * 1.1)), .98)); grad.addColorStop(1, rgb(mid.map((v) => v * pl * .8), .98))
+  f.fillStyle = grad; f.beginPath(); f.moveTo(58, py); f.lineTo(102, py); f.lineTo(128, 132); f.lineTo(32, 132); f.closePath(); f.fill()
+  f.fillStyle = rgb(hot, .18 + .25 * hov); f.beginPath(); f.moveTo(58, py); f.lineTo(80, py); f.lineTo(70, 132); f.lineTo(32, 132); f.closePath(); f.fill()
+  const btn = CONFIG.button
+  pixText(btn, GW / 2, 108, hov > .5 ? [60, 14, 36] : [64, 22, 40], 1)
+  if (hov > .3) { f.fillStyle = rgb([60, 14, 36], hov); for (let r = 0; r < 5; r++) { f.fillRect(Math.round(GW / 2 - textW(btn) / 2 - 8 + (r < 3 ? r : 4 - r)), 108 + 1 + r, 1, 1); f.fillRect(Math.round(GW / 2 + textW(btn) / 2 + 6 - (r < 3 ? r : 4 - r)), 108 + 1 + r, 1, 1) } }
+  // clouds
+  f.fillStyle = rgb([255, 150, 192], .8); ;[[6, 129, 9], [20, 131, 8], [138, 131, 9], [152, 129, 9], [36, 135, 12], [128, 135, 12]].forEach(([x, y, r]) => { f.beginPath(); f.arc(x, y, r, 0, 7); f.fill() })
+  // stars
+  for (let i = 0; i < 12; i++) { const x = Math.floor(hashN(i, 1, 9) * GW), y = Math.floor(hashN(i, 2, 9) * 90); const tw = .5 + .5 * Math.sin(t * 3 + i * 2); f.fillStyle = rgb(hot, .15 + .5 * tw * (hashN(i, 3, 9) > .5 ? 1 : .4)); f.fillRect(x, y, 1, 1) }
+  // static burst: noise cells replace the picture, with horizontal tearing
+  const img = f.getImageData(0, 0, GW, GH).data
+  g.fillStyle = CONFIG.bg; g.fillRect(0, 0, DW, DH)
+  const dim = CONFIG.dim
+  for (let y = 0; y < GH; y++) {
+    const tear = noise > .02 && hashN(y, fi, 5) > .93 ? Math.round((hashN(y, fi, 6) - .5) * 36 * noise) : 0
+    for (let x = 0; x < GW; x++) {
+      let sx = x + tear; if (sx < 0 || sx >= GW) sx = x
+      const o = (y * GW + sx) * 4
+      let a = img[o + 3] / 255, r = img[o], gg = img[o + 1], b = img[o + 2]
+      if (noise > .02) { const n = hashN(x, y, fi); const on = n > .5 ? (n - .5) * 2 : 0; const m = Math.min(1, noise * 1.1); a = lerp(a, on, m); const k = hot; r = lerp(r, k[0], m); gg = lerp(gg, k[1], m); b = lerp(b, k[2], m) }
+      const cx = x * C + C / 2, cy = y * C + C / 2
+      g.fillStyle = a > .04 ? `rgb(${Math.round(lerp(dim[0], r, Math.min(1, a * 1.15)))},${Math.round(lerp(dim[1], gg, Math.min(1, a * 1.15)))},${Math.round(lerp(dim[2], b, Math.min(1, a * 1.15)))})` : `rgb(${dim[0]},${dim[1]},${dim[2]})`
+      const rad = C * (.2 + .27 * Math.min(1, a))
+      g.beginPath(); g.arc(cx, cy, rad, 0, 6.2832); g.fill()
+    }
+  }
+  // bloom
+  g.save(); g.globalCompositeOperation = 'lighter'; g.filter = 'blur(9px)'; g.globalAlpha = CONFIG.glow; g.drawImage(cv, 0, 0); g.restore()
+  // pointer comet
+  const [px, py2] = along(PATH, t), [qx, qy] = along(PATH, Math.max(0, t - .22))
+  const lg = g.createLinearGradient(px, py2, qx, qy); lg.addColorStop(0, 'rgba(255,215,235,.75)'); lg.addColorStop(1, 'rgba(255,215,235,0)')
+  g.save(); g.strokeStyle = lg; g.lineWidth = 12; g.lineCap = 'round'; g.beginPath(); g.moveTo(px, py2); g.lineTo(qx, qy); g.stroke(); g.restore()
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(px, py2, 5, 0, 6.2832); g.fill()
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

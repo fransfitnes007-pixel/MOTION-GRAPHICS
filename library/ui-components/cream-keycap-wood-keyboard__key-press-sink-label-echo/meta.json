@@ -1,0 +1,36 @@
+{
+  "slug": "cream-keycap-wood-keyboard__key-press-sink-label-echo",
+  "visual_name": "Cream keycap wood keyboard",
+  "code_name": "Key press sink, label echo",
+  "category": "ui-components",
+  "summary": "A 60 percent keyboard with cream keycaps in a walnut case; each key you hit sinks and the letter shows above it.",
+  "tags": [
+    "hover",
+    "hero",
+    "light",
+    "form",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "css"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "vintage keyboard",
+    "keyboard",
+    "wooden keyboard",
+    "keycaps",
+    "typewriter keys",
+    "press any key"
+  ],
+  "credit": {
+    "idea": "Vintage Keyboard",
+    "author": "ayushmxxn",
+    "url": "https://21st.dev/@ayushmxxn/components/vintage-keyboard",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

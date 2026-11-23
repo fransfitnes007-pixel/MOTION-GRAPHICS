@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Aurora credit card tile</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#050506;color:#fff}
+.tile{position:absolute;left:0;top:0;width:426px;height:592px;border-radius:38px;background:#0a0a0c;border:1.5px solid #1b1b20}
+.ttl{position:absolute;left:32px;top:32px;font-size:28px;line-height:32px;font-weight:600;letter-spacing:-.015em;width:260px}
+.xp{position:absolute;left:346px;top:32px;width:48px;height:48px;border-radius:13px;display:grid;place-items:center}
+.cardw{position:absolute;left:81px;top:128px;width:270px;height:423px;perspective:900px}
+.card{position:absolute;inset:0;border-radius:22px;overflow:hidden;transform-style:preserve-3d;box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.flow{position:absolute;left:-30%;width:160%;transform-origin:50% 50%}
+.streak{position:absolute;left:-30%;width:160%;height:16px;transform-origin:50% 50%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75) 30%,rgba(255,255,255,.95) 60%,rgba(255,255,255,0));filter:blur(3px);mix-blend-mode:screen}
+.chip{position:absolute;left:145px;top:58px;width:39px;height:52px;border-radius:9px;background:linear-gradient(145deg,#fafafa,#cfcfd6)}
+.nfc{position:absolute;left:197px;top:74px}
+.mc{position:absolute;top:370px;width:27px;height:27px;border-radius:50%}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'Launch a card programme',
+  colors: ['#ff7ac1', '#a06bff', '#4f46e5', '#22d3ee', '#4ade80', '#ffb26b'],   // the six aurora bands, top to bottom, then it repeats
+  glow: '#a06bff',            // expand button and border highlight
+  flowSec: 12,                // seconds for the bands to flow through one full cycle
+  streakSec: 9,               // seconds for the light streak to sweep down and back
+  tiltDeg: 6,                 // maximum card tilt towards the cursor
+  bandAngle: -8,              // slant of the colour bands (degrees)
+  hoverFrom: 2.0, hoverTo: 10.4,   // when the cursor is over the tile (button turns purple)
+}
+const DUR = 12
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const box = fitBox(426, 592, .86)
+const tile = el('div', 'tile', box)
+el('div', 'ttl', tile, CONFIG.title)
+const xp = el('div', 'xp', tile, '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>')
+const cw = el('div', 'cardw', tile); const card = el('div', 'card', cw)
+// flowing colour bands: two identical periods stacked, moved up by one period over flowSec so it loops
+const cs = CONFIG.colors, n = cs.length
+const stops = []; for (let rep = 0; rep < 2; rep++) cs.forEach((c, i) => stops.push(`${c} ${((rep * n + i) / (2 * n) * 100).toFixed(2)}%`)); stops.push(`${cs[0]} 100%`)
+const flow = el('div', 'flow', card); const FH = 423
+S(flow, { top: '0', height: FH * 2 + 'px', background: `linear-gradient(180deg,${stops.join(',')})`, transform: 'rotate(' + CONFIG.bandAngle + 'deg)' })
+// soft darkening at the bottom and a pale top-left sheen, like the original card
+const sh = el('div', 'abs', card); S(sh, { inset: '0', background: 'linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 22%,rgba(0,0,0,0) 62%,rgba(20,10,40,.62) 100%)' })
+const streak = el('div', 'streak', card)
+el('div', 'chip', card, '<svg width="39" height="52" viewBox="0 0 39 52" fill="none" stroke="#8d8d96" stroke-width="1.2"><path d="M0 18h39M0 34h39M13 0v52M26 0v52"/><rect x="11" y="16" width="17" height="20" rx="5"/></svg>')
+el('div', 'nfc', card, '<svg width="26" height="32" viewBox="0 0 26 32" fill="none" stroke="#e9e9f5" stroke-width="2.4" stroke-linecap="round"><path d="M4 11c3 3 3 7 0 10M10 7c5 5 5 13 0 18M16 3c7 7 7 19 0 26"/></svg>')
+const m1 = el('div', 'mc', card); S(m1, { left: '203px', background: '#fff' }); const m2 = el('div', 'mc', card); S(m2, { left: '218px', background: 'rgba(255,255,255,.5)' })
+const cur = makeCursor(box)
+// cursor path over the tile (tile coordinates)
+const cp = [[0, 500, 620], [1.6, 440, 560], [2.0, 330, 360], [3.0, 330, 360], [4.2, 250, 300], [5.2, 230, 420], [6.2, 290, 520], [7.2, 340, 400], [8.2, 310, 250], [9.2, 330, 390], [10.4, 430, 560], [DUR, 500, 620]]
+function render(t) {
+  const [cx, cy] = kfp(t, cp, eio)
+  const inside = t >= CONFIG.hoverFrom && t <= CONFIG.hoverTo
+  const hv = inside ? eo(clamp((t - CONFIG.hoverFrom) / .25)) * (1 - eo(clamp((t - CONFIG.hoverTo + .25) / .25))) : 0
+  // tilt follows the cursor with the card centred at (216, 340)
+  const dx = clamp((cx - 216) / 135, -1.2, 1.2), dy = clamp((cy - 340) / 211, -1.2, 1.2)
+  S(card, { transform: `rotateY(${dx * CONFIG.tiltDeg * hv}deg) rotateX(${-dy * CONFIG.tiltDeg * hv}deg) scale(${1 + .015 * hv})` })
+  // bands flow upward by one period
+  const ph = (t / CONFIG.flowSec) % 1
+  S(flow, { transform: `translateY(${-ph * FH}px) rotate(${CONFIG.bandAngle}deg)` })
+  // streak: slides down then back, slanted the opposite way, and nudges with the tilt
+  const sp = .5 - .5 * Math.cos((t / CONFIG.streakSec) * 2 * Math.PI)
+  S(streak, { top: px(150 + sp * 230 + dy * 20 * hv), transform: `rotate(-22deg)`, opacity: .55 + .3 * hv })
+  S(xp, { background: hv > 0 ? `rgb(${lerp(36, 160, hv) | 0},${lerp(36, 107, hv) | 0},${lerp(42, 255, hv) | 0})` : '#24242a' })
+  S(tile, { borderColor: hv > 0 ? `rgb(${lerp(27, 150, hv) | 0},${lerp(27, 130, hv) | 0},${lerp(32, 235, hv) | 0})` : '#1b1b20' })
+  setCursor(cur, cx, cy, false, t > .3 && t < DUR - .3)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

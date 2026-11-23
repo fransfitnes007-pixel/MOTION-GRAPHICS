@@ -1,0 +1,29 @@
+{
+  "slug": "flag-circle-shuffle-spin__ring-of-badges-rotate-settle",
+  "visual_name": "Flag circle shuffle spin",
+  "code_name": "Ring of badges rotate settle",
+  "category": "ui-components",
+  "summary": "A ring of 12 round flag-style badges spins with momentum on a tap, shuffles positions, and the one landing at the top scales up with a glow and a name label.",
+  "aliases": [
+    "spinning flags",
+    "country wheel",
+    "badge ring spin",
+    "shuffle wheel",
+    "random picker"
+  ],
+  "tags": [
+    "3d",
+    "dark",
+    "card",
+    "carousel"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "seeded-permutation"
+  ],
+  "duration_sec": 6.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

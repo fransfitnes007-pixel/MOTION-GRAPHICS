@@ -1,0 +1,26 @@
+{
+  "slug": "whip-pan-transition__directional-blur-cut",
+  "visual_name": "Whip pan directional blur cut",
+  "code_name": "Horizontal blur at peak speed",
+  "category": "motion-graphics",
+  "summary": "Two full-frame scenes sit side by side; the camera whips sideways with a strong ease-in-out and a horizontal-only blur that peaks mid-move, hiding the cut between scene one and scene two and back.",
+  "aliases": [
+    "whip pan",
+    "swish pan",
+    "blur transition",
+    "fast pan cut",
+    "camera swipe transition"
+  ],
+  "tags": [
+    "transition",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg-filter",
+    "gaussian-blur"
+  ],
+  "duration_sec": 5.8,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.c{position:absolute;border:1px solid #e5e7eb;border-radius:24px;padding:12px;background:#fff}
+.in{position:relative;height:100%;border-radius:12px;border:.75px solid #eef0f2;padding:24px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:#fff}
+.ico{width:34px;height:34px;border:1px solid #e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.in h3{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.04em;color:#0a0a0a;text-wrap:balance;padding-top:2px}
+.in p{font-size:16px;line-height:22px;color:#737373;margin-top:12px}
+.ring{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;border:3px solid transparent;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.arc{position:absolute;inset:-3px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  spread: 40,            // half-width of the lit arc in degrees
+  proximity: 64,         // px outside a card where the pointer still wakes its glow
+  inactiveZone: .01,     // fraction of the card's smaller side around its centre where the glow sleeps
+  borderWidth: 3,        // px thickness of the glowing edge
+  follow: .35,           // seconds for the arc to catch up with the pointer angle
+  fade: .3,              // seconds for the glow to fade in and out
+  pad: 24, gap: 16,      // canvas padding and gap between cards
+  // colour blobs that the arc reveals; edit to recolour
+  gradient: 'radial-gradient(circle,#dd7bbb 10%,#dd7bbb00 20%),radial-gradient(circle at 40% 40%,#d79f1e 5%,#d79f1e00 15%),radial-gradient(circle at 60% 60%,#5a922c 10%,#5a922c00 20%),radial-gradient(circle at 40% 60%,#4c7894 10%,#4c789400 20%),conic-gradient(from 236deg at 50% 50%,#dd7bbb,#d79f1e,#5a922c,#4c7894,#dd7bbb)',
+  cards: [   // [grid col start, col end, row start, row end, title, text, icon path]
+    [1, 5, 1, 2, 'Do things the right way', "Running out of copy so I'll write anything.", '<path d="M21 8l-9-5-9 5v8l9 5 9-5zM3.3 7L12 12l8.7-5M12 22V12"/>'],
+    [1, 5, 2, 3, 'The best AI code editor ever.', "Yes, it's true. I'm not even kidding. Ask my mom if you don't believe me.", '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'],
+    [5, 8, 1, 3, 'You should buy Aceternity UI Pro', "It's the best money you'll ever spend", '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'],
+    [8, 13, 1, 2, 'This card is also built by Cursor', "I'm not even kidding. Ask my mom if you don't believe me.", '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>'],
+    [8, 13, 2, 3, 'Coming soon on Aceternity UI', "I'm writing the code as I record this, no shit.", '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'],
+  ],
+}
+const DUR = 8
+window.DUR = DUR
+const colW = (1280 - 2 * CONFIG.pad - 11 * CONFIG.gap) / 12, rowH = (800 - 2 * CONFIG.pad - CONFIG.gap) / 2
+const cards = CONFIG.cards.map(([c0, c1, r0, r1, title, text, ico]) => {
+  const x = CONFIG.pad + (c0 - 1) * (colW + CONFIG.gap), y = CONFIG.pad + (r0 - 1) * (rowH + CONFIG.gap)
+  const w = (c1 - c0) * colW + (c1 - c0 - 1) * CONFIG.gap, h = (r1 - r0) * rowH + (r1 - r0 - 1) * CONFIG.gap
+  const e = el('div', 'c', root, `<div class="in"><div class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></div><div><h3>${title}</h3><p>${text}</p></div></div>`)
+  S(e, { left: px(x), top: px(y), width: px(w), height: px(h) })
+  const ring = el('div', 'ring', e); S(ring, { borderWidth: CONFIG.borderWidth + 'px' }); const arc = el('div', 'arc', ring); S(arc, { background: CONFIG.gradient })
+  return { e, ring, arc, x, y, w, h, cx: x + w / 2, cy: y + h / 2 }
+})
+const P = [[0, 1180, 90, 0], [1.0, 1180, 90, 0], [1.9, 860, 210, 0], [3.0, 610, 520, 0], [4.0, 300, 590, 0], [5.0, 160, 230, 0], [6.0, 330, 15, 0], [7.0, 760, 785, 0], [8, 1180, 90, 0]]
+// arc angle per card: ease toward the pointer angle (shortest way round), integrated at a fixed step so render(t) stays pure
+const STEP = 1 / 120, M = Math.ceil(DUR / STEP) + 1
+cards.forEach((k) => { k.ang = new Float32Array(M); k.act = new Float32Array(M); let a = 0, act = 0, init = false
+  for (let i = 0; i < M; i++) { const t = i * STEP, c = cursorAt(t, P)
+    const inside = c.x > k.x - CONFIG.proximity && c.x < k.x + k.w + CONFIG.proximity && c.y > k.y - CONFIG.proximity && c.y < k.y + k.h + CONFIG.proximity
+    const dx = c.x - k.cx, dy = c.y - k.cy, dist = Math.hypot(dx, dy), dead = dist < .5 * Math.min(k.w, k.h) * CONFIG.inactiveZone
+    const on = inside && !dead
+    let tgt = (Math.atan2(dy, dx) * 180 / Math.PI) + 90
+    if (!init) { a = tgt; init = true }
+    if (on) { let d = ((tgt - a) % 360 + 540) % 360 - 180; a += d * (1 - Math.exp(-STEP / CONFIG.follow)) }
+    act += ((on ? 1 : 0) - act) * (1 - Math.exp(-STEP / (CONFIG.fade * .5)))
+    k.ang[i] = a; k.act[i] = act } })
+function render(t) {
+  const i = Math.min(M - 1, Math.round(t / STEP))
+  cards.forEach((k) => {
+    const a = k.ang[i], s = CONFIG.spread
+    S(k.ring, { opacity: k.act[i] })
+    S(k.arc, { WebkitMaskImage: `conic-gradient(from ${a - s}deg,#0000 0deg,#000 ${s}deg,#0000 ${s * 2}deg)`, maskImage: `conic-gradient(from ${a - s}deg,#0000 0deg,#000 ${s}deg,#0000 ${s * 2}deg)` })
+  })
+  putCursor(cursorAt(t, P))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

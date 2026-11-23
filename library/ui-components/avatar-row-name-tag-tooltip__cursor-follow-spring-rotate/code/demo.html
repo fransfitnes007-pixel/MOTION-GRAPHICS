@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fafafa;color:#111}
+.dots{position:absolute;inset:0;background-image:radial-gradient(#d4d4d8 1.6px,transparent 1.7px);background-size:64px 64px;background-position:32px 32px}
+.row{position:absolute;left:0;top:0}
+.av{position:absolute;border-radius:50%;border:2px solid #fff;overflow:hidden;box-sizing:content-box}
+.tip{position:absolute;left:0;top:0;width:150px;margin-left:-75px;background:#000;border-radius:7px;padding:8px 16px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,.3);white-space:nowrap;z-index:50}
+.tip b{display:block;color:#fff;font:700 16px/22px -apple-system,system-ui,sans-serif;position:relative}
+.tip small{display:block;color:#fff;font:400 12px/16px -apple-system,system-ui,sans-serif}
+.tip i{position:absolute;bottom:-1px;height:1px;left:40px;right:40px;background:linear-gradient(90deg,transparent,#10b981,transparent);width:20%}
+.tip u{position:absolute;bottom:-1px;height:1px;left:40px;background:linear-gradient(90deg,transparent,#0ea5e9,transparent);width:40%;left:56px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  scale: 3.0,             // size of the avatar row on the 1280x800 canvas
+  size: 56, pitch: 40,    // avatar diameter and centre-to-centre spacing (so 16px overlap)
+  people: [['John Doe', 'Software Engineer', ['#e8b890', '#d9c8b4', '#7a5a3a']], ['Robert Johnson', 'Product Manager', ['#d6a98a', '#aab8c8', '#2d3340']], ['Jane Smith', 'Data Scientist', ['#efc9b0', '#d8cfc8', '#3a2a24']], ['Emily Davis', 'UX Designer', ['#f0c4a6', '#9fc3d6', '#8a4a2a']], ['Tyler Durden', 'Soap Developer', ['#d9a47e', '#c8c8c8', '#4a4a4a']], ['Dora', 'The Explorer', ['#e3b08c', '#f3dede', '#2b1a14']]],
+  spring: { k: 100, c: 5 },          // the follow spring for tilt and slide: stiffness 100, damping 5 rings for about a second
+  tilt: 45, slide: 50, range: 100,   // at +-range px from the avatar centre: +-tilt degrees and +-slide px
+  enterK: 6.5, enterF: 12,           // pop-in spring for the tag
+}
+const DUR = 8
+window.DUR = DUR
+el('div', 'dots', root)
+const sc = CONFIG.scale, N = CONFIG.people.length
+const rowW = (N - 1) * CONFIG.pitch + CONFIG.size + 4
+const row = el('div', 'row', root); S(row, { left: px(640 - rowW * sc / 2), top: px(470), transform: `scale(${sc})`, transformOrigin: '0 0' })
+const rx0 = 640 - rowW * sc / 2, ry0 = 470
+const face = ([skin, bg, hair]) => `<svg width="${CONFIG.size}" height="${CONFIG.size}" viewBox="0 0 56 56"><rect width="56" height="56" fill="${bg}"/><path d="M6 58c0-13 10-18 22-18s22 5 22 18z" fill="${hair}" opacity=".85"/><circle cx="28" cy="24" r="11" fill="${skin}"/><path d="M16 22c1-11 23-12 24 0-6-4-17-4-24 0z" fill="${hair}"/></svg>`
+const avs = CONFIG.people.map((p, i) => { const e = el('div', 'av', row, face(p[2])); S(e, { width: CONFIG.size + 'px', height: CONFIG.size + 'px', left: px(i * CONFIG.pitch), top: '0' }); return e })
+// tag elements (one per person, only the hovered one shows)
+const tips = CONFIG.people.map((p) => { const e = el('div', 'tip', root, `<b>${p[0]}</b><small>${p[1]}</small><i></i><u></u>`); S(e, { display: 'none' }); return e })
+// scripted pointer path in canvas space, avatar index follows from x
+const cxOf = (i) => rx0 + (i * CONFIG.pitch + (CONFIG.size + 4) / 2) * sc, cy = ry0 + (CONFIG.size + 4) / 2 * sc
+const P = [[0, 1100, 700, 0], [.5, 1100, 700, 0], [1.0, cxOf(0) - 20, cy, 0], [1.9, cxOf(0) + 25, cy, 0], [2.4, cxOf(1) - 30, cy, 0], [3.2, cxOf(1) + 30, cy, 0], [3.6, cxOf(2) + 5, cy, 0], [4.2, cxOf(2) - 35, cy, 0], [4.8, cxOf(3) + 20, cy, 0], [5.6, cxOf(3) - 25, cy, 0], [6.0, cxOf(5) + 15, cy, 0], [6.9, cxOf(4) - 10, cy, 0], [7.4, 1100, 700, 0], [8, 1100, 700, 0]]
+const hoverAt = (t) => { const c = cursorAt(t, P); const inside = c.y > ry0 && c.y < ry0 + (CONFIG.size + 4) * sc && c.x > rx0 && c.x < rx0 + rowW * sc; if (!inside) return null; return Math.min(N - 1, Math.floor((c.x - rx0) / (CONFIG.pitch * sc))) }
+const offsetX = (t) => { const c = cursorAt(t, P), i = hoverAt(t); if (i === null) return null; return (c.x - rx0) / sc - i * CONFIG.pitch - (CONFIG.size + 4) / 2 }
+// springs integrated once at a fixed 240 steps/s so render(t) stays a pure lookup
+const STEP = 1 / 240, M = Math.ceil(DUR / STEP) + 1
+const tgt = new Float32Array(M), rot = new Float32Array(M), tx = new Float32Array(M)
+{ let xs = 0, r = 0, rv = 0, a = 0, av = 0; for (let i = 0; i < M; i++) { const t = i * STEP; const ox = offsetX(t); if (ox !== null) xs = ox; tgt[i] = xs
+  const tr = clamp(xs / CONFIG.range, -1, 1) * CONFIG.tilt, ta = clamp(xs / CONFIG.range, -1, 1) * CONFIG.slide
+  rv += (-CONFIG.spring.k * (r - tr) - CONFIG.spring.c * rv) * STEP; r += rv * STEP
+  av += (-CONFIG.spring.k * (a - ta) - CONFIG.spring.c * av) * STEP; a += av * STEP; rot[i] = r; tx[i] = a } }
+// when hover changes, find the moment the current hover began
+const hoverStart = (t) => { const h = hoverAt(t); if (h === null) return null; let s = t; for (let u = t; u >= 0; u -= .02) { if (hoverAt(u) !== h) break; s = u } return s }
+function render(t) {
+  const h = hoverAt(t), i = Math.min(M - 1, Math.round(t / STEP))
+  avs.forEach((e, k) => { S(e, { transform: `scale(${k === h ? 1.05 : 1})`, zIndex: k === h ? 30 : 1 }) })
+  tips.forEach((e, k) => {
+    let a = 0, s = 0
+    if (k === h) { const t0 = hoverStart(t); a = spring(seg(t - t0, 0, .5), CONFIG.enterK, CONFIG.enterF); s = 1 }
+    else { // fade the tag out for a moment after the pointer leaves its avatar
+      let last = null; for (let u = t; u >= Math.max(0, t - .3); u -= .02) if (hoverAt(u) === k) { last = u; break }
+      if (last !== null) { const f = seg(t - last, 0, .22); a = 1 - f; s = 1 } }
+    if (!s || a <= 0.001) { vis(e, false); return }
+    vis(e, true)
+    const o = clamp(a, 0, 1.15)
+    S(e, { left: px(cxOf(k)), top: px(ry0 - 12 * sc - 52), transformOrigin: '50% 100%', opacity: clamp(a, 0, 1), transform: `translateX(${tx[i] * sc}px) translateY(${(1 - o) * 20 * sc}px) rotate(${rot[i]}deg) scale(${sc * (.6 + .4 * o)})` })
+  })
+  putCursor(cursorAt(t, P))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

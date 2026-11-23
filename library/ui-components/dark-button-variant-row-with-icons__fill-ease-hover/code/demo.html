@@ -1,0 +1,118 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0a;color:#fafafa;font-family:'Inter',-apple-system,'SF Pro Text',system-ui,sans-serif}
+.b{position:absolute;display:flex;align-items:center;justify-content:center;gap:10px;font-size:19px;font-weight:500;white-space:nowrap;box-sizing:border-box}
+.cur{position:absolute;left:0;top:0;width:28px;height:28px;pointer-events:none}
+svg{display:block;flex:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Button set on dark: primary, secondary, tertiary (outline), ghost icon, small icon and large icon buttons. A scripted cursor hovers each one; the fill eases to its hover colour. Then Add item is clicked and shows a spinner (the loading state named in the page description; it is not in the preview clip).
+const CONFIG = {
+  gap: 16, Z: 1,                           // px between buttons and an overall size multiplier
+  buttons: [
+    { key: 'add',   label: 'Add item', icon: 'plus',   pos: 'lead',  variant: 'primary',   w: 139, h: 46 },
+    { key: 'cont',  label: 'Continue', icon: 'arrow',  pos: 'trail', variant: 'secondary', w: 139, h: 46 },
+    { key: 'search',label: 'Search',   icon: 'search', pos: 'lead',  variant: 'tertiary',  w: 125, h: 46 },
+    { key: 'gear',  label: '',         icon: 'gear',   pos: 'only',  variant: 'ghost',     w: 45,  h: 45 },
+    { key: 'plus',  label: '',         icon: 'plus',   pos: 'only',  variant: 'secondary', w: 42,  h: 42 },
+    { key: 'go',    label: '',         icon: 'arrow',  pos: 'only',  variant: 'primary',   w: 52,  h: 52, round: true },
+  ],
+  variants: {                              // [rest fill, hover fill, text colour, border]
+    primary:   ['#fafafa', '#e2e2e5', '#0a0a0a', 'transparent'],
+    secondary: ['#262628', '#38383c', '#fafafa', 'transparent'],
+    tertiary:  ['rgba(255,255,255,0)', '#1c1c1f', '#fafafa', '#27272a'],
+    ghost:     ['rgba(255,255,255,0)', '#262628', '#a1a1aa', 'transparent'],
+  },
+  hovers: [[.5, 1.3, 'add'], [1.5, 2.3, 'cont'], [2.5, 3.4, 'search'], [3.6, 4.3, 'gear'], [4.5, 5.1, 'plus'], [5.3, 6.0, 'go']],   // [from, to, button] cursor rests on each
+  hoverSec: .18,                           // fill ease time
+  loading: [6.7, 8.2],                     // Add item shows a spinner between these times
+  clickAt: 6.7,
+  dur: 9,
+}
+const C = CONFIG, Z = C.Z
+const DUR = C.dur
+window.DUR = DUR
+const ICON = {
+  plus: '<path d="M12 5v14M5 12h14"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8l1.8 2.2 2.8-.6 1 2.7 2.7 1-.6 2.8L21.5 12l-2.2 1.8.6 2.8-2.7 1-1 2.7-2.8-.6L12 21.2l-1.8-2.2-2.8.6-1-2.7-2.7-1 .6-2.8L2.5 12l2.2-1.8-.6-2.8 2.7-1 1-2.7 2.8.6Z"/>',
+  spin: '<path d="M12 3a9 9 0 1 0 9 9"/>',
+}
+const svg = (k, s = 20) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`
+const total = C.buttons.reduce((a, b) => a + b.w * Z, 0) + C.gap * Z * (C.buttons.length - 1)
+let x = CX - total / 2
+const bs = C.buttons.map((b) => {
+  const e = el('div', 'b', stage, `${b.pos === 'lead' ? svg(b.icon) : ''}${b.label ? `<span>${b.label}</span>` : ''}${b.pos === 'trail' || b.pos === 'only' ? svg(b.icon, b.pos === 'only' ? 22 : 18) : ''}`)
+  S(e, { left: px(x), top: px(CY - b.h * Z / 2), width: px(b.w * Z), height: px(b.h * Z), borderRadius: b.round ? '50%' : '999px', border: '1px solid transparent' })
+  b.x = x; x += (b.w + C.gap) * Z
+  return { b, e, ic: e.querySelector('.ic') }
+})
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="28" height="28"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+const hex = (c) => { const m = c.match(/[\d.]+/g); if (c[0] === '#') return [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)).concat(1); return m.map(Number).concat(m.length < 4 ? 1 : []) }
+const mixc = (a, b, k) => { const A = a === 'transparent' ? [0, 0, 0, 0] : hex(a), B = b === 'transparent' ? [0, 0, 0, 0] : hex(b); return `rgba(${A.slice(0, 3).map((v, i) => Math.round(lerp(v, B[i], k))).join(',')},${lerp(A[3], B[3], k)})` }
+function render(t) {
+  bs.forEach(({ b, e, ic }) => {
+    const v = C.variants[b.variant]
+    let h = 0; for (const [a, z, key] of C.hovers) if (key === b.key) h = Math.max(h, Math.min(seg(t, a, a + C.hoverSec), 1 - seg(t, z, z + C.hoverSec)))
+    const press = b.key === 'add' ? clamp(1 - Math.abs(t - C.clickAt) / .1) : 0
+    S(e, { background: mixc(v[0], v[1], h), color: v[2], borderColor: v[3], transform: `scale(${1 - .04 * press})` })
+  })
+  // add item: spinner while loading
+  const add = bs[0], load = t >= C.loading[0] && t < C.loading[1]
+  add.ic.innerHTML = load ? ICON.spin : ICON.plus
+  S(add.ic, { transform: load ? `rotate(${(t * 720) % 360}deg)` : 'none' })
+  add.e.querySelector('span').textContent = load ? 'Adding' : C.buttons[0].label
+  // cursor
+  const hov = C.hovers.map(([a, z, key]) => { const q = bs.find((o) => o.b.key === key).b; return [a, z, q.x + q.w * Z / 2, CY + 6] })
+  const stops = [[0, CX + 380, CY + 160]]; hov.forEach(([a, z, cx2, cy2]) => stops.push([a, cx2, cy2], [z, cx2, cy2]))
+  const addp = hov[0]; stops.push([C.clickAt - .5, addp[2], addp[3] + 40], [C.clickAt, addp[2], addp[3]], [C.loading[1] - .3, addp[2], addp[3]], [C.dur - .2, CX + 380, CY + 160])
+  stops.sort((p, q) => p[0] - q[0])
+  let cx = stops[0][1], cy = stops[0][2]
+  for (let j = 0; j < stops.length - 1; j++) if (t >= stops[j][0] && t <= stops[j + 1][0]) { const k = eio(seg(t, Math.max(stops[j][0], stops[j + 1][0] - .35), stops[j + 1][0])); cx = lerp(stops[j][1], stops[j + 1][1], k); cy = lerp(stops[j][2], stops[j + 1][2], k) }
+  if (t > stops[stops.length - 1][0]) { cx = stops[stops.length - 1][1]; cy = stops[stops.length - 1][2] }
+  S(cur, { transform: `translate(${cx}px,${cy}px)` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

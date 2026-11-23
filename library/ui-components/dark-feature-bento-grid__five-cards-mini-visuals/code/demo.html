@@ -1,0 +1,151 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dark feature bento grid</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#09090b;color:#f4f4f5}
+.cd{position:absolute;border-radius:17px;background:#0b0b0d;border:1px solid #232326;overflow:hidden}
+.t{position:absolute;left:0;right:0;text-align:center;font-weight:500;color:#f4f4f5;letter-spacing:-.005em}
+.b{position:absolute;text-align:center;color:#dedee0;line-height:22px}
+.tl{position:absolute;font-weight:500;color:#f4f4f5}
+.bl{position:absolute;color:#cfcfd3;line-height:22px}
+.tag{position:absolute;height:28px;line-height:25px;padding:0 10px;border:1px solid #3a3a3e;border-radius:6px;background:#0b0b0d;font-size:13.5px;color:#e6e6e8;white-space:nowrap}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  headline: '100%', headlineLabel: 'Customizable',
+  secure: ['Secure by default', 'Provident fugit and vero voluptate. magnam magni doloribus dolores voluptates a sapiente nisi.'],
+  speed: ['Faster than light', 'Provident fugit vero voluptate. magnam magni doloribus dolores voluptates inventore nisi.'],
+  speedLabel: 'Download', speedUnit: 'mbps', speedBase: 14.34,
+  chart: ['Faster than light', 'Provident fugit vero voluptate. Voluptates a sapiente inventore nisi.'],
+  team: ['Keep your loved ones safe', 'Voluptate. magnam magni doloribus dolores voluptates a sapiente inventore nisi.'],
+  people: [['Likeur', 'left', '#c2521b'], ['M. Irung', 'right', '#8c8c90'], ['B. Ng', 'left', '#d89a7c']],   // name, side of the line, avatar colour
+  stroke: '#e8e8ea',           // line colour for the sketches and charts
+  revealStagger: .12,          // seconds between cards appearing
+  scanSec: 3,                  // fingerprint scan line: seconds per sweep
+}
+const DUR = 8
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const box = fitBox(842, 499, .94)
+const mk = (x, y, w, h) => { const c = el('div', 'cd', box); S(c, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); return c }
+const c1 = mk(0, 0, 274, 267), c2 = mk(284, 0, 274, 267), c3 = mk(568, 0, 274, 267), c4 = mk(0, 278, 415, 221), c5 = mk(427, 278, 415, 221)
+const cards = [c1, c2, c3, c4, c5]
+const ring = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#202024" stroke-width="1.5"/>`
+const svgIn = (parent, w, h, inner = '', st = '') => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('width', w); s.setAttribute('height', h); s.setAttribute('viewBox', `0 0 ${w} ${h}`); s.style.cssText = 'position:absolute;left:0;top:0;' + st; s.innerHTML = inner; parent.appendChild(s); return s }
+// card 1: 100% in a hand-drawn ellipse
+const s1 = svgIn(c1, 274, 267, '<path id="e1" d="M45 99C46 72 90 58 140 58S238 74 235 106C232 142 188 156 134 156S46 132 52 103" fill="none" stroke="#e4e4e6" stroke-width="3" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/><path id="e2" d="M70 62C110 48 200 44 228 70" fill="none" stroke="#9c9ca0" stroke-width="3" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/>')
+const n1 = el('div', 't', c1); S(n1, { top: '82px', fontSize: '58px', lineHeight: '70px', fontWeight: 600 })
+el('div', 't', c1, CONFIG.headlineLabel).style.cssText += ';top:176px;font-size:25px;font-weight:600'
+// card 2: fingerprint + scan line
+const FP = '<path d="M12 10a2 2 0 0 0-2 2c0 1-.1 2.5-.3 4M14 13c0 2.4 0 6.4-1 9M17.3 21c.1-.6.4-2.3.5-3M2 12a10 10 0 0 1 18-6M21.8 16c.2-2 .1-5.4 0-6M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .3-2M8.7 22c.2-.7.5-1.3.6-2M9 6.8a6 6 0 0 1 9 5.2v2" fill="none" stroke="#c9c9cd" stroke-width="1.4" stroke-linecap="round"/>'
+svgIn(c2, 274, 267, ring(137, 82, 62) + ring(137, 82, 46) + `<g transform="translate(95 40) scale(3.5)">${FP}</g>`)
+const scan = el('div', 'abs', c2); S(scan, { left: '88px', width: '98px', height: '3px', background: '#f2f2f4', borderRadius: '2px', boxShadow: '0 0 8px rgba(255,255,255,.5)' })
+el('div', 't', c2, CONFIG.secure[0]).style.cssText += ';top:152px;font-size:18px'
+el('div', 'b', c2, CONFIG.secure[1]).style.cssText += ';left:16px;width:242px;top:186px;font-size:14.5px;line-height:21px'
+// card 3: download wave
+const s3 = svgIn(c3, 274, 267)
+const lab3 = el('div', 'abs', c3); S(lab3, { left: '56px', top: '45px', fontSize: '11px', color: '#9a9a9f' }); lab3.textContent = CONFIG.speedLabel
+const val3 = el('div', 'abs', c3); S(val3, { right: '26px', top: '44px', fontSize: '13px', color: '#c8c8cc' })
+el('div', 'abs', c3, '<svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#1b1b1e" stroke="#2a2a2e"/><path d="M10 5v8M7 10.5l3 3 3-3" stroke="#d0d0d4" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>').style.cssText = 'left:32px;top:42px'
+el('div', 't', c3, CONFIG.speed[0]).style.cssText += ';top:150px;font-size:18px'
+el('div', 'b', c3, CONFIG.speed[1]).style.cssText += ';left:16px;width:242px;top:186px;font-size:14.5px;line-height:21px'
+// card 4: shield + browser chart
+svgIn(c4, 415, 221, ring(41, 42, 33) + ring(41, 42, 22) + '<path d="M41 30l10 3.5v7c0 6-4.5 9-10 11-5.5-2-10-5-10-11v-7z" fill="none" stroke="#cfcfd3" stroke-width="1.5" stroke-linejoin="round"/>')
+el('div', 'tl', c4, CONFIG.chart[0]).style.cssText += ';left:22px;top:112px;font-size:19px'
+el('div', 'bl', c4, CONFIG.chart[1]).style.cssText += ';left:22px;top:140px;width:170px;font-size:14.5px;line-height:21px'
+const br = el('div', 'abs', c4); S(br, { left: '230px', top: '42px', width: '186px', height: '190px', border: '1px solid #232326', borderRadius: '10px 0 0 0' })
+const s4 = svgIn(c4, 415, 221)
+svgIn(c4, 415, 221, '<circle cx="243" cy="55" r="3.5" fill="#303034"/><circle cx="256" cy="55" r="3.5" fill="#303034"/><circle cx="269" cy="55" r="3.5" fill="#303034"/>')
+// card 5: people line
+svgIn(c5, 415, 221, ring(41, 42, 33) + ring(41, 42, 22) + '<g fill="none" stroke="#cfcfd3" stroke-width="1.5" stroke-linecap="round"><circle cx="37" cy="38" r="5"/><path d="M28 54c0-6 4-9 9-9s9 3 9 9M46 33a5 5 0 0 1 0 10M50 46c4 1 7 4 7 8"/></g>')
+el('div', 'tl', c5, CONFIG.team[0]).style.cssText += ';left:22px;top:112px;font-size:19px'
+el('div', 'bl', c5, CONFIG.team[1]).style.cssText += ';left:22px;top:140px;width:215px;font-size:14.5px;line-height:21px'
+const line5 = el('div', 'abs', c5); S(line5, { left: '309px', top: '0', width: '1px', height: '221px', background: '#2a2a2e' })
+const people = CONFIG.people.map(([n, side, col], i) => {
+  const a = el('div', 'abs', c5); S(a, { width: '26px', height: '26px', borderRadius: '50%', background: col, left: '296px', border: '2px solid #0b0b0d', boxShadow: '0 0 0 1px #3a3a3e' })
+  a.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="9" r="4" fill="rgba(0,0,0,.45)"/><path d="M3 22c1-6 4-8 8-8s7 2 8 8z" fill="rgba(0,0,0,.45)"/></svg>'
+  const tg = el('div', 'tag', c5, n)
+  return { a, tg, side, y: [62, 108, 154][i] }
+})
+function waveY(x, t, amp) { return Math.sin(x * .09 + t * 3) * .5 + Math.sin(x * .23 - t * 5) * .35 + Math.sin(x * .51 + t * 2.1) * .25 }
+function render(t) {
+  const fadeOut = 1 - seg(t, DUR - .6, DUR)
+  cards.forEach((c, i) => { const q = eo(seg(t, i * CONFIG.revealStagger, i * CONFIG.revealStagger + .55)); S(c, { opacity: q * fadeOut, transform: `translateY(${(1 - q) * 14}px)` }) })
+  // 1
+  const d1 = eo(seg(t, .5, 1.7)), d2 = eo(seg(t, 1.1, 1.9))
+  s1.querySelector('#e1').style.strokeDashoffset = String(1 - d1); s1.querySelector('#e2').style.strokeDashoffset = String(1 - d2)
+  n1.textContent = Math.round(100 * eo(seg(t, .3, 1.4))) + '%'
+  // 2: scan sweeps up and down over the fingerprint
+  const sp = .5 - .5 * Math.cos((t / CONFIG.scanSec) * 2 * Math.PI)
+  S(scan, { top: px(48 + sp * 68) })
+  // 3: speed wave
+  const pts = []; for (let x = 28; x <= 246; x += 3) pts.push([x, 98 - waveY(x, t, 1) * 16 * (.5 + .5 * Math.sin((x - 28) / 218 * Math.PI))])
+  const dd = pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1].toFixed(1)).join(' ')
+  s3.innerHTML = `<defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path d="${dd} L246 120 L28 120Z" fill="url(#g3)"/><path d="${dd}" fill="none" stroke="${CONFIG.stroke}" stroke-width="2" stroke-linejoin="round"/>`
+  val3.textContent = (CONFIG.speedBase + Math.sin(t * 2.6) * 1.8).toFixed(2).replace('.', ',') + ' ' + CONFIG.speedUnit
+  // 4: browser chart draws on
+  const p4 = eo(seg(t, .9, 3.2)); const n = Math.max(2, Math.round(p4 * 60))
+  const cp = []; for (let i = 0; i < n; i++) { const u = i / 59; const y = 196 - (u * 82 + Math.sin(u * 19) * 15 + Math.sin(u * 41 + 1) * 8 + Math.sin(u * 7) * 12); cp.push([232 + u * 178, y]) }
+  const cd = cp.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')
+  const last = cp[cp.length - 1]
+  s4.innerHTML = `<defs><linearGradient id="g4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path d="${cd} L${last[0]} 220 L232 220Z" fill="url(#g4)"/><path d="${cd}" fill="none" stroke="#f0f0f2" stroke-width="2" stroke-linejoin="round"/>`
+  // 5: avatars bob; tags follow
+  people.forEach((o, i) => {
+    const q = eo(seg(t, .8 + i * .25, 1.3 + i * .25)), bob = Math.sin(t * 1.6 + i * 2) * 3
+    S(o.a, { top: px(o.y - 13 + bob), opacity: q, transform: `scale(${.7 + .3 * q})` })
+    S(o.tg, { top: px(o.y - 14 + bob), opacity: q, left: o.side === 'left' ? px(296 - 8 - (o.tg.offsetWidth || 60)) : px(296 + 34) })
+  })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

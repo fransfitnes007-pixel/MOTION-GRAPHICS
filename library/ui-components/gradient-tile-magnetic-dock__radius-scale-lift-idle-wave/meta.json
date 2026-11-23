@@ -1,0 +1,36 @@
+{
+  "slug": "gradient-tile-magnetic-dock__radius-scale-lift-idle-wave",
+  "visual_name": "Gradient tile magnetic dock",
+  "code_name": "Radius-based scale and lift with idle wave",
+  "category": "ui-components",
+  "summary": "A dark rounded dock of seven gradient app tiles with black line icons; tiles near the cursor grow and rise like a macOS dock, a white label pops above the hovered tile, and an idle wave rolls through when nobody is hovering.",
+  "tags": [
+    "21st",
+    "dark",
+    "hover",
+    "nav"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "svg"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "magnetic dock",
+    "mac dock",
+    "dock",
+    "icon dock",
+    "magnify dock",
+    "app dock"
+  ],
+  "credit": {
+    "idea": "Magnetic Dock",
+    "author": "rmahammad",
+    "url": "https://21st.dev/@rmahammad/components/magnetic-dock",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

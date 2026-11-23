@@ -1,0 +1,28 @@
+{
+  "slug": "sparkle-sculpt-pop__particle-burst-icon-reveal",
+  "visual_name": "Sparkle sculpt pop",
+  "code_name": "Particle burst icon reveal",
+  "category": "ui-components",
+  "summary": "A tap on a dark blob bursts seeded sparkle particles with trails, the blob dissolves and a star icon pops in with overshoot and a ring pulse.",
+  "aliases": [
+    "sparkle burst",
+    "blob reveal",
+    "unlock icon",
+    "magic reveal",
+    "star pop"
+  ],
+  "tags": [
+    "transition",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "seeded-particles"
+  ],
+  "duration_sec": 6.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

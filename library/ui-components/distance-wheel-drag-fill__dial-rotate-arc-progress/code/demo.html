@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>distance wheel drag fill</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 7.2
+window.DUR = DUR
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const g = cvs.getContext('2d')
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const rnd = (i, s = 1) => { let h = (Math.imul(i + 1, 374761393) + Math.imul(s, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296 }
+const rrect = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r) }
+const circ = (x, y, r) => { g.beginPath(); g.arc(x, y, Math.max(0, r), 0, Math.PI * 2) }
+const txt = (s, x, y, size, wt, col, al = 'center') => { g.font = `${wt} ${size}px ${FONT}`; g.textAlign = al; g.textBaseline = 'middle'; g.fillStyle = col; g.fillText(s, x, y) }
+// simulated finger: a = opacity, press 0..1 (shrinks), rip 0..1 ripple progress (<0 or >1 = none)
+function finger(x, y, a, press, rip) {
+  if (a <= .01) return
+  g.save(); g.globalAlpha = a
+  if (rip >= 0 && rip < 1) { g.strokeStyle = `rgba(255,255,255,${.55 * (1 - rip)})`; g.lineWidth = 5 * (1 - rip) + 1; circ(x, y, lerp(34, 120, eo(rip))); g.stroke() }
+  const r = 38 * (1 - .2 * press)
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 24; g.shadowOffsetY = 8
+  const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.62)'); gr.addColorStop(1, 'rgba(255,255,255,.30)')
+  g.fillStyle = gr; circ(x, y, r); g.fill(); g.shadowColor = 'transparent'
+  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2.5; g.stroke(); g.restore()
+}
+const tapPress = (t, tt) => seg(t, tt - .14, tt) * (1 - seg(t, tt + .05, tt + .22))
+const tapRip = (t, tt) => t < tt ? -1 : seg(t, tt, tt + .6)
+
+const DR = TALL ? 340 : 360, DCY = CY + 8, KM_MAX = 50, DEG = 360 / KM_MAX, D2R = Math.PI / 180
+const T_DRAG0 = .9, T_DRAG1 = 4.0, A_END = 37.5 * DEG * D2R, T_BACK0 = 5.9, T_BACK1 = 6.5
+// where the finger has dragged the dial to (radians of rotation); the dial itself follows with a spring (inertia)
+function fingerRot(tt) { return A_END * eio(seg(tt, T_DRAG0, T_DRAG1)) * (1 - eio(seg(tt, T_BACK0, T_BACK1))) }
+// deterministic fixed-step simulation from t=0, so the frame is still a pure function of time
+let cache = { t: -1 }
+function sim(t) {
+  const dt = 1 / 240, w = 15, z = .5, cross = []; let x = 0, v = 0, last = 0
+  for (let s = 0; s * dt < t; s++) {
+    const tt = s * dt, a = w * w * (fingerRot(tt) - x) - 2 * z * w * v; v += a * dt; x += v * dt
+    const n = Math.floor(x / D2R / DEG / 5 + 1e-9); if (n !== last) { cross.push(tt); last = n }
+  }
+  return { x, v, cross }
+}
+function render(t) {
+  const { x: rot, v: vel, cross } = sim(t)
+  const km = rot / D2R / DEG
+  const bounce = cross.reduce((a, tc) => { const d = t - tc; return d < 0 || d > .6 ? a : a + Math.exp(-d * 11) * Math.sin(d * 42) }, 0)
+  const appear = eo(seg(t, 0, .6))
+  const bg = g.createRadialGradient(CX, DCY, 30, CX, DCY, W * .7); bg.addColorStop(0, '#171722'); bg.addColorStop(1, '#0b0b10'); g.fillStyle = bg; g.fillRect(0, 0, W, H)
+  g.save(); g.globalAlpha = appear; g.translate(CX, DCY); g.scale(.92 + .08 * appear, .92 + .08 * appear)
+  // progress ring
+  const PR = DR + 46
+  g.lineCap = 'round'; g.lineWidth = 22; g.strokeStyle = 'rgba(255,255,255,.07)'; circ(0, 0, PR); g.stroke()
+  const pf = clamp(km / KM_MAX)
+  if (pf > .003) {
+    const cg = g.createConicGradient(-Math.PI / 2 - .06, 0, 0); cg.addColorStop(0, '#2bd4ff'); cg.addColorStop(.04, '#2bd4ff'); cg.addColorStop(.5, '#4f8bff'); cg.addColorStop(.85, '#b45cff'); cg.addColorStop(1, '#ff5ca8')
+    g.save(); g.shadowColor = 'rgba(79,139,255,.55)'; g.shadowBlur = 34; g.strokeStyle = cg; g.lineWidth = 22; g.beginPath(); g.arc(0, 0, PR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pf); g.stroke(); g.restore()
+  }
+  // dial body
+  g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 50; g.shadowOffsetY = 20
+  const body = g.createRadialGradient(-DR * .3, -DR * .4, 10, 0, 0, DR * 1.1); body.addColorStop(0, '#2f2f40'); body.addColorStop(1, '#14141d'); g.fillStyle = body; circ(0, 0, DR); g.fill(); g.restore()
+  g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 2; circ(0, 0, DR - 1); g.stroke()
+  // rotating ticks and labels: tick k sits at -k*DEG from the top, so turning the dial clockwise raises the reading
+  g.save(); g.rotate(rot)
+  for (let k = 0; k < KM_MAX; k++) {
+    const a = -Math.PI / 2 - k * DEG * D2R, maj = k % 5 === 0, r0 = DR - 20, r1 = r0 - (maj ? 34 : 18)
+    g.strokeStyle = maj ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.33)'; g.lineWidth = maj ? 5 : 3; g.beginPath(); g.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); g.lineTo(Math.cos(a) * r1, Math.sin(a) * r1); g.stroke()
+    if (k % 10 === 0) { const rr = r1 - 34; g.save(); g.translate(Math.cos(a) * rr, Math.sin(a) * rr); g.rotate(a + Math.PI / 2); txt(String(k), 0, 0, 30, 600, 'rgba(255,255,255,.55)'); g.restore() }
+  }
+  g.restore()
+  // pointer at the top, kicked by each 5 km step
+  const kick = bounce * 7
+  g.fillStyle = '#ffffff'; g.shadowColor = 'rgba(255,255,255,.5)'; g.shadowBlur = 16 + Math.abs(bounce) * 20
+  g.beginPath(); g.moveTo(-15, -DR - 22 + kick); g.lineTo(15, -DR - 22 + kick); g.lineTo(0, -DR + 6 + kick); g.closePath(); g.fill(); g.shadowColor = 'transparent'
+  // centre number
+  const ns = 1 + .06 * bounce
+  g.save(); g.scale(ns, ns); txt(String(Math.max(0, Math.floor(km + 1e-6))), 0, -14, 190, 700, '#f6f6fa'); g.restore()
+  txt('km', 0, 98, 44, 560, 'rgba(255,255,255,.5)')
+  g.restore()
+  // the finger rides the dial edge, clockwise
+  const fa = seg(t, .55, .85) * (1 - seg(t, 4.1, 4.5))
+  const ang = 150 * D2R + fingerRot(Math.min(t, T_DRAG1)) , fr = DR - 62
+  const hold = seg(t, T_DRAG0 - .12, T_DRAG0) * (1 - seg(t, T_DRAG1, T_DRAG1 + .15))
+  const sx = lerp(CX + 330, CX + Math.cos(150 * D2R) * fr, eio(seg(t, .5, T_DRAG0 - .05))), sy = lerp(DCY + 450, DCY + Math.sin(150 * D2R) * fr, eio(seg(t, .5, T_DRAG0 - .05)))
+  const fx = t < T_DRAG0 ? sx : CX + Math.cos(ang) * fr, fy = t < T_DRAG0 ? sy : DCY + Math.sin(ang) * fr
+  finger(fx, fy, fa * appear, hold, tapRip(t, T_DRAG0 - .02))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

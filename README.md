@@ -4,11 +4,13 @@ Make motion-graphics videos with Claude Code: Instagram Reels, TikToks, YouTube 
 
 [![motion-reel-kit showcase film](docs/media/showcase-preview.gif)](docs/media/showcase.mp4)
 
-**▶ The 50-second showcase, with sound:**
+**▶ The 62-second showcase, with sound:**
 
-https://github.com/user-attachments/assets/e9299e3f-c02a-4b7f-8a8f-da2687dde81b
+https://github.com/user-attachments/assets/89baa632-2abe-4bee-9ec7-241fbf07413b
 
 The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Full quality: [`docs/media/showcase.mp4`](docs/media/showcase.mp4). Source: [`docs/showcase/`](docs/showcase/).
+
+The film credits [growthkit.net](https://growthkit.net), whose team made the kit, and plays that team's own reels and films inside it. Everything else in the repository is white-label.
 
 Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end (local voice, beats pinned to the words, 277 sound effects, App Store end card), still on the placeholder brand.
 
@@ -16,14 +18,16 @@ Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 
 
 | Part | What you get |
 |---|---|
-| **14 Claude Code skills** | A to Z reel making, viral-format recreation, the animation library, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
+| **16 Claude Code skills** | A to Z reel making, viral-format recreation, the animation library, motion moves, showreels and launch films, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
 | **5 slash commands** | `/reel`, `/recreate`, `/motion`, `/voice`, `/rebrand` |
-| **Animation library** | 241 pieces: 122 motion graphics, 58 UI components and micro-interactions, 41 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
+| **Animation library** | 358 pieces: 136 motion graphics, 158 UI components and micro-interactions, 44 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
 | **Pictogram reel pipeline** | A code-drawn, 20-beat faceless parable reel with beats pinned to the voiceover, synthesised sound effects and an App Store end card |
 | **Local voice pipeline** | Fast, natural voiceovers on Apple Silicon (Qwen3-TTS, Kokoro) at a set pace and pitch, line-by-line recording, voice design from a description |
 | **Reference analysis** | Measure any video you want to copy: cuts, words per minute, pauses, voice pitch, and the clicks, swishes, hits and music bed under the voice |
-| **Interaction pack** | 12 app-grade micro-interactions written from scratch for video: comma-jump number input, card burn, 3D card flip, border comet pulse, hold to commit, OTP success fill, split-flap counter and more |
-| **Palettes** | 9 named signature looks (including `arizona-sunset`) and the colours of every library piece |
+| **Interaction pack** | 20 app-grade micro-interactions written from scratch for video: comma-jump number input, card burn, 3D card flip, border comet pulse, hold to commit, OTP success fill, split-flap counter, readiness gauge, flag ring shuffle, card-ready glint and more |
+| **Motion moves** | A named vocabulary of 45+ motion techniques (timing, type, transitions, camera, texture, data, sound) with the exact easing and spring numbers, each tied to a demo |
+| **Showreel and launch-film playbook** | Beat structures, timing tokens, palette and type rules learned from the most-shared AI-made showreels and launch films, with a storyboard template |
+| **Palettes** | 10 named signature looks (including `arizona-sunset` and the film's `sunset-ink`) and the colours of every library piece |
 | **Formats and prompts** | 24 video formats written up beat by beat with what went wrong and how it was fixed, and a short and a detailed prompt for 23 of them |
 
 ## Install
@@ -94,7 +98,7 @@ idea or reference ─▶ script ─▶ voiceover ─▶ word times ─▶ beats 
 
 Try one now:
 ```bash
-open library/LIBRARY.html                                   # browse all 241 pieces, live
+open library/LIBRARY.html                                   # browse all 358 pieces, live
 node engine/tools/render_demo.cjs video \
   library/motion-graphics/dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax/code/demo.html \
   out/dino.mp4 1080 1920
@@ -120,7 +124,7 @@ python3 build/render.py vo/mix.wav out.mp4
 brand.config.json      your brand: the only file you have to edit
 commands/              /reel /recreate /motion /voice /rebrand
 skills/                the 14 skills Claude loads
-library/               241 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
+library/               358 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
 engine/                render, find, verify, poster, index, rebrand and chrome-logo tools; the demo template and spec
 pipelines/
   pictogram-reel/      the code-drawn reel renderer, example script, cues, sound effects
@@ -139,6 +143,8 @@ prompts/PROMPTS.md     ready-to-paste prompts
 | `recreate-viral-format` | "Make one like this": measure a reference and map a new story onto its beats |
 | `motion-library` | Find and adapt a scene, transition, UI animation, dashboard or sound |
 | `pictogram-reel` | The black-and-white faceless parable format |
+| `motion-moves` | Named motion techniques with their numbers: squash and stretch, overshoot, scramble decode, whip pan, iris… |
+| `showreel-and-launch-film` | Plan and build a 15 to 60 s showreel, launch film or product demo |
 | `short-form-principles` | Hooks, scripts and honesty rules |
 | `voiceover-local` | Free local narration with set pace and pitch |
 | `voiceover-elevenlabs` | Cloud narration with your own key |
@@ -175,4 +181,4 @@ Nothing in the kit calls a paid service unless you ask for it. Cloud tools read 
 
 ## Licence
 
-MIT for the kit's own code and docs. Bundled fonts and three.js keep their own licences: see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Use your own brand assets and real facts on end cards.
+MIT for the kit's own code and docs. 95 pieces are credited recreations of MIT and Apache-licensed 21st.dev components (see each piece's Credit section). Bundled fonts and three.js keep their own licences: see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Use your own brand assets and real facts on end cards.

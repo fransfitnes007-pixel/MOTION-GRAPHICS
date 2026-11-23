@@ -1,0 +1,27 @@
+{
+  "slug": "line-mask-text-reveal__clip-rise-per-line",
+  "visual_name": "Line mask text reveal",
+  "code_name": "Clip, rise per line",
+  "category": "motion-graphics",
+  "summary": "A bold centred headline in three lines, each rising from the bottom edge of its own mask with a slight tilt, staggered, with hairlines marking the mask edges, then rising out the top.",
+  "aliases": [
+    "line reveal",
+    "text mask reveal",
+    "rise from mask",
+    "headline slide up",
+    "masked lines"
+  ],
+  "tags": [
+    "kinetic-type",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "overflow-clip",
+    "translate"
+  ],
+  "duration_sec": 5.2,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

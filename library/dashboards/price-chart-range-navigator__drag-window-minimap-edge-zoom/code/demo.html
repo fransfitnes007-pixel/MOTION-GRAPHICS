@@ -1,0 +1,167 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Price chart with range navigator</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0b;color:#fff}
+.ttl{position:absolute;left:200px;top:258px;font-size:23px;font-weight:500;letter-spacing:-.005em}
+.ax{position:absolute;left:1090px;font-size:14.5px;color:#4d4e55;width:60px}
+.dl{position:absolute;top:684px;font-size:16px;color:#8d8e95}
+.tip{position:absolute;height:30px;line-height:29px;padding:0 24px;border-radius:7px;background:#17171a;border:1px solid #2b2c31;font-size:15.5px;color:#fff;white-space:nowrap;transform:translateX(-50%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'Price history · drag to navigate',
+  line: '#1f40e0', area: '#1b2d9a',          // price line and the fill under it
+  frame: '#2b40b8',                           // window outline in the minimap
+  chart: { x0: 207, x1: 1077, y0: 318, y1: 569 },    // main chart box (design px, 1280 x 960)
+  mini: { y0: 597, y1: 675 },                 // minimap box
+  days: 240,                                  // number of daily points (Dec 3 to Jul 30)
+  // price anchors [day, price]; the series is these, smoothed, plus small seeded noise
+  anchors: [[0, 127], [25, 135], [45, 150], [58, 154], [80, 146], [100, 131], [112, 129], [130, 128], [150, 132], [165, 140], [177, 148], [190, 150], [205, 153], [213, 158.1], [222, 151], [232, 146], [239, 143]],
+  noise: 1.1, seed: 7,
+  // window [start, end] in days over time: keyframes [time, day]
+  winStart: [[0, 167], [3.1, 167], [3.8, 94], [4.7, 82], [5.0, 82], [6.2, 0], [8.0, 0], [9.0, 81], [9.3, 81], [10.8, 167], [12, 167]],
+  winEnd: [[0, 239], [3.1, 239], [3.8, 166], [4.7, 154], [9.3, 154], [10.8, 239], [12, 239]],
+  // hover phase [time, x]: crosshair follows the cursor over the chart before the drag starts
+  hover: [[0, 270], [.6, 295], [1.2, 520], [1.8, 762], [2.4, 1000], [2.7, 1012]],
+}
+const DUR = 12
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+// ---- data ----
+const N = CONFIG.days
+let sd = CONFIG.seed; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647
+const price = []
+for (let d = 0; d < N; d++) {
+  let a = CONFIG.anchors[0], b = CONFIG.anchors[CONFIG.anchors.length - 1]
+  for (let i = 1; i < CONFIG.anchors.length; i++) if (d <= CONFIG.anchors[i][0]) { a = CONFIG.anchors[i - 1]; b = CONFIG.anchors[i]; break }
+  const u = b[0] === a[0] ? 0 : (d - a[0]) / (b[0] - a[0])
+  price.push(a[1] + (b[1] - a[1]) * (1 - Math.cos(Math.PI * u)) / 2 + (rnd() - .5) * 2 * CONFIG.noise)
+}
+price[213] = 158.13
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const dateOf = (d) => new Date(Date.UTC(2025, 11, 3 + Math.round(d)))
+const fmt = (d, yr) => { const dt = dateOf(d); return MON[dt.getUTCMonth()] + ' ' + dt.getUTCDate() + (yr ? ', ' + String(dt.getUTCFullYear()).slice(2) : '') }
+const C = CONFIG.chart, M = CONFIG.mini, CW = C.x1 - C.x0
+const svgNS = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.cssText = 'position:absolute;left:0;top:0'
+const box = fitBox(1280, 960, 1)
+box.appendChild(svg); svg.setAttribute('width', 1280); svg.setAttribute('height', 960); svg.setAttribute('viewBox', '0 0 1280 960')
+svg.innerHTML = `<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${CONFIG.area}" stop-opacity=".30"/><stop offset="1" stop-color="${CONFIG.area}" stop-opacity="0"/></linearGradient><clipPath id="cc"><rect x="${C.x0 - 6}" y="${C.y0 - 10}" width="${CW + 12}" height="${C.y1 - C.y0 + 40}"/></clipPath></defs>
+ <path id="area" fill="url(#ag)" clip-path="url(#cc)"/><polyline id="line" fill="none" stroke="${CONFIG.line}" stroke-width="3" stroke-linejoin="round" clip-path="url(#cc)"/>
+ <polyline id="mini" fill="none" stroke="#3d3e44" stroke-width="1.6"/>
+ <line id="xh" stroke="#4a4b52" stroke-dasharray="3 4" stroke-width="1.3"/><circle id="xd" r="4.5" fill="${CONFIG.line}"/>
+ <rect id="win" rx="3" fill="rgba(30,50,160,.16)" stroke="${CONFIG.frame}" stroke-width="1.6"/><rect id="hl" width="5" height="30" rx="2.5" fill="${CONFIG.line}"/><rect id="hr" width="5" height="30" rx="2.5" fill="${CONFIG.line}"/>`
+const $ = (id) => svg.querySelector('#' + id)
+el('div', 'ttl', box, CONFIG.title)
+const axes = [0, 1, 2, 3, 4].map(() => el('div', 'ax', box))
+const dlL = el('div', 'dl', box); dlL.style.left = '200px'; const dlR = el('div', 'dl', box); S(dlR, { left: '900px', width: '263px', textAlign: 'right' })
+const tip = el('div', 'tip', box)
+const cur = makeCursor(box)
+const handSvg = '<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"><path d="M8 11V6a1.5 1.5 0 0 1 3 0v4M11 9.5V5a1.5 1.5 0 0 1 3 0v5M14 10V6.5a1.5 1.5 0 0 1 3 0V12M17 11.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-4.6-2.1L4 14a1.5 1.5 0 0 1 2.3-1.9L8 14"/></svg>'
+const resSvg = '<svg width="28" height="20" viewBox="0 0 28 20" fill="#fff" stroke="#000" stroke-width="1.2"><path d="M2 10l7-6v12zM26 10l-7-6v12z"/></svg>'
+const kind = el('div', 'abs', box); S(kind, { zIndex: 98, pointerEvents: 'none' })
+const mx = (d) => C.x0 + (d / (N - 1)) * CW
+const miniY = (p) => M.y1 - 12 - ((p - 126) / (159 - 126)) * 46
+const wnd = (t) => [kf(t, CONFIG.winStart, eio), kf(t, CONFIG.winEnd, eio)]
+// cursor script: [time, x, y, mode]  mode: 0 arrow, 1 hand, 2 resize
+const winMid = (s, e) => mx((s + e) / 2)
+const cpts = [[0, 270, 460]]
+CONFIG.hover.forEach(([tt, xx]) => cpts.push([tt, xx, 450]))
+cpts.push([3.0, mx(203), 636], [3.2, mx(203), 636], [3.8, mx(130), 636], [4.7, mx(118), 636], [4.95, mx(82) - 2, 636], [5.1, mx(82) - 2, 636], [6.2, mx(0) + 4, 636], [6.3, mx(0) + 4, 636], [7.0, 150, 700], [7.9, 150, 700], [8.0, mx(0) + 4, 636], [9.0, mx(81) + 2, 636], [9.3, mx(81) + 2, 636], [9.5, mx(117) , 636], [10.8, mx(203), 636], [11.1, mx(203), 636], [11.6, 1000, 760], [12, 270, 460])
+const kfx = (t) => kf(t, cpts.map((p) => [p[0], p[1]]), eio), kfy = (t) => kf(t, cpts.map((p) => [p[0], p[2]]), eio)
+function render(t) {
+  const [ws, we] = wnd(t), n0 = Math.max(0, Math.round(ws)), n1 = Math.min(N - 1, Math.round(we))
+  // main series for the window
+  let lo = 1e9, hi = -1e9
+  for (let d = n0; d <= n1; d++) { lo = Math.min(lo, price[d]); hi = Math.max(hi, price[d]) }
+  const rg = hi - lo, top = hi + rg * .12, bot = lo - rg * .16
+  const yy = (p) => C.y0 + (top - p) / (top - bot) * (C.y1 - C.y0)
+  const xx = (d) => C.x0 + (d - ws) / (we - ws) * CW
+  const step = Math.max(1, Math.floor((n1 - n0) / 140))
+  let pts = []
+  for (let d = n0; d <= n1; d += step) pts.push(`${xx(d).toFixed(1)},${yy(price[d]).toFixed(1)}`)
+  $('line').setAttribute('points', pts.join(' '))
+  $('area').setAttribute('d', `M${pts[0]} L${pts.join(' L')} L${xx(n1)},${C.y1} L${xx(n0)},${C.y1} Z`)
+  // minimap
+  const mp = []; for (let d = 0; d < N; d += 2) mp.push(`${mx(d).toFixed(1)},${miniY(price[d]).toFixed(1)}`); $('mini').setAttribute('points', mp.join(' '))
+  const wx0 = mx(ws), wx1 = mx(we)
+  const win = $('win'); win.setAttribute('x', wx0); win.setAttribute('y', M.y0); win.setAttribute('width', wx1 - wx0); win.setAttribute('height', M.y1 - M.y0)
+  $('hl').setAttribute('x', wx0 - 2.5); $('hl').setAttribute('y', M.y0 + 21); $('hr').setAttribute('x', wx1 - 2.5); $('hr').setAttribute('y', M.y0 + 21)
+  // axis labels
+  axes.forEach((a, i) => { const yv = C.y0 + i * (C.y1 - C.y0) / 4, pv = top - (yv - C.y0) / (C.y1 - C.y0) * (top - bot); a.textContent = '$' + Math.round(pv); S(a, { top: px(yv - 9) }) })
+  const yr = dateOf(ws).getUTCFullYear() !== dateOf(we).getUTCFullYear()
+  dlL.textContent = fmt(ws, yr); dlR.textContent = fmt(we, yr)
+  // crosshair only while hovering before the drag
+  const hovering = t < 2.75
+  const hx = kfx(t)
+  const dayAt = ws + (hx - C.x0) / CW * (we - ws), di = clamp(Math.round(dayAt), n0, n1)
+  if (hovering && hx > C.x0 && hx < C.x1) {
+    const px_ = xx(di), py_ = yy(price[di])
+    $('xh').setAttribute('x1', px_); $('xh').setAttribute('x2', px_); $('xh').setAttribute('y1', C.y0 + 12); $('xh').setAttribute('y2', C.y1 + 3); $('xh').style.display = ''
+    $('xd').setAttribute('cx', px_); $('xd').setAttribute('cy', py_); $('xd').style.display = ''
+    tip.textContent = `$${price[di].toFixed(2)} · ${fmt(di, false)}`; S(tip, { display: '', left: px(px_), top: px(C.y0 - 20) })
+  } else { $('xh').style.display = 'none'; $('xd').style.display = 'none'; S(tip, { display: 'none' }) }
+  // cursor
+  const cx_ = kfx(t), cy_ = kfy(t)
+  const inMini = cy_ > M.y0 && cy_ < M.y1 + 10
+  const nearEdge = inMini && (Math.abs(cx_ - wx0) < 12 || Math.abs(cx_ - wx1) < 12)
+  const down = (t > 3.1 && t < 4.75) || (t > 5.0 && t < 6.25) || (t > 8.0 && t < 9.05) || (t > 9.3 && t < 10.9)
+  setCursor(cur, cx_, cy_, false, false)
+  const mode = inMini ? (nearEdge || (t > 5.0 && t < 6.3) || (t > 8.0 && t < 9.1) ? 2 : 1) : 0
+  if (mode === 0) { setCursor(cur, cx_, cy_, false, true); S(kind, { display: 'none' }) }
+  else { kind.innerHTML = mode === 1 ? handSvg : resSvg; S(kind, { display: '', left: px(cx_ - 13), top: px(cy_ - 10) }) }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

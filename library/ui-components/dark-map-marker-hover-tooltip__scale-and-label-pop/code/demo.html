@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#111213;color:#eee}
+.map{position:absolute;border-radius:12px;border:1px solid #2a2c30;overflow:hidden;background:#0e0f10}
+.mk{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#3b82f6;border:2.5px solid #fff;box-shadow:0 4px 8px rgba(0,0,0,.5);box-sizing:border-box}
+.tip{position:absolute;background:#fff;color:#111;font-size:16px;line-height:20px;padding:4px 10px;border-radius:6px;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.35);font-family:-apple-system,'SF Pro Text',system-ui,sans-serif}
+.info{position:absolute;right:16px;bottom:16px;width:26px;height:26px;border-radius:50%;background:#fff;color:#111;text-align:center;font-weight:800;font-size:16px;line-height:26px}
+.cur{position:absolute;left:0;top:0;width:28px;height:28px;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Dark map with blue markers: tiles fade in, then hovering a marker grows it 10% and pops a white name tooltip above it.
+const CONFIG = {
+  map: { w: 960, h: 450 },                     // px, map frame
+  markers: [                                   // x, y inside the frame, label
+    { x: 629, y: 59, name: 'Central Park' },
+    { x: 567, y: 161, name: 'Times Square' },
+    { x: 567, y: 201, name: 'Empire State Building' },
+  ],
+  hovers: [[2.5, 3.6, 2], [4.1, 5.0, 0], [5.4, 6.3, 1]],   // [from, to, marker index] the scripted cursor rests on each in turn
+  tilesAt: 2.1, tilesSec: .4,                  // when the map tiles fade in (the clip shows them loading for about 2s first)
+  tipSec: .15, tipRise: 6,                     // tooltip fade and rise
+  markerColor: '#3b82f6', water: '#262b33', land: '#0f1011', road: '#34383d', label: '#b4b7bd',
+  dur: 7,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const mx = CX - C.map.w / 2, my = CY - C.map.h / 2 + 10
+const map = el('div', 'map', stage); S(map, { left: px(mx), top: px(my), width: px(C.map.w), height: px(C.map.h) })
+// ---- placeholder map, drawn once with a fixed seed ----
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+let roads = ''
+for (let i = -30; i < 60; i++) roads += `<line x1="${i * 26}" y1="-40" x2="${i * 26 + 120}" y2="520" stroke="${C.road}" stroke-width="${rnd() < .15 ? 1.8 : .8}" opacity=".8"/>`
+for (let i = -10; i < 30; i++) roads += `<line x1="-40" y1="${i * 24 + 10}" x2="1000" y2="${i * 24 - 90}" stroke="${C.road}" stroke-width="${rnd() < .15 ? 1.8 : .8}" opacity=".8"/>`
+let island = ''
+for (let i = -30; i < 40; i++) island += `<line x1="${560 + i * 9}" y1="0" x2="${560 + i * 9 - 330}" y2="560" stroke="#4a4e54" stroke-width=".9"/>`
+for (let i = 0; i < 46; i++) island += `<line x1="400" y1="${i * 10 - 40}" x2="900" y2="${i * 10 + 130}" stroke="#3d4147" stroke-width=".8"/>`
+let art = ''
+for (let i = 0; i < 9; i++) art += `<path d="M${rnd() * 960} ${rnd() * 450} C ${rnd() * 960} ${rnd() * 450}, ${rnd() * 960} ${rnd() * 450}, ${rnd() * 960} ${rnd() * 450}" fill="none" stroke="#55595f" stroke-width="2"/>`
+const names = [['Belleville', 30, 18, 12], ['North Arlington', 60, 38, 12], ['Secaucus', 330, 30, 12], ['Guttenberg', 535, 25, 12], ['West New York', 475, 52, 12], ['Union City', 440, 72, 12], ['Weehawken', 450, 108, 12], ['Kearny', 55, 120, 12], ['Harrison', 15, 215, 12], ['Hoboken', 360, 200, 13], ['JERSEY CITY', 305, 276, 14], ['NEW YORK', 500, 308, 16], ['Communipaw', 340, 308, 11]]
+const tiles = el('div', 'abs', map)
+tiles.innerHTML = `<svg width="${C.map.w}" height="${C.map.h}" viewBox="0 0 960 450" style="display:block">
+<rect width="960" height="450" fill="${C.land}"/>
+<g>${roads}</g>${art}
+<g>${island}</g>
+<g fill="${C.water}"><path d="M595 20 C 620 120, 600 240, 630 330 C 640 380, 620 420, 585 450 L 540 450 C 560 400, 545 350, 530 300 C 515 240, 520 140, 500 40 Z" opacity=".95"/>
+<path d="M740 150 C 780 190, 760 280, 720 330 C 700 360, 680 400, 650 450 L 625 450 C 650 400, 670 350, 700 300 C 730 250, 720 180, 700 150Z"/>
+<ellipse cx="130" cy="260" rx="70" ry="38"/><ellipse cx="260" cy="320" rx="70" ry="55"/><ellipse cx="90" cy="360" rx="110" ry="45"/><ellipse cx="360" cy="420" rx="90" ry="40"/>
+<path d="M0 220 C 100 190, 200 250, 330 300 C 380 340, 330 380, 290 360 C 200 330, 60 290, 0 300Z"/>
+<ellipse cx="850" cy="30" rx="60" ry="26"/><ellipse cx="940" cy="200" rx="36" ry="26"/></g>
+<path d="M670 70 L735 60 L745 110 L690 130Z" fill="#161b18"/>
+<g font-family="-apple-system,'SF Pro Text',system-ui,sans-serif" font-weight="700" fill="${C.label}">${names.map((n) => `<text x="${n[1]}" y="${n[2] + 12}" font-size="${n[3] + 1}" ${n[0] === n[0].toUpperCase() ? 'letter-spacing="1"' : ''}>${n[0]}</text>`).join('')}</g></svg>`
+const mks = C.markers.map((m) => { const e = el('div', 'mk', map); S(e, { left: px(m.x), top: px(m.y), background: C.markerColor }); return e })
+const info = el('div', 'info', map, 'i')
+const tips = C.markers.map((m) => { const e = el('div', 'tip', map, m.name); return e })
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="28" height="28"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+function render(t) {
+  S(tiles, { opacity: eo(seg(t, C.tilesAt, C.tilesAt + C.tilesSec)) })
+  // which marker is hovered, and how long
+  let hi = -1, h0 = 0, h1 = 0; for (const [a, b, i] of C.hovers) if (t >= a && t < b + C.tipSec) { hi = i; h0 = a; h1 = b }
+  mks.forEach((e, i) => {
+    const k = i === hi ? Math.min(eo(seg(t, h0, h0 + C.tipSec)), 1 - eo(seg(t, h1, h1 + C.tipSec))) : 0
+    S(e, { transform: `scale(${1 + .1 * k})` })
+    const m = C.markers[i], tw = tips[i].offsetWidth || 120
+    S(tips[i], { opacity: k, left: px(m.x - tw / 2), top: px(m.y - 12 - 6 - 28 - (1 - k) * -C.tipRise), pointerEvents: 'none' })
+  })
+  S(info, { opacity: eo(seg(t, C.tilesAt, C.tilesAt + C.tilesSec)) })
+  // cursor: rests on each hovered marker, travels between
+  const pt = (i) => [mx + C.markers[i].x + 6, my + C.markers[i].y + 6], rest = [mx + C.map.w + 40, my + C.map.h * .6]
+  const stops = [[0, ...rest]]; for (const [a, b, i] of C.hovers) { stops.push([a - .05, ...pt(i)], [b, ...pt(i)]) }
+  stops.push([C.dur - .1, ...rest])
+  let x = rest[0], y = rest[1]
+  for (let j = 0; j < stops.length - 1; j++) if (t >= stops[j][0] && t <= stops[j + 1][0]) { const k = eio(seg(t, Math.max(stops[j][0], stops[j + 1][0] - .8), stops[j + 1][0])); x = lerp(stops[j][1], stops[j + 1][1], k); y = lerp(stops[j][2], stops[j + 1][2], k) }
+  if (t > stops[stops.length - 1][0]) { x = rest[0]; y = rest[1] }
+  S(cur, { transform: `translate(${x}px,${y}px)` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

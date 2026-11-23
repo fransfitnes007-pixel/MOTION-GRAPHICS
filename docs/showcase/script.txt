@@ -1,11 +1,11 @@
 One prompt. One finished video.
-This is Motion Reel Kit, an open source plugin for Claude Code.
-Inside, over two hundred and forty motion pieces. Kinetic type, transitions, dashboards, end cards.
+This is motion-reel-kit, the open-source motion graphics plugin for Claude Code.
+Reels. TikToks. Shorts. UGC ads. Product demos. Launch films. Dashboards. Logo idents. Every format, every shape, from one prompt.
+Over three hundred motion pieces are built in: kinetic type, transitions, dashboards, end cards, and the micro-interactions from the best apps on your phone.
 Every frame is code, so every render is exact.
-Micro-interactions from the best apps, rebuilt for video.
-Put your brand in one file, and every logo, scene and end card follows.
+Your brand goes in one file. Every logo, scene and end card follows.
 It writes the script, records the voice, and pins every beat to the words.
-Then it lays down the clicks, swishes and booms on the exact frame.
-Show it a viral reel, and it measures the cuts, the pace and the sound, then rebuilds the format for you.
-Reels. TikToks. Shorts. Long-form films.
+Then it lays down every click, swish and boom on the exact frame.
+Show it a viral reel. It measures the cuts, the pace and the sound, and rebuilds that exact format for you.
 Clone it. Brand it. Ship it.
+motion-reel-kit. Created by growthkit.net.

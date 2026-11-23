@@ -1,0 +1,39 @@
+{
+  "slug": "add-to-cart-list-with-live-cart-panel__odometer-total",
+  "visual_name": "Add to cart list with live cart panel",
+  "code_name": "Odometer total",
+  "category": "ui-components",
+  "summary": "A list of three shoe products with Add buttons beside a Cart card; adding an item slides a row into the cart and the Total digits roll like an odometer.",
+  "tags": [
+    "card",
+    "form",
+    "counter",
+    "hover",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "shadcn"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "interactive checkout",
+    "add to cart",
+    "cart panel",
+    "shopping cart",
+    "product page",
+    "odometer total",
+    "mini cart"
+  ],
+  "credit": {
+    "idea": "Interactive Checkout",
+    "author": "kokonutd",
+    "url": "https://21st.dev/@kokonutd/components/interactive-checkout",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

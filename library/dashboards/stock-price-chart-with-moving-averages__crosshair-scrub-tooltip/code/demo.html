@@ -1,0 +1,148 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ssychui-sma-chart</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.t{position:absolute;white-space:nowrap}
+.tip{position:absolute;width:150px;border-radius:7px;padding:8px 10px;font-size:12px;line-height:1}
+.tip .r{display:flex;align-items:center;justify-content:space-between;height:21px}
+.tip .l{display:flex;align-items:center;gap:7px}
+.tip .sw{width:3px;height:11px;border-radius:2px}
+.pill{position:absolute;border-radius:8px;padding:7px 11px;font-size:15px;font-weight:600}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  theme: 'dark',                       // 'dark' or 'light'
+  symbol: 'AMZN', company: 'Amazon.com Inc.',
+  bars: 120,                           // number of candles/points
+  seed: 11,                            // changes the price path
+  lo: 144.69, hi: 179.28,              // axis range, price is scaled to fit it exactly
+  fast: 60, slow: 200,                 // SMA windows, labelled in the legend
+  change: '+$7.34', pct: '+4.27%',
+  plot: { x: 150, y: 250, w: 840, h: 270 }, // plot box on the 1280x800 board
+  scrub: [[0, 21], [.9, 21], [1.5, 66], [2.1, 92], [2.7, 120], [3.4, 69], [4.1, 40], [4.8, 12], [5.4, 12]], // time (s), bar index the cursor sits on
+}
+const DUR = 7
+window.DUR = DUR
+const PAL = CONFIG.theme === 'dark'
+  ? { bg: '#09090a', text: '#f2f2f3', sub: '#7d7d85', grid: '#1b1b1e', price: '#f4f4f5', blue: '#5b9cf5', amber: '#e5b45c', up: '#4ade80', pill: 'rgba(74,222,128,.14)', tip: '#18181b', tipb: '#2b2b30', cross: '#9a9aa2' }
+  : { bg: '#ffffff', text: '#111114', sub: '#8d8d95', grid: '#eeeef0', price: '#2a2a2e', blue: '#6aa8f7', amber: '#e9c987', up: '#34b27a', pill: 'rgba(52,178,122,.14)', tip: '#ffffff', tipb: '#e5e5e8', cross: '#777' }
+S(stage, { background: PAL.bg, color: PAL.text })
+
+// seeded price path, then scaled so min and max land exactly on the axis ends
+const mul32 = (a) => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
+const r = mul32(CONFIG.seed)
+let raw = [], v = 0
+for (let i = 0; i < CONFIG.bars; i++) { v += .3 + (r() - .5) * 3.6 - (i < 14 ? .3 : 0); raw.push(v) }
+const mn = Math.min(...raw), mx = Math.max(...raw)
+const price = raw.map((x) => CONFIG.lo + (x - mn) / (mx - mn) * (CONFIG.hi - CONFIG.lo))
+price[price.length - 1] = CONFIG.hi                  // the last close is the high, matching the headline number
+const sma = (n) => price.map((_, i) => { const a = Math.max(0, i - n + 1); let s = 0; for (let k = a; k <= i; k++) s += price[k]; return s / (i - a + 1) })
+const fast = sma(CONFIG.fast), slow = sma(CONFIG.slow)
+const P = CONFIG.plot
+const X = (i) => P.x + i / (CONFIG.bars - 1) * P.w
+const Y = (p) => P.y + (1 - (p - CONFIG.lo) / (CONFIG.hi - CONFIG.lo)) * P.h
+const path = (a) => a.map((p, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p).toFixed(1)).join('')
+
+const ns = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width', 1280); svg.setAttribute('height', 800); svg.style.cssText = 'position:absolute;left:0;top:0'
+root.appendChild(svg)
+const ticks = [0, 1, 2, 3, 4].map((k) => CONFIG.hi - k * (CONFIG.hi - CONFIG.lo) / 4)
+svg.innerHTML = ticks.map((tk) => `<line x1="${P.x}" x2="${P.x + P.w + 20}" y1="${Y(tk)}" y2="${Y(tk)}" stroke="${PAL.grid}" stroke-width="1"/>`).join('')
+  + `<line x1="${P.x}" x2="${P.x + P.w + 20}" y1="${P.y + P.h + 24}" y2="${P.y + P.h + 24}" stroke="${PAL.grid}"/>`
+  + `<path d="${path(slow)}" fill="none" stroke="${PAL.amber}" stroke-width="2" stroke-linejoin="round"/>`
+  + `<path d="${path(fast)}" fill="none" stroke="${PAL.blue}" stroke-width="2" stroke-linejoin="round"/>`
+  + `<path d="${path(price)}" fill="none" stroke="${PAL.price}" stroke-width="2" stroke-linejoin="round"/>`
+  + `<line id="vl" y1="${P.y}" y2="${P.y + P.h + 24}" stroke="${PAL.cross}" stroke-width="1" opacity="0"/>`
+  + `<circle id="d1" r="4" fill="${PAL.price}" opacity="0"/><circle id="d2" r="3.5" fill="${PAL.blue}" opacity="0"/><circle id="d3" r="3.5" fill="${PAL.amber}" opacity="0"/>`
+const vl = svg.querySelector('#vl'), d1 = svg.querySelector('#d1'), d2 = svg.querySelector('#d2'), d3 = svg.querySelector('#d3')
+ticks.forEach((tk) => { const e = el('div', 't', root, tk.toFixed(2)); S(e, { left: px(P.x + P.w + 30), top: px(Y(tk) - 8), fontSize: '14px', color: PAL.sub }) })
+const hd = el('div', 't', root, `<b style="font-size:19px;letter-spacing:.01em">${CONFIG.symbol}</b> <span style="color:${PAL.sub};font-size:17px;margin-left:8px">${CONFIG.company}</span>`); S(hd, { left: px(P.x), top: px(P.y - 70) })
+const lg = el('div', 't', root, `<span style="color:${PAL.sub};font-size:15px"><i style="display:inline-block;width:9px;height:9px;border-radius:5px;background:${PAL.blue};margin-right:8px"></i>${CONFIG.fast} SMA</span><span style="color:${PAL.sub};font-size:15px;margin-left:22px"><i style="display:inline-block;width:9px;height:9px;border-radius:5px;background:${PAL.amber};margin-right:8px"></i>${CONFIG.slow} SMA</span>`); S(lg, { left: px(P.x + P.w - 200), top: px(P.y - 66) })
+const last = el('div', 't', root, '$' + CONFIG.hi.toFixed(2)); S(last, { left: px(P.x), top: px(P.y + P.h + 52), fontSize: '23px', fontWeight: 700 })
+const ch = el('div', 't', root, CONFIG.change); S(ch, { left: px(P.x + P.w - 170), top: px(P.y + P.h + 56), fontSize: '17px', color: PAL.up, fontWeight: 500 })
+const pl = el('div', 'pill', root, CONFIG.pct); S(pl, { left: px(P.x + P.w - 80), top: px(P.y + P.h + 46), background: PAL.pill, color: PAL.up })
+const tip = el('div', 'tip', root); S(tip, { background: PAL.tip, border: `1px solid ${PAL.tipb}`, boxShadow: '0 8px 24px rgba(0,0,0,.25)', zIndex: 5 })
+const row = (c, name) => `<div class="r"><span class="l"><i class="sw" style="background:${c}"></i><span style="color:${PAL.sub}">${name}</span></span><b class="v" style="font-weight:600"></b></div>`
+tip.innerHTML = `<div class="h" style="color:${PAL.sub};font-size:11px;margin-bottom:5px"></div>` + row(PAL.price, 'Price') + row(PAL.blue, CONFIG.fast + ' SMA') + row(PAL.amber, CONFIG.slow + ' SMA')
+const tipH = tip.querySelector('.h'), tipV = tip.querySelectorAll('.v')
+const plus = el('div', 'abs', root, `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M11 3v16M3 11h16" stroke="${PAL.cross}" stroke-width="2.2" stroke-linecap="round"/></svg>`); S(plus, { zIndex: 6 })
+// scripted cursor: keys = [{t, x, y, click?}], eased between keys; a click shows a short press ring
+const cursorEl = el('div', 'abs', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.8L10.4 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const ringEl = el('div', 'abs', root); S(ringEl, { width: '34px', height: '34px', marginLeft: '-17px', marginTop: '-17px', borderRadius: '50%', border: '2px solid rgba(120,120,140,.6)', pointerEvents: 'none' })
+function cursorAt(t, keys) {
+  let i = 0; while (i < keys.length - 1 && t >= keys[i + 1].t) i++
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)]
+  const k = b === a ? 0 : eio(seg(t, a.t, b.t))
+  let press = 0; for (const q of keys) if (q.click && t >= q.t && t < q.t + .35) press = 1 - (t - q.t) / .35
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), press }
+}
+function drawCursor(c) {
+  S(cursorEl, { left: px(c.x - 5), top: px(c.y - 3), transform: `scale(${1 - .12 * c.press})`, zIndex: 99 })
+  S(ringEl, { left: px(c.x), top: px(c.y), opacity: c.press * .9, transform: `scale(${.5 + (1 - c.press) * 1.2})`, zIndex: 98 })
+}
+
+cursorEl.style.display = 'none'; ringEl.style.display = 'none'
+
+function render(t) {
+  const sc = CONFIG.scrub
+  let i = 0; while (i < sc.length - 1 && t >= sc[i + 1][0]) i++
+  const a = sc[i], b = sc[Math.min(i + 1, sc.length - 1)]
+  const k = b === a ? 0 : eio(seg(t, a[0], b[0]))
+  const bi = lerp(a[1], b[1], k)
+  const on = t < sc[sc.length - 1][0]
+  const idx = Math.round(bi)
+  const show = on ? 1 : 0
+  vl.setAttribute('x1', X(idx)); vl.setAttribute('x2', X(idx)); vl.setAttribute('opacity', show * .8)
+  ;[[d1, price], [d2, fast], [d3, slow]].forEach(([d, s]) => { d.setAttribute('cx', X(idx)); d.setAttribute('cy', Y(s[idx])); d.setAttribute('opacity', show) })
+  const cx = X(bi), cy = lerp(P.y + P.h * .62, P.y + P.h * .72, (Math.sin(t * 3) + 1) / 2)
+  S(plus, { left: px(cx - 11), top: px(cy - 11), opacity: show })
+  const right = X(idx) + 10 + 150 > P.x + P.w + 60
+  S(tip, { left: px(right ? X(idx) - 160 : X(idx) + 10), top: px(P.y - 12), opacity: show })
+  tipH.textContent = `bar ${idx + 1} / ${CONFIG.bars}`
+  tipV[0].textContent = '$' + price[idx].toFixed(2); tipV[1].textContent = '$' + fast[idx].toFixed(2); tipV[2].textContent = '$' + slow[idx].toFixed(2)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

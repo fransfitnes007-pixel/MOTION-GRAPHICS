@@ -1,0 +1,29 @@
+{
+  "slug": "splash-bubbles-pop__rising-circles-burst-reveal",
+  "visual_name": "Splash bubbles pop",
+  "code_name": "Rising circles burst reveal",
+  "category": "ui-components",
+  "summary": "Soft bubbles rise from the bottom at seeded speeds, grow and pop one by one with a ring and tiny droplets, revealing a wordmark letter by letter.",
+  "aliases": [
+    "bubble splash",
+    "bubbles pop",
+    "launch screen",
+    "logo reveal bubbles",
+    "soap bubbles intro"
+  ],
+  "tags": [
+    "kinetic-type",
+    "logo",
+    "transition",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "seeded-random"
+  ],
+  "duration_sec": 6.8,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

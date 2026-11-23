@@ -1,0 +1,37 @@
+{
+  "slug": "dark-feature-bento-grid__five-cards-mini-visuals",
+  "visual_name": "Dark feature bento grid",
+  "code_name": "Five cards, each with a small drawn visual",
+  "category": "ui-components",
+  "summary": "A dark bento grid of five bordered feature cards: a circled \"100% Customizable\", a fingerprint with a scan line, a download-speed wave, a shield beside a chart in a browser frame, and a people line with name tags.",
+  "tags": [
+    "21st",
+    "card",
+    "chart",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "svg"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "features 8",
+    "feature grid",
+    "bento grid",
+    "features section",
+    "dark features",
+    "bento cards"
+  ],
+  "credit": {
+    "idea": "Features 8",
+    "author": "meschacirung",
+    "url": "https://21st.dev/@meschacirung/components/features-8",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

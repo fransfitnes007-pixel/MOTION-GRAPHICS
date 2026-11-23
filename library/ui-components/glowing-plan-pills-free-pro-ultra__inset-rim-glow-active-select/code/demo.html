@@ -1,0 +1,96 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tier badge demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f6f8fb;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.pl{position:absolute;width:125px;height:72px;border-radius:36px;font:600 24px/72px "Segoe UI",-apple-system,"SF Pro Display",system-ui,sans-serif;color:#fff;text-align:center;letter-spacing:-.2px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  tiers: [                                          // label, rim colour, glow colour
+    { label: 'Free',  rim: '#16a06c', glow: '#3ff0a6' },
+    { label: 'Pro',   rim: '#2749d4', glow: '#7d97ff' },
+    { label: 'Ultra', rim: '#7a2bd6', glow: '#d072ff' },
+  ],
+  mode: 'light',                // 'light' or 'dark' page
+  pitch: 162,                   // px between pill centres on the 800 x 600 canvas
+  startActive: 2,               // index of the tier lit at 0s
+  picks: [[1.2, 0], [2.6, 1], [4.0, 2]],   // [second of the click, tier clicked]
+}
+const DUR = 5.6
+window.DUR = DUR
+const DW = 800, DH = 600, U = Math.min(W / DW, H / DH)
+const dark = CONFIG.mode === 'dark'
+stage.style.background = dark ? '#07090d' : '#f6f8fb'
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})` })
+const N = CONFIG.tiers.length
+const X0 = DW / 2 - (N - 1) * CONFIG.pitch / 2, Y = 264
+const pills = CONFIG.tiers.map((tr, i) => {
+  const p = el('div', 'pl', root); S(p, { left: X0 + i * CONFIG.pitch - 62.5 + 'px', top: Y + 'px' })
+  p.innerHTML = `<div class="abs" style="inset:0;border-radius:36px;background:#0a0b10;box-shadow:inset 0 0 0 2.5px ${tr.rim},inset 0 0 20px 3px ${tr.rim}"></div><div class="abs" style="left:24px;right:24px;bottom:-1px;height:22px;border-radius:50%;background:radial-gradient(ellipse at 50% 100%,${tr.glow},transparent 72%);filter:blur(3px)"></div><div class="abs" style="inset:0;border-radius:36px;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 40%)"></div><span style="position:relative">${tr.label}</span>`
+  return p
+})
+const cur = el('div', 'abs', root, '<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7 17.5 L10.5 25 L14 23.5 L10.5 16.5 L17 16.5 Z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'); S(cur, { zIndex: 9 })
+const along = (pts, t) => {
+  if (t <= pts[0][0]) return [pts[0][1], pts[0][2]]
+  for (let i = 0; i < pts.length - 1; i++) if (t < pts[i + 1][0]) { const u = eio(seg(t, pts[i][0], pts[i + 1][0])); return [lerp(pts[i][1], pts[i + 1][1], u), lerp(pts[i][2], pts[i + 1][2], u)] }
+  const l = pts[pts.length - 1]; return [l[1], l[2]]
+}
+const cx = (i) => X0 + i * CONFIG.pitch + 14, cy = Y + 44
+const PATH = [[0, 560, 420], [.6, 560, 420], ...CONFIG.picks.map(([tt, i]) => [tt, cx(i), cy]).flatMap((p, k, a) => [p, [p[0] + .5, p[1], p[2]]]), [5, 560, 420], [5.6, 560, 420]]
+function render(t) {
+  // active tier: starts as startActive, changes at each pick
+  let act = CONFIG.startActive, since = -9
+  CONFIG.picks.forEach(([tt, i]) => { if (t >= tt) { act = i; since = tt } })
+  const lastAct = (() => { let a = CONFIG.startActive; CONFIG.picks.forEach(([tt, i]) => { if (t >= tt) { a = i } }); return a })()
+  CONFIG.tiers.forEach((tr, i) => {
+    // eased 0..1 "active" amount per pill
+    let a = i === CONFIG.startActive ? 1 : 0
+    CONFIG.picks.forEach(([tt, k]) => { const u = eo(seg(t, tt, tt + .35)); a = k === i ? lerp(a, 1, u) : lerp(a, 0, u) })
+    const pulse = .5 + .5 * Math.sin(t * 3.2)
+    const press = CONFIG.picks.reduce((m, [tt, k]) => k === i ? Math.max(m, 1 - seg(Math.abs(t - (tt - .05)), 0, .14)) : m, 0)
+    S(pills[i], { transform: `scale(${1 + .05 * a - .05 * press})`, filter: `brightness(${.94 + .06 * a + .06 * pulse * a})`, boxShadow: `0 ${8 + 6 * a}px ${16 + 20 * a}px ${dark ? 0 : -2}px ${tr.rim}${a > .5 ? '55' : '2e'}` })
+  })
+  const [px, py] = along(PATH, t)
+  S(cur, { left: px + 'px', top: py + 'px', opacity: seg(t, .3, .6) * (1 - seg(t, 5.0, 5.4)) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

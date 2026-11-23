@@ -1,0 +1,36 @@
+{
+  "slug": "one-word-in-nine-type-styles-preloader__camera-pan-over-tile-wall",
+  "visual_name": "One word in nine type styles, preloader",
+  "code_name": "Camera pan over a tile wall",
+  "category": "ui-components",
+  "summary": "A portfolio preloader that plays one word in many type treatments (lime on indigo with design icons, black ransom-note cutouts, a lime counter) then pulls back to show all nine as a 3 x 3 wall before landing on a plain big version.",
+  "tags": [
+    "loader",
+    "kinetic-type",
+    "hero",
+    "dark",
+    "cursor",
+    "21st"
+  ],
+  "tech": [
+    "react"
+  ],
+  "duration_sec": 10.4,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "type remix",
+    "typography preloader",
+    "portfolio preloader",
+    "ransom note",
+    "word in different fonts",
+    "loading screen type"
+  ],
+  "credit": {
+    "idea": "Typography Portfolio Preloader",
+    "author": "kedhareswer",
+    "url": "https://21st.dev/@kedhareswer/components/type-remix-preloader",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

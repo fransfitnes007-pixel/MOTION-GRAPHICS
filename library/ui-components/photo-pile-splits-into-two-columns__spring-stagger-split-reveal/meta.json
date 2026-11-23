@@ -1,0 +1,35 @@
+{
+  "slug": "photo-pile-splits-into-two-columns__spring-stagger-split-reveal",
+  "visual_name": "Photo pile that splits into two columns",
+  "code_name": "Spring stagger split reveal",
+  "category": "ui-components",
+  "summary": "A small pile of rounded photo tiles in the middle of a cream page springs apart into a left and a right column, uncovering a serif headline between them; a pill at the bottom swaps from \"unveil\" to \"close curtain\".",
+  "tags": [
+    "hero",
+    "card",
+    "light",
+    "scroll",
+    "21st"
+  ],
+  "tech": [
+    "react"
+  ],
+  "duration_sec": 6.4,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "curtain split",
+    "curtain hero",
+    "photo split hero",
+    "photos part to reveal text",
+    "unveil",
+    "split hero"
+  ],
+  "credit": {
+    "idea": "Curtain Split Hero",
+    "author": "daiwiikharihar",
+    "url": "https://21st.dev/@daiwiikharihar/components/curtain-split-hero",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

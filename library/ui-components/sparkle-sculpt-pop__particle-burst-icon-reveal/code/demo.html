@@ -1,0 +1,147 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>sparkle sculpt pop</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6.4
+window.DUR = DUR
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const g = cvs.getContext('2d')
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const rnd = (i, s = 1) => { let h = (Math.imul(i + 1, 374761393) + Math.imul(s, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296 }
+const rrect = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r) }
+const circ = (x, y, r) => { g.beginPath(); g.arc(x, y, Math.max(0, r), 0, Math.PI * 2) }
+const txt = (s, x, y, size, wt, col, al = 'center') => { g.font = `${wt} ${size}px ${FONT}`; g.textAlign = al; g.textBaseline = 'middle'; g.fillStyle = col; g.fillText(s, x, y) }
+// simulated finger: a = opacity, press 0..1 (shrinks), rip 0..1 ripple progress (<0 or >1 = none)
+function finger(x, y, a, press, rip) {
+  if (a <= .01) return
+  g.save(); g.globalAlpha = a
+  if (rip >= 0 && rip < 1) { g.strokeStyle = `rgba(255,255,255,${.55 * (1 - rip)})`; g.lineWidth = 5 * (1 - rip) + 1; circ(x, y, lerp(34, 120, eo(rip))); g.stroke() }
+  const r = 38 * (1 - .2 * press)
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 24; g.shadowOffsetY = 8
+  const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.62)'); gr.addColorStop(1, 'rgba(255,255,255,.30)')
+  g.fillStyle = gr; circ(x, y, r); g.fill(); g.shadowColor = 'transparent'
+  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2.5; g.stroke(); g.restore()
+}
+const tapPress = (t, tt) => seg(t, tt - .14, tt) * (1 - seg(t, tt + .05, tt + .22))
+const tapRip = (t, tt) => t < tt ? -1 : seg(t, tt, tt + .6)
+
+const BX = CX, BY = CY - 10, BRAD = TALL ? 250 : 270, TAP = 1.1, TB = 1.18, NP = 78, ND = 70
+const W2 = Math.PI * 2 / DUR
+const col = ['#fff2b0', '#ffd24a', '#ffffff', '#ff9ac8', '#9be7ff', '#ffb35a']
+const smooth = (x) => x * x * (3 - 2 * x)
+function blobR(th, tt, amp) {            // wobbly radius, loops because every frequency is a multiple of 2*pi/DUR
+  return 1 + .045 * Math.sin(3 * th + W2 * 2 * tt) + .035 * Math.sin(5 * th - W2 * 3 * tt + 1.3) + .03 * Math.sin(2 * th + W2 * tt + .6) + amp * (Math.sin(9 * th + 2.1) * .5 + Math.sin(14 * th + 4.4) * .5)
+}
+function sparkle(x, y, r, rot) {
+  g.beginPath()
+  for (let k = 0; k < 8; k++) { const a = rot + k * Math.PI / 4, rr = k % 2 ? r * .22 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) }
+  g.closePath()
+}
+function star(x, y, R, r, cr) {
+  g.beginPath()
+  for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r : R; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) }
+  g.closePath()
+}
+
+function render(t) {
+  const bg = g.createRadialGradient(BX, BY, 30, BX, BY, W * .7); bg.addColorStop(0, '#15151f'); bg.addColorStop(1, '#0b0b10'); g.fillStyle = bg; g.fillRect(0, 0, W, H)
+  const dis = eio(seg(t, 1.3, 2.5)) - eio(seg(t, 5.4, 6.2))
+  const press = tapPress(t, TAP), burst = spring(seg(t, TB, TB + .6), 7, 14)
+  // icon (under the blob)
+  const isc = spring(seg(t, 1.7, 2.6), 6.5, 12) * (1 - eo(seg(t, 5.0, 5.7)))
+  if (isc > .005) {
+    g.save(); g.translate(BX, BY); g.scale(isc, isc); g.rotate((1 - isc) * -.5)
+    const ig = g.createRadialGradient(0, 0, 0, 0, 0, 330); ig.addColorStop(0, 'rgba(255,200,70,.35)'); ig.addColorStop(1, 'rgba(255,200,70,0)'); g.fillStyle = ig; circ(0, 0, 330); g.fill()
+    g.shadowColor = 'rgba(255,170,30,.6)'; g.shadowBlur = 50
+    const sg = g.createLinearGradient(0, -150, 0, 130); sg.addColorStop(0, '#fff0a0'); sg.addColorStop(.5, '#ffbe2e'); sg.addColorStop(1, '#ff8a00')
+    g.fillStyle = sg; g.strokeStyle = sg; g.lineJoin = 'round'; g.lineWidth = 46; star(0, 8, 118, 56); g.fill(); g.stroke(); g.shadowColor = 'transparent'
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-30, -44, 22, 10, -.9, 0, 7); g.fill()
+    g.restore()
+  }
+  // ring pulses
+  for (let k = 0; k < 2; k++) {
+    const p = seg(t, 1.75 + .14 * k, 2.55 + .14 * k)
+    if (p > 0 && p < 1) { g.strokeStyle = `rgba(255,214,120,${.8 * (1 - p) * (k ? .6 : 1)})`; g.lineWidth = 12 * (1 - p) + 2; circ(BX, BY + 8, lerp(150, 470, eo(p))); g.stroke() }
+  }
+  // blob
+  const bs = (1 - .06 * press + .07 * burst * (1 - seg(t, TB + .4, TB + 1.2))) * (1 - .38 * Math.max(0, dis)) + .0
+  const ba = 1 - smooth(clamp((dis - .05) / .75))
+  if (ba > .01) {
+    g.save(); g.globalAlpha = ba; g.translate(BX, BY); g.scale(bs, bs)
+    const path = (rs) => { g.beginPath(); for (let k = 0; k <= 140; k++) { const th = k / 140 * Math.PI * 2, r = BRAD * rs * blobR(th, t, .06 * dis); g.lineTo(Math.cos(th) * r, Math.sin(th) * r) } g.closePath() }
+    g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 60; g.shadowOffsetY = 26; path(1)
+    const gr = g.createRadialGradient(-BRAD * .3, -BRAD * .35, 10, 0, 0, BRAD * 1.1); gr.addColorStop(0, '#2b2b3a'); gr.addColorStop(.6, '#15151e'); gr.addColorStop(1, '#08080c'); g.fillStyle = gr; g.fill(); g.shadowColor = 'transparent'
+    g.save(); path(1); g.clip(); const rim = g.createLinearGradient(-BRAD, -BRAD, BRAD * .6, BRAD * .6); rim.addColorStop(0, 'rgba(255,255,255,.22)'); rim.addColorStop(.3, 'rgba(255,255,255,0)'); g.strokeStyle = rim; g.lineWidth = 8; path(1); g.stroke(); g.restore()
+    g.fillStyle = 'rgba(255,255,255,.07)'; g.beginPath(); g.ellipse(-BRAD * .32, -BRAD * .42, BRAD * .3, BRAD * .13, -.6, 0, 7); g.fill()
+    g.restore()
+  }
+  // blob dust leaving the edge
+  for (let j = 0; j < ND; j++) {
+    const th = rnd(j, 7) * Math.PI * 2, d0 = 1.35 + rnd(j, 8) * .7, age = t - d0
+    if (age < 0 || age > 1.3) continue
+    const r = BRAD * (1 + .9 * eo(age / 1.3) * (.4 + rnd(j, 9))) , a = (1 - age / 1.3) * .8, sz = (3 + rnd(j, 10) * 8) * (1 - age / 1.3)
+    g.fillStyle = `rgba(40,40,58,${a})`; circ(BX + Math.cos(th) * r, BY + Math.sin(th) * r, sz); g.fill()
+  }
+  // sparkle burst with trails
+  g.globalCompositeOperation = 'lighter'
+  for (let j = 0; j < NP; j++) {
+    const ang = rnd(j, 1) * Math.PI * 2, sp = 380 + rnd(j, 2) * 760, life = .9 + rnd(j, 3) * .9, dr = 2.4 + rnd(j, 4) * 1.2, c = col[(rnd(j, 5) * col.length) | 0]
+    const o0 = rnd(j, 6) * 70, size = 8 + rnd(j, 11) * 20, age = t - TB
+    if (age < 0 || age > life) continue
+    const P = (a) => { const d = sp * (1 - Math.exp(-dr * a)) / dr + o0; return [BX + Math.cos(ang) * d, BY + 10 + Math.sin(ang) * d + 90 * a * a] }
+    const fade = 1 - Math.pow(age / life, 2)
+    for (let k = 1; k <= 9; k++) { const a0 = age - .022 * (k - 1), a1 = age - .022 * k; if (a1 < 0) break; const [x0, y0] = P(a0), [x1, y1] = P(a1); g.strokeStyle = c; g.globalAlpha = fade * (1 - k / 10) * .8; g.lineWidth = size * .26 * (1 - k / 10); g.lineCap = 'round'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke() }
+    const [x, y] = P(age), tw = .7 + .3 * Math.sin(age * 22 + j)
+    g.globalAlpha = fade; g.fillStyle = c; sparkle(x, y, size * tw * (1 - .4 * age / life), age * (rnd(j, 12) - .5) * 5); g.fill()
+    g.globalAlpha = fade * .25; circ(x, y, size * 1.2); g.fill()
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'
+  // burst flash
+  const fl = seg(t, TB, TB + .35); if (fl > 0 && fl < 1) { const fg = g.createRadialGradient(BX, BY, 0, BX, BY, 380); fg.addColorStop(0, `rgba(255,236,170,${.45 * (1 - fl)})`); fg.addColorStop(1, 'rgba(255,236,170,0)'); g.fillStyle = fg; circ(BX, BY, 380); g.fill() }
+  const fp = eio(seg(t, .5, 1.05)), fa = seg(t, .45, .7) * (1 - seg(t, 1.5, 1.85))
+  finger(lerp(BX + 340, BX + 30, fp), lerp(BY + 420, BY + 40, fp), fa, press, tapRip(t, TAP))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

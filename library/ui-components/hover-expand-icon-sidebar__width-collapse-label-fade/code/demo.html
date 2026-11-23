@@ -1,0 +1,109 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;background-image:radial-gradient(#e4e4e7 1.2px,transparent 1.4px);background-size:28px 28px;font-family:'Inter',-apple-system,'SF Pro Text',system-ui,sans-serif;color:#2c2c2e}
+.shell{position:absolute;background:#f4f4f5;border:1px solid #dcdce0;border-radius:9px;overflow:hidden}
+.main{position:absolute;top:2px;bottom:0;background:#fff;border-radius:34px 0 0 0;border-left:1.5px solid #e5e5e8;border-top:1.5px solid #e5e5e8;overflow:hidden}
+.sk{position:absolute;background:#f5f5f7;border-radius:14px}
+.lab{position:absolute;white-space:nowrap;font-size:22px;line-height:28px}
+.cur{position:absolute;left:0;top:0;width:28px;height:28px;pointer-events:none}
+svg{display:block}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Hover-expand sidebar: an icon rail widens to a full menu when the cursor is over it and shrinks back when it leaves. Labels fade with the width and the dashboard area re-flows into the space.
+const CONFIG = {
+  brand: 'Acet Labs', user: 'Manu Arora',
+  links: ['Dashboard', 'Profile', 'Settings', 'Logout'],
+  frame: { w: 968, h: 736 },              // px, whole component
+  wOpen: 448, wClosed: 89,                // sidebar width expanded and collapsed (the original uses 300px and 60px)
+  collapseSec: .4, expandSec: .4,          // width animation lengths
+  events: [[.45, 0], [3.2, 1]],            // [time, 1 = open / 0 = closed]; starts open
+  cursor: [[0, 200, 470], [.2, 200, 470], [.7, 880, 420], [2.6, 880, 420], [3.2, 120, 470], [4.4, 200, 470]],   // [time, x, y] inside the frame
+  dur: 4.4,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const fx = CX - C.frame.w / 2, fy = CY - C.frame.h / 2
+const shell = el('div', 'shell', stage); S(shell, { left: px(fx), top: px(fy), width: px(C.frame.w), height: px(C.frame.h) })
+const main = el('div', 'main', shell)
+const ICON = {
+  term: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="m8 9 3 3-3 3M13 15h4"/>',
+  user: '<circle cx="10" cy="8" r="3.4"/><path d="M4 20c0-3.5 2.8-5.5 6-5.5M17 14l-2.2 4h3.4L16 22"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8l1.8 2.2 2.8-.6 1 2.7 2.7 1-.6 2.8L21.5 12l-2.2 1.8.6 2.8-2.7 1-1 2.7-2.8-.6L12 21.2l-1.8-2.2-2.8.6-1-2.7-2.7-1 .6-2.8L2.5 12l2.2-1.8-.6-2.8 2.7-1 1-2.7 2.8.6Z"/>',
+  back: '<path d="M20 12H5M11 6l-6 6 6 6"/>',
+}
+const mkIcon = (k) => `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#3a3a3c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`
+const logo = el('div', 'abs', shell, '<svg width="38" height="34" viewBox="0 0 38 34"><path d="M0 4C0 1.8 1.8 0 4 0h24c6 0 10 4 10 10v20c0 2.2-1.8 4-4 4H10C4 34 0 30 0 24Z" fill="#000"/></svg>'); S(logo, { left: '28px', top: '28px' })
+const brand = el('div', 'lab', shell, C.brand); S(brand, { left: '78px', top: '31px', fontWeight: 600, fontSize: '21px' })
+const icons = ['term', 'user', 'gear', 'back'], rows = C.links.map((l, i) => {
+  const ic = el('div', 'abs', shell, mkIcon(icons[i])); S(ic, { left: '28px', top: px(112 + i * 66 - 2) })
+  const lb = el('div', 'lab', shell, l); S(lb, { left: '76px', top: px(112 + i * 66 + 2), fontSize: '22px' })
+  return [ic, lb]
+})
+const av = el('div', 'abs', shell, '<svg width="46" height="46" viewBox="0 0 46 46"><defs><linearGradient id="avg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ab3f2"/><stop offset="1" stop-color="#2e86d9"/></linearGradient></defs><circle cx="23" cy="23" r="23" fill="url(#avg)"/><circle cx="23" cy="19" r="8" fill="#e8b48f"/><path d="M5 40c3-9 9-12 18-12s15 3 18 12" fill="#2b2f3a"/><path d="M15 15c2-7 14-8 16 0-4-3-12-3-16 0Z" fill="#1d1d22"/></svg>'); S(av, { left: '20px', top: px(C.frame.h - 66) })
+const ulabel = el('div', 'lab', shell, C.user); S(ulabel, { left: '78px', top: px(C.frame.h - 56), fontSize: '22px' })
+const sks = Array.from({ length: 6 }, () => el('div', 'sk', main))
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="28" height="28"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+function open(t) {        // 0 closed .. 1 open
+  let v = 1, from = 1, te = -9; for (const [tt, o] of C.events) if (t >= tt) { from = v; v = o; te = tt }
+  const d = v ? C.expandSec : C.collapseSec
+  return lerp(from, v, eo(seg(t, te, te + d)))
+}
+function render(t) {
+  const k = open(t), sw = lerp(C.wClosed, C.wOpen, k)
+  S(main, { left: px(sw), width: px(C.frame.w - sw) })
+  const lab = clamp((k - .45) / .55)          // labels appear in the last half of the opening, vanish early when closing
+  for (const e of [brand, ulabel, ...rows.map((r) => r[1])]) S(e, { opacity: lab, clipPath: `inset(0 ${Math.max(0, 0)}px 0 0)` })
+  // skeleton re-flows to the main width: 4 small tiles over 2 tall tiles
+  const iw = C.frame.w - sw - 110, ix = 55, g = 12
+  const sw4 = (iw - g * 3) / 4, sw2 = (iw - g) / 2
+  sks.forEach((e, i) => { if (i < 4) S(e, { left: px(ix + i * (sw4 + g)), top: px(52), width: px(sw4), height: px(116) }); else S(e, { left: px(ix + (i - 4) * (sw2 + g)), top: px(182), width: px(sw2), height: px(C.frame.h - 182 - 68) }) })
+  // cursor
+  const P = C.cursor; let x = P[0][1], y = P[0][2]
+  for (let j = 0; j < P.length - 1; j++) if (t >= P[j][0] && t <= P[j + 1][0]) { const u = eio(seg(t, P[j][0], P[j + 1][0])); x = lerp(P[j][1], P[j + 1][1], u); y = lerp(P[j][2], P[j + 1][2], u) }
+  S(cur, { transform: `translate(${fx + x}px,${fy + y}px)` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

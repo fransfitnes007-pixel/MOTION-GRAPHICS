@@ -1,0 +1,92 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.tx{position:absolute;white-space:nowrap}
+.pill{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:999px;font-weight:600;color:#fff;white-space:nowrap}
+.cur{position:absolute;width:26px;height:26px;pointer-events:none}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  trigger: 'Delete Account',                         // page button that opens the dialog
+  heading: 'Permanently delete your account?',
+  body: 'This action cannot be undone. All your data, settings, and content will be permanently removed from our servers. The dramatic red backdrop emphasizes the severity of this decision.',
+  confirm: 'Delete Forever', cancel: 'Keep Account',   // footer buttons, confirm sits on top
+  danger: '#ff3b3b', accent: '#0a84ff',               // red and blue button colours
+  backdropRGB: '69,10,10',                            // r,g,b of the red wash (Tailwind red-950)
+  baseDim: 0.5,                                       // black dim behind the red wash
+  blur: 4,                                            // px of backdrop blur
+  openAt: 0.8, closeAt: 3.7,                          // pointer clicks: Delete Account, then Keep Account (seconds)
+  fade: 0.25,                                         // open/close time
+}
+const DUR = 5.4
+window.DUR = DUR
+const BW = 1200, BH = 900
+const U = Math.min(W / BW, H / BH)
+const root = el('div', 'abs', stage); S(root, { left: '50%', top: '50%', width: BW + 'px', height: BH + 'px', marginLeft: -BW / 2 + 'px', marginTop: -BH / 2 + 'px', transform: `scale(${U})`, overflow: 'hidden' })
+const trig = el('div', 'pill', root, CONFIG.trigger); S(trig, { left: '533px', top: '431px', width: '135px', height: '38px', background: CONFIG.danger, fontSize: '14px' })
+const bd = el('div', 'abs', root); S(bd, { inset: '0', backdropFilter: `blur(${CONFIG.blur}px)`, webkitBackdropFilter: `blur(${CONFIG.blur}px)`, background: `linear-gradient(to top, rgba(${CONFIG.backdropRGB},.9), rgba(${CONFIG.backdropRGB},.5) 50%, rgba(${CONFIG.backdropRGB},0)), rgba(0,0,0,${CONFIG.baseDim})` })
+const dlg = el('div', 'abs', root); S(dlg, { left: '403px', top: '301px', width: '394px', height: '300px', borderRadius: '30px', background: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,.35)' })
+const xb = el('div', 'tx', dlg, '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'); S(xb, { right: '20px', top: '15px', width: '22px', height: '22px', borderRadius: '50%', background: '#ebebed', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+const ic = el('div', 'tx', dlg, '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>'); S(ic, { left: '177px', top: '20px', width: '40px', height: '40px', borderRadius: '50%', background: '#fde1e1', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+const hd = el('div', 'tx', dlg, CONFIG.heading); S(hd, { left: '0', width: '394px', textAlign: 'center', top: '72px', fontSize: '18px', fontWeight: '600' })
+const by = el('div', 'tx', dlg, CONFIG.body); S(by, { left: '22px', width: '350px', top: '104px', whiteSpace: 'normal', fontSize: '14.5px', lineHeight: '18.8px', color: '#6e6e73' })
+const b1 = el('div', 'pill', dlg, CONFIG.confirm); S(b1, { left: '22px', top: '199px', width: '350px', height: '34px', background: CONFIG.danger, fontSize: '14.5px' })
+const b2 = el('div', 'pill', dlg, CONFIG.cancel); S(b2, { left: '22px', top: '241px', width: '350px', height: '34px', background: CONFIG.accent, fontSize: '14.5px' })
+const cur = el('div', 'cur', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+
+function render(t) {
+  const C = CONFIG
+  const open = eo(seg(t, C.openAt + .05, C.openAt + .05 + C.fade)) * (1 - eo(seg(t, C.closeAt + .05, C.closeAt + .05 + C.fade)))
+  S(bd, { opacity: open }); vis(bd, open > 0)
+  S(dlg, { opacity: open, transform: `scale(${.94 + .06 * open})` }); vis(dlg, open > 0)
+  // pointer: to Delete Account, away, then to Keep Account
+  const P = [[0, 900, 220], [C.openAt - .45, 610, 452], [C.openAt + .1, 610, 452], [C.openAt + .7, 900, 300], [C.closeAt - .9, 640, 560], [C.closeAt + .1, 640, 560], [C.closeAt + .8, 930, 700], [DUR, 930, 700]]
+  let X = P[0][1], Y = P[0][2]
+  for (let i = 0; i < P.length - 1; i++) if (t >= P[i][0] && t <= P[i + 1][0]) { const e = eio(seg(t, P[i][0], P[i + 1][0])); X = lerp(P[i][1], P[i + 1][1], e); Y = lerp(P[i][2], P[i + 1][2], e) }
+  const dip = (c) => 1 - seg(Math.abs(t - c - .05), 0, .1)
+  S(cur, { left: px(X), top: px(Y), transform: `scale(${1 - .15 * Math.max(dip(C.openAt), dip(C.closeAt))})` })
+  S(trig, { transform: `scale(${1 - .05 * dip(C.openAt)})` })
+  S(b2, { transform: `scale(${1 - .04 * dip(C.closeAt)})`, filter: `brightness(${1 - .08 * seg(t, C.closeAt - .3, C.closeAt)})` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

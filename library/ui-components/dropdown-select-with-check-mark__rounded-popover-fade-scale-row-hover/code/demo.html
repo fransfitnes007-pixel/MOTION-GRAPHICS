@@ -1,0 +1,118 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.tx{position:absolute;white-space:nowrap}
+.cur{position:absolute;width:26px;height:26px;pointer-events:none}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  label: 'State',                 // text above the trigger
+  placeholder: 'Select one',     // trigger text before a choice
+  items: [{name: "Florida"}, {name: "Delaware"}, {name: "California"}, {name: "Texas"}, {name: "New York"}, {name: "Washington"}],
+  // each item: name, optional email line, optional avatar gradient [light, dark]
+  width: 256,                          // trigger and popover width in px
+  rowH: 40,                      // height of one option row
+  pick: 0,                             // index of the option the pointer clicks
+  accent: '#0a0a0a',                   // check mark colour
+  hoverFill: '#f1f1f3',                // fill of the hovered row
+  clickOpen: 0.5, clickPick: 1.6, clickOpen2: 2.6, clickAway: 3.9,   // scripted click times in seconds
+}
+const DUR = 4.6
+window.DUR = DUR
+const BW = 1280, BH = 960
+const U = Math.min(W / BW, H / BH)
+const root = el('div', 'abs', stage); S(root, { left: '50%', top: '50%', width: BW + 'px', height: BH + 'px', marginLeft: -BW / 2 + 'px', marginTop: -BH / 2 + 'px', transform: `scale(${U})` })
+const WD = CONFIG.width, L = (BW - WD) / 2, TT = 474, TH = 36
+const lab = el('div', 'tx', root, CONFIG.label); S(lab, { left: px(L), top: '448px', fontSize: '14px', fontWeight: '500' })
+const trig = el('div', 'tx', root); S(trig, { left: px(L), top: px(TT), width: px(WD), height: px(TH), borderRadius: '18px', background: '#f6f6f7', boxShadow: '0 0 0 1px rgba(0,0,0,.05), 0 2px 6px rgba(0,0,0,.05)' })
+const val = el('div', 'tx', trig); S(val, { left: '14px', top: '0', height: px(TH), display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' })
+const chev = el('div', 'tx', trig, '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'); S(chev, { right: '12px', top: '11px' })
+const N = CONFIG.items.length, RH = CONFIG.rowH, PAD = 9
+const PH = N * RH + PAD * 2
+const pop = el('div', 'tx', root); S(pop, { left: px(L), top: px(TT + TH + 9), width: px(WD), height: px(PH), borderRadius: '27px', background: '#fff', boxShadow: '0 0 0 1px rgba(0,0,0,.04), 0 12px 40px rgba(0,0,0,.13)', transformOrigin: '50% 0', overflow: 'hidden' })
+const grad = ([a, b]) => `radial-gradient(circle at 30% 25%, ${a}, ${b} 85%)`
+const rows = CONFIG.items.map((it, i) => {
+  const r = el('div', 'tx', pop); S(r, { left: px(PAD - 2), top: px(PAD + i * RH), width: px(WD - 2 * (PAD - 2)), height: px(RH), borderRadius: '18px' })
+  let x = 14
+  if (it.avatar) { const a = el('div', 'tx', r); S(a, { left: '14px', top: px((RH - 32) / 2), width: '32px', height: '32px', borderRadius: '50%', background: grad(it.avatar) }); x = 58 }
+  const nm = el('div', 'tx', r, it.name); S(nm, { left: px(x), top: px(it.email ? RH / 2 - 17 : RH / 2 - 9), fontSize: '14.5px', fontWeight: '500' })
+  if (it.email) { const em = el('div', 'tx', r, it.email); S(em, { left: px(x), top: px(RH / 2 + 2), fontSize: '12.5px', color: '#6f6f75' }) }
+  const ck = el('div', 'tx', r, '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'); S(ck, { right: '14px', top: px(RH / 2 - 7) })
+  return { r, ck }
+})
+const cur = el('div', 'cur', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const setVal = (it, op) => {
+  val.style.opacity = op
+  if (!it) { val.innerHTML = `<span style="color:#6b6b70">${CONFIG.placeholder}</span>`; return }
+  val.innerHTML = (it.avatar ? `<span style="width:16px;height:16px;border-radius:50%;background:${grad(it.avatar)};display:inline-block"></span>` : '') + `<span>${it.name}</span>`
+}
+function render(t) {
+  const C = CONFIG
+  // open state: opens at clickOpen, closes at clickPick, reopens at clickOpen2, closes at clickAway
+  const o1 = eo(seg(t, C.clickOpen, C.clickOpen + .22)) * (1 - eo(seg(t, C.clickPick, C.clickPick + .16)))
+  const o2 = eo(seg(t, C.clickOpen2, C.clickOpen2 + .22)) * (1 - eo(seg(t, C.clickAway, C.clickAway + .16)))
+  const open = Math.max(o1, o2)
+  S(pop, { opacity: open, transform: `scale(${.96 + .04 * open}) translateY(${(open - 1) * 6}px)` }); vis(pop, open > 0)
+  S(chev, { transform: `rotate(${(t >= C.clickOpen && t < C.clickPick) || (t >= C.clickOpen2 && t < C.clickAway) ? 180 : 0}deg)` })
+  const chosen = t >= C.clickPick
+  const fadeEnd = 1 - seg(t, DUR - .3, DUR)
+  setVal(chosen ? C.items[C.pick] : null, chosen ? fadeEnd : 1)
+  if (chosen && fadeEnd < 1) setVal(fadeEnd > .5 ? C.items[C.pick] : null, Math.abs(fadeEnd - .5) * 2)
+  // pointer
+  const rowC = (i) => [L + WD / 2 - 30, TT + TH + 9 + PAD + (i + .5) * RH]
+  const P = [[0, 980, 700], [C.clickOpen - .35, L + 170, TT + 18], [C.clickOpen + .15, L + 170, TT + 18], [C.clickPick - .5, ...rowC(C.pick)], [C.clickPick + .1, ...rowC(C.pick)], [C.clickPick + .7, 900, 640],
+    [C.clickOpen2 - .35, L + 150, TT + 18], [C.clickOpen2 + .15, L + 150, TT + 18], [C.clickAway - .6, 930, 560], [C.clickAway + .1, 930, 560], [DUR, 1000, 700]]
+  let X = P[0][1], Y = P[0][2]
+  for (let i = 0; i < P.length - 1; i++) if (t >= P[i][0] && t <= P[i + 1][0]) { const e = eio(seg(t, P[i][0], P[i + 1][0])); X = lerp(P[i][1], P[i + 1][1], e); Y = lerp(P[i][2], P[i + 1][2], e) }
+  S(cur, { left: px(X), top: px(Y) })
+  // row hover: the row under the pointer while the popover is open
+  rows.forEach((rw, i) => {
+    const [rx, ry] = rowC(i)
+    const hover = open > .9 && Math.abs(Y - ry) < RH / 2 && X > L && X < L + WD
+    S(rw.r, { background: hover ? C.hoverFill : 'transparent' })
+    const sel = chosen && i === C.pick && (t >= C.clickOpen2)
+    S(rw.ck, { opacity: sel ? 1 : 0 })
+  })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

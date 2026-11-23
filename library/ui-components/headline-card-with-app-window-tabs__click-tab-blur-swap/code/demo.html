@@ -1,0 +1,139 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0b0b0b}
+.bcard{position:absolute;background:#fff;border:1px solid #e4e4e7;border-radius:44px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.12)}
+.eyebrow{position:absolute;font-size:15px;letter-spacing:.02em;color:#6f6f76;text-transform:uppercase}
+.head{position:absolute;font-size:30px;font-weight:500;line-height:1.28;letter-spacing:-.01em}
+.back{position:absolute;background:#f6f6f7;border-radius:30px 0 0 0}
+.win{position:absolute;background:#fff;border:7px solid #ececee;border-radius:34px 0 0 0;overflow:hidden}
+.bar{position:absolute;left:0;right:0;top:0;height:52px;border-bottom:1px solid #eee}
+.dot{position:absolute;top:21px;width:10px;height:10px;border-radius:50%;background:#e1e1e4}
+.wtitle{position:absolute;top:16px;left:0;right:0;text-align:center;font-size:17px;letter-spacing:.06em;color:#bdbdc3}
+.side{position:absolute;left:0;top:53px;bottom:0;width:162px;background:#fafafa;border-right:1px solid #eee}
+.item{position:absolute;left:10px;width:142px;height:38px;border-radius:12px;font-size:16px;color:#555;line-height:38px;padding-left:40px;white-space:nowrap}
+.item.on{background:#f1f1f2;color:#0b0b0b}
+.item i{position:absolute;left:12px;top:11px;width:16px;height:16px;border:1.6px solid #777;border-radius:5px}
+.item em{position:absolute;right:8px;top:9px;height:20px;line-height:20px;padding:0 8px;border-radius:10px;background:#efeff1;color:#888;font-style:normal;font-size:12px}
+.tick{position:absolute;left:3px;top:9px;width:3px;height:22px;background:#111;border-radius:2px}
+.pane{position:absolute;left:182px;top:70px;right:0;bottom:0}
+.pane h4{font-size:15px;letter-spacing:.03em;font-weight:600;color:#555;margin-bottom:4px}
+.pane .sub{font-size:14px;color:#7b7b82}
+.tile{position:absolute;border:1px solid #ececee;border-radius:20px;background:#fff}
+.lbl{font-size:13px;color:#555}.big{font-size:29px;font-weight:400;margin-top:12px}
+.ul{position:absolute;left:0;right:0;height:3px;background:#111;border-radius:2px}
+.row{position:absolute;left:0;right:0;font-size:13px}
+.av{position:absolute;left:14px;top:6px;width:24px;height:24px;border-radius:50%;background:#f1f1f3;border:1px solid #e6e6e8}
+.btn{position:absolute;background:#111;color:#fff;border-radius:8px;font-size:11px;height:20px;line-height:20px;text-align:center}
+.cur{position:absolute;left:0;top:0;width:22px;height:22px;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Bento card: a headline card with a clipped app window below it. A cursor clicks the sidebar tabs and the window content swaps with a short blur crossfade.
+const CONFIG = {
+  eyebrow: 'Project Dashboard',
+  headline: 'High-performance analytics and team collaboration tools in one place.',
+  card: { w: 690, h: 540 },            // px
+  tabs: ['Dashboard', 'Manage...', 'Threads', 'Resources'],
+  badges: ['', '10', '12', ''],        // little count pill per tab
+  clicks: [[0, 0], [1.0, 1], [2.6, 2], [4.1, 3], [5.5, 0]],   // [time, tab index] the cursor clicks; the last one loops back to the start
+  blurSec: .45,                        // blur-in length of the new pane
+  dur: 6.6,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const card = el('div', 'bcard'); S(card, { width: px(C.card.w), height: px(C.card.h), left: px(CX - C.card.w / 2), top: px(CY - C.card.h / 2 + 4) })
+el('div', 'eyebrow', card, C.eyebrow).style.cssText = 'left:40px;top:40px'
+el('div', 'head', card, C.headline).style.cssText = 'left:40px;top:72px;width:560px'
+const back = el('div', 'back', card); S(back, { left: '60px', top: '270px', width: '700px', height: '400px' })
+const win = el('div', 'win', card); S(win, { left: '100px', top: '232px', width: '740px', height: '420px' })
+for (let i = 0; i < 3; i++) { const d = el('div', 'dot', win); d.style.left = (20 + i * 17) + 'px' }
+el('div', 'bar', win); el('div', 'wtitle', win, 'WORKSPACE')
+const side = el('div', 'side', win)
+const tick = el('div', 'tick', side)
+const items = C.tabs.map((n, i) => { const it = el('div', 'item', side, `<i></i>${n}${C.badges[i] ? `<em>${C.badges[i]}</em>` : ''}`); it.style.top = (14 + i * 46) + 'px'; return it })
+const panes = [
+  `<h4>PROJECT OVERVIEW</h4><div class="sub">Daily summary of your team performance.</div>
+   <div class="tile" style="left:0;top:62px;width:460px;height:128px;padding:16px 20px"><div class="lbl">Team Performance</div><div class="big">94.2%</div><div class="ul" style="left:18px;right:0;top:76px"></div><div class="lbl" style="position:absolute;left:18px;top:96px;font-size:12px;color:#666">Score for Search &amp; Delivery campaigns</div></div>
+   <div class="tile" style="left:0;top:212px;width:200px;height:90px;padding:14px"><div class="lbl" style="color:#111">1,070</div><div style="font-size:10px;color:#aaa;margin-top:6px">KEYWORDS</div></div>
+   <div class="tile" style="left:216px;top:212px;width:200px;height:90px;padding:14px"><div class="lbl" style="color:#111">2.3M</div><div style="font-size:10px;color:#aaa;margin-top:6px">CREDITS</div></div>`,
+  `<h4>TEAM MANAGEMENT</h4><div class="sub">Manage roles and user permissions.</div>
+   <div style="position:absolute;left:0;right:0;top:48px;height:30px;background:#f6f6f7;font-size:11px;letter-spacing:.06em;color:#999;line-height:30px;padding-left:14px">ACTIVE USERS</div>
+   ${[['Anthony Dionne', 'Pending admin approval', '#f5a524'], ['Nick Yahodin', 'Leadership group admin', '#22c55e'], ['Mujeeb Aimaq', 'Design lead', '#22c55e']].map((u, i) => `<div class="row" style="top:${92 + i * 52}px;height:44px"><div class="av" style="top:8px"></div><div style="position:absolute;left:34px;top:30px;width:8px;height:8px;border-radius:50%;background:${u[2]};border:1.5px solid #fff"></div><div style="position:absolute;left:58px;top:6px;font-weight:600;font-size:13px">${u[0]}</div><div style="position:absolute;left:58px;top:24px;font-size:11px;color:#8a8a90">${u[1]}</div></div>`).join('')}`,
+  `<h4>COMMUNICATIONS</h4><div class="sub">High-priority team discussions.</div>
+   ${[['Create a Page', 'Build your project base.', 'Create', 0], ['Create a Task', 'Organize your work.', 'Create', 240]].map((c) => `<div class="tile" style="left:${c[3]}px;top:56px;width:224px;height:104px;border-radius:14px;padding:16px"><div style="font-size:14px;font-weight:600">${c[0]}</div><div style="font-size:12px;color:#8a8a90;margin-top:4px">${c[1]}</div><div class="btn" style="left:16px;top:70px;width:68px">+ Create</div></div>`).join('')}
+   <div style="position:absolute;left:0;top:200px;font-size:12px;color:#999"><span style="display:inline-block;width:11px;height:11px;border:1.5px solid #bbb;border-radius:50%;vertical-align:-2px;margin:0 8px 0 36px"></span>Pin a new item</div>`,
+  `<h4>SYSTEM ASSETS</h4><div class="sub">Shared documentation and media logs.</div>
+   <div style="position:absolute;left:0;right:0;top:48px;height:30px;background:#f6f6f7;font-size:11px;letter-spacing:.06em;color:#999;line-height:30px;padding-left:14px">ARCHIVE &amp; LOGS</div>
+   ${['design_spec_v2.pdf', 'q4_performance.xlsx', 'branding_assets.zip'].map((n, i) => `<div class="row" style="top:${92 + i * 46}px;height:38px"><div class="av" style="border-radius:6px;top:7px"></div><div style="position:absolute;left:58px;top:11px;font-size:13px">${n}</div><div style="position:absolute;right:30px;top:9px;width:60px;height:20px;border-radius:10px;background:#f1f1f3"></div></div>`).join('')}`,
+]
+const paneEls = panes.map((h) => { const p = el('div', 'pane', win, h); return p })
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="22" height="22"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+const tabPos = (i) => [CX - C.card.w / 2 + 100 + 7 + 70, CY - C.card.h / 2 + 4 + 232 + 7 + 53 + 14 + i * 46 + 19]
+function render(t) {
+  // which tab is selected, and when it was selected
+  let cur_i = C.clicks[0][1], t0 = -9
+  for (const [ct, ti] of C.clicks) if (t >= ct + .12) { cur_i = ti; t0 = ct + .12 }
+  const prev_i = (() => { let p = C.clicks[0][1]; for (const [ct, ti] of C.clicks) { if (t >= ct + .12) break; p = ti } return p })()
+  const k = seg(t, t0, t0 + C.blurSec)
+  paneEls.forEach((p, i) => {
+    let o = 0, b = 0
+    if (i === cur_i) { o = k < 1 && t0 > 0 ? eo(k) : 1; b = (1 - eo(k)) * 8; if (t0 < 0) { o = 1; b = 0 } }
+    S(p, { opacity: o, filter: b > .1 ? `blur(${b}px)` : 'none', transform: `translateY(${(1 - eo(k)) * 6}px)` })
+  })
+  items.forEach((it, i) => it.classList.toggle('on', i === cur_i))
+  S(tick, { top: px(14 + cur_i * 46 + 8) })
+  // cursor: drifts between clicks, dips on each click
+  let x = CX + 300, y = CY - 40
+  const stops = [[0, CX + 120, CY - 60], ...C.clicks.map(([ct, ti]) => [ct, ...tabPos(ti)])]
+  for (let j = 0; j < stops.length - 1; j++) if (t >= stops[j][0] && t <= stops[j + 1][0]) {
+    const u = eio(seg(t, Math.max(stops[j][0], stops[j + 1][0] - .7), stops[j + 1][0]))
+    x = lerp(stops[j][1], stops[j + 1][1], u); y = lerp(stops[j][2], stops[j + 1][2], u)
+  }
+  if (t > stops[stops.length - 1][0]) { x = stops[stops.length - 1][1]; y = stops[stops.length - 1][2] }
+  let press = 0; for (const [ct] of C.clicks) press = Math.max(press, 1 - Math.abs(t - ct) / .12 > 0 ? 1 - Math.abs(t - ct) / .12 : 0)
+  S(cur, { transform: `translate(${x}px,${y}px) scale(${1 - .15 * press})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

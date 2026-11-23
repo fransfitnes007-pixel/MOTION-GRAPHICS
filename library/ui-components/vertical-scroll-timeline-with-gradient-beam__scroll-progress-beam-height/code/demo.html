@@ -1,0 +1,116 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fdfdfd;color:#171717}
+.tx{position:absolute;white-space:nowrap}
+.img{position:absolute;border-radius:13px;overflow:hidden;box-shadow:0 0 0 1px rgba(34,42,53,.05),0 0 4px rgba(34,42,53,.08),0 16px 68px rgba(47,48,55,.05)}
+.cur{position:absolute;width:26px;height:26px;pointer-events:none}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  heading: 'Changelog from my journey',                                             // intro heading above the timeline
+  intro: "I've been working on Acme for the past 2 years. Here's a timeline of my journey.",
+  entries: [                                                                        // title, paragraphs, optional checklist, image style for the 2x2 grid
+    { title: '2024', paras: ['Built and launched Acme UI and Acme UI Pro from scratch'], grid: 'light' },
+    { title: 'Early 2023', paras: ['I usually run out of copy, but when I see content this big, I try to integrate lorem ipsum.', 'Lorem ipsum is for people who are too lazy to write copy. But we are not. Here are some more example of beautiful designs I built.'], grid: 'dark' },
+    { title: 'Changelog', paras: ['Deployed 5 new components today'], list: ['Card grid component', 'Startup template', 'File upload component', 'Icon pack', 'Pricing table'], grid: 'dark' },
+  ],
+  titleColor: '#6b6b6b',               // big entry titles
+  railX: 164,                          // x of the rail and dots (design box 1280x1070)
+  beamFrom: '#a855f7', beamVia: '#3b82f6',   // beam colours: leading (bottom) end purple, then blue, fading upward
+  beamLead: 0.5,                       // the beam's lower end sits this far down the viewport (0..1)
+  scroll: [[0, 0], [0.8, 0], [5.4, 1473], [6.6, 1473], [9.4, 0], [10.4, 0]],   // [seconds, scrollY px]: down, hold, back up
+}
+const DUR = 10.4
+window.DUR = DUR
+const BW = 1280, BH = 1070
+const U = Math.min(W / BW, H / BH)
+const root = el('div', 'abs', stage); S(root, { left: '50%', top: '50%', width: BW + 'px', height: BH + 'px', marginLeft: -BW / 2 + 'px', marginTop: -BH / 2 + 'px', transform: `scale(${U})`, overflow: 'hidden' })
+const page = el('div', 'abs', root); S(page, { left: '0', top: '0', width: BW + 'px' })
+const RX = CONFIG.railX
+const mock = (kind, w, h) => {
+  const d = el('div', 'img'); S(d, { width: px(w), height: px(h) })
+  if (kind === 'light') { d.style.background = '#f3f4f7'; d.innerHTML = '<div style="position:absolute;left:0;top:0;right:0;height:16px;background:#fff"></div><div style="position:absolute;left:20%;right:20%;top:38px;height:12px;border-radius:6px;background:#2b2f3a"></div><div style="position:absolute;left:30%;right:30%;top:60px;height:6px;border-radius:3px;background:#b9bdc8"></div><div style="position:absolute;left:42%;width:16%;top:82px;height:14px;border-radius:7px;background:#111"></div>' }
+  else { d.style.background = '#0b0b0e'; d.innerHTML = '<div style="position:absolute;left:12%;right:12%;top:30px;height:14px;border-radius:7px;background:#e7e7ea"></div><div style="position:absolute;left:22%;right:22%;top:54px;height:8px;border-radius:4px;background:#e7e7ea;opacity:.8"></div><div style="position:absolute;left:30%;right:30%;top:76px;height:6px;border-radius:3px;background:#5a5a62"></div><div style="position:absolute;left:44%;width:12%;top:98px;height:12px;border-radius:6px;background:#3b3b44"></div>' }
+  return d
+}
+let y = 136
+const hd = el('div', 'tx', page, CONFIG.heading); S(hd, { left: '132px', top: px(y), fontSize: '27px', fontWeight: '600' })
+const ip = el('div', 'tx', page, CONFIG.intro); S(ip, { left: '132px', top: px(y + 48), width: '420px', whiteSpace: 'normal', fontSize: '20px', lineHeight: '30px', color: '#3f3f46' })
+// entries: title centre positions measured from the preview
+const TY = [511, 1084, 1774]
+const railTop = TY[0] - 60
+const railBottom = 2543 - 130
+CONFIG.entries.forEach((e, k) => {
+  const Y0 = TY[k]
+  const dot = el('div', 'tx', page); S(dot, { left: px(RX - 17), top: px(Y0 - 17), width: '34px', height: '34px', borderRadius: '50%', background: '#e9e9ec', border: '1px solid #d6d6da' })
+  const dd = el('div', 'tx', dot); S(dd, { left: '9px', top: '9px', width: '14px', height: '14px', borderRadius: '50%', background: '#d4d4d8' })
+  const t = el('div', 'tx', page, e.title); S(t, { left: '251px', top: px(Y0 - 34), fontSize: '52px', fontWeight: '700', letterSpacing: '-.02em', color: CONFIG.titleColor })
+  e.paras.forEach((p, i) => {   // paragraph centres sit 73px (and 161px for a second one) under the title centre
+    const pe = el('div', 'tx', page, p); S(pe, { left: '251px', top: px(Y0 + [73, 161][i] - 15), width: '912px', whiteSpace: 'normal', fontSize: '22px', lineHeight: '29px', color: '#262626' })
+  })
+  if (e.list) e.list.forEach((li, i) => { const l = el('div', 'tx', page, '✅ ' + li); S(l, { left: '251px', top: px(Y0 + 132 + i * 30 - 12), fontSize: '19px', color: '#3f3f46' }) })
+  const gy = Y0 + [145, 264, 324][k]
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) { const m = mock(e.grid, 443, 148); S(m, { left: px(251 + c * 471), top: px(gy + r * 177) }); page.appendChild(m) }
+})
+// rail with a faint grey line and the scroll beam on top
+const rail = el('div', 'tx', page); S(rail, { left: px(RX - 1), top: px(railTop), width: '2px', height: px(railBottom - railTop), background: 'linear-gradient(to bottom, transparent 0%, #e4e4e7 10%, #e4e4e7 90%, transparent 100%)' })
+const beam = el('div', 'tx', page); S(beam, { left: px(RX - 1), top: px(railTop), width: '2px', borderRadius: '2px', background: `linear-gradient(to top, ${CONFIG.beamFrom} 0%, ${CONFIG.beamVia} 10%, rgba(59,130,246,0) 100%)` })
+const cur = el('div', 'cur', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+
+function scrollAt(t) {
+  const K = CONFIG.scroll
+  if (t <= K[0][0]) return K[0][1]
+  for (let i = 0; i < K.length - 1; i++) if (t <= K[i + 1][0]) return lerp(K[i][1], K[i + 1][1], eio(seg(t, K[i][0], K[i + 1][0])))
+  return K[K.length - 1][1]
+}
+function render(t) {
+  const sy = scrollAt(t)
+  S(page, { transform: `translateY(${-sy}px)` })
+  const railH = railBottom - railTop
+  const lead = sy + BH * CONFIG.beamLead                  // page y of the beam's lower end
+  const h = clamp(lead - railTop, 0, railH)
+  S(beam, { height: px(h), opacity: clamp(h / (railH * .1)) })
+  S(cur, { left: '1010px', top: '640px' })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

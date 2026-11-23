@@ -1,0 +1,147 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>logo-particle-assemble__points-converge-settle</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6
+window.DUR = DUR
+const N = 1200, LETTER = 'A'
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const T_IN = .3, T_CONV = 3.0, T_SETTLE = 4.0, T_FLASH = 4.0, T_SOLID_OUT = 5.2, T_END = 5.85
+const ACC = [79, 139, 255], PAPER = [242, 242, 244]
+
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const ctx = cvs.getContext('2d')
+
+// ---- seeded RNG (mulberry32), never Math.random ----
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+const R = rng(20241)
+
+// ---- sample the glyph: draw a big letter offscreen, collect opaque pixels, thin them to N spaced points ----
+const GS = Math.min(W, H) * .74                                  // glyph em size
+const gc = document.createElement('canvas'); gc.width = Math.ceil(GS * 1.2); gc.height = Math.ceil(GS * 1.2)
+const g2 = gc.getContext('2d'); g2.font = `900 ${GS}px ${FONT}`; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillStyle = '#fff'
+g2.fillText(LETTER, gc.width / 2, gc.height / 2 + GS * .04)
+const id = g2.getImageData(0, 0, gc.width, gc.height).data
+const cand = []
+for (let y = 0; y < gc.height; y += 3) for (let x = 0; x < gc.width; x += 3) if (id[(y * gc.width + x) * 4 + 3] > 128) cand.push([x - gc.width / 2, y - gc.height / 2])
+for (let i = cand.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [cand[i], cand[j]] = [cand[j], cand[i]] }   // seeded shuffle
+let pts = [], dmin = 14
+while (true) {                                                    // dart throwing with a shrinking minimum distance until N points fit
+  pts = []; const cell = dmin, grid = new Map()
+  for (const c of cand) {
+    const gx = Math.floor(c[0] / cell), gy = Math.floor(c[1] / cell); let ok = true
+    for (let a = -1; a <= 1 && ok; a++) for (let b = -1; b <= 1 && ok; b++) { const q = grid.get((gx + a) + ',' + (gy + b)); if (q && (q[0] - c[0]) ** 2 + (q[1] - c[1]) ** 2 < dmin * dmin) ok = false }
+    if (ok) { pts.push(c); grid.set(gx + ',' + gy, c); if (pts.length >= N) break }
+  }
+  if (pts.length >= N || dmin < 3) break
+  dmin -= .5
+}
+while (pts.length < N) pts.push(cand[Math.floor(R() * cand.length)])
+
+// ---- per-particle constants ----
+const P = pts.map((p, i) => {
+  const at = Math.atan2(p[1], p[0]), rt = Math.hypot(p[0], p[1])
+  const a0 = R() * Math.PI * 2, r0 = (.55 + R() * .75) * Math.hypot(W, H) * .5
+  return { tx: p[0], ty: p[1], rt, at, a0, r0, delay: R() * 1.1, turns: .6 + R() * .7, jp: R() * 6.28, jf: 14 + R() * 10, sz: (1.6 + R() * 1.7) * (TALL ? .85 : 1), mix: R(), ph: R() * 6.28 }
+})
+const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d }
+
+function render(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1
+  ctx.fillStyle = '#0b0b10'; ctx.fillRect(0, 0, W, H)
+  const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, W * .6)
+  bg.addColorStop(0, 'rgba(40,60,120,.28)'); bg.addColorStop(1, 'rgba(11,11,16,0)'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
+  const outA = 1 - ei(seg(t, T_SOLID_OUT, T_END))
+  const solid = eo5(seg(t, T_FLASH + .06, T_FLASH + .3)) * outA
+  const flash = Math.exp(-Math.pow((t - (T_FLASH + .06)) / .09, 2))
+  const showP = t < T_FLASH + .12                               // particles hand over to the solid letter at the flash
+
+  if (showP) {
+    ctx.globalCompositeOperation = 'lighter'
+    const jit = Math.exp(-seg(t, T_CONV, T_SETTLE) * 3.2) * (t >= T_CONV ? 1 : 0)           // settle: jitter decays after arrival
+    const pulse = 1 + .35 * smooth(seg(t, T_SETTLE - .3, T_FLASH))
+    for (let i = 0; i < N; i++) {
+      const p = P[i]
+      const e = eio(clamp((t - T_IN - p.delay) / (T_CONV - T_IN - 1.2)))
+      const a = p.at + angDiff(p.at, p.a0) * 0 + (p.a0 - p.at) * (1 - e) + p.turns * Math.PI * 2 * (1 - e) * (1 - e)
+      let x, y
+      if (e < 1) { const r = lerp(p.r0, p.rt, e); x = CX + Math.cos(a) * r; y = CY + Math.sin(a) * r }
+      else { x = CX + p.tx; y = CY + p.ty }
+      if (t >= T_CONV) { x += Math.sin(t * p.jf + p.jp) * 7 * K * jit; y += Math.cos(t * p.jf * .9 + p.jp * 1.7) * 7 * K * jit }
+      else if (e > .6) { x += Math.sin(t * 20 + p.jp) * 2 * (1 - e) * 4; y += Math.cos(t * 17 + p.jp) * 2 * (1 - e) * 4 }
+      const vis_ = clamp((t - T_IN - p.delay * .6) / .35)
+      if (vis_ <= 0) continue
+      const m = p.mix * (.4 + .6 * e), cr = lerp(PAPER[0], ACC[0], m), cg = lerp(PAPER[1], ACC[1], m), cb = lerp(PAPER[2], ACC[2], m)
+      const tw = .75 + .25 * Math.sin(t * 5 + p.ph)
+      const rad = p.sz * K * pulse * (1 + (1 - e) * .8)
+      const al = vis_ * (.55 + .45 * e) * tw
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, rad * 3.2)
+      grd.addColorStop(0, `rgba(${cr | 0},${cg | 0},${cb | 0},${al})`); grd.addColorStop(.35, `rgba(${cr | 0},${cg | 0},${cb | 0},${al * .45})`); grd.addColorStop(1, `rgba(${cr | 0},${cg | 0},${cb | 0},0)`)
+      ctx.fillStyle = grd; ctx.fillRect(x - rad * 3.2, y - rad * 3.2, rad * 6.4, rad * 6.4)
+    }
+    ctx.globalCompositeOperation = 'source-over'
+  }
+  if (solid > 0) {                                              // the solid monogram
+    ctx.save(); ctx.globalAlpha = solid
+    const sc = 1 + .05 * (1 - eo(seg(t, T_FLASH + .06, T_FLASH + .6)))
+    ctx.translate(CX, CY); ctx.scale(sc, sc)
+    ctx.font = `900 ${GS}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.shadowColor = 'rgba(79,139,255,.65)'; ctx.shadowBlur = 60 * K
+    const lg = ctx.createLinearGradient(0, -GS * .4, 0, GS * .45); lg.addColorStop(0, '#ffffff'); lg.addColorStop(1, '#c9d9ff')
+    ctx.fillStyle = lg; ctx.fillText(LETTER, gc.width / 2 - gc.width / 2, GS * .04)
+    ctx.restore()
+  }
+  if (flash > .01) {                                            // white flash at the hand-over
+    ctx.globalCompositeOperation = 'lighter'
+    const fg = ctx.createRadialGradient(CX, CY, 0, CX, CY, W * .55)
+    fg.addColorStop(0, `rgba(255,255,255,${.9 * flash})`); fg.addColorStop(.35, `rgba(160,190,255,${.45 * flash})`); fg.addColorStop(1, 'rgba(160,190,255,0)')
+    ctx.fillStyle = fg; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'
+  }
+}
+function smooth(x) { return x * x * (3 - 2 * x) }
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

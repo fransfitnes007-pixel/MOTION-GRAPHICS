@@ -1,0 +1,30 @@
+{
+  "slug": "value-prop-text-flip__card-flip-headline-cycle",
+  "visual_name": "Value prop text flip",
+  "code_name": "Card flip headline cycle",
+  "category": "ui-components",
+  "summary": "Three value-prop lines cycle on a card, each flipping down like a split-flap (rotateX) to reveal the next, with an icon that morphs between shapes in sync.",
+  "aliases": [
+    "split flap text",
+    "flip headline",
+    "text rotator",
+    "flip card text",
+    "rotating value props"
+  ],
+  "tags": [
+    "kinetic-type",
+    "card",
+    "3d",
+    "carousel",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "canvas-2d-morph"
+  ],
+  "duration_sec": 6.6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

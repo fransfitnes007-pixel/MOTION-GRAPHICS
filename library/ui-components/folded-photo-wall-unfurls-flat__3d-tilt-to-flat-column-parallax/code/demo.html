@@ -1,0 +1,99 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Unfurling gallery demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.p3{position:absolute;transform-style:preserve-3d}
+.tl{position:absolute;overflow:hidden;border-radius:4px;background:#0b0b0d}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  cols: 4,
+  colW: 245, gap: 26, left: 24,        // px on the 1066 x 716 canvas
+  heights: [[330, 300, 360, 300, 330], [260, 360, 300, 330, 300], [340, 310, 280, 360, 300], [360, 300, 330, 290, 340]],   // tile heights per column
+  empty: [[1, 1], [3, 0]],              // [col, row] tiles left dark and empty
+  tilt: { x: 52, y: -4, z: 24 },        // degrees at the start (fully folded)
+  startScale: 0.62,
+  parallax: 260,                        // px that columns lag by when folded, scaled per column
+  tHold: 0.7, tUnfurl: 4.6, tFlat: 6.2, tBack: 7.6,   // seconds
+  frame: '#2a2a32',
+}
+const DUR = 8
+window.DUR = DUR
+const DW = 1066, DH = 716, U = Math.min(W / DW, H / DH)
+stage.style.background = '#000'
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, overflow: 'hidden', background: '#000', borderRadius: '26px', boxShadow: `inset 0 0 0 2px ${CONFIG.frame}` })
+const view = el('div', 'abs', root); S(view, { left: 0, top: 0, width: DW + 'px', height: DH + 'px', perspective: '1500px', perspectiveOrigin: '55% 40%' })
+const grid = el('div', 'p3', view); S(grid, { left: DW / 2 + 'px', top: DH / 2 + 'px', width: 0, height: 0 })
+const seeded = (n) => { const x = Math.sin(n * 12.9898 + 7.7) * 43758.5453; return x - Math.floor(x) }
+const BG = ['#8d949a', '#c9b09a', '#2a6a86', '#d9d0c4', '#3a5a52', '#b9b9c2', '#d6a9a0', '#47605a', '#d2c4a8', '#5a6a8a']
+const portrait = (i, w, h) => {
+  const bg = BG[i % BG.length], skin = ['#e6b48f', '#b9805a', '#f0c8a8', '#8a5a3a'][i % 4], cloth = ['#1b1c20', '#b9202c', '#e8d8a0', '#3a5a9a', '#f4f4f4', '#2a5a4a'][i % 6]
+  const hx = w * (.42 + seeded(i) * .16), hy = h * (.34 + seeded(i + 3) * .08), hr = w * .17
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="pb${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${bg}"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient></defs><rect width="${w}" height="${h}" fill="${bg}"/><rect width="${w}" height="${h}" fill="url(#pb${i})"/><ellipse cx="${hx}" cy="${h * .98}" rx="${w * .42}" ry="${h * .3}" fill="${cloth}"/><rect x="${hx - hr * .35}" y="${hy + hr * .8}" width="${hr * .7}" height="${hr * 1.1}" fill="${skin}"/><ellipse cx="${hx}" cy="${hy}" rx="${hr}" ry="${hr * 1.22}" fill="${skin}"/>${i % 3 === 0 ? `<path d="M${hx - hr * 1.5} ${hy - hr * .5} Q${hx} ${hy - hr * 2.4} ${hx + hr * 1.5} ${hy - hr * .5} Z" fill="#1a1512"/>` : `<path d="M${hx - hr} ${hy - hr * .2} Q${hx} ${hy - hr * 1.9} ${hx + hr} ${hy - hr * .2} Q${hx} ${hy - hr * 1.0} ${hx - hr} ${hy - hr * .2}" fill="#3a2a1e"/>`}</svg>`
+}
+const colEls = []
+let idx = 0
+const totalW = CONFIG.cols * CONFIG.colW + (CONFIG.cols - 1) * CONFIG.gap
+for (let c = 0; c < CONFIG.cols; c++) {
+  const col = el('div', 'p3', grid); S(col, { left: -totalW / 2 + c * (CONFIG.colW + CONFIG.gap) + 'px', top: '0px', width: CONFIG.colW + 'px', height: '0px' })
+  let y = -DH / 2 + 14 + (c % 2 ? 40 : 0)
+  CONFIG.heights[c].forEach((h, r) => {
+    const t = el('div', 'tl', col); S(t, { left: 0, top: y + 'px', width: CONFIG.colW + 'px', height: h + 'px' })
+    if (!CONFIG.empty.some(([cc, rr]) => cc === c && rr === r)) t.innerHTML = portrait(idx++, CONFIG.colW, h)
+    y += h + CONFIG.gap
+  })
+  colEls.push(col)
+}
+const cur = el('div', 'abs', root, '<svg width="16" height="22" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7 17.5 L10.5 25 L14 23.5 L10.5 16.5 L17 16.5 Z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>'); S(cur, { zIndex: 9 })
+// unfold progress: 0 folded, 1 flat
+const prog = (t) => { const T = CONFIG; if (t < T.tHold) return 0; if (t < T.tUnfurl) return eio(seg(t, T.tHold, T.tUnfurl)); if (t < T.tFlat) return 1; return 1 - eio(seg(t, T.tFlat, T.tBack)) * 1 }
+function render(t) {
+  const p = prog(t), q = 1 - p
+  const T = CONFIG.tilt
+  S(grid, { transform: `translate3d(${lerp(60, 0, p)}px,${lerp(-20, 0, p)}px,0) rotateX(${T.x * q}deg) rotateY(${T.y * q}deg) rotateZ(${T.z * q}deg) scale(${lerp(CONFIG.startScale, 1, p)})` })
+  colEls.forEach((c, i) => S(c, { transform: `translateY(${(i - 1.5) * CONFIG.parallax * .45 * q + Math.sin(i * 1.7) * 30 * q}px)` }))
+  // pointer rests bottom-left then idles
+  const x = lerp(94, 94, p) + Math.sin(t * .8) * 4, y = 190 + Math.cos(t * .7) * 3
+  S(cur, { left: x + 'px', top: y + 'px', opacity: q > .05 ? 1 : 0 })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

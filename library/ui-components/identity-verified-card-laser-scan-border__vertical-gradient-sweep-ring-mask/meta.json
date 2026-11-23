@@ -1,0 +1,36 @@
+{
+  "slug": "identity-verified-card-laser-scan-border__vertical-gradient-sweep-ring-mask",
+  "visual_name": "Identity verified card with laser-scan border",
+  "code_name": "Vertical gradient sweep, ring mask",
+  "category": "ui-components",
+  "summary": "A white ID-check card (name, role, four facts, 'Scan complete' bar, button) whose thin border is lit by a blue, pink and teal band that slides down it like a scanner.",
+  "tags": [
+    "card",
+    "light",
+    "hover",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "css-mask"
+  ],
+  "duration_sec": 4.8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "shine border",
+    "laser scan card",
+    "shine border security card",
+    "identity card",
+    "id verified",
+    "scanner border"
+  ],
+  "credit": {
+    "idea": "Shine Border Security Card",
+    "author": "shadcnspace",
+    "url": "https://21st.dev/@shadcnspace/components/shine-border-02",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

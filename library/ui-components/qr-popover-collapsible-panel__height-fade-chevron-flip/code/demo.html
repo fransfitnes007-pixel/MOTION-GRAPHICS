@@ -1,0 +1,111 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#09090b;color:#fff}
+.col{position:absolute;left:0;top:0;width:340px;text-align:center;transform-origin:0 0}
+.trig{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:24px;font-size:14px;font-weight:500;background:#2b2b2e;color:#8fbcf5;white-space:nowrap}
+.trig svg{width:16px;height:16px;flex:none}
+.clip{overflow:hidden}
+.panel{margin-top:12px;display:flex;flex-direction:column;align-items:center;border-radius:24px;background:#141417;padding:16px;text-align:center}
+.panel p{font-size:14px;line-height:20px;color:#7ea6d6}
+.qr{width:216px;height:216px;margin:12px 0 6px;background:#fff;border-radius:6px;overflow:hidden}
+.app{margin-top:16px;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:24px;background:#0a84ff;color:#fff;font-size:14px;font-weight:500}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  scale: 1.5,                      // size of the whole group on the 1280x800 canvas
+  trigger: 'Preview HeroUI Native',
+  intro: 'Scan this QR code with your camera app to preview the HeroUI native components.',
+  note: 'Expo must be installed on your device.',
+  button: 'Download on App Store',
+  closeAt: 1.5, openAt: 3.3,       // seconds when the trigger is clicked to collapse, then to expand
+  animSec: .34,                    // collapse / expand time
+  seed: 7,                         // changes the placeholder QR pattern
+}
+const DUR = 5.6
+window.DUR = DUR
+// placeholder QR: three finder squares plus seeded random modules
+const rnd = (() => { let s = CONFIG.seed * 2654435761 >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296) })()
+const N = 29; let qr = `<svg viewBox="0 0 ${N + 2} ${N + 2}" width="216" height="216" shape-rendering="crispEdges"><rect width="${N + 2}" height="${N + 2}" fill="#fff"/>`
+const fin = (x, y) => `<rect x="${x + 1}" y="${y + 1}" width="7" height="7" fill="#000"/><rect x="${x + 2}" y="${y + 2}" width="5" height="5" fill="#fff"/><rect x="${x + 3}" y="${y + 3}" width="3" height="3" fill="#000"/>`
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const inF = (x < 8 && y < 8) || (x > N - 9 && y < 8) || (x < 8 && y > N - 9); if (!inF && rnd() > .52) qr += `<rect x="${x + 1}" y="${y + 1}" width="1" height="1" fill="#000"/>` }
+qr += fin(0, 0) + fin(N - 7, 0) + fin(0, N - 7) + '</svg>'
+const QRI = '<svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8.75 2.25a.75.75 0 0 0-1.5 0v5h-5a.75.75 0 0 0 0 1.5h5.5a1 1 0 0 0 1-1zM7.25 11a1 1 0 0 1 1-1H11a.75.75 0 0 1 0 1.5H8.75v2.25a.75.75 0 0 1-1.5 0zM13 13h-2.25a.75.75 0 0 0 0 1.5h2.75a1 1 0 0 0 1-1V8.25a1 1 0 0 0-1-1h-2.75a.75.75 0 0 0 0 1.5H13zM3 4.5V3h1.5v1.5zm-1.5-2a1 1 0 0 1 1-1H5a1 1 0 0 1 1 1V5a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1zm1.5 9V13h1.5v-1.5zM2.5 10a1 1 0 0 0-1 1v2.5a1 1 0 0 0 1 1H5a1 1 0 0 0 1-1V11a1 1 0 0 0-1-1zM11.5 3v1.5H13V3zm-1.5-.5a1 1 0 0 1 1-1h2.5a1 1 0 0 1 1 1V5a1 1 0 0 1-1 1H11a1 1 0 0 1-1-1z"/></svg>'
+const CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4-4 4 4"/></svg>'
+const APPLE = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="m15.079 5.999l.239.012c1.43.097 3.434 1.013 4.508 2.586a1 1 0 0 1-.344 1.44c-.05.028-.372.158-.497.217a4 4 0 0 0-.722.431c-.614.461-.948 1.009-.942 1.694c.01.885.339 1.454.907 1.846c.208.143.436.253.666.33c.126.043.426.116.444.122a1 1 0 0 1 .662.942C20 18.24 16.96 22 14.714 22c-.79 0-1.272-.091-1.983-.315l-.098-.031c-.463-.146-.702-.192-1.133-.192c-.52 0-.863.06-1.518.237l-.197.053c-.575.153-.964.226-1.5.248C5.536 22 2 16.907 2 12.438c0-4.12 2.701-6.44 5.604-6.44c.846 0 1.596.242 2.359.705l.303.189c.359.219.53.307.734.307c.168 0 .331-.074.653-.263l.291-.17c.832-.472 1.675-.768 2.896-.768zM14 2a1 1 0 0 1 1 1a3 3 0 0 1-3 3a1 1 0 0 1-1-1a3 3 0 0 1 3-3"/></svg>'
+const col = el('div', 'col', root)
+const head = el('div', '', col, ''); const trig = el('div', 'trig', head, `${QRI}<span>${CONFIG.trigger}</span><span class="cv" style="display:inline-flex">${CHEV}</span>`)
+const clip = el('div', 'clip', col); const panel = el('div', 'panel', clip, `<p>${CONFIG.intro}</p><div class="qr">${qr}</div><p>${CONFIG.note}</p><div class="app">${APPLE}${CONFIG.button}</div>`)
+const cv = trig.querySelector('.cv')
+const fullH = panel.offsetHeight + 12   // natural panel height incl. top margin
+const total = (open) => 36 + fullH * open
+const sc = CONFIG.scale
+function render(t) {
+  // open amount 0..1: starts open, collapses at closeAt, expands at openAt
+  const o = t < CONFIG.openAt ? 1 - eio(seg(t, CONFIG.closeAt, CONFIG.closeAt + CONFIG.animSec)) : eio(seg(t, CONFIG.openAt, CONFIG.openAt + CONFIG.animSec))
+  S(clip, { height: px(fullH * o) }); S(panel, { opacity: Math.pow(o, 1.6), transform: `translateY(${-(1 - o) * 10}px)` })
+  S(cv, { transform: `rotate(${180 * (1 - o)}deg)` })
+  const h = total(o)
+  S(col, { left: px(640 - 170 * sc), top: px(400 - h * sc / 2), transform: `scale(${sc})` })
+  const ty = 400 - total(1) * sc / 2 + 18 * sc   // where the trigger sits when open
+  const tyc = 400 - total(0) * sc / 2 + 18 * sc
+  const clickY1 = 400 - total(1) * sc / 2 + 18 * sc, clickY2 = 400 - total(0) * sc / 2 + 18 * sc
+  const P = [[0, 1000, 700, 0], [.6, 1000, 700, 0], [1.4, 640, clickY1, 0], [CONFIG.closeAt, 640, clickY1, 1], [CONFIG.closeAt + .12, 640, clickY1, 0], [2.6, 640, clickY1 + 4, 0], [CONFIG.openAt - .05, 640, clickY2, 0], [CONFIG.openAt, 640, clickY2, 1], [CONFIG.openAt + .12, 640, clickY2, 0], [4.6, 1000, 700, 0], [5.6, 1000, 700, 0]]
+  putCursor(cursorAt(t, P))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

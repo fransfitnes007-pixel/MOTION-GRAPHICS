@@ -1,0 +1,27 @@
+{
+  "slug": "rotating-word-swap__flip-up-staggered",
+  "visual_name": "Rotating word swap",
+  "code_name": "Flip up, staggered",
+  "category": "motion-graphics",
+  "summary": "A fixed phrase followed by a word in a glowing pill that flips up letter by letter to the next word while the pill resizes smoothly; four words loop.",
+  "aliases": [
+    "word swap",
+    "rotating words",
+    "text flip",
+    "changing word headline",
+    "word carousel"
+  ],
+  "tags": [
+    "kinetic-type",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d-transform",
+    "measured-widths"
+  ],
+  "duration_sec": 4.8,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

@@ -1,6 +1,13 @@
 # Palettes
 
-Every colour look used across the kit. `palettes.json` has the same data, plus the colours of all 221 library pieces. Open `index.html` to see the swatches.
+Every colour look used across the kit. `palettes.json` has the same data, plus the colours of all 338 library pieces. Open `index.html` to see the swatches.
+
+## Sunset ink, the showcase film (`sunset-ink`)
+
+Deep violet ink with a warm sunset glow low in the frame; warm white type; amber labels, coral for the one accent per scene, violet for secondary marks. Pairs with the arizona-sunset reel.
+
+- **Colours:** `#0A0712` `#FFF4E6` `#FFB45C` `#FF6A4D` `#8B5CF6` `#C84B8C` `#A79DB5`
+- **Example:** `docs/showcase/showcase.html`
 
 ## Arizona sunset (pixel dino reel) (`arizona-sunset`)
 

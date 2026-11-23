@@ -1,0 +1,37 @@
+{
+  "slug": "circuit-board-node-diagram__right-angle-traces-travelling-pulse",
+  "visual_name": "Circuit board node diagram",
+  "code_name": "Right-angle traces, travelling pulse",
+  "category": "ui-components",
+  "summary": "Four small icon nodes (Cloud, Server, Validate, Database) joined by grey right-angle wires, with dark pulses running along the wires.",
+  "tags": [
+    "hover",
+    "light",
+    "background",
+    "loader",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "svg",
+    "lucide"
+  ],
+  "duration_sec": 4.8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "circuit board",
+    "circuit",
+    "node diagram",
+    "data flow",
+    "pulse wires",
+    "architecture diagram"
+  ],
+  "credit": {
+    "idea": "Circuit Board",
+    "author": "componentry",
+    "url": "https://21st.dev/@componentry/components/circuit-board",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

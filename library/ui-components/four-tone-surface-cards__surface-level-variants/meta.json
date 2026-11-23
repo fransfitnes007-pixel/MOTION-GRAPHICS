@@ -1,0 +1,34 @@
+{
+  "slug": "four-tone-surface-cards__surface-level-variants",
+  "visual_name": "Four-tone surface cards",
+  "code_name": "Surface level variants",
+  "category": "ui-components",
+  "summary": "Four stacked cards in rising shades of grey, from fully transparent to a lifted blue-grey, each with a title, a description and a line of body text.",
+  "tags": [
+    "card",
+    "dark",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "heroui",
+    "tailwind"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "card",
+    "surface cards",
+    "card variants",
+    "four tone cards",
+    "dashboard homepage cards"
+  ],
+  "credit": {
+    "idea": "Card",
+    "author": "hero_ui",
+    "url": "https://21st.dev/@hero_ui/components/heroui-card/variants",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

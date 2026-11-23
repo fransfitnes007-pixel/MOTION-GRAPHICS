@@ -1,0 +1,135 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>gughigug-broken-by-design</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#04050a}
+svg text{font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,'Helvetica Neue',system-ui,sans-serif}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  text: 'broken by design.',           // headline seen through the glass
+  fontSize: 80,
+  textColor: '#9aa0b8',
+  textY: 410,                         // baseline on the 1280x800 board
+  shardDrift: 4,                      // px each shard slides toward the cursor (parallax)
+  refract: 5,                         // px the text copy inside each shard is shifted
+  glowSize: 60,                       // px radius of the cursor light on the glass
+  rim: 'rgba(235,240,255,.75)',       // bright edge colour
+}
+const DUR = 7
+window.DUR = DUR
+const OX = 160
+const SHARDS = [
+  { p: '128,118 436,127 440,160 400,260 372,372 350,372 322,320 300,298 135,262', k: [[150,150,320,250],[320,140,300,260]] },
+  { p: '466,122 722,135 724,175 712,265 668,294 422,350 418,330', k: [[560,130,640,300],[470,160,420,330]] },
+  { p: '768,112 802,120 812,190 836,590 826,615 708,440 722,250 745,150', k: [[780,130,760,200]] },
+  { p: '404,386 690,324 700,350 698,420 660,452 488,490 444,480 376,436', k: [[470,330,520,480],[400,436,690,420]] },
+  { p: '130,312 300,338 374,445 442,540 440,636 392,658 160,664 124,606 112,568', k: [[130,440,380,436],[374,445,410,600]] },
+  { p: '486,508 646,510 664,540 672,612 540,626 470,668 432,666 430,638 444,560', k: [[504,628,672,600]] },
+  { p: '668,460 706,474 806,632 800,658 718,668 690,662 676,600', k: [] },
+]
+const ns = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width', 1280); svg.setAttribute('height', 800); svg.style.cssText = 'position:absolute;left:0;top:0'
+root.appendChild(svg)
+const sv = (tag, attrs, parent = svg) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e }
+const defs = sv('defs', {})
+const bg = sv('radialGradient', { id: 'bgg', cx: .5, cy: .55, r: .6 }, defs); sv('stop', { offset: 0, 'stop-color': '#0c0f1c' }, bg); sv('stop', { offset: 1, 'stop-color': '#04050a' }, bg)
+const fill = sv('linearGradient', { id: 'fill', x1: 0, y1: 0, x2: 1, y2: 1 }, defs); sv('stop', { offset: 0, 'stop-color': '#ffffff', 'stop-opacity': .1 }, fill); sv('stop', { offset: .5, 'stop-color': '#10121a', 'stop-opacity': .55 }, fill); sv('stop', { offset: 1, 'stop-color': '#000', 'stop-opacity': .7 }, fill)
+const glow = sv('radialGradient', { id: 'glow' }, defs); sv('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': .55 }, glow); sv('stop', { offset: 1, 'stop-color': '#fff', 'stop-opacity': 0 }, glow)
+const blur = sv('filter', { id: 'soft', x: '-20%', y: '-20%', width: '140%', height: '140%' }, defs); sv('feGaussianBlur', { stdDeviation: 1.2 }, blur)
+sv('rect', { x: 0, y: 0, width: 1280, height: 800, fill: 'url(#bgg)' })
+const T = (parent, dx, dy, op) => { const t = sv('text', { x: 640 + dx, y: CONFIG.textY + dy, 'text-anchor': 'middle', 'font-size': CONFIG.fontSize, 'font-weight': 700, 'letter-spacing': -3, fill: CONFIG.textColor, opacity: op }, parent); t.textContent = CONFIG.text; return t }
+T(svg, 0, 0, .85)
+const rng = (i) => Math.sin(i * 91.7) * .5 + .5
+const shards = SHARDS.map((s, i) => {
+  const g = sv('g', {})
+  const pts = s.p.split(' ').map((q) => q.split(',').map(Number)).map(([x, y]) => `${x + OX},${y}`).join(' ')
+  const cid = 'c' + i; const cp = sv('clipPath', { id: cid }, defs); sv('polygon', { points: pts }, cp)
+  sv('polygon', { points: pts, fill: 'url(#fill)' }, g)
+  const inner = sv('g', { 'clip-path': `url(#${cid})` }, g)
+  T(inner, (rng(i) - .5) * 2 * CONFIG.refract, (rng(i + 9) - .5) * 2 * CONFIG.refract, .55)
+  s.k.forEach(([a, b, c, d]) => sv('line', { x1: a + OX, y1: b, x2: c + OX, y2: d, stroke: 'rgba(255,255,255,.28)', 'stroke-width': 1.2 }, inner))
+  const gl = sv('circle', { r: CONFIG.glowSize, fill: 'url(#glow)', opacity: 0 }, inner)
+  sv('polygon', { points: pts, fill: 'none', stroke: CONFIG.rim, 'stroke-width': 2.2, 'stroke-linejoin': 'round', filter: 'url(#soft)' }, g)
+  sv('polygon', { points: pts, fill: 'none', stroke: 'rgba(255,255,255,.35)', 'stroke-width': 1 }, g)
+  return { g, gl, cx: s.p.split(' ').map((q) => +q.split(',')[0]).reduce((a, b) => a + b) / s.p.split(' ').length + OX, cy: s.p.split(' ').map((q) => +q.split(',')[1]).reduce((a, b) => a + b) / s.p.split(' ').length }
+})
+// sound toggle placeholder, bottom right
+sv('rect', { x: 960, y: 700, width: 64, height: 36, rx: 8, fill: 'rgba(255,255,255,.04)', stroke: 'rgba(255,255,255,.3)' })
+sv('path', { d: 'M978 716h5l7-5v18l-7-5h-5z M995 714q5 4 0 12', fill: 'none', stroke: 'rgba(255,255,255,.7)', 'stroke-width': 1.5 })
+// scripted cursor: keys = [{t, x, y, click?}], eased between keys; a click shows a short press ring
+const cursorEl = el('div', 'abs', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.8L10.4 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const ringEl = el('div', 'abs', root); S(ringEl, { width: '34px', height: '34px', marginLeft: '-17px', marginTop: '-17px', borderRadius: '50%', border: '2px solid rgba(120,120,140,.6)', pointerEvents: 'none' })
+function cursorAt(t, keys) {
+  let i = 0; while (i < keys.length - 1 && t >= keys[i + 1].t) i++
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)]
+  const k = b === a ? 0 : eio(seg(t, a.t, b.t))
+  let press = 0; for (const q of keys) if (q.click && t >= q.t && t < q.t + .35) press = 1 - (t - q.t) / .35
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), press }
+}
+function drawCursor(c) {
+  S(cursorEl, { left: px(c.x - 5), top: px(c.y - 3), transform: `scale(${1 - .12 * c.press})`, zIndex: 99 })
+  S(ringEl, { left: px(c.x), top: px(c.y), opacity: c.press * .9, transform: `scale(${.5 + (1 - c.press) * 1.2})`, zIndex: 98 })
+}
+
+
+const keys = [{ t: 0, x: 500, y: 560 }, { t: 1, x: 620, y: 590 }, { t: 2, x: 400, y: 380 }, { t: 3, x: 300, y: 560 }, { t: 4, x: 520, y: 330 }, { t: 5, x: 740, y: 640 }, { t: 6, x: 880, y: 300 }, { t: 7, x: 500, y: 560 }]
+
+function render(t) {
+  const c = cursorAt(t, keys)
+  shards.forEach((s, i) => {
+    const dx = (c.x - 640) / 640, dy = (c.y - 400) / 400
+    const ph = t / DUR * 6.283
+    const tx = dx * CONFIG.shardDrift * (.5 + rng(i)) + Math.sin(ph + i) * 1.2
+    const ty = dy * CONFIG.shardDrift * (.5 + rng(i + 3)) + Math.cos(ph + i * 1.7) * 1.2
+    const rot = Math.sin(ph + i * 2.1) * .35 + dx * .6 * (rng(i) - .5)
+    s.g.setAttribute('transform', `translate(${tx.toFixed(2)} ${ty.toFixed(2)}) rotate(${rot.toFixed(3)} ${s.cx.toFixed(1)} ${s.cy.toFixed(1)})`)
+    s.gl.setAttribute('cx', (c.x - tx).toFixed(1)); s.gl.setAttribute('cy', (c.y - ty).toFixed(1)); s.gl.setAttribute('opacity', 1)
+  })
+  drawCursor(c)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

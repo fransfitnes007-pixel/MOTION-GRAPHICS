@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Gradient tile magnetic dock</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0b;color:#aeb2bd}
+.dock{position:absolute;left:220px;top:334px;width:776px;height:123px;border-radius:42px;background:#0e1118;border:1px solid rgba(255,255,255,.07);box-shadow:0 30px 70px rgba(70,100,220,.14),0 0 0 1px rgba(0,0,0,.4) inset}
+.tile{position:absolute;width:80px;height:80px;border-radius:22px;transform-origin:50% 100%;display:grid;place-items:center}
+.tile svg{width:38px;height:38px;fill:none;stroke:#07070a;stroke-opacity:.88;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tip{position:absolute;height:40px;line-height:40px;padding:0 18px;border-radius:14px;background:#fff;color:#0a0a0a;font-size:19px;font-weight:600;white-space:nowrap;transform:translateX(-50%)}
+.cap{position:absolute;left:0;width:1216px;top:518px;text-align:center;font-size:22px;color:#9da1ad}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  items: [   // label, gradient [from, to], icon path (24px grid)
+    ['Finder', ['#4f7cff', '#22c7d9'], 'M3 7h18M3 7v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7M3 7l2-3h14l2 3'],
+    ['Search', ['#22c7d9', '#38bdf8'], 'm21 21-4.35-4.35M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z'],
+    ['Deploy', ['#32d583', '#22c7d9'], 'M12 19V5M5 12l7-7 7 7'],
+    ['Insights', ['#f6b94a', '#ff6b5e'], 'M4 20V10M10 20V4M16 20v-7M22 20h-20'],
+    ['Audio', ['#ff6b5e', '#e9564a'], 'M4 12v2M8 8v10M12 5v14M16 9v6M20 11v2'],
+    ['Vault', ['#7f9fff', '#4f7cff'], 'M6 11V8a6 6 0 1 1 12 0v3M5 11h14v9H5z'],
+    ['Send', ['#45d5e4', '#4f7cff'], 'M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z'],
+  ],
+  caption: 'Sweep the dock, or Tab through it.',
+  pitch: 104,          // distance between tile centres at rest
+  maxScale: 1.55,      // scale of the tile under the cursor (the page's prop is 1.65 at its own pixel size)
+  lift: 18,            // extra rise of the hovered tile (px)
+  radius: 200,         // magnet radius: tiles within this distance grow
+  idleScale: 1.18,     // peak scale of the idle wave
+  idleSpeed: 2.8,      // tiles per second the idle wave travels
+  tooltip: true,
+  // cursor sweep: [time, tile position (0 = first tile centre), height above rest (0 = on the dock)]
+  sweep: [[.5, -1.8, 90], [.75, 1.5, 4], [1.25, 4, 4], [1.7, 6, 4], [2.3, 6.05, 4], [2.85, 3, 4], [3.2, -1.8, 90]],
+}
+const DUR = 6
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const box = fitBox(1280, 712, 1)
+const dock = el('div', 'dock', box)
+const CXD = 608, N = CONFIG.items.length, cx0 = CXD - (N - 1) / 2 * CONFIG.pitch
+const tiles = CONFIG.items.map(([lab, g, d], i) => {
+  const t = el('div', 'tile', box, `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`)
+  S(t, { background: `linear-gradient(160deg,${g[0]},${g[1]})`, left: px(cx0 + i * CONFIG.pitch - 40), top: '348px' })
+  return t
+})
+const tip = el('div', 'tip', box); tip.style.zIndex = 40
+el('div', 'cap', box, CONFIG.caption).style.left = '0'
+const cur = makeCursor(box)
+const bump = (d, R) => d >= R ? 0 : Math.pow(Math.cos(Math.PI * d / (2 * R)), 2)
+function render(t) {
+  // cursor state
+  const sw = CONFIG.sweep, active = t >= sw[0][0] - .2 && t <= sw[sw.length - 1][0]
+  const pos = kf(t, sw.map(([a, b]) => [a, b])), hgt = kf(t, sw.map(([a, , c]) => [a, c]))
+  const cxp = cx0 + pos * CONFIG.pitch
+  const near = active ? clamp(1 - (hgt - 4) / 60) : 0        // 1 when the cursor rides the dock
+  // idle wave centre in px; two waves, one at the start of the loop and one after the cursor leaves
+  const leave = sw[sw.length - 1][0] + .1
+  const widx = t < sw[0][0] ? -0.6 + CONFIG.idleSpeed * t : -0.6 + CONFIG.idleSpeed * Math.max(0, t - leave)
+  const wpx = cx0 + widx * CONFIG.pitch
+  const idleAmp = (t < sw[0][0] ? 1 - clamp((t - (sw[0][0] - .25)) / .25) : t < leave ? 0 : 1 - seg(widx, N - 1.2, N + .8)) * (1 - near)
+  let best = -1, bestV = 0
+  tiles.forEach((tl, i) => {
+    const x = cx0 + i * CONFIG.pitch
+    const hov = near * bump(Math.abs(x - cxp), CONFIG.radius)
+    const idl = idleAmp * bump(Math.abs(x - wpx), CONFIG.radius)
+    const sc = 1 + (CONFIG.maxScale - 1) * hov + (CONFIG.idleScale - 1) * idl
+    const rise = CONFIG.lift * hov + 6 * idl
+    S(tl, { transform: `translateY(${-rise}px) scale(${sc})`, zIndex: String(Math.round((hov + idl) * 20)) })
+    const v = hov + idl * .8
+    if (v > bestV) { bestV = v; best = i }
+  })
+  if (CONFIG.tooltip && best >= 0 && bestV > .55) {
+    const x = cx0 + best * CONFIG.pitch
+    const sc = 1 + (CONFIG.maxScale - 1) * near * bump(Math.abs(x - cxp), CONFIG.radius) + (CONFIG.idleScale - 1) * idleAmp * bump(Math.abs(x - wpx), CONFIG.radius)
+    tip.textContent = CONFIG.items[best][0]
+    S(tip, { display: '', left: px(x), top: px(428 - 80 * sc - 18 - 40 - (CONFIG.lift * near * bump(Math.abs(x - cxp), CONFIG.radius))), opacity: clamp((bestV - .55) / .25) })
+  } else S(tip, { display: 'none' })
+  setCursor(cur, cxp, 390 - hgt, false, active)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Curtain split demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#efeeea;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.crd{position:absolute;width:132px;height:132px;border-radius:30px;overflow:hidden;box-shadow:0 16px 24px -6px rgba(0,0,0,.28),0 2px 5px rgba(0,0,0,.15)}
+.txt{position:absolute;left:0;width:100%;text-align:center}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  eyebrow: 'MONOGRAPH NO. 04',
+  title: ['Architectural', 'Symmetry.'],
+  body: ['Unfolding spatial narratives through raw', 'concrete, natural light, and balanced', 'bilateral geometry.'],
+  pillClosed: 'Scroll down or click to unveil',
+  pillOpen: 'Scroll up or click to close curtain',
+  paper: '#f3f0e8',                 // page colour inside the rounded frame
+  cardSize: 132,                    // px, on a 1256 x 856 canvas
+  colX: [207, 1049],                // x centres of the left and right columns when open
+  rowY: [167, 334, 493, 654],       // y centres of the four rows
+  tilt: [[-13, -8, -6, -3], [8, 6, 4, 2]],   // degrees for left and right column, top to bottom
+  stagger: 0.045,                   // seconds between rows starting to move
+  tOpen: 1.0, tClose: 4.2,          // seconds: when the curtain opens and closes again
+  openTime: 0.8,                    // how long a move takes
+  cursor: true,
+}
+const DUR = 6.4
+window.DUR = DUR
+const DW = 1256, DH = 856, U = Math.min(W / DW, H / DH)
+stage.style.background = '#efeeea'
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})` })
+const frame = el('div', 'abs', root); S(frame, { left: '18px', top: '18px', width: DW - 36 + 'px', height: DH - 36 + 'px', borderRadius: '34px', background: CONFIG.paper, overflow: 'hidden', boxShadow: '0 0 0 1px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.05)' })
+S(frame, { backgroundImage: 'radial-gradient(circle,rgba(120,110,90,.22) 0 1px,transparent 1.5px)', backgroundSize: '56px 56px', backgroundPosition: '20px 24px' })
+const cx = DW / 2, cy = DH / 2 - 30
+const seeded = (n) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x) }
+// placeholder "house" pictures: sky, ground, block, windows
+const PAL = [['#2b3a55', '#d6dde6', '#1a1f26'], ['#4a86c9', '#e9eef4', '#2a6a8a'], ['#1f2a4e', '#e8e8ea', '#c9822c'], ['#e9ebee', '#f8f8f8', '#222'], ['#5f9be0', '#f2f4f6', '#3d6f6a'], ['#d9d9db', '#9a9ea6', '#555'], ['#1d3a68', '#31506f', '#e0902a'], ['#6aa3dc', '#dfe3e8', '#566a3c']]
+const art = (i) => { const p = PAL[i]; const r = seeded(i + 3)
+  return `<svg width="132" height="132" viewBox="0 0 132 132"><defs><linearGradient id="g${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p[0]}"/><stop offset=".62" stop-color="${p[1]}"/></linearGradient></defs><rect width="132" height="132" fill="url(#g${i})"/><rect y="98" width="132" height="34" fill="${p[2]}" opacity=".85"/><rect x="${14 + r * 16}" y="44" width="${70 + r * 24}" height="56" fill="${p[1]}" opacity=".96"/><rect x="${22 + r * 16}" y="54" width="22" height="30" fill="${p[0]}" opacity=".85"/><rect x="${52 + r * 16}" y="54" width="34" height="30" fill="${p[2]}" opacity=".7"/><rect x="${8}" y="38" width="${96 + r * 20}" height="8" fill="#fff" opacity=".9"/></svg>` }
+// order: left column top to bottom = 0..3, right column = 4..7; stack order puts 0 on top
+const cards = []
+for (let i = 0; i < 8; i++) { const c = el('div', 'crd', frame, art(i)); S(c, { zIndex: 8 - i }); cards.push(c) }
+// text block
+const mono = el('div', 'txt', frame, CONFIG.eyebrow); S(mono, { top: '246px', font: '500 12px/1 ui-monospace,Menlo,monospace', letterSpacing: '.3em', color: '#7a776f' })
+const h1a = el('div', 'txt', frame, CONFIG.title.join('<br>')); S(h1a, { top: '276px', font: '400 54px/56px Georgia,"Times New Roman",serif', color: '#1c1b19', letterSpacing: '-.5px' })
+const rule = el('div', 'abs', frame); S(rule, { left: DW / 2 - 18 - 36 + 'px', top: '404px', width: '36px', height: '2px', background: 'linear-gradient(90deg,transparent,#c8c3b6,transparent)' })
+const para = el('div', 'txt', frame, CONFIG.body.join('<br>')); S(para, { top: '444px', font: '400 17px/30px -apple-system,system-ui,sans-serif', color: '#78756e' })
+// pill
+const pill = el('div', 'abs', frame); S(pill, { left: (DW - 36) / 2 - 168 + 'px', top: '718px', width: '336px', height: '40px', borderRadius: '20px', background: 'rgba(0,0,0,.055)', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.03)', font: '600 14px/40px -apple-system,system-ui,sans-serif', color: '#3a3936', textAlign: 'center' })
+const dot = el('span', '', pill); S(dot, { display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', marginRight: '11px', verticalAlign: '1px' })
+const pillT = el('span', '', pill)
+// pointer hand
+const hand = el('div', 'abs', root, '<svg width="40" height="44" viewBox="0 0 40 44"><path d="M13 4c2 0 3 1 3 3v13l1-.5c3-1 5 0 5 2l2-.5c3-.5 4 1 4 3l2-.2c3 0 4 2 4 4v9c0 4-3 9-8 9H17c-4 0-6-3-9-8l-4-7c-1-2 1-4 3-3l4 3V7c0-2 1-3 2-3z" fill="#fff" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/></svg>'); S(hand, { zIndex: 40 })
+
+const sp = (x) => spring(x, 6.5, 7)
+function render(t) {
+  const o = clamp(t < CONFIG.tClose ? (t >= CONFIG.tOpen ? 1 : 0) : 0)
+  const open = (i, lag = 0) => {
+    const tt = t - lag
+    const row = i % 4, d = row * CONFIG.stagger
+    const a = sp(seg(tt, CONFIG.tOpen + d, CONFIG.tOpen + d + CONFIG.openTime))
+    const b = sp(seg(tt, CONFIG.tClose + d, CONFIG.tClose + d + CONFIG.openTime))
+    return a * (1 - b)
+  }
+  for (let i = 0; i < 8; i++) {
+    const side = i < 4 ? 0 : 1, row = i % 4
+    const k = open(i)
+    // stacked pose: loose pile in the middle, each card with its own tilt and nudge
+    const sx = cx + (i - 3.5) * 3 + (seeded(i) - .5) * 14, sy = cy + (seeded(i + 9) - .5) * 14 + (i - 3.5) * 1.5
+    const sr = (seeded(i + 4) - .5) * 14
+    const ex = CONFIG.colX[side], ey = CONFIG.rowY[row], er = CONFIG.tilt[side][row]
+    const k2 = open(i, .12)
+    const x = lerp(sx, ex, k), y = lerp(sy, ey, k2), r = lerp(sr, er, k)
+    S(cards[i], { left: x - CONFIG.cardSize / 2 + 'px', top: y - CONFIG.cardSize / 2 + 'px', transform: `rotate(${r}deg) scale(${lerp(.88, 1, Math.min(k, 1))})` })
+  }
+  const kk = open(0)
+  const tOp = clamp((kk - .3) / .7)
+  S(mono, { opacity: tOp, transform: `translateY(${(1 - tOp) * 10}px)` })
+  S(h1a, { opacity: tOp, transform: `translateY(${(1 - tOp) * 14}px)` })
+  S(rule, { opacity: tOp }); S(para, { opacity: tOp, transform: `translateY(${(1 - tOp) * 10}px)` })
+  const isOpen = t >= CONFIG.tOpen + .25 && t < CONFIG.tClose + .25
+  pillT.textContent = isOpen ? CONFIG.pillOpen : CONFIG.pillClosed
+  S(dot, { background: isOpen ? '#3dbd6e' : '#ee8a1c' })
+  // pointer: rests beside the stack, presses just before each toggle
+  const press = Math.max(1 - seg(Math.abs(t - (CONFIG.tOpen - .12)), 0, .12), 1 - seg(Math.abs(t - (CONFIG.tClose - .12)), 0, .12))
+  S(hand, { left: '880px', top: '336px', opacity: CONFIG.cursor ? 1 : 0, transform: `scale(${1 - .12 * press}) translate(${press * -3}px,${press * 3}px)` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

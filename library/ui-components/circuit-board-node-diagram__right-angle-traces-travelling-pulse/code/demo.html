@@ -1,0 +1,146 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>componentry-circuit-board</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff}
+svg text{font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 1.95,                       // the SVG is 500 x 300 units, shown larger
+  nodes: [                          // x, y in SVG units, same shape as the usage example
+    { id: 'start', x: 80, y: 150, label: 'Cloud', icon: 'cloud' },
+    { id: 'process', x: 250, y: 80, label: 'Server', icon: 'server' },
+    { id: 'validate', x: 250, y: 220, label: 'Validate', icon: 'shield' },
+    { id: 'end', x: 420, y: 150, label: 'Database', icon: 'db' },
+  ],
+  connections: [['start', 'process'], ['start', 'validate'], ['process', 'end'], ['validate', 'end']],
+  tile: 34,                         // node size
+  trace: '#cacaca', traceW: 2.2,    // resting wire
+  pulse: '#3a3a3a', pulseLen: 38,   // travelling pulse colour and length (SVG units)
+  travel: [.9, .9, .9, .9],         // seconds each pulse takes along its wire
+  start: [0, .55, 1.0, 1.45],       // seconds into the cycle each pulse leaves
+  period: 2.4,                      // pulse repeats every period
+  hoverScale: 1.14,
+}
+const DUR = 4.8
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+S(root, { left: px(CX - 250), top: px(CY - 150), width: '500px', height: '300px' })   // the board is now the 500 x 300 SVG itself
+const ns = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width', 500); svg.setAttribute('height', 300); svg.setAttribute('viewBox', '0 0 500 300'); svg.style.cssText = 'position:absolute;left:0;top:0;overflow:visible'
+root.appendChild(svg)
+const sv = (tag, a, p = svg) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e }
+const defs = sv('defs', {}); const f = sv('filter', { id: 'gl', x: '-50%', y: '-50%', width: '200%', height: '200%' }, defs); sv('feGaussianBlur', { stdDeviation: 1.1 }, f)
+// faint dot grid
+for (let x = 0; x <= 500; x += 20) for (let y = 0; y <= 300; y += 20) sv('circle', { cx: x, cy: y, r: .7, fill: '#e9e9e9' })
+const N = Object.fromEntries(CONFIG.nodes.map((n) => [n.id, n]))
+const h = CONFIG.tile / 2
+// right-angle route: out of the source horizontally, across at the midpoint x, in to the target horizontally
+const route = (a, b) => { const mx = (a.x + b.x) / 2; return `M${a.x + h} ${a.y}H${mx}V${b.y}H${b.x - h}` }
+const wires = CONFIG.connections.map(([a, b], i) => {
+  const d = route(N[a], N[b])
+  const base = sv('path', { d, fill: 'none', stroke: CONFIG.trace, 'stroke-width': CONFIG.traceW, 'stroke-linejoin': 'round' })
+  const tail = [1, .6, .3].map((k, j) => sv('path', { d, fill: 'none', stroke: CONFIG.pulse, 'stroke-width': CONFIG.traceW + 2 - j * .3, 'stroke-linecap': 'round', opacity: [.28, .5, 1][j] })); tail[0].setAttribute('filter', 'url(#gl)')
+  return { d, tail, len: base.getTotalLength() }
+})
+const ICON = {
+  cloud: '<path d="M6.500 15.500a3.500 3.500 0 0 1 .5-7 5 5 0 0 1 9.600 1.200 3 3 0 0 1-.6 5.800z"/>',
+  server: '<rect x="4" y="4" width="16" height="6.500" rx="1.600"/><rect x="4" y="13.500" width="16" height="6.500" rx="1.600"/><path d="M8 7.300h.01M8 16.800h.01"/>',
+  shield: '<path d="M12 3.500l7 2.500v5.500c0 4.500-3 7.500-7 9-4-1.500-7-4.500-7-9V6z"/>',
+  db: '<ellipse cx="12" cy="6" rx="7" ry="2.800"/><path d="M5 6v12c0 1.500 3 2.800 7 2.800s7-1.300 7-2.800V6M5 12c0 1.500 3 2.800 7 2.800s7-1.300 7-2.800"/>',
+}
+const nodes = CONFIG.nodes.map((n) => {
+  const g = sv('g', {})
+  sv('rect', { x: n.x - h, y: n.y - h, width: CONFIG.tile, height: CONFIG.tile, rx: 9, fill: '#e9e9e9', stroke: '#8e8e8e', 'stroke-width': 2 }, g)
+  const ic = sv('g', { transform: `translate(${n.x - 8} ${n.y - 8}) scale(.667)`, fill: 'none', stroke: '#777', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g); ic.innerHTML = ICON[n.icon]
+  const tx = sv('text', { x: n.x, y: n.y + h + 14, 'text-anchor': 'middle', 'font-size': 10.500, 'font-weight': 500, fill: '#8a8a8a' }, g); tx.textContent = n.label
+  return { g, n }
+})
+// scripted cursor: keys = [{t, x, y, click?}], eased between keys; a click shows a short press ring
+const cursorEl = el('div', 'abs', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.8L10.4 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const ringEl = el('div', 'abs', root); S(ringEl, { width: '34px', height: '34px', marginLeft: '-17px', marginTop: '-17px', borderRadius: '50%', border: '2px solid rgba(120,120,140,.6)', pointerEvents: 'none' })
+function cursorAt(t, keys) {
+  let i = 0; while (i < keys.length - 1 && t >= keys[i + 1].t) i++
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)]
+  const k = b === a ? 0 : eio(seg(t, a.t, b.t))
+  let press = 0; for (const q of keys) if (q.click && t >= q.t && t < q.t + .35) press = 1 - (t - q.t) / .35
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), press }
+}
+function drawCursor(c) {
+  S(cursorEl, { left: px(c.x - 5), top: px(c.y - 3), transform: `scale(${1 - .12 * c.press})`, zIndex: 99 })
+  S(ringEl, { left: px(c.x), top: px(c.y), opacity: c.press * .9, transform: `scale(${.5 + (1 - c.press) * 1.2})`, zIndex: 98 })
+}
+
+const toBoard = (x, y) => ({ x: x + (640 - 250), y: y + (400 - 150) })
+const hoverKeys = [[1.0, 'start'], [2.0, 'process'], [3.0, 'validate'], [4.0, 'end']]
+const keys = [{ t: 0, x: 440 + 390, y: 400 + 150 }].concat(hoverKeys.map(([t, id]) => ({ t, ...toBoard(N[id].x, N[id].y + 4) }))).concat([{ t: 4.8, x: 440 + 390, y: 400 + 150 }])
+cursorEl.firstChild.setAttribute('width', 14); cursorEl.firstChild.setAttribute('height', 14); S(ringEl, { display: 'none' })
+
+function render(t) {
+  const C = CONFIG, cu = cursorAt(t, keys)
+  wires.forEach((w, i) => {
+    const ph = ((t - C.start[i]) % C.period + C.period) % C.period
+    const s = ph / C.travel[i] * (w.len + C.pulseLen)        // head position along the wire, runs past the end so the pulse leaves cleanly
+    const head = s
+    w.tail.forEach((p, j) => {
+      const L = C.pulseLen * [1, .62, .3][j]
+      const st = Math.max(0, head - L), en = Math.min(w.len, head)
+      const vis = Math.max(0, en - st)
+      p.setAttribute('stroke-dasharray', `${vis} ${w.len * 2}`); p.setAttribute('stroke-dashoffset', -st)
+      p.style.opacity = vis > .5 && ph < C.travel[i] * 1.5 ? [.28, .5, 1][j] : 0
+    })
+  })
+  nodes.forEach(({ g, n }) => {
+    const b = toBoard(n.x, n.y), near = Math.hypot(cu.x - b.x, cu.y - b.y) < 28
+    const k = near ? 1 : 0
+    g.setAttribute('transform', `translate(${n.x} ${n.y}) scale(${near ? C.hoverScale : 1}) translate(${-n.x} ${-n.y})`)
+    g.querySelector('text').setAttribute('fill', near ? '#4a4a4a' : '#8a8a8a')
+  })
+  drawCursor(cu)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

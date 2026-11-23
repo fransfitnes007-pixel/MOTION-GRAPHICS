@@ -1,0 +1,35 @@
+{
+  "slug": "overlapping-avatar-stack-plus-count__negative-margin-circles",
+  "visual_name": "Overlapping avatar stack with a +99 count",
+  "code_name": "Negative margin circles",
+  "category": "ui-components",
+  "summary": "Four round photos tucked under each other in a row, ending in a black circle that reads +99.",
+  "tags": [
+    "hover",
+    "logo",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "avatar circles",
+    "avatar stack",
+    "overlapping avatars",
+    "social proof avatars",
+    "plus 99",
+    "face pile"
+  ],
+  "credit": {
+    "idea": "Avatar Circles",
+    "author": "dillionverma",
+    "url": "https://21st.dev/@dillionverma/components/avatar-circles",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

@@ -1,0 +1,156 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background-color:#fdfdfd;background-image:radial-gradient(circle,#dfe2e8 1px,transparent 1.5px);background-size:30px 30px}
+.t{position:absolute;white-space:nowrap;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
+.chip{position:absolute;white-space:nowrap;border:1px solid #94a3b8;background:#e2e8f0;border-radius:24px;padding:6px 8px;font:400 12px/16px -apple-system,"SF Pro Text",system-ui,sans-serif;color:#0f172a}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  title: 'Any questions about Design?',
+  sub: 'Feel free to reach out to me!',
+  tags: [                            // chips around the logo: label, which edge they sit from (box is 300 x 270)
+    { t: 'Branding', right: 48, top: 40 },
+    { t: 'Graphic Design', left: 8, top: 80 },
+    { t: 'Web Application', right: 4, bottom: 80 },
+    { t: 'UI-UX', left: 56, bottom: 48 },
+  ],
+  // the pointer's tour, in box px: where it goes and which chip it lights, one stop every ~1.15s (from the usage example)
+  stops: [[200, 60, 0], [50, 102, 1], [224, 170, 2], [88, 198, 3]],
+  pointerColor: '#ef4444',
+  glow: '150,225,120',               // spotlight colour (rgb) that follows the mouse
+  glowRadius: 340,                   // px
+  particles: 200, particleColor: '#555555', particleSpeed: 12,   // dots, colour, px per second upward
+  button: 'Book a call',
+  cursorPath: [[0, 150, 1000], [.5, 150, 1000], [1.1, 880, 300], [1.9, 760, 560], [2.8, 560, 840], [3.5, 330, 900], [4.0, 200, 1010], [4.7, 560, 880], [5.2, 640, 760], [5.9, 1090, 640], [6.4, 1150, 700], [9.2, 1150, 700]],  // mouse path in frame px
+}
+const DUR = 9.2
+window.DUR = DUR
+const SCENE = { w: 1280, h: 1092, bg: '#fdfdfd', cursor: 'dark', path: CONFIG.cursorPath }
+// ----- scene scaffold: a fixed-size scene scaled and centred to fit any stage size -----
+const sc = Math.min(W / SCENE.w, H / SCENE.h)
+const scene = el('div', 'abs'); S(scene, { left: '0', top: '0', width: SCENE.w + 'px', height: SCENE.h + 'px', transformOrigin: '0 0', transform: `translate(${(W - SCENE.w * sc) / 2}px,${(H - SCENE.h * sc) / 2}px) scale(${sc})` })
+stage.style.background = SCENE.bg
+// ----- icons (lucide, stroke 2) -----
+const LUC = {
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  zoomIn: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  chevDown: '<path d="m6 9 6 6 6-6"/>', sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+}
+const ic = (n, size = 16, sw = 2) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block">${LUC[n]}</svg>`
+// ----- scripted cursor: PATH is [[time, x, y, pressed?], ...] in scene units -----
+const cur = el('div', 'abs', scene, `<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7.5 17.5 L11 25.5 L14.5 24 L11 16.2 L18 16 Z" fill="${SCENE.cursor === 'light' ? '#fff' : '#111'}" stroke="${SCENE.cursor === 'light' ? '#000' : '#fff'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`)
+S(cur, { pointerEvents: 'none', zIndex: 99 })
+function curAt(t) {
+  const P = SCENE.path
+  if (t <= P[0][0]) return [P[0][1], P[0][2]]
+  for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (t <= b[0]) { const u = eio(seg(t, a[0], b[0])); return [lerp(a[1], b[1], u), lerp(a[2], b[2], u)] } }
+  const l = P[P.length - 1]; return [l[1], l[2]]
+}
+// smooth 0..1 value that is 1 between a and b, easing over f seconds each side
+const win = (t, a, b, f = .18) => eo(clamp(seg(t, a, a + f) - seg(t, b, b + f)))
+function drawCursor(t) { const [x, y] = curAt(t); S(cur, { left: px(x - 2), top: px(y - 2) }); return [x, y] }
+
+stage.style.background = ''
+const CARD = { x: 294, y: 160, w: 704, h: 787 }, BOX = { x: 392, y: 207, s: 1.75 }
+// outer rim glow + card
+const rim = el('div', 't', scene); S(rim, { left: CARD.x - 4 + 'px', top: CARD.y - 4 + 'px', width: CARD.w + 8 + 'px', height: CARD.h + 8 + 'px', borderRadius: '50px' })
+const card = el('div', 't', scene); S(card, { left: CARD.x + 'px', top: CARD.y + 'px', width: CARD.w + 'px', height: CARD.h + 'px', borderRadius: '44px', background: '#fff', border: '1px solid #e2e8f0', overflow: 'hidden' })
+const spot = el('div', 't', card); S(spot, { left: '0', top: '0', width: '100%', height: '100%' })
+const cv = document.createElement('canvas'); cv.width = CARD.w; cv.height = CARD.h; S(cv, { position: 'absolute', left: '0', top: '0' }); card.appendChild(cv)
+const g = cv.getContext('2d')
+let seed = 7; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
+const parts = Array.from({ length: CONFIG.particles }, () => ({ x: rnd() * CARD.w, y: rnd() * CARD.h, r: .8 + rnd() * 1.6, a: .3 + rnd() * .7, dx: (rnd() - .5) * 6 }))
+// box with chips, logo and pointer, drawn at 1.75x
+const box = el('div', 't', scene); S(box, { left: BOX.x + 'px', top: BOX.y + 'px', width: '300px', height: '270px', transformOrigin: '0 0', transform: `scale(${BOX.s})` })
+const logo = el('div', 't', box, '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 3h7a9 9 0 0 1 0 18H5z" fill="#111"/></svg>'); S(logo, { left: '138px', top: '123px' })
+const chips = CONFIG.tags.map((c) => { const e = el('div', 'chip', box, c.t); const o = {}; ['left', 'right', 'top', 'bottom'].forEach((k) => { if (c[k] !== undefined) o[k] = c[k] + 'px' }); S(e, o); return e })
+const ptr = el('div', 't', box, `<svg width="16.8" height="18.2" viewBox="0 0 12 13" fill="${CONFIG.pointerColor}" stroke="white" stroke-width="1"><path fill-rule="evenodd" d="M12 5.50676L0 0L2.83818 13L6.30623 7.86537L12 5.50676V5.50676Z"/></svg>`)
+// text + buttons, in frame px
+const h = el('div', 't', scene, CONFIG.title); S(h, { left: '342px', top: '690px', font: '700 45px/54px -apple-system,"SF Pro Display",system-ui,sans-serif', color: '#0b1220', letterSpacing: '-.015em' })
+const sub = el('div', 't', scene, CONFIG.sub); S(sub, { left: '342px', top: '752px', fontSize: '30px', color: '#94a3b8' })
+const b1 = el('div', 't', scene, CONFIG.button); S(b1, { left: '342px', top: '826px', width: '190px', height: '76px', borderRadius: '14px', background: '#111418', color: '#fff', fontSize: '25px', textAlign: 'center', lineHeight: '76px', fontWeight: '500' })
+const b2 = el('div', 't', scene, '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'); S(b2, { left: '548px', top: '826px', width: '76px', height: '76px', borderRadius: '14px', border: '1px solid #d9dee6', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+const b3 = el('div', 't', scene, '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22a05b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.6-5.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 9.5c.5 2.5 2.5 4.5 5.5 5.5l1.3-1.3-2-1-.8.8c-.9-.4-1.7-1.2-2.1-2.1l.8-.8-1-2z"/></svg>'); S(b3, { left: '640px', top: '826px', width: '76px', height: '76px', borderRadius: '14px', border: '1px solid #d9dee6', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+function hoverAt(t) {   // how "hovered" the card is: rises in 0.5s, falls over 1s
+  const P = CONFIG.cursorPath, inside = (x, y) => x > CARD.x && x < CARD.x + CARD.w && y > CARD.y && y < CARD.y + CARD.h
+  let v = 0, last = -1
+  const step = .05
+  for (let s = 0; s <= t + 1e-6; s += step) { const [x, y] = curAt(s); const target = inside(x, y) ? 1 : 0; v += (target - v) * (target ? 1 - Math.exp(-step / .35) : 1 - Math.exp(-step / .55)) }
+  return v
+}
+function render(t) {
+  const [mx, my] = drawCursor(t)
+  const hv = hoverAt(t)
+  const lx = clamp(mx, CARD.x - 100, CARD.x + CARD.w + 100) - CARD.x, ly = clamp(my, CARD.y - 100, CARD.y + CARD.h + 100) - CARD.y
+  S(spot, { background: `radial-gradient(circle ${CONFIG.glowRadius}px at ${lx}px ${ly}px, rgba(${CONFIG.glow},${.34 * hv}) 0%, rgba(${CONFIG.glow},${.14 * hv}) 45%, rgba(${CONFIG.glow},0) 100%)` })
+  S(rim, { background: `radial-gradient(circle ${CONFIG.glowRadius + 80}px at ${lx + 4}px ${ly + 4}px, rgba(${CONFIG.glow},${.75 * hv}), rgba(${CONFIG.glow},0) 75%)` })
+  // particles drift up and wrap; faint when idle, full strength while hovered
+  g.clearRect(0, 0, CARD.w, CARD.h); g.fillStyle = CONFIG.particleColor
+  parts.forEach((p) => { const y = (((p.y - CONFIG.particleSpeed * t * (.6 + p.r / 3)) % CARD.h) + CARD.h) % CARD.h, x = (((p.x + p.dx * t) % CARD.w) + CARD.w) % CARD.w
+    g.globalAlpha = p.a * (.1 + .9 * hv); g.beginPath(); g.arc(x, y, p.r, 0, 6.2832); g.fill() })
+  g.globalAlpha = 1
+  // pointer tour: four stops, the chip under the pointer lights up (timings from the usage example's useAnimate sequence)
+  const S0 = CONFIG.stops, T = t % 4.6
+  const moves = [[.8, 1.3], [1.9, 2.4], [3.0, 3.5], [4.1, 4.6]]
+  let px0 = S0[0][0], py0 = S0[0][1]
+  for (let i = 0; i < 4; i++) { const a = S0[i], b = S0[(i + 1) % 4], k = eio(seg(T, moves[i][0], moves[i][1])); if (T >= moves[i][0]) { px0 = lerp(a[0], b[0], k); py0 = lerp(a[1], b[1], k) } }
+  S(ptr, { left: px(px0), top: px(py0) })
+  const lit = [[0, .3, 1, 1.0, 1.1, .4], [1.1, 1.4, 1, 2.1, 2.2, .4], [2.2, 2.5, 1, 3.2, 3.3, .4], [3.3, 3.6, 1, 4.3, 4.4, .5]]
+  chips.forEach((c, i) => { const [a0, a1, , d0, d1] = lit[i]; const up = T < 1 ? (i === 0 ? lerp(.5, 1, seg(T, 0, .3)) : .5) : 0
+    let o = .5
+    if (i === 0) o = T < d0 ? lerp(.5, 1, seg(T, 0, .3)) : lerp(1, .4, seg(T, d0, d1)); else o = T < a0 ? (i === 1 ? .4 : .5) : T < d0 ? lerp(i === 1 ? .4 : .5, 1, seg(T, a0, a1)) : lerp(1, .4, seg(T, d0, d1))
+    if (i === 0 && T >= 4.3) o = lerp(.4, .5, 0) + (T > 4.3 ? 0 : 0)
+    c.style.opacity = o })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,35 @@
+{
+  "slug": "copper-fractal-tree-night__seeded-recursive-branches-mouse-bend",
+  "visual_name": "Copper fractal tree at night",
+  "code_name": "Seeded recursive branches, mouse bend",
+  "category": "ui-components",
+  "summary": "A dark screen with one copper tree whose trunk splits into thousands of hair-thin twigs that fade into a dim cloud and sway.",
+  "tags": [
+    "background",
+    "hero",
+    "dark",
+    "21st"
+  ],
+  "tech": [
+    "canvas",
+    "vanilla-js"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "generative tree",
+    "fractal tree",
+    "tree",
+    "branches",
+    "night tree",
+    "recursive tree"
+  ],
+  "credit": {
+    "idea": "Generative Tree",
+    "author": "mengto",
+    "url": "https://21st.dev/@mengto/components/generative-tree",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

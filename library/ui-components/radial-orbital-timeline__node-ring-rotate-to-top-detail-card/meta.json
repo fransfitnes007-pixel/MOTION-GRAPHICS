@@ -1,0 +1,38 @@
+{
+  "slug": "radial-orbital-timeline__node-ring-rotate-to-top-detail-card",
+  "visual_name": "Radial orbital timeline",
+  "code_name": "Node ring that rotates the picked node to the top",
+  "category": "ui-components",
+  "summary": "A black screen with five small icon nodes slowly circling a glowing gradient orb; clicking a node swings it to the top, turns it white, and opens a detail card below it with status, date, energy bar and connected nodes.",
+  "tags": [
+    "21st",
+    "3d",
+    "card",
+    "dark",
+    "hover",
+    "nav"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "lucide"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "radial orbital timeline",
+    "orbit timeline",
+    "circular roadmap",
+    "orbital nodes",
+    "radial timeline",
+    "solar system"
+  ],
+  "credit": {
+    "idea": "Radial Orbital Timeline",
+    "author": "jatin-yadav05",
+    "url": "https://21st.dev/@jatin-yadav05/components/radial-orbital-timeline",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

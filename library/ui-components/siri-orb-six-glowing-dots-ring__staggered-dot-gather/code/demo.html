@@ -1,0 +1,101 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>siri-orb-six-glowing-dots-ring__staggered-dot-gather</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0c;color:#fff}
+.box{position:absolute;background:#000;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.dot{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff 0,#fff 55%,rgba(255,255,255,.0) 72%);}
+.halo{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),rgba(255,255,255,0) 70%)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  size: 360,                  // side of the black square in px (size={360} in the usage)
+  radius: 18,                 // corner radius of the square
+  ring: 32,                   // radius in px of the final ring of dots
+  dotR: 7.6,                  // base dot radius in px
+  count: 6,                   // number of dots in the ring
+  glow: 14,                   // halo size multiplier
+  intro: 1.6,                 // seconds for the three dots to become six
+  hold: 3.4,                  // seconds when the loop starts folding back
+  spin: 20,                   // degrees per second the finished ring turns
+  // first three dots begin as a loose triangle: [angle in degrees, distance in px, delay in s]
+  starts: [[-150, 46, 0], [-18, 52, 0], [100, 44, 0]],
+  // the other dots appear from the centre: delay in seconds
+  late: [.0, .45, .75],
+}
+DUR = 4.8; window.DUR = DUR
+const S0 = CONFIG.size
+const box = el('div', 'box'); S(box, { left: px(CX - S0 / 2), top: px(CY - S0 / 2), width: px(S0), height: px(S0), borderRadius: CONFIG.radius + 'px' })
+const dots = Array.from({ length: CONFIG.count }, () => ({ h: el('div', 'halo', box), d: el('div', 'dot', box) }))
+const rad = (d) => d * Math.PI / 180
+
+function render(t) {
+  // u: 0 = loose start, 1 = finished ring; plays in, holds, then folds back so the loop closes
+  const u = t < CONFIG.hold ? seg(t, 0, CONFIG.intro) : 1 - seg(t, CONFIG.hold, DUR - .2)
+  const rot = (t * CONFIG.spin) % 360
+  const cx = S0 / 2, cy = S0 / 2
+  dots.forEach((dt, k) => {
+    const big = k % 2 === 0                         // dots 0, 2, 4 are the first three
+    const ringA = -90 + 360 / CONFIG.count * k + rot * eo(u)
+    const wob = Math.sin(t * 2.4 + k * 1.7) * .06
+    const rr = CONFIG.ring * (1 + wob * eo(u))
+    const tx = Math.cos(rad(ringA)) * rr, ty = Math.sin(rad(ringA)) * rr
+    let x, y, r, a = 1
+    if (big) {
+      const [sa, sd] = CONFIG.starts[k / 2]
+      const e = eo5(clamp(u * 1.15))
+      x = lerp(Math.cos(rad(sa)) * sd, tx, e); y = lerp(Math.sin(rad(sa)) * sd, ty, e)
+      r = CONFIG.dotR * (1.1 + .12 * Math.sin(t * 3 + k)) * lerp(1.15, 1, e)
+    } else {
+      const del = CONFIG.late[(k - 1) / 2], e = eo(seg(u * CONFIG.intro, del, del + .7))
+      x = lerp(0, tx, e); y = lerp(0, ty, e)
+      r = CONFIG.dotR * lerp(.5, 1, e) * (1 + .12 * Math.sin(t * 3 + k))
+      a = k === 1 ? 1 : clamp((u * CONFIG.intro - del + .05) * 6)
+    }
+    S(dt.d, { left: px(cx + x - r), top: px(cy + y - r), width: px(r * 2), height: px(r * 2), opacity: a })
+    const hr = r * CONFIG.glow / 4
+    S(dt.h, { left: px(cx + x - hr), top: px(cy + y - hr), width: px(hr * 2), height: px(hr * 2), opacity: a * .8 })
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

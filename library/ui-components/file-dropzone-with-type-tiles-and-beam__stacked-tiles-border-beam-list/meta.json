@@ -1,0 +1,37 @@
+{
+  "slug": "file-dropzone-with-type-tiles-and-beam__stacked-tiles-border-beam-list",
+  "visual_name": "File dropzone with type tiles and beam",
+  "code_name": "Stacked tiles, border beam, file list",
+  "category": "ui-components",
+  "summary": "A dashed upload card with three stacked file-type tiles, a light beam that circles the border while a file is over it, and a compact list of the files after the drop.",
+  "tags": [
+    "form",
+    "card",
+    "light",
+    "hover",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "css"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "file upload",
+    "dropzone",
+    "drag and drop upload",
+    "upload card",
+    "border beam upload",
+    "file picker"
+  ],
+  "credit": {
+    "idea": "File Upload",
+    "author": "extend-hq",
+    "url": "https://21st.dev/@extend-hq/components/file-upload-2",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

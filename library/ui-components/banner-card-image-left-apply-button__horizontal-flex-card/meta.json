@@ -1,0 +1,35 @@
+{
+  "slug": "banner-card-image-left-apply-button__horizontal-flex-card",
+  "visual_name": "Banner card, image left, Apply button",
+  "code_name": "Horizontal flex card",
+  "category": "ui-components",
+  "summary": "A wide dark card with a square cherry photo on the left, a title and text in the middle, a close X top right and a white Apply Now pill at the bottom right.",
+  "tags": [
+    "card",
+    "dark",
+    "hover",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "heroui",
+    "tailwind"
+  ],
+  "duration_sec": 7.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "card",
+    "banner card",
+    "horizontal card",
+    "apply now card",
+    "dashboard homepage banner"
+  ],
+  "credit": {
+    "idea": "Card",
+    "author": "hero_ui",
+    "url": "https://21st.dev/@hero_ui/components/heroui-card/horizontal",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

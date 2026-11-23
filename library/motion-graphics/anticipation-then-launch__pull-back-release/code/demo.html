@@ -1,0 +1,117 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Anticipation then launch</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;color:#fff}
+.fill{position:absolute;left:0;top:0;width:100%;height:100%}
+.blk{position:absolute;background:linear-gradient(150deg,#8b93ff 0%,#5b5ce6 55%,#3a2fb0 100%);box-shadow:0 30px 70px -20px rgba(91,92,230,.7),inset 0 2px 0 rgba(255,255,255,.35),inset 0 -10px 24px rgba(20,10,90,.35);display:flex;align-items:center;justify-content:center}
+.post{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8e8f4,#7d7d96);box-shadow:0 8px 20px rgba(0,0,0,.6)}
+.tgt{position:absolute;border-radius:50%;border:4px solid rgba(165,180,252,.5)}
+.ring{position:absolute;border-radius:50%;border:4px solid #a5b4fc}
+.cap{position:absolute;left:0;width:100%;text-align:center;font-weight:700;letter-spacing:-.01em}
+.cap small{display:block;font-weight:500;color:#8c8ca6;margin-top:10px}
+svg.band{position:absolute;left:0;top:0;overflow:visible}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const pr = (t, a, d) => seg(t, a, a + d)          // progress 0..1 of a move that starts at a and lasts d seconds
+const DUR = 4.6
+window.DUR = DUR
+const bg = el('div', 'fill'); bg.style.background = 'radial-gradient(70% 60% at 50% 50%,#17172a 0%,#0b0b10 75%)'
+
+const U = TALL ? { x: 0, y: -1 } : { x: 1, y: 0 }       // launch direction
+const Pp = { x: -U.y, y: U.x }                             // perpendicular
+const SPAN = TALL ? H * .52 : W * .56                      // rest to target
+const P0 = { x: CX - U.x * SPAN / 2, y: CY - U.y * SPAN / 2 }
+const P1 = { x: CX + U.x * SPAN / 2, y: CY + U.y * SPAN / 2 }
+const B = TALL ? 220 : 280                                 // block size
+const D = SPAN * .22                                       // pull-back distance
+const T_PULL = .95, T_PEAK = 1.95, T_REL = 2.3, T_OUT = 3.95
+const at = (p, s, q = 0) => ({ x: p.x + U.x * s + Pp.x * q, y: p.y + U.y * s + Pp.y * q })
+
+const tg = el('div', 'tgt'), tg2 = el('div', 'tgt'); tg2.style.borderStyle = 'dashed'; tg2.style.borderWidth = '3px'
+const rings = [el('div', 'ring'), el('div', 'ring')]
+const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'band'); svg.setAttribute('width', W); svg.setAttribute('height', H); stage.appendChild(svg)
+const ghosts = []; for (let i = 0; i < 4; i++) ghosts.push(el('div', 'blk'))
+const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('fill', 'none'); path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke', '#a5b4fc'); svg.appendChild(path)
+const posts = [el('div', 'post'), el('div', 'post')]
+const blk = el('div', 'blk')
+blk.innerHTML = '<svg width="70" height="70" viewBox="0 0 24 24" style="transform:rotate(' + (TALL ? -90 : 0) + 'deg)"><path d="M9 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+const cap = el('div', 'cap'); S(cap, { top: px(TALL ? 44 : H * .1), fontSize: px(54 * K) })
+const cap1 = el('div', '', cap, 'Anticipation<small>pull back, hold, tremble</small>'), cap2 = el('div', '', cap, 'Launch<small>release, stretch, overshoot, settle</small>')
+cap2.style.position = 'absolute'; cap2.style.left = 0; cap2.style.width = '100%'; cap2.querySelector('small').style.fontSize = px(28 * K); cap1.querySelector('small').style.fontSize = px(28 * K)
+
+// block position along the axis (0 = rest post line), and its scale along / across the axis
+function sPos(t) {
+  if (t < T_REL) { const trem = pr(t, T_PEAK, T_REL - T_PEAK) * Math.sin(t * 95) * 3; return -D * eio(pr(t, T_PULL, T_PEAK - T_PULL)) + trem }
+  return lerp(-D, SPAN, spring((t - T_REL) / 1.2, 5.2, 7.2))
+}
+function render(t) {
+  const vp = spring(pr(t, .05, .6), 6, 10) * (1 - eio(pr(t, T_OUT, .55)))          // whole piece in / out
+  const pull = eio(pr(t, T_PULL, T_PEAK - T_PULL)) * (t < T_REL ? 1 : 0)
+  const s = sPos(t)
+  const v = t < T_REL ? 0 : Math.abs(sPos(t + .008) - sPos(t - .008)) / .016
+  const stretch = clamp(v / 5000)
+  const sa = (1 - .22 * pull) * (1 + .55 * stretch), sp = (1 + .12 * pull) * (1 - .3 * stretch)
+  const dims = (sa_, sp_) => TALL ? [B * sp_, B * sa_] : [B * sa_, B * sp_]
+  const place = (e, ss, a, b, o) => { const c = at(P0, ss), [w, h] = dims(a, b); S(e, { left: px(c.x - w / 2), top: px(c.y - h / 2), width: px(w), height: px(h), borderRadius: px(Math.min(w, h) * .26), opacity: o, transform: 'scale(' + vp + ')' }) }
+  ghosts.forEach((g, i) => { const st = sPos(t - (i + 1) * .018); place(g, st, sa * 1.0, sp, .22 * (1 - i / 4) * clamp(stretch * 1.6)) })
+  place(blk, s, sa, sp, 1)
+  // target
+  const tc = P1, TR = B * .85
+  S(tg, { left: px(tc.x - TR), top: px(tc.y - TR), width: px(TR * 2), height: px(TR * 2), opacity: vp * .9, transform: 'scale(' + vp + ')' })
+  S(tg2, { left: px(tc.x - TR * 1.45), top: px(tc.y - TR * 1.45), width: px(TR * 2.9), height: px(TR * 2.9), opacity: vp * .35, transform: 'scale(' + vp + ')' })
+  rings.forEach((r, i) => { const p = pr(t, 2.52 + i * .16, .75), rr = TR * (1 + 1.8 * eo(p)); S(r, { left: px(tc.x - rr), top: px(tc.y - rr), width: px(rr * 2), height: px(rr * 2), opacity: p > 0 && p < 1 ? .8 * (1 - p) * vp : 0, borderWidth: px(5 * (1 - p) + 1) }) })
+  // posts and elastic band
+  const gap = B * .95, a = at(P0, 0, -gap), b = at(P0, 0, gap)
+  posts.forEach((p, i) => { const c = i ? b : a, r = 15 * K; S(p, { left: px(c.x - r), top: px(c.y - r), width: px(r * 2), height: px(r * 2), opacity: vp, transform: 'scale(' + vp + ')' }) })
+  const apexOff = t < T_REL ? s - B * .39 : (-D - B * .39) * Math.exp(-9 * (t - T_REL)) * Math.cos(34 * (t - T_REL))
+  const mid = at(P0, 0, 0), apex = at(P0, apexOff), ctrl = { x: mid.x + 2 * (apex.x - mid.x), y: mid.y + 2 * (apex.y - mid.y) }
+  const bandOn = t < T_REL ? pull : clamp(1 - (t - T_REL) / .55)
+  path.setAttribute('d', 'M' + a.x + ' ' + a.y + ' Q' + ctrl.x + ' ' + ctrl.y + ' ' + b.x + ' ' + b.y)
+  path.setAttribute('stroke-width', 11 - 5 * pull)
+  path.setAttribute('opacity', (t < T_REL ? clamp(pull * 3) : bandOn) * vp)
+  // captions
+  const c1 = clamp(pr(t, .6, .3)) * (1 - clamp(pr(t, T_REL - .12, .15))), c2 = clamp(pr(t, T_REL, .2)) * (1 - clamp(pr(t, T_OUT - .1, .3)))
+  S(cap1, { opacity: c1 * vp > 0 ? c1 : 0, transform: 'translateY(' + (1 - c1) * 12 + 'px)' }); S(cap2, { opacity: c2, transform: 'translateY(' + (1 - c2) * 12 + 'px)' })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

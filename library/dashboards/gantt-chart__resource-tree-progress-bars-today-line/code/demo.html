@@ -1,0 +1,174 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Gantt chart</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff}
+.g{position:absolute;left:0;top:0;width:928px;height:392px;border:1px solid #e4e4e7;border-radius:14px;background:#fff;overflow:hidden;font-size:12px;color:#222}
+.tb{position:absolute;left:0;top:0;right:0;height:34px;border-bottom:1px solid #e4e4e7}
+.pill{position:absolute;top:6px;height:22px;line-height:22px;border-radius:6px;font-size:12px;font-weight:500;padding:0 9px;white-space:nowrap}
+.pane{position:absolute;left:0;top:34px;width:151px;bottom:0;border-right:1px solid #e4e4e7;overflow:hidden}
+.tl{position:absolute;left:151px;top:34px;right:0;bottom:0;overflow:hidden}
+.rl{position:absolute;left:0;right:0;height:30px;border-bottom:1px solid #ececee;line-height:30px;font-size:12px;white-space:nowrap}
+.vl{position:absolute;top:0;bottom:0;width:1px;background:#ececee}
+.dh{position:absolute;top:25px;height:25px;line-height:24px;text-align:center;font-size:12px;color:#55555a;width:48px}
+.bar{position:absolute;height:18px;border-radius:5px;overflow:hidden;transform-origin:0 50%}
+.bar i{position:absolute;left:0;top:0;bottom:0}
+.bar b{position:absolute;left:6px;top:0;line-height:18px;font-weight:500;font-size:11px;color:#2a2a2e;white-space:nowrap}
+.grp{position:absolute;height:5px;transform-origin:0 50%}
+.grp i{position:absolute;left:0;top:0;bottom:0;background:#a9a9ad}
+.sc{position:absolute;left:0;right:0;height:6px;border-radius:3px;background:#d9d9dc}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  month: 'July 2026',
+  dayW: 48,                         // pixel width of one day column
+  firstDay: 19,                     // day-of-month at the left edge of the data (Sun Jul 19)
+  today: 29.69,                     // day number of the red line (fractional = time of day)
+  rowH: 30,
+  // resources: [label, depth, kind]  kind: 'group' or 'task'
+  rows: [['Planning', 0, 'g'], ['Project brief', 1, 't'], ['Scope review', 1, 't'], ['Design', 0, 'g'], ['Wireframes', 1, 't'], ['Visual design', 1, 't'], ['Build', 0, 'g'], ['Frontend', 1, 't'], ['Backend', 1, 't'], ['QA pass', 1, 't']],
+  // bars by row index: start day, end day, progress 0..1, colours [track, fill], label
+  bars: {
+    0: { s: 12, e: 22, p: 1, g: 1, pct: '100%' },
+    2: { s: 20.3, e: 22, p: 1, c: ['#7dd3fc', '#7dd3fc'], l: 'Scope review' },
+    3: { s: 22, e: 31, p: .55, g: 1, pct: '55%' },
+    4: { s: 22, e: 26, p: .8, c: ['#eadbfb', '#c79df6'], l: 'Wireframes' },
+    5: { s: 26, e: 31, p: .35, c: ['#eadbfb', '#c79df6'], l: 'Visual design' },
+    6: { s: 29, e: 44, p: .1, g: 1 },
+    7: { s: 29, e: 36, p: .1, c: ['#c9f0e1', '#73d4ae'], l: 'Frontend' },
+    8: { s: 31, e: 37, p: 0, c: ['#c9f0e1', '#73d4ae'], l: 'Backend', drag: true },
+    9: { s: 37, e: 41, p: 0, c: ['#c9f0e1', '#73d4ae'], l: 'QA pass' },
+  },
+  barStagger: .08, barGrowSec: .55,   // reveal timing
+  dragBy: 1.5,                        // days the scripted drag moves the Backend bar
+}
+const DUR = 7
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const D = CONFIG.dayW, X0 = 24 - 3 * D      // x of day 19 inside the timeline pane, so day 22 starts at 24
+const dx = (d) => X0 + (d - CONFIG.firstDay) * D
+const box = fitBox(930, 394, .96)
+const g = el('div', 'g', box)
+// toolbar
+const tb = el('div', 'tb', g)
+const mkPill = (txt, x, extra = '') => { const p = el('div', 'pill', tb, txt); S(p, { left: x + 'px' }); if (extra) p.style.cssText += extra; return p }
+mkPill('Today', 10, 'background:#f3f3f4'); mkPill('Month &#8964;', 66); mkPill('&#8249;', 124); mkPill('&#8250;', 148); mkPill(CONFIG.month, 176, 'font-weight:600')
+mkPill('&#9881; Settings', 838, 'border:1px solid #e4e4e7;')
+const pane = el('div', 'pane', g); const tl = el('div', 'tl', g)
+el('div', '', pane, 'Resources').style.cssText = 'position:absolute;left:28px;top:7px;font-size:12px;color:#55555a'
+// header + grid
+const HY = 50
+for (let d = 19; d <= 44; d++) {
+  const date = new Date(Date.UTC(2026, 6, d)); const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dom = date.getUTCDate(); const x = dx(d)
+  const v = el('div', 'vl', tl); S(v, { left: x + 'px' })
+  const lab = el('div', 'dh', tl, `${names[date.getUTCDay()]} ${dom}`); S(lab, { left: x + 'px' })
+  if (d === 29) { S(lab, { width: '48px', overflow: 'hidden' }); lab.innerHTML = '<span style="background:#ececee;border-radius:9px;padding:1px 6px;font-weight:500;white-space:nowrap">Wed ...</span>' }
+}
+const todayCol = el('div', '', tl); S(todayCol, { position: 'absolute', left: dx(29) + 'px', width: D + 'px', top: HY + 'px', bottom: 0, background: 'rgba(0,0,0,.045)' })
+for (const [d, lab] of [[19, 'W30 Jul 19 - 25'], [26, 'W31 Jul 26 - 1'], [33, 'W32 Aug 2 - 8']]) {
+  const w = el('div', '', tl, lab); S(w, { position: 'absolute', left: Math.max(dx(d), 0) + 10 + 'px', top: '4px', fontSize: '12px', color: '#55555a', whiteSpace: 'nowrap' })
+  const l = el('div', 'vl', tl); S(l, { left: dx(d) + 'px' }); l.style.background = '#e2e2e5'
+}
+el('div', '', tl).style.cssText = 'position:absolute;left:0;right:0;top:25px;height:1px;background:#e4e4e7'
+el('div', '', tl).style.cssText = `position:absolute;left:0;right:0;top:${HY}px;height:1px;background:#e4e4e7`
+// rows
+const bars = []
+CONFIG.rows.forEach(([label, depth, kind], i) => {
+  const y = HY + 1 + i * CONFIG.rowH
+  const pl = el('div', 'rl', pane, (kind === 'g' ? '<span style="color:#777;margin-right:6px;font-size:10px">&#8964;</span>' : '') + label); S(pl, { top: y + 'px', paddingLeft: (kind === 'g' ? 22 : 42) + 'px', fontWeight: kind === 'g' ? 600 : 400, fontSize: '11px' })
+  const gl = el('div', '', tl); S(gl, { position: 'absolute', left: 0, right: 0, top: y + CONFIG.rowH - 1 + 'px', height: '1px', background: 'transparent' })
+  const b = CONFIG.bars[i]; if (!b) return
+  let node
+  if (b.g) {
+    node = el('div', 'grp', tl); const full = (b.e - b.s) * D
+    node.innerHTML = '<div style="position:absolute;inset:0;background:#e1e1e4"></div>'
+    const f = el('i', '', node); S(f, { width: full * b.p + 'px' })
+    S(node, { left: dx(b.s) + 'px', top: y + 12 + 'px', width: full + 'px' })
+    if (b.pct) { const pc = el('div', '', tl, b.pct); S(pc, { position: 'absolute', left: dx(b.e) + 8 + 'px', top: y + 6 + 'px', fontSize: '11px', color: '#6a6a70' }); b.pcEl = pc }
+  } else {
+    node = el('div', 'bar', tl); S(node, { left: dx(b.s) + 'px', top: y + 6 + 'px', width: (b.e - b.s) * D + 'px', background: b.c[0] })
+    const f = el('i', '', node); S(f, { width: (b.e - b.s) * D * b.p + 'px', background: b.c[1] })
+    el('b', '', node, b.l)
+  }
+  bars.push({ node, b, i, y })
+})
+// today line
+const tline = el('div', '', tl); S(tline, { position: 'absolute', left: dx(CONFIG.today) + 'px', top: HY - 4 + 'px', bottom: 0, width: '1.5px', background: '#e5262d' })
+el('div', '', tl).style.cssText = `position:absolute;left:${dx(CONFIG.today) - 3.5}px;top:${HY - 8}px;width:8px;height:8px;border-radius:50%;background:#e5262d`
+// scroll strips and zoom buttons
+const sc1 = el('div', 'sc', g); S(sc1, { left: '2px', width: '146px', bottom: '3px' }); const sc2 = el('div', 'sc', g); S(sc2, { left: '600px', width: '320px', bottom: '3px' })
+const zoom = el('div', '', tl, '+<br>&minus;'); S(zoom, { position: 'absolute', right: '8px', bottom: '14px', width: '20px', height: '40px', borderRadius: '6px', border: '1px solid #e4e4e7', background: '#fff', textAlign: 'center', lineHeight: '18px', fontSize: '13px' })
+const cur = makeCursor(box)
+const dragBar = bars.find((x) => x.b.drag)
+const tlOrigin = [151, 34]
+const bx = (d) => tlOrigin[0] + dx(d), by = (y) => tlOrigin[1] + y
+const sx = bx(33.2), sy = by(dragBar.y + 15)
+const dragPx = CONFIG.dragBy * D
+const cp = [[0, 700, 330], [2.0, 700, 330], [2.7, sx, sy], [3.0, sx, sy], [4.0, sx + dragPx, sy], [4.5, sx + dragPx, sy], [5.1, sx + dragPx, sy], [6.0, sx, sy], [6.4, sx, sy], [7, 700, 330]]
+function render(t) {
+  bars.forEach((o, n) => {
+    const q = eo(seg(t, .15 + n * CONFIG.barStagger, .15 + n * CONFIG.barStagger + CONFIG.barGrowSec))
+    let shift = 0
+    if (o.b.drag) shift = kf(t, [[0, 0], [3.0, 0], [4.0, dragPx], [5.1, dragPx], [6.0, 0]]) 
+    const x0 = dx(o.b.s) + shift
+    S(o.node, { left: x0 + 'px', opacity: clamp(q * 2), transform: `scaleX(${.05 + .95 * q})` })
+    if (o.b.pcEl) S(o.b.pcEl, { opacity: seg(q, .7, 1) })
+  })
+  const press = t > 2.9 && t < 4.6 || t > 5.1 && t < 6.1
+  const [mx, my] = kfp(t, cp)
+  setCursor(cur, mx, my, press, t > 1.8)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

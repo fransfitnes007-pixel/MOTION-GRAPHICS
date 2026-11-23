@@ -1,0 +1,106 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>card ready reveal</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+#stage{background:radial-gradient(ellipse at 50% 45%,#1a1b26 0%,#0b0b10 70%)}
+.card{position:absolute;border-radius:38px;overflow:hidden;background:linear-gradient(135deg,#3c4354 0%,#1d212b 52%,#2d3443 100%);box-shadow:0 50px 90px rgba(0,0,0,.6),0 0 0 1.5px rgba(255,255,255,.09) inset;transform-style:preserve-3d;will-change:transform}
+.card .sheen{position:absolute;inset:0;background:radial-gradient(circle at 18% 8%,rgba(255,255,255,.16),transparent 46%),radial-gradient(circle at 92% 96%,rgba(120,150,255,.14),transparent 50%)}
+.card .ring{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.05)}
+.glint{position:absolute;top:-60%;height:230%;transform:rotate(22deg);background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.34) 48%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.34) 52%,rgba(255,255,255,0))}
+.brand{position:absolute;left:54px;top:46px;font-size:48px;font-weight:750;letter-spacing:.5px;color:#f4f6fb}
+.chip{position:absolute;left:54px;top:170px;width:84px;height:64px;border-radius:13px;background:linear-gradient(135deg,#e9d9a4,#b99a52 60%,#e2cd8c);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.chip i{position:absolute;background:rgba(0,0,0,.28)}
+.dots{position:absolute;left:54px;top:296px;height:72px;font-size:56px;line-height:72px;letter-spacing:7px;color:rgba(244,246,251,.85);font-weight:600;font-variant-numeric:tabular-nums}
+.col{position:absolute;top:296px;width:42px;height:72px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent 0,#000 14%,#000 86%,transparent 100%)}
+.col div{position:absolute;left:0;width:42px;text-align:center;font-size:58px;line-height:72px;font-weight:650;color:#fff;font-variant-numeric:tabular-nums}
+.meta{position:absolute;bottom:42px;font-size:24px;letter-spacing:2.5px;color:rgba(244,246,251,.7);font-weight:560}
+.pill{position:absolute;display:flex;align-items:center;gap:16px;height:76px;padding:0 34px 0 14px;border-radius:38px;background:rgba(40,52,46,.92);box-shadow:0 18px 40px rgba(0,0,0,.5),0 0 0 1.5px rgba(80,220,150,.45) inset;font-size:34px;font-weight:680;color:#e7fff1;white-space:nowrap}
+.pill .ok{width:50px;height:50px;border-radius:50%;background:linear-gradient(#4be39b,#1fb878);display:flex;align-items:center;justify-content:center}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6.4
+window.DUR = DUR
+const cw = 780, ch = 480, CT = CY - 70 - ch / 2
+const wrap = el('div', 'abs'); S(wrap, { left: px(CX - cw / 2), top: px(CT), width: px(cw), height: px(ch) })
+const card = el('div', 'card', wrap); S(card, { left: '0px', top: '0px', width: px(cw), height: px(ch) })
+el('div', 'sheen', card)
+const r1 = el('div', 'ring', card); S(r1, { left: '470px', top: '-120px', width: '520px', height: '520px' })
+const r2 = el('div', 'ring', card); S(r2, { left: '540px', top: '-60px', width: '380px', height: '380px' })
+el('div', 'brand', card, 'Acme')
+el('div', 'abs', card, '<svg width="54" height="54" viewBox="0 0 54 54" fill="none" stroke="rgba(244,246,251,.75)" stroke-width="4" stroke-linecap="round"><path d="M16 14a20 20 0 0 1 0 26"/><path d="M26 8a30 30 0 0 1 0 38"/><path d="M36 2a40 40 0 0 1 0 50" opacity=".6"/></svg>').style.cssText = 'right:50px;top:40px'
+const chip = el('div', 'chip', card); for (const s of ['left:0;top:21px;width:84px;height:2px', 'left:0;top:41px;width:84px;height:2px', 'left:28px;top:0;width:2px;height:64px', 'left:54px;top:0;width:2px;height:64px']) el('i', '', chip).style.cssText = s
+el('div', 'dots', card, '••••&nbsp; ••••&nbsp; ••••')
+const DIG = [4, 8, 2, 1], DX = 543, cols = []
+for (let j = 0; j < 4; j++) {
+  const c = el('div', 'col', card); c.style.left = px(DX + j * 44)
+  const inner = el('div', '', c); let h = ''; for (let k = 0; k < 40; k++) h += `<div style="top:${k * 72}px">${k % 10}</div>`; inner.innerHTML = h; inner.style.cssText = 'position:absolute;left:0;top:0;width:42px'
+  cols.push(inner)
+}
+const nm = el('div', 'meta', card, 'A. CARDHOLDER'); nm.style.left = '54px'
+const ex = el('div', 'meta', card, '12 / 29'); ex.style.right = '54px'
+const gl = el('div', 'glint', card); gl.style.width = '150px'
+const pill = el('div', 'pill'); pill.innerHTML = '<span class="ok"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path id="ck" d="M7 15.5l5.5 5.5L23 9.5" stroke-dasharray="26" stroke-dashoffset="26"/></svg></span>Ready'
+S(pill, { left: '0px', top: px(CT + ch + 54) })
+const ck = pill.querySelector('#ck')
+const W2 = Math.PI * 2 / DUR
+
+function render(t) {
+  const sp = spring(seg(t, .25, 1.35), 5.2, 10), arr = seg(t, .6, 1.6)
+  const out = ei(seg(t, 5.6, 6.3))
+  const ty = lerp(H * .62, 0, sp) + out * H * .62
+  const rx = lerp(38, 0, sp) + 5 * Math.sin(2 * W2 * t + .5) * arr, ry = -8 * Math.sin(2 * W2 * t + 1.4) * arr, rz = 1.2 * Math.sin(2 * W2 * t) * arr
+  wrap.style.transform = `perspective(1700px) translateY(${ty.toFixed(1)}px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg)`
+  wrap.style.opacity = t < .25 ? 0 : 1
+  // glint sweep across the card
+  const gp = eio(seg(t, 1.45, 2.35)), gx = lerp(-260, cw + 120, gp)
+  S(gl, { left: px(gx), opacity: gp > 0 && gp < 1 ? 1 : 0 })
+  // odometer digits
+  for (let j = 0; j < 4; j++) { const p = eo5(seg(t, 1.9 + .22 * j, 3.0 + .22 * j)); cols[j].style.transform = `translateY(${(-lerp(0, 20 + DIG[j], p) * 72).toFixed(1)}px)` }
+  // ready pill
+  const pp = spring(seg(t, 3.35, 4.05), 6.5, 12), pa = eo(seg(t, 3.35, 3.5)) * (1 - seg(t, 5.3, 5.7))
+  const pw = pill.offsetWidth || 190
+  pill.style.left = px(CX - pw / 2)
+  pill.style.transform = `translateY(${(lerp(26, 0, pp)).toFixed(1)}px) scale(${lerp(.6, 1, pp).toFixed(3)})`; pill.style.opacity = pa.toFixed(3)
+  ck.style.strokeDashoffset = (26 * (1 - eo(seg(t, 3.55, 3.95)))).toFixed(2)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

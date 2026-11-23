@@ -1,0 +1,147 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>add-to-cart-list-with-live-cart-panel__odometer-total</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#18181b}
+.pg{position:absolute;left:0;top:0;width:640px;transform-origin:0 0}
+.t{position:absolute;white-space:nowrap}
+.b{position:absolute}
+.cursor{position:absolute;width:18px;height:22px;pointer-events:none;z-index:50}
+.col{position:absolute;overflow:hidden;height:15px;width:7.4px}
+.col div{height:15px;line-height:15px;text-align:center;font-weight:700;font-size:12px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  products: [['Air Max 90', 'Running', 129.99, 'Black/White'], ['Ultra Boost', 'Performance', 179.99, 'Grey/Blue'], ['Classic Trainer', 'Casual', 89.99, 'White/Red']],
+  zoom: 1.8,                         // scale of the page (preview is 640px wide)
+  ink: '#18181b', line: '#e4e4e7', chip: '#f1f1f3',
+  addAt: .95, plusAt: 2.15, checkoutAt: 3.1, resetAt: 4.35,  // seconds for the scripted clicks and the reset
+  rollTime: .5,                      // seconds the total's digits take to roll
+  rowTime: .3,                       // seconds for the cart row to open
+}
+DUR = 5.0; window.DUR = DUR
+const Z = CONFIG.zoom, OX = 122 - 31 * Z, OY = CY - 252 * Z
+const pg = el('div', 'pg'); S(pg, { transform: `translate(${OX}px,${OY}px) scale(${Z})` })
+const t = (x, y, s, size, w, col, extra = {}, par = pg) => { const e = el('div', 't', par, s); S(e, Object.assign({ left: x + 'px', top: y + 'px', fontSize: size + 'px', fontWeight: w, color: col }, extra)); return e }
+const bx = (x, y, w, h, css = {}, par = pg) => { const e = el('div', 'b', par); S(e, Object.assign({ left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }, css)); return e }
+const ICO = (d, c = '#222', s = 13, sw = 2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`
+const SHOE = '<svg width="30" height="22" viewBox="0 0 30 22"><path d="M2 14c1-1 4-1 6-3l3-5 3 3c3 0 5 2 8 3 3 1 6 1 7 4v2c-1 1-3 1-5 1H4c-2 0-3-2-2-5z" fill="#111"/><path d="M3 19h24" stroke="#555" stroke-width="1" opacity=".5"/></svg>'
+// left list
+const rowsEl = CONFIG.products.map(([n, tag, price, col], i) => {
+  const y = 144 + i * 75
+  const card = bx(31, y, 298, 65, { background: '#fff', border: `1px solid ${CONFIG.line}`, borderRadius: '10px' })
+  const ic = bx(45, y + 12, 40, 40, { background: '#f3f3f5', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }); ic.innerHTML = SHOE
+  t(93, y + 17, n, 12.5, 500, CONFIG.ink)
+  const tg = bx(93 + n.length * 6.3 + 10, y + 17, tag.length * 5.6 + 14, 14, { background: CONFIG.chip, borderRadius: '7px', fontSize: '9.5px', color: '#666', textAlign: 'center', lineHeight: '14px' }); tg.textContent = tag
+  t(93, y + 34, `$${price.toFixed(2)} &nbsp;&bull;&nbsp; ${col}`, 11, 400, '#666')
+  const add = bx(257, y + 18, 58, 29, { border: `1px solid ${CONFIG.line}`, borderRadius: '7px', background: '#fff', boxShadow: '0 1px 1px rgba(0,0,0,.04)' }); t(10, 7.5, '+ &nbsp;Add', 11.5, 500, CONFIG.ink, {}, add)
+  return { card, ic, add }
+})
+// cart
+bx(349, 144, 257, 216, { background: '#fff', border: `1px solid ${CONFIG.line}`, borderRadius: '10px' })
+const ci = el('div', 't', pg, ICO('<circle cx="9" cy="21" r="1.5"/><circle cx="20" cy="21" r="1.5"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>', '#222', 12)); S(ci, { left: '362px', top: '158px' })
+const ctitle = t(382, 158, 'Cart (0)', 11.5, 500, CONFIG.ink)
+const item = bx(362, 184, 230, 47, { background: '#f5f5f6', borderRadius: '8px', overflow: 'hidden' })
+t(7, 7, 'Air Max 90', 11.5, 500, CONFIG.ink, {}, item); t(214, 5, '&times;', 11, 400, '#999', {}, item)
+const minus = t(8, 25, '&minus;', 11, 400, '#333', {}, item), qtyEl = t(27, 26, '1', 10.5, 500, '#333', {}, item), plus = t(43, 25, '+', 12, 400, '#333', {}, item)
+const priceEl = t(0, 27, '$129.99', 10, 400, '#777', { width: '60px', textAlign: 'right' }, item); priceEl.style.left = '163px'
+bx(362, 282, 230, 1, { background: CONFIG.line })
+t(362, 293, 'Total', 11.5, 700, CONFIG.ink)
+// odometer total: 6 columns right-aligned to x=592
+const COLX = [0, 1, 2].map(i => 592 - 7.4 * 6 + i * 7.4 + 0), cols = []
+const xs = []; for (let i = 0; i < 6; i++) xs.push(592 - 7.4 * (6 - i) - (i >= 4 ? -0 : 0))
+for (let i = 0; i < 6; i++) {
+  if (i === 3) { cols.push({ dot: t(xs[i] + 1.5, 293, '.', 12, 700, CONFIG.ink) }); continue }
+  const c = bx(xs[i], 293, 7.4, 15, {}, pg); c.className = 'col'; S(c, { left: xs[i] + 'px', top: '293px' })
+  const strip = el('div', '', c); strip.style.height = '150px'
+  for (let d = 0; d < 10; d++) { const ln = el('div', '', strip, String(d)); S(ln, { color: CONFIG.ink }) }
+  cols.push({ c, strip })
+}
+const co = bx(362, 318, 230, 29, { background: '#18181b', borderRadius: '8px' }); const coT = t(70, 7, 'Checkout', 11.5, 600, '#fff', {}, co); coT.insertAdjacentHTML('beforebegin', `<span class="t" style="left:48px;top:8px">${ICO('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', '#fff', 12)}</span>`)
+const cur = el('div', 'cursor', stage, '<svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1l13 12-6 1 4 7-3 1.5-4-7-4 4z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>')
+
+const scr = (x, y) => [OX + x * Z, OY + y * Z]
+function qtyAt(tm) { const C = CONFIG; return tm >= C.resetAt ? 0 : tm >= C.plusAt ? 2 : tm >= C.addAt ? 1 : 0 }
+function render(tm) {
+  const C = CONFIG
+  const q = qtyAt(tm)
+  // --- total roll: digits go from the previous total to the current one
+  const evs = [[C.addAt, 1], [C.plusAt, 2], [C.resetAt, 0]]
+  let from = 0, to = 0, tl = -9
+  for (const [te, qq] of evs) if (tm >= te) { from = to; to = qq; tl = te }
+  const e = to === 0 ? 1 : eo(seg(tm, tl, tl + C.rollTime))
+  const val = lerp(from, to, e) * 129.99, shown = to * 129.99
+  const dig = (v, k) => Math.floor(v * 100 + 1e-6)   // cents
+  const cents = val * 100
+  const place = [100000, 10000, 1000, null, 100, 10, 1]
+  const tgt = Math.round(to * 12999), src = Math.round(from * 12999)
+  const pl = [10000, 1000, 100, null, 10, 1]
+  cols.forEach((col, i) => {
+    if (i === 3) { S(col.dot, { opacity: shown > 0 || val > 0 ? 1 : 0 }); return }
+    const p = pl[i]
+    const dA = Math.floor(src / p) % 10, dB = Math.floor(tgt / p) % 10
+    const lead = (i === 0 && tgt < 10000) || (i === 1 && tgt < 1000)   // hide leading zeros
+    const hidden = (tgt === 0 && i !== 2) || lead
+    const roll = lerp(dA, dB, e)
+    S(col.strip, { transform: `translateY(${-roll * 15}px)` }); S(col.c, { opacity: hidden && !(tm < tl + C.rollTime && !(tgt === 0)) ? 0 : (hidden ? 0 : 1) })
+  })
+  // --- cart row and header
+  const open = q === 0 ? 1 - eo(seg(tm, C.resetAt, C.resetAt + .01)) * 0 : 1
+  const grow = q === 0 ? 0 : eo(seg(tm, C.addAt, C.addAt + C.rowTime))
+  S(item, { opacity: q === 0 ? 0 : grow, transform: `translateY(${(1 - grow) * -6}px)` })
+  ctitle.textContent = `Cart (${q})`; qtyEl.textContent = String(Math.max(q, 1)); priceEl.textContent = '$' + (Math.max(q, 1) * 129.99).toFixed(2)
+  // --- row hover / press states
+  const hovAdd = tm > .6 && tm < C.addAt + .6
+  S(rowsEl[0].ic, { background: hovAdd ? '#e4e4e8' : '#f3f3f5' }); S(rowsEl[0].add, { background: Math.abs(tm - C.addAt) < .1 ? '#f1f1f3' : '#fff', transform: Math.abs(tm - C.addAt) < .1 ? 'scale(.97)' : 'none' })
+  S(co, { background: tm >= C.checkoutAt && tm < C.checkoutAt + .5 ? '#2c2c30' : '#18181b' })
+  // --- cursor path
+  const P = { start: scr(430, 80), add: scr(292, 163), plus: scr(411, 217), mid: scr(450, 250), co: scr(484, 332), away: scr(560, 400) }
+  const seq = [[0, P.start], [.7, P.add], [C.addAt + .5, P.add], [C.plusAt - .15, P.plus], [C.plusAt + .5, P.plus], [C.checkoutAt - .1, P.co], [C.checkoutAt + .8, P.co], [C.resetAt, P.away]]
+  let p = seq[0][1]
+  for (let k = 1; k < seq.length; k++) { if (tm >= seq[k][0]) p = seq[k][1]; else { const k2 = eio(seg(tm, seq[k - 1][0], seq[k][0])); p = [lerp(seq[k - 1][1][0], seq[k][1][0], k2), lerp(seq[k - 1][1][1], seq[k][1][1], k2)]; break } }
+  if (tm >= C.resetAt) { const k3 = eio(seg(tm, C.resetAt, DUR)); p = [lerp(P.away[0], P.start[0], k3), lerp(P.away[1], P.start[1], k3)] }
+  const click = [C.addAt, C.plusAt, C.checkoutAt].some(x => Math.abs(tm - x) < .07)
+  S(cur, { left: px(p[0]), top: px(p[1]), transform: `scale(${click ? .85 : 1})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

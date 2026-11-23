@@ -1,0 +1,99 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>shadcnspace-shine-border-02</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.sc{position:absolute;width:384px;height:461px;border-radius:22px;background:#fff;border:1px solid #e9e9ec;box-shadow:0 6px 24px rgba(0,0,0,.05)}
+.t{position:absolute;white-space:nowrap}
+.ring{position:absolute;inset:-1px;border-radius:22px;padding:2px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);pointer-events:none}
+.stat{position:absolute;width:160px;height:62px;border-radius:11px;background:#fafafa}
+.stat .l{position:absolute;left:12px;top:11px;font-size:11.5px;color:#737378}
+.stat .v{position:absolute;left:12px;top:30px;font-size:14.5px;font-weight:600}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 1.55,                      // the card is about 384px wide in life
+  period: 2.4,                     // seconds for the scan band to pass down the card once
+  borderWidth: 2,
+  // gradient stops down the band, top to bottom; the rest of the border stays plain
+  band: [['rgba(160,180,255,0)', 0], ['#a9b8ff', 18], ['#cbb3f0', 32], ['#f4a3b8', 50], ['#f08f98', 62], ['#4fdcc6', 86], ['rgba(79,220,198,0)', 100]],
+  bandHeight: .75,                 // band height as a fraction of the card, bigger = more of the border lit at once
+  title: 'Identity Verified', sub: 'Biometric Scan', badge: 'Secure',
+  name: 'Albert', role: 'Senior Engineer', id: 'ID: #EMP-00421',
+  stats: [['Access Level', 'Level 4'], ['Clearance', 'Top Secret'], ['Last Scan', 'Just now'], ['Location', 'HQ — Floor 3']],
+  status: 'Scan complete — Access granted', button: 'View Access Log',
+}
+const DUR = 4.8
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+const card = el('div', 'sc', root); S(card, { left: px(640 - 192), top: px(400 - 230) })
+const T = (txt, o) => { const e = el('div', 't', card, txt); S(e, o); return e }
+const fp = el('div', 'abs', card, '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.7" stroke-linecap="round"><path d="M12 11c0 3 0 5-1.500 8M8 14c0-3 1.500-5 4-5s4 2 4 5c0 2-.300 3.500-1 5M5 12c0-4 3-7 7-7s7 3 7 7c0 1.500-.200 3-.700 4.500M3 17c.700-1.500 1-3.500 1-5"/></svg>'); S(fp, { left: '24px', top: '27px', width: '40px', height: '40px', borderRadius: '11px', background: '#f1f1f2', display: 'flex', alignItems: 'center', justifyContent: 'center' })
+T(CONFIG.title, { left: '75px', top: '28px', fontSize: '15px', fontWeight: 600 })
+T(CONFIG.sub, { left: '75px', top: '48px', fontSize: '12.5px', color: '#737378' })
+const bd = T('<i style="display:inline-block;width:6px;height:6px;border-radius:3px;background:#12d6b8;margin-right:6px;vertical-align:1px"></i>' + CONFIG.badge, { right: '24px', top: '32px', height: '24px', lineHeight: '22px', padding: '0 10px', borderRadius: '12px', background: '#e8fcf8', border: '1px solid #a5f0e2', color: '#0fcfb2', fontSize: '12px', fontWeight: 600, boxShadow: '0 2px 5px rgba(16,205,178,.18)' })
+const av = el('div', 'abs', card, '<svg width="56" height="56" viewBox="0 0 56 56"><defs><linearGradient id="avg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b8794"/><stop offset="1" stop-color="#3c4552"/></linearGradient></defs><circle cx="28" cy="28" r="28" fill="url(#avg)"/><circle cx="28" cy="22" r="9" fill="#d3a98a"/><path d="M8 56c2-14 10-19 20-19s18 5 20 19z" fill="#8ab0c9"/></svg>'); S(av, { left: '24px', top: '93px', borderRadius: '50%', border: '2px solid #cfcfd3', overflow: 'hidden', width: '60px', height: '60px' })
+T(CONFIG.name, { left: '94px', top: '96px', fontSize: '17px', fontWeight: 600 })
+T(CONFIG.role, { left: '94px', top: '118px', fontSize: '14.5px', color: '#737378' })
+T(CONFIG.id, { left: '94px', top: '139px', fontSize: '12.5px', color: '#737378' })
+CONFIG.stats.forEach(([l, v], i) => { const s = el('div', 'stat', card, `<div class="l">${l}</div><div class="v">${v}</div>`); S(s, { left: px(24 + (i % 2) * 176), top: px(172 + Math.floor(i / 2) * 75) }) })
+const st = el('div', 'abs', card, `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12cfb3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><span>${CONFIG.status}</span>`); S(st, { left: '24px', top: '329px', width: '336px', height: '45px', borderRadius: '10px', background: '#f0fdfa', border: '1px solid #a9f1e4', display: 'flex', alignItems: 'center', gap: '9px', padding: '0 14px', fontSize: '14.5px', fontWeight: 500, color: '#10cdb0' })
+const bt = el('div', 'abs', card, `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>${CONFIG.button}</span>`); S(bt, { left: '24px', top: '395px', width: '336px', height: '39px', borderRadius: '9px', background: '#fff', border: '1px solid #e4e4e7', boxShadow: '0 2px 5px rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px', fontSize: '14.5px', fontWeight: 500 })
+const ring = el('div', 'ring', card)
+ring.style.padding = CONFIG.borderWidth + 'px'
+ring.style.backgroundImage = `linear-gradient(180deg, ${CONFIG.band.map(([c, p]) => `${c} ${p}%`).join(',')})`
+ring.style.backgroundRepeat = 'no-repeat'
+const total = 461 + 2
+
+function render(t) {
+  // the band travels from above the card to below it, 'bandHeight' of the card tall
+  const bh = total * CONFIG.bandHeight
+  const y = lerp(-bh, total, ((t / CONFIG.period) % 1))
+  ring.style.backgroundSize = `100% ${bh}px`
+  ring.style.backgroundPosition = `0 ${y}px`
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

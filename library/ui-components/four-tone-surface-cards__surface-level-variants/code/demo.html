@@ -1,0 +1,104 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#121212;color:#fff}
+.card{position:absolute;left:0;width:320px;border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h3{font-size:14px;font-weight:500;color:#fafafa;line-height:20px}
+.card .d{font-size:14px;color:#a1a1aa;line-height:20px;margin-top:2px}
+.card .b{font-size:14px;color:#fafafa;line-height:20px}
+.tok{position:absolute;font:500 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d4d4d8;background:#1f1f23;border:1px solid #3a3a40;border-radius:8px;padding:7px 10px;white-space:nowrap}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  scale: 1.35,        // size of the card column on the 1280x800 canvas
+  width: 320,         // card width in px before scaling
+  gap: 16,            // space between cards
+  stagger: .14,       // seconds between each card fading up
+  // the four surface levels: background, border, and the token name shown in the callout
+  cards: [
+    { title: 'Transparent', desc: 'Minimal prominence with transparent background', body: 'Use for less important content or nested cards', bg: 'transparent', border: 'transparent', token: 'bg-transparent' },
+    { title: 'Default', desc: 'Standard card appearance (bg-surface)', body: 'The default card variant for most use cases', bg: '#18181a', border: 'rgba(255,255,255,.07)', token: 'bg-surface  #18181a' },
+    { title: 'Secondary', desc: 'Medium prominence (bg-surface-secondary)', body: 'Use to draw moderate attention', bg: '#272729', border: 'rgba(255,255,255,.07)', token: 'bg-surface-secondary  #272729' },
+    { title: 'Tertiary', desc: 'Higher prominence (bg-surface-tertiary)', body: 'Use for primary or featured content', bg: '#3f3f47', border: 'rgba(255,255,255,.08)', token: 'bg-surface-tertiary  #3f3f47' },
+  ],
+}
+const DUR = 7
+window.DUR = DUR
+const col = el('div', 'abs', root); S(col, { width: CONFIG.width + 'px', transform: `scale(${CONFIG.scale})`, transformOrigin: '0 0' })
+const cards = CONFIG.cards.map((c) => { const e = el('div', 'card', col, `<div><h3>${c.title}</h3><div class="d">${c.desc}</div></div><div class="b">${c.body}</div>`); S(e, { background: c.bg, boxShadow: c.bg === 'transparent' ? 'none' : `inset 0 0 0 1px ${c.border}, 0 8px 24px rgba(0,0,0,.35)` }); const tok = el('div', 'tok', root, c.token); return { c, e, tok } })
+// stack the cards with their real heights
+let yy = 0; cards.forEach((k) => { k.y = yy; yy += k.e.offsetHeight + CONFIG.gap })
+const totalH = (yy - CONFIG.gap) * CONFIG.scale
+const x0 = 640 - CONFIG.width * CONFIG.scale / 2 - 120, y0 = 400 - totalH / 2
+S(col, { left: px(x0), top: px(y0) })
+cards.forEach((k) => { S(k.e, { top: px(k.y) }); S(k.tok, { left: px(x0 + CONFIG.width * CONFIG.scale + 28), top: px(y0 + (k.y + k.e.offsetHeight / 2) * CONFIG.scale - 13) }) })
+function render(t) {
+  cards.forEach((k, i) => {
+    const a = eo(seg(t, .2 + i * CONFIG.stagger, .2 + i * CONFIG.stagger + .5))
+    // after the entrance, the callout for each card lights up in turn while the cursor points at it
+    const turn = 2 + i * 1.1, on = seg(t, turn, turn + .25) * (1 - seg(t, turn + 1, turn + 1.2))
+    S(k.e, { opacity: a, transform: `translateY(${(1 - a) * 16}px) scale(${1 + .015 * on})` })
+    S(k.tok, { opacity: on, transform: `translateX(${(1 - on) * -10}px)` })
+  })
+  const tgt = cards.map((k, i) => [2 + i * 1.1, x0 + (CONFIG.width * .8) * CONFIG.scale, y0 + (k.y + k.e.offsetHeight / 2) * CONFIG.scale])
+  const P = [[0, 1100, 700, 0], [1.6, 1100, 700, 0]]
+  tgt.forEach((p, i) => { P.push([p[0] - .1, p[1], p[2], 0]); P.push([p[0] + 1, p[1], p[2], 0]) })
+  P.push([6.9, 1100, 700, 0])
+  putCursor(cursorAt(t, P))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

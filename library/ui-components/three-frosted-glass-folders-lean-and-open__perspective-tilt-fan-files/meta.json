@@ -1,0 +1,36 @@
+{
+  "slug": "three-frosted-glass-folders-lean-and-open__perspective-tilt-fan-files",
+  "visual_name": "Three frosted glass folders that lean and open",
+  "code_name": "Perspective tilt, fanned files",
+  "category": "ui-components",
+  "summary": "Three folders on a dotted desk (milk glass over striped art, plain milk glass, smoked glass over red ink); hovering leans the glass toward you and clicking fans a stack of file cards up out of it.",
+  "tags": [
+    "card",
+    "hover",
+    "light",
+    "cursor",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "css-3d"
+  ],
+  "duration_sec": 7.8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "glass folder",
+    "glass folders",
+    "frosted folder",
+    "folder cards",
+    "file folder",
+    "glassmorphism folder"
+  ],
+  "credit": {
+    "idea": "Glassmorphism Folder Cards",
+    "author": "kedhareswer",
+    "url": "https://21st.dev/@kedhareswer/components/glass-folder-cards",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

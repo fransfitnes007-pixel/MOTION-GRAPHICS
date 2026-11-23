@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>beat-grid-kinetic-type__words-on-eighth-notes</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4
+window.DUR = DUR
+const BPM = 120, EIGHTH = 60 / BPM / 2, QUARTER = 60 / BPM       // 0.25 s and 0.5 s
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const INK = '#0b0b10', PAPER = '#f2f2f4', ACC = '#ff4b2b'
+const WORDS = ['MAKE', 'EVERY', 'SINGLE', 'FRAME', 'LAND', 'ON', 'THE', 'BEAT']   // one word per eighth note, starting at 0.25 s
+const T_OUT = 3.5                                                 // words leave on the last two beats so the loop restarts clean
+// 12-column grid placement: [first column, columns spanned, row]. Rows are 3 (wide) or 8 (tall).
+const WIDE = [[1, 2, 0], [3, 10, 0], [1, 4, 1], [5, 8, 1], [1, 4, 2], [5, 2, 2], [7, 2, 2], [9, 4, 2]]
+const TALLP = [[1, 6, 0], [4, 9, 1], [1, 12, 2], [2, 9, 3], [6, 7, 4], [1, 3, 5], [4, 3, 5], [3, 10, 6]]
+const PLACE = TALL ? TALLP : WIDE
+const RH = TALL ? [.17, .19, .15, .14, .13, .08, .14] : [.42, .27, .31]       // row heights as fractions of the grid height
+
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const ctx = cvs.getContext('2d')
+const MX = 90 * K, MT = TALL ? 150 : 110, MB = TALL ? 190 : 150, GUT = 18 * K
+const COLW = (W - 2 * MX - 11 * GUT) / 12, GH = H - MT - MB
+const RTOP = RH.map((_, r) => MT + GH * RH.slice(0, r).reduce((a, b) => a + b, 0))
+ctx.font = `900 100px ${FONT}`
+const unit = WORDS.map(w => ctx.measureText(w).width / 100)
+// each word is sized to fill its column span exactly (never taller than its row)
+const BOX = PLACE.map(([c, s, r], i) => {
+  const x = MX + (c - 1) * (COLW + GUT), w = s * COLW + (s - 1) * GUT
+  let fs = w / unit[i]; const ROWH = GH * RH[r], cap = fs * .72, maxCap = ROWH * .84
+  if (cap > maxCap) fs *= maxCap / cap
+  return { x, w, fs, cy: RTOP[r] + ROWH / 2, cx: x + w / 2 }
+})
+
+function render(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1
+  ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H)
+
+  // bass punch: every quarter note, stronger on the bar downbeat (every 2 s)
+  const q = Math.floor(t / QUARTER + 1e-9), uq = t - q * QUARTER, down = q % 4 === 0
+  const punch = (down ? .075 : .032) * Math.exp(-uq * 11) * (1 + .0)
+  const pk = 1 + punch
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(pk, pk); ctx.translate(-CX, -CY)
+
+  // faint 12-column guides, brighter on the beat
+  const gl = .022 + .05 * Math.exp(-uq * 9)
+  ctx.fillStyle = `rgba(242,242,244,${gl})`
+  for (let c = 0; c < 12; c++) ctx.fillRect(MX + c * (COLW + GUT), MT * .6, COLW, H - MT * .6 - MB * .55)
+
+  // words
+  WORDS.forEach((w, i) => {
+    const t0 = .25 + i * EIGHTH, u = t - t0
+    const leave = ei(seg(t, T_OUT + (i % 4) * .06, T_OUT + (i % 4) * .06 + .22))
+    if (u < 0 || leave >= 1) return
+    const b = BOX[i], s = spring(clamp(u / .3), 6.5, 10), sc = lerp(1.7, 1, s)
+    const a = clamp(u / .05) * (1 - leave)
+    const flash = Math.exp(-u * 7)                                // arrival colour: accent that cools to paper
+    ctx.save(); ctx.globalAlpha = a
+    ctx.translate(b.cx, b.cy); ctx.scale(sc * (1 - .1 * leave), sc * (1 - .1 * leave)); ctx.translate(0, (1 - eo(clamp(u / .22))) * -b.fs * .12 + leave * b.fs * .2)
+    ctx.font = `900 ${b.fs}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+    const accent = i === WORDS.length - 1
+    ctx.fillStyle = accent ? ACC : PAPER; ctx.fillText(w, 0, b.fs * .36)
+    if (!accent && flash > .03) { ctx.globalAlpha = a * flash; ctx.fillStyle = ACC; ctx.fillText(w, 0, b.fs * .36) }
+    ctx.restore()
+  })
+  ctx.restore()
+
+  // beat strip: eight ticks, the current eighth lit
+  const ty = H - (TALL ? 90 : 70), sw = 36 * K, sg = 14 * K, tx0 = CX - (8 * sw + 7 * sg) / 2
+  const e = Math.floor(t / EIGHTH + 1e-9), ue = t - e * EIGHTH
+  for (let j = 0; j < 8; j++) {
+    const on = (e % 8) === j, h = on ? 14 * K * (1 + .6 * Math.exp(-ue * 10)) : 6 * K
+    ctx.fillStyle = on ? ACC : 'rgba(242,242,244,.28)'
+    ctx.fillRect(tx0 + j * (sw + sg), ty - h / 2, sw, h)
+  }
+  ctx.fillStyle = 'rgba(242,242,244,.55)'; ctx.font = `600 ${20 * K}px ${FONT}`; ctx.textAlign = 'center'
+  if ('letterSpacing' in ctx) ctx.letterSpacing = (.25 * 20 * K) + 'px'
+  ctx.fillText('120 BPM   4/4', CX, ty + 46 * K)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

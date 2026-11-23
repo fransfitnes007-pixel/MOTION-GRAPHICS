@@ -1,0 +1,29 @@
+{
+  "slug": "photo-to-illustration-flip__3d-flip-style-swap",
+  "visual_name": "Photo to illustration flip",
+  "code_name": "3D flip style swap",
+  "category": "ui-components",
+  "summary": "A card with a CSS-drawn photo scene (sky, hills, sun) flips in 3D with an overshoot to reveal the same scene as a flat line illustration; a tap flips it back.",
+  "aliases": [
+    "flip card",
+    "style swap",
+    "photo to cartoon",
+    "before after flip",
+    "card turn over"
+  ],
+  "tags": [
+    "card",
+    "3d",
+    "cursor",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "spring"
+  ],
+  "duration_sec": 6.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

@@ -1,0 +1,27 @@
+{
+  "slug": "beat-grid-kinetic-type__words-on-eighth-notes",
+  "visual_name": "Beat grid kinetic type",
+  "code_name": "Words on eighth notes",
+  "category": "motion-graphics",
+  "summary": "A sentence builds one word per eighth note at 120 BPM, each word at its own scale and position on a 12-column grid, with a bass-hit scale punch on every beat.",
+  "aliases": [
+    "words on the beat",
+    "kinetic type grid",
+    "beat synced text",
+    "one word per beat",
+    "bass hit text"
+  ],
+  "tags": [
+    "kinetic-type",
+    "hero",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d"
+  ],
+  "duration_sec": 4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

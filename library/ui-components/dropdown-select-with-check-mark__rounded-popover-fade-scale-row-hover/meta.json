@@ -1,0 +1,37 @@
+{
+  "slug": "dropdown-select-with-check-mark__rounded-popover-fade-scale-row-hover",
+  "visual_name": "Dropdown select with a check mark",
+  "code_name": "Rounded popover, fade and scale open, row hover",
+  "category": "ui-components",
+  "summary": "A labelled pill-shaped select that opens a white rounded list of six states under it, highlights the row under the pointer, and shows a check mark next to the chosen one.",
+  "tags": [
+    "form",
+    "hover",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "react-aria",
+    "heroui",
+    "tailwind"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "select",
+    "dropdown",
+    "heroui select",
+    "demo user dropdown",
+    "checkout page info",
+    "state select"
+  ],
+  "credit": {
+    "idea": "HeroUI Select",
+    "author": "hero_ui",
+    "url": "https://21st.dev/@hero_ui/components/heroui-select",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

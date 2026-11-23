@@ -1,0 +1,146 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Glass folder cards demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#fdfdfd;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.fold{position:absolute;width:310px;height:250px;transform-style:flat}
+.lay{position:absolute;left:0;top:0;width:310px;height:250px}
+.file{position:absolute;left:20px;width:270px;height:112px;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 8px 18px -6px rgba(0,0,0,.3),0 0 0 1px rgba(0,0,0,.05);font-family:-apple-system,system-ui,sans-serif}
+.mono{font-family:ui-monospace,Menlo,monospace}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  folders: [
+    { label: 'My Files', meta: '3 items', art: 'aurora', tone: 'light', action: 'plus', labelAt: 'bottom-left',
+      files: [{ name: 'Cover - final', meta: 'PNG - 4.8 MB', art: 'ember' }, { name: 'Moodboard', meta: '24 images', art: 'aurora' }, { name: 'Brief.pdf', meta: 'PDF - 1.2 MB' }] },
+    { label: 'Archives', meta: '4 items', art: 'none', tone: 'light', action: 'more', labelAt: 'top-left',
+      files: [{ name: 'Lookbook 2024', meta: '38 images', art: 'dusk' }, { name: 'Invoices', meta: '12 PDFs' }, { name: 'Shoot - Lisbon', meta: 'RAW - 2.1 GB', art: 'ember' }, { name: 'Contract.pdf', meta: 'PDF - 320 KB' }] },
+    { label: 'My Files', meta: 'Wed 19 Aug', art: 'ember', tone: 'dark', action: 'none', labelAt: 'top-right',
+      files: [{ name: 'Stills', meta: '64 images', art: 'verdant' }, { name: 'Edit notes', meta: 'TXT - 4 KB', dark: true }, { name: 'Grade v3', meta: 'DRX - 18 MB', art: 'aurora' }] },
+  ],
+  x: [128, 488, 851], y: 249,           // top-left of each folder on the 1280 x 766 canvas
+  appearDelay: [0, .14, .28],           // seconds between folders dropping in
+  // scripted pointer: which folder is hovered and opened, [hoverFrom, openFrom, openTo, hoverTo]
+  script: [[5.3, 5.5, 7.0, 7.1], [3.9, 4.1, 5.2, 5.4], [2.5, 3.0, 4.0, 4.1]],
+  lean: 11,                             // degrees the glass tips toward you on hover
+  hint: 'HOVER TO LEAN  -  CLICK TO OPEN  -  + TO ADD',
+  paper: '#fdfdfd',
+}
+const DUR = 7.8
+window.DUR = DUR
+const DW = 1280, DH = 766, U = Math.min(W / DW, H / DH)
+stage.style.background = CONFIG.paper
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, backgroundImage: 'radial-gradient(rgba(0,0,0,.14) 1.1px,transparent 1.4px)', backgroundSize: '22px 22px' })
+const ART = {
+  aurora: 'linear-gradient(118deg,#c93a3f 0%,#e7d9d4 16%,#2e4a94 30%,#d33d44 46%,#f1ecea 58%,#3a5bb0 72%,#a22a38 88%,#e9dcd7 100%)',
+  ember: 'radial-gradient(ellipse at 22% 38%,#e94a2a 0 22%,transparent 46%),radial-gradient(ellipse at 70% 28%,#cf2d22 0 20%,transparent 44%),radial-gradient(ellipse at 48% 82%,#e2562e 0 18%,transparent 42%),radial-gradient(ellipse at 90% 80%,#2f6f78 0 18%,transparent 40%),linear-gradient(135deg,#1c3b45,#7a2a22)',
+  dusk: 'linear-gradient(160deg,#241a3a,#7b3a64 55%,#d98a72)',
+  verdant: 'radial-gradient(ellipse at 30% 30%,#d9c36a 0 15%,transparent 40%),radial-gradient(ellipse at 70% 70%,#e0b946 0 12%,transparent 36%),linear-gradient(140deg,#0e3b28,#2f6b3f)',
+}
+const BACK = 'M0,52 Q0,32 22,32 L128,32 C150,32 150,0 178,0 L288,0 Q310,0 310,22 L310,228 Q310,250 288,250 L22,250 Q0,250 0,228 Z'
+const FRONT = 'M0,89 Q0,67 22,67 L108,67 C130,67 134,96 158,96 L288,96 Q310,96 310,118 L310,228 Q310,250 288,250 L22,250 Q0,250 0,228 Z'
+const mkFile = (f, w) => {
+  const d = el('div', 'file'); const bg = f.art ? ART[f.art] : f.dark ? '#25252a' : '#fff'
+  const ink = f.art || f.dark ? '#fff' : '#18181b', sub = f.art || f.dark ? 'rgba(255,255,255,.7)' : '#8a8a92'
+  d.style.background = bg
+  d.innerHTML = `<div style="position:absolute;left:16px;top:12px;font:600 15px/1 -apple-system,system-ui,sans-serif;color:${ink}">${f.name}</div><div class="mono" style="position:absolute;right:16px;top:14px;font-size:10.5px;color:${sub}">${f.meta}</div>` + (f.art || f.dark ? '' : `<div style="position:absolute;left:16px;right:16px;top:44px;height:7px;border-radius:4px;background:#ececef"></div><div style="position:absolute;left:16px;width:150px;top:60px;height:7px;border-radius:4px;background:#f0f0f3"></div>`)
+  return d
+}
+const F = CONFIG.folders.map((fc, i) => {
+  const f = el('div', 'fold', root); S(f, { left: CONFIG.x[i] + 'px', top: CONFIG.y + 'px' })
+  const shadow = el('div', 'abs', f); S(shadow, { left: '16px', top: '208px', width: '278px', height: '52px', borderRadius: '50%', background: 'rgba(0,0,0,.26)', filter: 'blur(18px)' })
+  const dark = fc.tone === 'dark'
+  const back = el('div', 'lay', f); S(back, { clipPath: `path('${BACK}')`, background: fc.art === 'none' ? 'linear-gradient(180deg,#f2f2f4,#e4e4e8)' : ART[fc.art] })
+  if (fc.art !== 'none') S(back, { backgroundSize: '140% 140%' })
+  if (fc.art === 'none') { const rim = el('div', 'lay', f); S(rim, { background: 'transparent' }) }
+  const files = fc.files.map((fl, k) => { const d = mkFile(fl); f.appendChild(d); S(d, { top: '96px', zIndex: 2 }); return d })
+  const front = el('div', 'lay', f); S(front, { clipPath: `path('${FRONT}')`, zIndex: 5, background: dark ? 'linear-gradient(180deg,rgba(60,24,26,.75),rgba(14,10,12,.96) 70%)' : 'linear-gradient(180deg,rgba(255,255,255,.34),rgba(250,250,252,.93) 62%,#fff)', backdropFilter: 'blur(16px) saturate(1.2)' })
+  const rim = el('div', 'lay', f); rim.innerHTML = `<svg width="310" height="250" style="position:absolute;left:0;top:0"><path d="${FRONT}" fill="none" stroke="${dark ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.9)'}" stroke-width="1.5"/></svg>`; S(rim, { zIndex: 6 })
+  // label
+  const lab = el('div', 'abs', f); const tx = dark ? '#fff' : '#111'
+  lab.innerHTML = `<div style="font:600 21px/1.1 -apple-system,system-ui,sans-serif;color:${tx}">${fc.label}</div><div class="mono" style="margin-top:6px;font-size:12.5px;color:${dark ? 'rgba(255,255,255,.62)' : '#85858d'}">${fc.meta}</div>`
+  const pos = fc.labelAt === 'bottom-left' ? { left: '20px', top: '190px' } : fc.labelAt === 'top-left' ? { left: '26px', top: '110px' } : { right: '24px', top: '130px', textAlign: 'right' }
+  S(lab, Object.assign({ zIndex: 7 }, pos))
+  if (fc.action !== 'none') {
+    const b = el('div', 'abs', f); S(b, { left: '236px', top: '176px', width: '54px', height: '54px', borderRadius: '17px', zIndex: 7, background: fc.action === 'plus' ? 'linear-gradient(180deg,#2a2a2d,#050506)' : 'linear-gradient(180deg,#fff,#ececef)', boxShadow: fc.action === 'plus' ? '0 8px 14px -4px rgba(0,0,0,.45)' : '0 6px 12px -4px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.05)' })
+    b.innerHTML = fc.action === 'plus' ? `<svg width="54" height="54"><path d="M27 17v20M17 27h20" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>` : `<svg width="54" height="54"><g fill="none" stroke="#222" stroke-width="2.2"><circle cx="17" cy="27" r="4.4"/><circle cx="27" cy="27" r="4.4"/><circle cx="37" cy="27" r="4.4"/></g></svg>`
+  }
+  return { f, files, front, rim, lab, back, shadow }
+})
+const hint = el('div', 'abs mono', root, CONFIG.hint); S(hint, { left: 0, width: DW + 'px', textAlign: 'center', top: '553px', fontSize: '12px', letterSpacing: '.18em', color: '#6b6b72', whiteSpace: 'pre' })
+const cur = el('div', 'abs', root, '<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7 17.5 L10.5 25 L14 23.5 L10.5 16.5 L17 16.5 Z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'); S(cur, { zIndex: 50 })
+const ctr = (i) => [CONFIG.x[i] + 190, CONFIG.y + 150]
+const PATH = [[0, 1100, 640], [2.0, 1100, 640], [2.7, ...ctr(2)], [4.0, ...ctr(2)], [4.2, ...ctr(1)], [5.2, ...ctr(1)], [5.5, ...ctr(0)], [7.1, ...ctr(0)], [7.8, 1100, 640]]
+const along = (pts, t) => {
+  if (t <= pts[0][0]) return [pts[0][1], pts[0][2]]
+  for (let i = 0; i < pts.length - 1; i++) if (t < pts[i + 1][0]) { const u = eio(seg(t, pts[i][0], pts[i + 1][0])); return [lerp(pts[i][1], pts[i + 1][1], u), lerp(pts[i][2], pts[i + 1][2], u)] }
+  const l = pts[pts.length - 1]; return [l[1], l[2]]
+}
+const bump = (t, a, b, f = .35) => eo(seg(t, a, a + f)) * (1 - eo(seg(t, b, b + f)))
+
+function render(t) {
+  F.forEach((o, i) => {
+    const [h0, o0, o1, h1] = CONFIG.script[i]
+    const ap = CONFIG.appearDelay[i]
+    const a = spring(seg(t, ap, ap + .9), 6, 8)           // drop-in
+    const intro = 1 - eo(seg(t, ap + .2, ap + .95))       // files start out and tuck away
+    const hov = bump(t, h0, h1, .3)
+    const op = Math.max(bump(t, o0, o1, .5), intro)
+    S(o.f, { opacity: clamp(seg(t, ap, ap + .35)), transform: `translateY(${(1 - a) * 26}px) scale(${.96 + .04 * a})` })
+    const lean = hov * CONFIG.lean + op * 5
+    S(o.front, { transformOrigin: '50% 100%', transform: `perspective(700px) rotateX(${lean}deg)` })
+    S(o.rim, { transformOrigin: '50% 100%', transform: `perspective(700px) rotateX(${lean}deg)` })
+    S(o.lab, { transform: `translateY(${-lean * .6}px)` })
+    const n = o.files.length
+    o.files.forEach((d, k) => {
+      const rank = n - 1 - k                              // last file ends nearest the front
+      const lift = hov * 22 + op * (70 + rank * 34)
+      const stagger = clamp((op * 1.25) - k * .12)
+      const rot = (k - (n - 1) / 2) * 3.2 * stagger
+      S(d, { transform: `translate(${(k - (n - 1) / 2) * 7 * stagger}px,${-lift * (op > .01 ? lerp(.55, 1, stagger) : 1)}px) rotate(${rot}deg)`, zIndex: 2 + k, opacity: 1 })
+    })
+    S(o.shadow, { opacity: .8 + .2 * op })
+  })
+  const [px, py] = along(PATH, t)
+  S(cur, { left: px + 'px', top: py + 'px', opacity: seg(t, 1.6, 2.0) * (1 - seg(t, 7.2, 7.7)) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

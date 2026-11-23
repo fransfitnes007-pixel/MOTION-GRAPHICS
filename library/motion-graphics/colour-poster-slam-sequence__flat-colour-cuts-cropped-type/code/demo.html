@@ -1,0 +1,112 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>colour-poster-slam-sequence__flat-colour-cuts-cropped-type</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3
+window.DUR = DUR
+const BEAT = .6, FLASH = 2 / 30                                   // a cut every 0.6 s; flash is 2 frames at 30 fps
+const FONT = "-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif"
+const INK = '#0b0b10', PAPER = '#f2f2f4'
+// four flat posters: colour, type colour, word, width as a multiple of the frame width, offset of the word centre (fractions of W,H), rotation, caption
+const POSTERS = [
+  { bg: '#ff4b2b', fg: INK,   word: 'MOVE', fac: 1.34, dx: -.04, dy: .00, rot: 0,   cap: '01 / Motion' },
+  { bg: PAPER,     fg: INK,   word: 'FAST', fac: 1.46, dx: .08,  dy: .20, rot: 0,   cap: '02 / Speed' },
+  { bg: '#2f5bff', fg: PAPER, word: 'BOLD', fac: 1.22, dx: .00,  dy: .02, rot: -90, cap: '03 / Weight' },
+  { bg: '#ffd23f', fg: INK,   word: 'ACME', fac: 1.38, dx: -.10, dy: -.16, rot: 0,  cap: '04 / Studio' },
+]
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const ctx = cvs.getContext('2d')
+ctx.font = `900 100px ${FONT}`
+const unit = POSTERS.map(p => ctx.measureText(p.word).width / 100)   // width of the word at 1 px, so we can size it exactly
+
+function drawPoster(p, i, u, t) {                                  // u: seconds since this poster's cut
+  ctx.fillStyle = p.bg; ctx.fillRect(0, 0, W, H)
+  // slam: word arrives 12 % too big and 9 % of the frame to the side, snaps home in 0.2 s, then drifts slowly
+  const s = eo5(seg(u, 0, .2)), drift = u / BEAT
+  const along = p.rot ? H : W
+  const fs = (p.fac * along) / unit[i]
+  const sc = lerp(1.12, 1, s) * (1 + .05 * drift)
+  const slide = (1 - s) * .09 * along * (i % 2 ? -1 : 1) + (drift - .5) * .04 * along * (i % 2 ? 1 : -1)
+  ctx.save()
+  ctx.translate(CX + p.dx * W, CY + p.dy * H); ctx.rotate(p.rot * Math.PI / 180)
+  ctx.translate(slide, 0); ctx.scale(sc, sc)
+  ctx.font = `900 ${fs}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = p.fg
+  ctx.fillText(p.word, 0, fs * .36)                                // centre the cap height on the anchor
+  ctx.restore()
+  // small caption, bottom-left, and a count, top-right
+  const m = 56 * K, cs = 24 * K, ca = eo(seg(u, .08, .26))
+  ctx.globalAlpha = ca; ctx.fillStyle = p.fg
+  ctx.font = `600 ${cs}px ${FONT}`; ctx.textBaseline = 'alphabetic'
+  if ('letterSpacing' in ctx) ctx.letterSpacing = (.2 * cs) + 'px'
+  ctx.textAlign = 'left'; ctx.fillText(p.cap.toUpperCase(), m, H - m + (1 - ca) * 14)
+  ctx.textAlign = 'right'; ctx.fillText('ACME STUDIO', W - m, m + cs)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+  ctx.globalAlpha = 1
+}
+
+function render(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1
+  const k = Math.floor(t / BEAT + 1e-9), u = t - k * BEAT          // beats 0 to 3 are posters, beat 4 is the rest beat
+  if (k < 4) drawPoster(POSTERS[k], k, u, t)
+  else {
+    ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H)
+    const a = eo(seg(u, 0, .25)) * (1 - ei(seg(u, .4, BEAT)))
+    ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.fillStyle = PAPER
+    const cs = 26 * K; ctx.font = `600 ${cs}px ${FONT}`
+    if ('letterSpacing' in ctx) ctx.letterSpacing = (.3 * cs) + 'px'
+    ctx.fillText('FOUR CUTS', CX, CY + 8 * K)
+    POSTERS.forEach((p, j) => { ctx.fillStyle = p.bg; ctx.beginPath(); ctx.arc(CX + (j - 1.5) * 44 * K, CY + 60 * K, 9 * K, 0, 7); ctx.fill() })
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+    ctx.globalAlpha = 1
+  }
+  // 2-frame white flash on every cut (including the cut back to the first poster at t = 0)
+  const fu = t - k * BEAT
+  if (fu < FLASH && k < 4) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H) }
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

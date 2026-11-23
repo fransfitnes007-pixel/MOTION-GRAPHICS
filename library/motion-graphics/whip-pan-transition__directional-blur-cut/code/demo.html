@@ -1,0 +1,103 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Whip pan directional blur cut</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;color:#fff}
+.pan{position:absolute;left:0;top:0}
+.scn{position:absolute;top:0;overflow:hidden}
+.scn .t{position:absolute;font-weight:800;letter-spacing:-.045em;line-height:1}
+.scn .s{position:absolute;font-weight:500;letter-spacing:-.01em;opacity:.7}
+.scn .n{position:absolute;font-weight:800;letter-spacing:-.06em;line-height:.8;opacity:.16}
+.scn .o{position:absolute;border-radius:50%}
+.scn .bar{position:absolute;border-radius:999px}
+.vig{position:absolute;left:0;top:0;pointer-events:none;background:radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.5) 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const pr = (t, a, d) => seg(t, a, a + d)          // progress 0..1 of a move that starts at a and lasts d seconds
+const DUR = 5.8
+window.DUR = DUR
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const svgNS = 'http://www.w3.org/2000/svg'
+const defs = document.createElementNS(svgNS, 'svg'); defs.setAttribute('width', 0); defs.setAttribute('height', 0); defs.style.position = 'absolute'
+defs.innerHTML = '<filter id="whipblur" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="gb" stdDeviation="0 0"/></filter>'
+stage.appendChild(defs)
+const gb = defs.querySelector('#gb')
+
+const pan = el('div', 'pan'); S(pan, { width: px(W * 3), height: px(H) })
+const SC = [
+  { bg: 'linear-gradient(135deg,#2b2f8f 0%,#171a52 55%,#0d0e2c 100%)', acc: '#a5b4fc', n: '01', t: 'Scene one', s: 'Your headline goes here' },
+  { bg: 'linear-gradient(135deg,#ff8a4c 0%,#d6366b 55%,#4a1459 100%)', acc: '#ffd2b0', n: '02', t: 'Scene two', s: 'Cut hidden in the blur' },
+  null]
+SC[2] = SC[0]
+const scn = SC.map((c, i) => {
+  const s = el('div', 'scn', pan); S(s, { left: px(i * W), width: px(W), height: px(H), background: c.bg })
+  const flip = i === 1
+  const n = el('div', 'n', s, c.n); S(n, { fontSize: px(TALL ? 760 : 700), left: px(TALL ? 40 : (flip ? W * .46 : W * .05)), top: px(TALL ? H * .08 : H * .1), color: '#fff' })
+  const orbs = [[.78, .3, 420, .22], [.62, .72, 300, .16], [.9, .85, 220, .2]]
+  orbs.forEach((o, j) => { const d = el('div', 'o', s); const r = o[2] * (TALL ? .7 : 1); S(d, { width: px(r), height: px(r), left: px(W * (flip ? 1 - o[0] : o[0]) - r / 2), top: px(H * (TALL ? o[1] * .9 : o[1]) - r / 2), background: c.acc, opacity: o[3] }); d._b = [W * (flip ? 1 - o[0] : o[0]) - r / 2, H * (TALL ? o[1] * .9 : o[1]) - r / 2, j] })
+  const t = el('div', 't', s, c.t); S(t, { fontSize: px(TALL ? 150 : 190), left: px(TALL ? 70 : (flip ? W - 70 - 1000 : 110)), width: TALL ? 'auto' : '1000px', textAlign: !TALL && flip ? 'right' : 'left', top: px(TALL ? H * .58 : H * .4) })
+  const su = el('div', 's', s, c.s); S(su, { fontSize: px(TALL ? 46 : 44), left: px(TALL ? 74 : (flip ? W - 74 - 1000 : 114)), width: TALL ? 'auto' : '1000px', textAlign: !TALL && flip ? 'right' : 'left', top: px(TALL ? H * .58 + 190 : H * .4 + 230) })
+  for (let b = 0; b < 3; b++) { const x = el('div', 'bar', s); S(x, { height: '14px', width: px((TALL ? 380 : 460) - b * 90), left: px(TALL ? 74 : (flip ? W - 74 - ((TALL ? 380 : 460) - b * 90) : 114)), top: px((TALL ? H * .58 + 290 : H * .4 + 330) + b * 34), background: c.acc, opacity: .5 - b * .12 }) }
+  s._orbs = [...s.querySelectorAll('.o')]
+  return s
+})
+const vig = el('div', 'vig'); S(vig, { width: px(W), height: px(H) })
+
+const WH1 = [1.8, .72], WH2 = [4.4, .72]                     // start and length of each whip
+function camX(t) { // camera position in pixels along the strip: 0 = scene one, W = scene two, 2W = scene one again
+  return W * eio5(seg(t, WH1[0], WH1[0] + WH1[1])) + W * eio5(seg(t, WH2[0], WH2[0] + WH2[1]))
+}
+function render(t) {
+  const x = camX(t), v = Math.abs(camX(t + .004) - camX(t - .004)) / .008 / W   // screens per second
+  const sp = clamp(v / 6)                                                      // 0..1 relative speed
+  const bl = 120 * K * Math.pow(sp, 1.1)
+  gb.setAttribute('stdDeviation', bl.toFixed(2) + ' 0')
+  pan.style.filter = bl > .4 ? 'url(#whipblur)' : 'none'
+  pan.style.transform = 'translateX(' + (-x).toFixed(2) + 'px) scale(' + (1 + .04 * sp) + ')'
+  pan.style.transformOrigin = (x + CX) + 'px 50%'
+  scn.forEach((s, i) => { vis(s, s._v = (i * W < x + W && i * W + W > x)) })
+  // slow periodic drift so the holds are alive and the loop still closes
+  const ph = 2 * Math.PI * t / DUR
+  scn.forEach(s => s._orbs.forEach((o, j) => { o.style.transform = 'translate(' + (Math.sin(ph + j * 2) * 24).toFixed(1) + 'px,' + (Math.cos(ph + j * 1.3) * 18).toFixed(1) + 'px)' }))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

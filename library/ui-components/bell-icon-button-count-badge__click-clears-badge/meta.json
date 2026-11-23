@@ -1,0 +1,39 @@
+{
+  "slug": "bell-icon-button-count-badge__click-clears-badge",
+  "visual_name": "Bell icon button with count badge",
+  "code_name": "Click clears badge",
+  "category": "ui-components",
+  "summary": "A square white outline button with a bell icon and a small black circular count badge on its top-right corner that disappears when you click.",
+  "tags": [
+    "hover",
+    "light",
+    "cursor",
+    "nav",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "shadcn",
+    "lucide"
+  ],
+  "duration_sec": 6.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "notification bell",
+    "bell button",
+    "badge button",
+    "notification badge",
+    "notification inside of dashboards",
+    "dashboard notification",
+    "count badge"
+  ],
+  "credit": {
+    "idea": "Button",
+    "author": "originui",
+    "url": "https://21st.dev/@originui/components/button/button-with-badge",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

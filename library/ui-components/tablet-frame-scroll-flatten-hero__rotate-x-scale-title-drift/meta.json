@@ -1,0 +1,38 @@
+{
+  "slug": "tablet-frame-scroll-flatten-hero__rotate-x-scale-title-drift",
+  "visual_name": "Tablet frame scroll flatten hero",
+  "code_name": "Rotate X scale title drift",
+  "category": "ui-components",
+  "summary": "A big bold headline above a dark tablet frame showing an app; as you scroll, the tablet rises from tilted back to flat and fills the screen while the headline drifts up and out.",
+  "tags": [
+    "21st",
+    "3d",
+    "card",
+    "hero",
+    "light",
+    "scroll"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "nextjs"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "container scroll animation",
+    "scroll animation",
+    "scroll animations",
+    "3d scroll hero",
+    "tablet scroll",
+    "scroll hero"
+  ],
+  "credit": {
+    "idea": "Container Scroll Animation",
+    "author": "manuarora700",
+    "url": "https://21st.dev/@manuarora700/components/container-scroll-animation",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>starc007-loader</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fdfdfd;color:#111}
+.lab{position:absolute;width:120px;text-align:center;font-size:12.5px;color:#737373}
+.cellsv{position:absolute;overflow:visible}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 1.5,                         // the page is shown 1.5x
+  size: 40,                          // loader box in px, same as the usage example's size={40}
+  ink: '#111', soft: '#d6d6d6', mid: '#8c8c8c',   // main colour, faint track colour, mid grey
+  speed: 1,                          // 1 = as recorded; 2 = twice as fast (loops stay whole numbers of cycles)
+  pitchX: 134, pitchY: 116,          // grid spacing
+  cols: 5,
+  labelColor: '#737373',
+}
+const DUR = 6
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+const ns = 'http://www.w3.org/2000/svg'
+const defs = document.createElementNS(ns, 'svg'); defs.setAttribute('width', 0); defs.setAttribute('height', 0); defs.style.position = 'absolute'
+defs.innerHTML = '<defs><filter id="goo"><feGaussianBlur stdDeviation="2.2"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></defs>'
+root.appendChild(defs)
+const TAU = Math.PI * 2
+const hash = (n) => { n = Math.sin(n * 127.1 + 311.7) * 43758.5453; return n - Math.floor(n) }
+const { ink, soft, mid } = CONFIG
+const ph = (t, p, o = 0) => (((t / p + o) % 1) + 1) % 1                // 0..1 phase
+
+const LOADERS = [
+  ['Spinner', (t) => { const a = ph(t, 1) * 360; return `<circle r="16" fill="none" stroke="${soft}" stroke-width="3"/><circle r="16" fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="25 75" transform="rotate(${a})"/>` }],
+  ['Dots', (t) => [0, 1, 2].map((i) => { const p = ph(t, 1.2, -i * .16), s = Math.sin(p * TAU); const k = .5 + .5 * s; return `<circle cx="${(i - 1) * 11}" cy="${-8 * s}" r="${3 + 1.1 * k}" fill="${ink}" opacity="${.42 + .58 * k}"/>` }).join('')],
+  ['Bars', (t) => [0, 1, 2, 3].map((i) => { const k = .5 + .5 * Math.sin(ph(t, 1.2, i * .2) * TAU); const h = 7 + 25 * k; return `<rect x="${-14 + i * 8}" y="${16 - h}" width="5.500" height="${h}" rx="1.500" fill="${ink}"/>` }).join('')],
+  ['Dot Matrix', (t) => { let o = ''; for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { const v = Math.max(0, Math.cos((ph(t, 1.5) - (r * 3 + c) / 9) * TAU)); o += `<circle cx="${(c - 1) * 10}" cy="${(r - 1) * 10}" r="${2.2 + 1.5 * v}" fill="${v > .55 ? ink : (v > .25 ? mid : soft)}"/>` } return o }],
+  ['Dither', (t) => { let o = ''; for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) { const i = r * 4 + c; const v = .5 + .5 * Math.sin(ph(t, 1.2) * TAU + hash(i) * TAU); const g = Math.round(228 - v * 190); o += `<rect x="${-16 + c * 8.500}" y="${-16 + r * 8.500}" width="7" height="7" fill="rgb(${g},${g},${g})"/>` } return o }],
+  ['Morph', (t) => {
+    const p = ph(t, 3), seg3 = Math.floor(p * 3), k = eio((p * 3) % 1)
+    const shape = (n) => Array.from({ length: 8 }, (_, i) => { const a = i / 8 * TAU - Math.PI / 4; if (n === 0) { const cx = Math.cos(a), sy = Math.sin(a), m = Math.max(Math.abs(cx), Math.abs(sy)); return [cx / m * 13, sy / m * 13] } if (n === 1) return [Math.cos(a) * 15, Math.sin(a) * 15]; const tri = [[0, -16], [14, 11], [-14, 11]], e = i / 8 * 3, j = Math.floor(e), f = e - j; const A = tri[j % 3], B = tri[(j + 1) % 3]; return [A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f] })
+    const A = shape(seg3), B = shape((seg3 + 1) % 3)
+    const pts = A.map((a, i) => (a[0] + (B[i][0] - a[0]) * k).toFixed(2) + ',' + (a[1] + (B[i][1] - a[1]) * k).toFixed(2)).join(' ')
+    return `<polygon points="${pts}" fill="${ink}" transform="rotate(${ph(t, 3) * 360})"/>` }],
+  ['Comet', (t) => { let o = ''; for (let i = 0; i < 12; i++) { const a = (ph(t, 1) - i * .018) * TAU; o += `<circle cx="${Math.cos(a) * 12}" cy="${Math.sin(a) * 12}" r="${3.6 - i * .26}" fill="${ink}" opacity="${1 - i * .08}"/>` } return `<g style="filter:blur(.35px)">${o}</g>` }],
+  ['Metaballs', (t) => { const d = 3.5 + 9 * Math.abs(Math.sin(ph(t, 1.5) * Math.PI)); return `<g filter="url(#goo)"><circle cx="${-d}" r="7.500" fill="${ink}"/><circle cx="${d}" r="7.500" fill="${ink}"/></g>` }],
+  ['Newton', (t) => { const p = ph(t, 1.5); const L = 17; const a = p < .5 ? -Math.sin(p * 2 * Math.PI) * .9 : Math.sin((p - .5) * 2 * Math.PI) * .9; return [0, 1, 2, 3, 4].map((i) => { let x = (i - 2) * 7.600, y = 0; if (i === 0 && a < 0) { x += L * Math.sin(a); y = L * (1 - Math.cos(a)) * -1 } if (i === 4 && a > 0) { x += L * Math.sin(a); y = L * (1 - Math.cos(a)) * -1 } return `<circle cx="${x}" cy="${y}" r="3.200" fill="${ink}"/>` }).join('') }],
+  ['Helix', (t) => { let o = ''; for (let r = 0; r < 10; r++) { const a = ph(t, 1.5) * TAU + r * .65; for (const sgn of [1, -1]) { const z = Math.cos(a) * sgn; o += `<circle cx="${Math.sin(a) * sgn * 7}" cy="${-17 + r * 3.8}" r="${1.1 + .9 * (z * .5 + .5)}" fill="${ink}" opacity="${.25 + .75 * (z * .5 + .5)}"/>` } } return o }],
+  ['Scramble', (t) => { const word = 'LOADING', cyc = ph(t, 3), lock = Math.floor(cyc * 1.35 * (word.length + 1)); const set = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/#%'; const s = [...word].map((ch, i) => (i < lock - 1 || cyc > .75 && cyc < .95 ? ch : set[Math.floor(hash(i * 7 + Math.floor(t * 16)) * set.length)])).join(''); return `<text y="5" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="600" letter-spacing="2.5" fill="${ink}">${s}</text>` }],
+  ['Percent', (t) => { const v = Math.floor(ph(t, 3) * 100); return `<text y="-1" x="0" text-anchor="middle" font-size="15" font-weight="500" fill="${ink}">${v}%</text><rect x="-20" y="8" width="40" height="3" rx="1.500" fill="${soft}"/><rect x="-20" y="8" width="${40 * v / 100}" height="3" rx="1.500" fill="${ink}"/>` }],
+  ['ASCII', (t) => { const F = [[1, 2, 4], [1, 4, 5], [1, 4, 5, 6], [4, 5, 6], [3, 4, 5, 6], [3, 5, 6], [2, 3, 6], [1, 2, 3, 6], [1, 2, 3], [1, 2, 3, 4]]; const on = F[Math.floor(ph(t, 1) * 10)]; return [1, 2, 3, 4, 5, 6].map((d) => { const col = d > 3 ? 1 : 0, row = (d - 1) % 3; return on.includes(d) ? `<circle cx="${col * 9 - 4.500}" cy="${row * 9 - 9}" r="2.200" fill="${ink}"/>` : '' }).join('') }],
+  ['ASCII Braille', (t) => { const order = [[0, 0], [1, 0], [1, 1], [1, 2], [0, 2], [0, 1]]; const h = Math.floor(ph(t, 1.2) * 6); return order.map(([c, r], i) => `<circle cx="${c * 10 - 5}" cy="${r * 10 - 10}" r="2.300" fill="${(i - h + 6) % 6 < 3 ? ink : soft}"/>`).join('') }],
+]
+const cells = LOADERS.map(([name, fn], i) => {
+  const r = Math.floor(i / CONFIG.cols), c = i % CONFIG.cols
+  const n = r === 2 ? 4 : CONFIG.cols
+  const cx = 640 + (c - (CONFIG.cols - 1) / 2) * CONFIG.pitchX, cy = 400 + (r - 1) * CONFIG.pitchY - 26
+  const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width', 56); svg.setAttribute('height', 56); svg.setAttribute('viewBox', '-28 -28 56 56'); svg.setAttribute('class', 'cellsv'); S(svg, { left: px(cx - 28), top: px(cy - 28) }); root.appendChild(svg)
+  const lab = el('div', 'lab', root, name); S(lab, { left: px(cx - 60), top: px(cy + 38), color: CONFIG.labelColor })
+  return { svg, fn }
+})
+function render(t) {
+  const tt = t * CONFIG.speed
+  cells.forEach(({ svg, fn }) => { svg.innerHTML = `<g transform="scale(${CONFIG.size / 40})">${fn(tt)}</g>` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

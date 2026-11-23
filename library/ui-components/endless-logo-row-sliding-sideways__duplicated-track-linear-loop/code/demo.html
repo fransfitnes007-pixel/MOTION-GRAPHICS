@@ -1,0 +1,123 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.logo{position:absolute;top:0;height:100%;display:flex;align-items:center;justify-content:center;white-space:nowrap;font-family:-apple-system,"SF Pro Display",system-ui,sans-serif;color:#111}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  bg: '#fdfdfd',
+  height: 58,                        // logo height in px (scene is 1280 x 1070)
+  gap: 28,                           // space between logos
+  speed: 100,                        // px per second
+  reverse: true,                     // true moves the row to the right, false to the left
+  y: 535,                            // vertical centre of the row
+  logos: [                           // placeholder wordmarks: swap for <img> logos
+    { t: 'Northwind', css: 'font:800 46px/1 Georgia,serif;letter-spacing:.06em;text-transform:uppercase;font-size:34px', w: 250 },
+    { t: 'Orbit', css: 'font:600 44px/1 -apple-system,system-ui;color:#2a2a2a', w: 190, icon: 'ring' },
+    { t: 'stratus', css: 'font:300 46px/1 -apple-system,system-ui;color:#666', w: 190, icon: 'dot' },
+    { t: 'KILN', css: 'font:900 50px/1 -apple-system,system-ui;color:#c81e2d;letter-spacing:.02em', w: 150, box: true },
+    { t: 'Fieldnote', css: 'font:italic 800 44px/1 -apple-system,system-ui;color:#10204a', w: 230, icon: 'wave' },
+    { t: 'MUSE', css: 'font:700 46px/1 -apple-system,system-ui;color:#111;letter-spacing:.04em', w: 170, icon: 'bar' },
+  ],
+}
+const n = CONFIG.logos.length
+const widths = CONFIG.logos.map((l) => l.w), TRACK = widths.reduce((a, b) => a + b + CONFIG.gap, 0)
+const DUR = TRACK / CONFIG.speed          // one full lap of the row, so the loop is seamless
+window.DUR = DUR
+const SCENE = { w: 1280, h: 1070, bg: CONFIG.bg, cursor: 'dark', path: [] }
+// ----- scene scaffold: a fixed-size scene scaled and centred to fit any stage size -----
+const sc = Math.min(W / SCENE.w, H / SCENE.h)
+const scene = el('div', 'abs'); S(scene, { left: '0', top: '0', width: SCENE.w + 'px', height: SCENE.h + 'px', transformOrigin: '0 0', transform: `translate(${(W - SCENE.w * sc) / 2}px,${(H - SCENE.h * sc) / 2}px) scale(${sc})` })
+stage.style.background = SCENE.bg
+// ----- icons (lucide, stroke 2) -----
+const LUC = {
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  zoomIn: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  chevDown: '<path d="m6 9 6 6 6-6"/>', sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+}
+const ic = (n, size = 16, sw = 2) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="display:block">${LUC[n]}</svg>`
+// ----- scripted cursor: PATH is [[time, x, y, pressed?], ...] in scene units -----
+const cur = el('div', 'abs', scene, `<svg width="22" height="28" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7.5 17.5 L11 25.5 L14.5 24 L11 16.2 L18 16 Z" fill="${SCENE.cursor === 'light' ? '#fff' : '#111'}" stroke="${SCENE.cursor === 'light' ? '#000' : '#fff'}" stroke-width="1.6" stroke-linejoin="round"/></svg>`)
+S(cur, { pointerEvents: 'none', zIndex: 99 })
+function curAt(t) {
+  const P = SCENE.path
+  if (t <= P[0][0]) return [P[0][1], P[0][2]]
+  for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1]; if (t <= b[0]) { const u = eio(seg(t, a[0], b[0])); return [lerp(a[1], b[1], u), lerp(a[2], b[2], u)] } }
+  const l = P[P.length - 1]; return [l[1], l[2]]
+}
+// smooth 0..1 value that is 1 between a and b, easing over f seconds each side
+const win = (t, a, b, f = .18) => eo(clamp(seg(t, a, a + f) - seg(t, b, b + f)))
+function drawCursor(t) { const [x, y] = curAt(t); S(cur, { left: px(x - 2), top: px(y - 2) }); return [x, y] }
+
+vis(cur, false)
+const ICON = {
+  ring: '<svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="17" fill="none" stroke="#e0652d" stroke-width="7"/></svg>',
+  dot: '<svg width="46" height="46" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#4a90d9"/><circle cx="24" cy="24" r="9" fill="#fff"/></svg>',
+  wave: '<svg width="46" height="46" viewBox="0 0 48 48"><path d="M4 30 C12 12 20 12 24 24 C28 36 36 36 44 18" fill="none" stroke="#10204a" stroke-width="6" stroke-linecap="round"/></svg>',
+  bar: '<svg width="40" height="46" viewBox="0 0 40 48"><rect x="4" y="22" width="9" height="22" rx="3" fill="#111"/><rect x="16" y="6" width="9" height="38" rx="3" fill="#111"/><rect x="28" y="14" width="9" height="30" rx="3" fill="#111"/></svg>',
+}
+const row = el('div', 'abs', scene); S(row, { left: '0', top: px(CONFIG.y - CONFIG.height / 2 - 14), width: '1280px', height: CONFIG.height + 28 + 'px', overflow: 'hidden' })
+// three copies of the track so the row always covers the screen while it slides
+const items = []
+for (let c = -1; c < 2; c++) { let x = c * TRACK
+  CONFIG.logos.forEach((l, i) => {
+    const e = el('div', 'logo', row, (l.icon ? `<span style="margin-right:8px;display:flex">${ICON[l.icon]}</span>` : '') + `<span>${l.t}</span>`)
+    e.firstElementChild && (l.box ? S(e.lastElementChild, { border: '5px solid #c81e2d', borderRadius: '24px', padding: '0 12px', lineHeight: '46px' }) : 0)
+    e.lastElementChild.style.cssText += ';' + l.css
+    S(e, { width: l.w + 'px' }); items.push({ e, x, base: x }); x += l.w + CONFIG.gap })
+}
+function render(t) {
+  const off = (CONFIG.reverse ? 1 : -1) * ((t * CONFIG.speed) % TRACK)
+  items.forEach((it) => { it.e.style.transform = `translateX(${(it.base + off).toFixed(2)}px)` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

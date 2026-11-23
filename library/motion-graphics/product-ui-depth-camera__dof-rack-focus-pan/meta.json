@@ -1,0 +1,30 @@
+{
+  "slug": "product-ui-depth-camera__dof-rack-focus-pan",
+  "visual_name": "Product UI depth camera",
+  "code_name": "DOF rack focus pan",
+  "category": "motion-graphics",
+  "summary": "A mock app window with three depth layers (list, floating card, toast); the camera pans and racks focus between them using blur as depth of field, then pushes into the card's primary button.",
+  "aliases": [
+    "rack focus ui",
+    "depth of field app demo",
+    "camera pan on screen",
+    "blurred background ui",
+    "push in to button"
+  ],
+  "tags": [
+    "browser-window",
+    "card",
+    "cursor",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform",
+    "css-filter"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

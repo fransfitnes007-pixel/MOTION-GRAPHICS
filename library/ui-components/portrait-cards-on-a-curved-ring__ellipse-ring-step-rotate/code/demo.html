@@ -1,0 +1,100 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Halo reel demo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#151515;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.c{position:absolute;width:97px;height:135px;overflow:hidden;box-shadow:0 8px 16px rgba(0,0,0,.35)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  label: 'Selected works',
+  mode: 'dark',                   // 'dark' (as in the video) or 'light' (as in the poster)
+  slots: 20,                      // positions on the ring
+  cardW: 97, cardH: 135,          // px on the 960 x 420 canvas
+  ringCx: -190, ringCy: 210,      // centre of the ring
+  rx: 620, ry: 135,               // ring radii, the left of the ring runs off screen
+  minScale: 0.75,                 // scale of the cards at the far side
+  hold: 0.8, step: 0.6,           // seconds resting, then moving one slot
+  direction: 1,                   // 1 or -1 for which way the ring turns
+  labelX: 722, labelSize: 33,
+}
+const N = CONFIG.slots, IMAGES = 10
+const DUR = (CONFIG.hold + CONFIG.step) * IMAGES
+window.DUR = DUR
+const dark = CONFIG.mode === 'dark'
+const DW = 960, DH = 420, U = Math.min(W / DW, H / DH)
+stage.style.background = dark ? '#151515' : '#fbfbfb'
+const root = el('div', 'abs'); S(root, { width: DW + 'px', height: DH + 'px', left: (W - DW * U) / 2 + 'px', top: (H - DH * U) / 2 + 'px', transformOrigin: '0 0', transform: `scale(${U})`, overflow: 'hidden', background: dark ? '#151515' : '#fbfbfb' })
+const ART = [
+  'linear-gradient(180deg,#f7efe2 0 52%,#f1e4d0)',                                              // 0 cream, head drawn below
+  'radial-gradient(ellipse at 50% 85%,#ff8a3a 0 18%,#c1281c 40%,transparent 70%),#0a0408',       // 1 red glow
+  'linear-gradient(190deg,#d4411c,#7a2410 70%,#2a0d08)',                                        // 2 rust
+  'linear-gradient(180deg,#2a3a8a,#6a5ab8 55%,#c58fd0)',                                        // 3 violet sky
+  'radial-gradient(circle at 50% 110%,#2a6ad8 0 35%,#0a1a3a 60%),#02040c',                      // 4 blue planet
+  'linear-gradient(120deg,#05060a 30%,#3b4bd8 55%,#e06ad8 70%,#ffb27a 85%)',                    // 5 rainbow streak
+  'radial-gradient(ellipse at 50% 90%,#ffb02a 0 6%,transparent 12%),radial-gradient(ellipse at 50% 100%,#f08a1a 0 30%,transparent 31%),#050505', // 6 orange arc
+  'linear-gradient(180deg,#e8e8ea,#9a9aa0 70%,#555)',                                           // 7 grey cloud
+  'linear-gradient(180deg,#ff6a2a,#e83a1a 60%,#7a1410)',                                        // 8 orange
+  'linear-gradient(180deg,#1a2a78,#2a60b8 50%,#e8a050 56%,#2a8a7a)',                            // 9 teal horizon
+]
+const cards = []
+for (let k = 0; k < N; k++) {
+  const i = k % IMAGES
+  const c = el('div', 'c', root); S(c, { width: CONFIG.cardW + 'px', height: CONFIG.cardH + 'px', background: ART[i], borderRadius: '2px' })
+  if (i === 0) c.innerHTML = '<div style="position:absolute;left:18px;top:34px;width:62px;height:96px;border-radius:50% 50% 0 0;background:radial-gradient(circle at 50% 30%,#e8a070 0 22%,#331a14 24%)"></div>'
+  if (i === 2 || i === 3) c.innerHTML = '<div style="position:absolute;left:32px;top:46px;width:34px;height:96px;border-radius:50% 50% 8px 8px;background:#14080a;opacity:.85"></div>'
+  cards.push(c)
+}
+const lab = el('div', 'abs', root, CONFIG.label); S(lab, { left: CONFIG.labelX - 200 + 'px', width: '400px', textAlign: 'center', top: DH / 2 - 21 + 'px', font: `500 ${CONFIG.labelSize}px/1.2 "Helvetica Neue",-apple-system,system-ui,sans-serif`, letterSpacing: '-.5px', color: dark ? '#fff' : '#0b0b0b' })
+const P = CONFIG.hold + CONFIG.step
+const pos = (t) => { const k = Math.floor(t / P), r = t - k * P; return k + eio(seg(r, CONFIG.hold, P)) }
+function render(t) {
+  const s = pos(t) * CONFIG.direction
+  for (let k = 0; k < N; k++) {
+    const th = (k - s) / N * Math.PI * 2
+    const x = CONFIG.ringCx + CONFIG.rx * Math.cos(th), y = CONFIG.ringCy + CONFIG.ry * Math.sin(th)
+    const depth = (Math.cos(th) + 1) / 2
+    const sc = lerp(CONFIG.minScale, 1, depth)
+    S(cards[k], { left: x - CONFIG.cardW / 2 + 'px', top: y - CONFIG.cardH / 2 + 'px', transform: `scale(${sc})`, zIndex: Math.round(depth * 100), display: x < -80 ? 'none' : '' })
+  }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

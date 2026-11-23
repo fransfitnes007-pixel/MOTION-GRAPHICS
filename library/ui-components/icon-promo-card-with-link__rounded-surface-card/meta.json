@@ -1,0 +1,35 @@
+{
+  "slug": "icon-promo-card-with-link__rounded-surface-card",
+  "visual_name": "Icon promo card with link",
+  "code_name": "Rounded surface card",
+  "category": "ui-components",
+  "summary": "A dark rounded card with a blue dollar-coin icon, a bold title, two lines of grey text and a blue link with an arrow.",
+  "tags": [
+    "card",
+    "dark",
+    "hover",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "heroui",
+    "tailwind"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "aliases": [
+    "card",
+    "promo card",
+    "icon card",
+    "card with link",
+    "dashboard homepage card"
+  ],
+  "credit": {
+    "idea": "Card",
+    "author": "hero_ui",
+    "url": "https://21st.dev/@hero_ui/components/heroui-card",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

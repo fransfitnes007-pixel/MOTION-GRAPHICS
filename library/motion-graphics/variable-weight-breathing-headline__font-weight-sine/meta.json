@@ -1,0 +1,27 @@
+{
+  "slug": "variable-weight-breathing-headline__font-weight-sine",
+  "visual_name": "Variable weight breathing headline",
+  "code_name": "Font weight sine",
+  "category": "motion-graphics",
+  "summary": "A large serif word whose letters swell and thin between weight 400 and 900 in a travelling sine wave, with a slider and number reading the weight.",
+  "aliases": [
+    "breathing text",
+    "font weight animation",
+    "variable font wave",
+    "pulsing bold text",
+    "weight wave"
+  ],
+  "tags": [
+    "kinetic-type",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "variable-font",
+    "sine"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build"
+}

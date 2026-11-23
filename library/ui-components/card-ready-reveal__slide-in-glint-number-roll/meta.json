@@ -1,0 +1,29 @@
+{
+  "slug": "card-ready-reveal__slide-in-glint-number-roll",
+  "visual_name": "Card ready reveal",
+  "code_name": "Slide in glint number roll",
+  "category": "ui-components",
+  "summary": "A bank-style card springs up from below and tilts in 3D as if held, a light glint sweeps across it, the last four digits roll in like an odometer, then a Ready check pill pops.",
+  "aliases": [
+    "card ready",
+    "credit card reveal",
+    "odometer digits",
+    "card glint",
+    "card activated"
+  ],
+  "tags": [
+    "card",
+    "3d",
+    "counter",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "spring"
+  ],
+  "duration_sec": 6.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

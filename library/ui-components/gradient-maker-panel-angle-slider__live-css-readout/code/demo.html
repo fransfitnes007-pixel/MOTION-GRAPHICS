@@ -1,0 +1,132 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#09090b;color:#fafafa}
+.pz{position:absolute;left:0;top:0;width:960px;height:724px;transform-origin:0 0;font-size:17px}
+.bc{position:absolute;left:0;right:0;top:30px;text-align:center;font-size:17px;color:#e5e7eb;display:flex;gap:14px;justify-content:center}
+.bc span:last-child{color:#fff}
+.panel{position:absolute;left:37px;top:131px;width:890px;height:441px;border:2px solid #27272a;border-radius:20px}
+.prev{position:absolute;left:67px;top:161px;width:381px;height:381px;border-radius:8px;overflow:hidden}
+.sw{position:absolute;width:48px;height:48px;border-radius:50%;box-shadow:0 0 0 2px #09090b,0 0 0 3px #3f3f46}
+.box{position:absolute;height:47px;border-radius:10px;border:1px solid #27272a;background:#0c0c0e;display:flex;align-items:center;padding:0 18px;font-size:17px;white-space:nowrap;overflow:hidden}
+.tg{position:absolute;width:52px;height:28px;border-radius:14px}
+.tg i{position:absolute;top:3px;width:22px;height:22px;border-radius:50%;background:#0a0a0c}
+.lbl{position:absolute;font-size:17px;color:#fafafa;white-space:nowrap}
+.trk{position:absolute;left:709px;top:282px;width:149px;height:7px;border-radius:4px;background:#27272a}
+.fill{position:absolute;left:0;top:0;height:7px;border-radius:4px;background:#fafafa}
+.thumb{position:absolute;top:-8px;width:23px;height:23px;border-radius:50%;background:#fafafa;box-shadow:inset 0 0 0 5px #fafafa,inset 0 0 0 7px #09090b;}
+.btn{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:10px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (keyframes, scripted cursor, fixed 1280x800 design space scaled to fit) ----
+const kf = (t, k, ez = eio) => { if (t <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [a, va] = k[i - 1], [b, vb] = k[i]; return va + (vb - va) * ez((t - a) / (b - a)) } return k[k.length - 1][1] }
+const CURSOR_SVG = '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 2.5l15 8-6.4 2L9.6 19.5z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+// pts: [[time, x, y, pressed?], ...]  (x, y in the 1280x800 design space); eases between points
+const cursorAt = (t, pts, ez = eio) => { let r = { x: pts[0][1], y: pts[0][2], p: 0 }; if (t <= pts[0][0]) return r
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i]; if (t <= b[0]) { const u = ez((t - a[0]) / Math.max(1e-6, b[0] - a[0])); return { x: lerp(a[1], b[1], u), y: lerp(a[2], b[2], u), p: b[3] && a[3] ? 1 : (t > b[0] - .08 && b[3]) || (a[3] && t < a[0] + .08) ? 1 : 0 } } }
+  const l = pts[pts.length - 1]; return { x: l[1], y: l[2], p: l[3] ? 1 : 0 } }
+const root = el('div', 'abs'); const U = Math.min(W / 1280, H / 800)
+S(root, { width: '1280px', height: '800px', left: px((W - 1280) / 2), top: px((H - 800) / 2), transform: `scale(${U})`, transformOrigin: '50% 50%' })
+const cur = el('div', 'abs', root, CURSOR_SVG); S(cur, { left: 0, top: 0, zIndex: 99, pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' })
+const putCursor = (c) => S(cur, { transform: `translate(${c.x - 4}px,${c.y - 2.5}px) scale(${c.p ? .88 : 1})`, opacity: c.show === 0 ? 0 : 1 })
+// ---- end shared ----
+
+const CONFIG = {
+  scale: 1.1,                       // size of the scene on the 1280x800 canvas
+  stops: [['#5ee9ff', 0], ['#0000ff', 100]],   // [colour, position %] of the two gradient stops
+  angle0: 90, angle1: 281,          // starting angle and where the slider is dragged to (degrees)
+  breadcrumb: ['Home', 'Products', 'Graaadients'],
+  footer: 'All gradients are 100% free.',
+  dragA: .9, dragB: 2.7,            // seconds the slider thumb is dragged
+  radialAt: 3.6,                    // click on the Linear / Radial toggle
+  noiseAt: 5.0,                     // click on the Noise toggle
+  resetAt: 6.4,                     // click on the reset button
+}
+const DUR = 7.4
+window.DUR = DUR
+const sc = CONFIG.scale
+const ox = (1280 - 960 * sc) / 2, oy = (800 - 724 * sc) / 2
+const pz = el('div', 'pz', root); S(pz, { left: px(ox), top: px(oy), transform: `scale(${sc})` })
+const bc = el('div', 'bc', pz, CONFIG.breadcrumb.map((t, i) => (i ? '<span style="color:#9ca3af">›</span>' : '') + `<span>${t}</span>`).join(''))
+el('div', 'panel', pz)
+const prev = el('div', 'prev', pz); const noise = el('div', '', prev); S(noise, { position: 'absolute', inset: 0, mixBlendMode: 'overlay', backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3'/><feColorMatrix values='.33 .33 .33 0 0  .33 .33 .33 0 0  .33 .33 .33 0 0  0 0 0 0 1'/></filter><rect width='220' height='220' filter='url(%23n)'/></svg>")` })
+const sw0 = el('div', 'sw', pz); S(sw0, { left: '477px', top: '179px', background: CONFIG.stops[0][0] })
+const sw1 = el('div', 'sw', pz); S(sw1, { left: '620px', top: '179px', background: CONFIG.stops[1][0] })
+el('div', 'box', pz, String(CONFIG.stops[0][1])).style.cssText += ';left:533px;top:179px;width:77px'
+el('div', 'box', pz, String(CONFIG.stops[1][1])).style.cssText += ';left:677px;top:179px;width:76px'
+const plus = el('div', 'btn box', pz, '+'); S(plus, { left: '763px', top: '179px', width: '47px', padding: 0, justifyContent: 'center', fontSize: '24px', fontWeight: 300 })
+const lin = el('div', 'lbl', pz, 'Linear'), rad = el('div', 'lbl', pz, 'Radial'), tg = el('div', 'tg', pz, '<i></i>'), angL = el('div', 'lbl', pz, 'Angle'), angV = el('div', 'lbl', pz, '90°')
+S(lin, { left: '477px', top: '275px' }); S(tg, { left: '535px', top: '271px' }); S(rad, { left: '596px', top: '275px' }); S(angL, { left: '655px', top: '275px' }); S(angV, { left: '868px', top: '275px' })
+const trk = el('div', 'trk', pz, '<div class="fill"></div><div class="thumb"></div>'); const fill = trk.firstChild, thumb = trk.lastChild
+const tgN = el('div', 'tg', pz, '<i></i>'); S(tgN, { left: '477px', top: '346px' }); el('div', 'lbl', pz, 'Noise').style.cssText += ';left:539px;top:350px'
+el('div', 'lbl', pz, 'CSS Code').style.cssText += ';left:477px;top:418px'
+const code = el('div', 'box', pz); S(code, { left: '565px', top: '404px', width: '275px', padding: '0 15px' })
+const copy = el('div', 'btn box', pz, '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e5e7eb" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>'); S(copy, { left: '850px', top: '404px', width: '47px', padding: 0 })
+const dl = el('div', 'btn', pz, 'Download JPG'); S(dl, { left: '477px', top: '461px', width: '153px', height: '47px', background: '#fafafa', color: '#09090b', fontSize: '17px', fontWeight: 500 })
+const rf = el('div', 'btn', pz, '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>'); S(rf, { left: '639px', top: '461px', width: '47px', height: '47px', background: '#27272a' })
+el('div', 'lbl', pz, CONFIG.footer).style.cssText += ';left:0;right:0;top:632px;text-align:center;font-weight:600;font-size:19px'
+// pointer positions in scene space (960x724)
+const toD = (x, y) => [ox + x * sc, oy + y * sc]
+const thumbX = (a) => 709 + 11 + (a / 360) * 127   // thumb centre for an angle
+const pt = (t, x, y, d = 0) => { const q = toD(x, y); return [t, q[0], q[1], d] }
+const A0 = CONFIG.angle0, A1 = CONFIG.angle1
+const P = [pt(0, 900, 20), pt(.5, 800, 120), pt(CONFIG.dragA - .15, thumbX(A0), 286), pt(CONFIG.dragA, thumbX(A0), 286, 1), pt(CONFIG.dragB, thumbX(A1), 286, 1), pt(CONFIG.dragB + .12, thumbX(A1), 286), pt(CONFIG.radialAt - .35, 561, 286), pt(CONFIG.radialAt, 561, 286, 1), pt(CONFIG.radialAt + .12, 561, 286), pt(CONFIG.noiseAt - .35, 503, 361), pt(CONFIG.noiseAt, 503, 361, 1), pt(CONFIG.noiseAt + .12, 503, 361), pt(CONFIG.resetAt - .4, 662, 485), pt(CONFIG.resetAt, 662, 485, 1), pt(CONFIG.resetAt + .12, 662, 485), pt(7.2, 900, 650), pt(7.4, 900, 650)]
+const setTg = (e, on) => { S(e, { background: on > .5 ? '#fafafa' : '#2f2f33' }); S(e.firstChild, { left: px(3 + 24 * on) }) }
+function render(t) {
+  const reset = t >= CONFIG.resetAt
+  const ang = reset ? A0 : t < CONFIG.dragA ? A0 : lerp(A0, A1, eio(seg(t, CONFIG.dragA, CONFIG.dragB)))
+  const radial = !reset && t >= CONFIG.radialAt ? 1 : 0, noiseOn = !reset && t >= CONFIG.noiseAt ? 1 : 0
+  const a = Math.round(ang)
+  const [s0, s1] = CONFIG.stops
+  const lg = `linear-gradient(${a}deg, ${s0[0]} ${s0[1]}%, ${s1[0]} ${s1[1]}%)`, rg = `radial-gradient(circle, ${s0[0]} ${s0[1]}%, ${s1[0]} ${s1[1]}%)`
+  prev.style.background = radial ? rg : lg
+  noise.style.opacity = noiseOn ? .9 : 0
+  angV.textContent = a + '°'; vis(angL, !radial); vis(angV, !radial); vis(trk, !radial)
+  const k = (a / 360); S(fill, { width: px(11 + k * 127 + 2) }); S(thumb, { left: px(k * 127) })
+  setTg(tg, radial); setTg(tgN, noiseOn)
+  code.textContent = 'background: ' + (radial ? rg : lg)
+  putCursor(cursorAt(t, P))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

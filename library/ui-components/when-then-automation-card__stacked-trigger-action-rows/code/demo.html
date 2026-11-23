@@ -1,0 +1,109 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>When-Then automation card</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff}
+.card{position:absolute;left:8px;top:8px;width:784px;height:406px;border-radius:26px;border:1.5px solid #e4e4e6;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.row{position:absolute;left:30px;width:722px;height:132px;border-radius:20px;border:2px solid #e8e8ea;background:#fff}
+.tile{position:absolute;left:20px;top:20px;width:88px;height:88px;border-radius:22px;display:grid;place-items:center}
+.lab{position:absolute;left:130px;top:22px;font-size:28px;font-weight:600;letter-spacing:.01em;line-height:40px;white-space:nowrap}
+.lab b{color:#6b6b70;font-weight:700;letter-spacing:.03em;margin-right:12px}
+.lab span{color:#0a0a0a}
+.evt{position:absolute;left:130px;top:62px;font-size:28px;color:#707076;line-height:40px;white-space:nowrap}
+.arrow{position:absolute;left:376px;top:179px;width:48px;height:48px;border-radius:50%;border:2px solid #e3e3e5;background:#f3f3f4;display:grid;place-items:center}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  triggerLabel: 'WHEN',            // small caps word on the first row
+  actionLabel: 'THEN',             // small caps word on the second row
+  trigger: { app: 'Billing', event: 'Payment received', tile: '#5433ff' },   // tile = icon tile colour
+  action: { app: 'Team chat', event: 'Send #revenue alert', tile: '#f3f3f4' },
+  rowStagger: .18,                 // seconds between the pieces appearing
+  pulseAt: 1.9,                    // when the arrow nudges to show the flow; set 99 to turn off
+}
+const DUR = 5
+window.DUR = DUR
+// ---- helpers: keyframe interpolation and a scripted cursor ----
+// kf(t, [[time, value], ...]) eases between values; kfp does the same for [time, x, y] points.
+const kf = (t, pts, ease = eio) => {
+  if (t <= pts[0][0]) return pts[0][1]
+  for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * ease((t - a[0]) / (b[0] - a[0])) }
+  return pts[pts.length - 1][1]
+}
+const kfp = (t, pts, ease = eio) => [kf(t, pts.map((p) => [p[0], p[1]]), ease), kf(t, pts.map((p) => [p[0], p[2]]), ease)]
+const CURSOR_SVG = '<svg width="22" height="26" viewBox="0 0 22 26"><path d="M3.5 2.5v17l4.6-4 3.2 7 3-1.4-3.2-6.9h6.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+const makeCursor = (parent) => { const c = el('div', 'cursor', parent, CURSOR_SVG); S(c, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none', zIndex: 99, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.35))' }); return c }
+const setCursor = (c, x, y, down = false, on = true) => S(c, { display: on ? '' : 'none', transform: `translate(${x - 3}px,${y - 2}px) scale(${down ? .86 : 1})` })
+// fit(): put a fixed-size design box in the middle of the stage, scaled to fit.
+const fitBox = (dw, dh, fill = .86) => { const k = Math.min(W / dw, H / dh) * fill; const box = el('div', 'abs'); S(box, { width: dw + 'px', height: dh + 'px', left: px(CX - dw * k / 2), top: px(CY - dh * k / 2), transformOrigin: '0 0', transform: `scale(${k})` }); return box }
+
+const box = fitBox(800, 420, .84)
+const card = el('div', 'card', box)
+const mkRow = (y, label, d) => {
+  const r = el('div', 'row', card); S(r, { top: y + 'px' })
+  const tile = el('div', 'tile', r); S(tile, { background: d.tile })
+  const l = el('div', 'lab', r, `<b>${label}</b><span>${d.app}</span>`)
+  const e = el('div', 'evt', r, d.event)
+  return { r, tile }
+}
+const r1 = mkRow(30, CONFIG.triggerLabel, CONFIG.trigger)
+const r2 = mkRow(244, CONFIG.actionLabel, CONFIG.action)
+// placeholder marks: a slanted slab, and a four-colour hash
+r1.tile.innerHTML = '<svg width="44" height="44" viewBox="0 0 44 44"><path d="M7 11 L38 5 L38 33 L7 39Z" fill="#fff"/></svg>'
+r2.tile.innerHTML = '<svg width="46" height="46" viewBox="0 0 46 46" stroke-linecap="round" stroke-width="7"><path d="M17 8v14M8 17h14" stroke="#36c5f0"/><path d="M29 8v12M29 17h-0" stroke="#2eb67d"/><path d="M38 17h-9" stroke="#2eb67d"/><path d="M29 38V24M38 29H24" stroke="#ecb22e"/><path d="M17 38V26M8 29h10" stroke="#e01e5a"/></svg>'
+const arrow = el('div', 'arrow', card, '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5b5b60" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M5 13l7 7 7-7"/></svg>')
+function render(t) {
+  const g = CONFIG.rowStagger
+  const c = eo(seg(t, 0, .5))
+  S(card, { opacity: c, transform: `translateY(${(1 - c) * 18}px)` })
+  const a = spring(seg(t, g, g + .6), 8, 10), b = spring(seg(t, g * 3.4, g * 3.4 + .6), 8, 10), ar = spring(seg(t, g * 2, g * 2 + .5), 9, 12)
+  S(r1.r, { opacity: clamp(a * 1.5), transform: `translateY(${(1 - a) * 14}px)` })
+  S(r2.r, { opacity: clamp(b * 1.5), transform: `translateY(${(1 - b) * 14}px)` })
+  const p = seg(t, CONFIG.pulseAt, CONFIG.pulseAt + 1)
+  const nudge = Math.sin(p * Math.PI) * 7
+  S(arrow, { opacity: clamp(ar * 2), transform: `scale(${.6 + .4 * ar}) translateY(${nudge}px)`, borderColor: `rgba(${lerp(227, 84, Math.sin(p * Math.PI))|0},${lerp(227, 51, Math.sin(p * Math.PI))|0},${lerp(229, 255, Math.sin(p * Math.PI))|0},1)` })
+  const flash = Math.sin(seg(t, CONFIG.pulseAt + .35, CONFIG.pulseAt + 1.3) * Math.PI)
+  S(r2.r, { borderColor: `rgb(${lerp(232, 120, flash)|0},${lerp(232, 100, flash)|0},${lerp(234, 255, flash)|0})`, boxShadow: `0 0 0 ${flash * 5}px rgba(84,51,255,${.08 * flash})` })
+  const out = 1 - seg(t, DUR - .4, DUR)
+  S(box, { opacity: out < 1 ? out : 1 })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

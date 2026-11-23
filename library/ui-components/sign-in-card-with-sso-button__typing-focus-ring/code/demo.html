@@ -1,0 +1,122 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ephraimduncan-login-08</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+.lc{position:absolute;width:354px;height:590px;border:1px solid #e4e4e7;border-radius:16px;background:#fff}
+.t{position:absolute;white-space:nowrap}
+.inp{position:absolute;left:26px;width:300px;height:38px;border:1px solid #e1e1e4;border-radius:7px;box-shadow:0 1px 2px rgba(0,0,0,.06);font-size:15px;line-height:36px;padding:0 13px;overflow:hidden;white-space:nowrap}
+.bt{position:absolute;left:26px;width:302px;height:38px;border-radius:7px;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 800)   // the board below is 1280x800 and scaled to fit any ?w=&h=
+const root = el('div', 'abs'); S(root, { left: px(CX - 640), top: px(CY - 400), width: '1280px', height: '800px', transform: `scale(${U})`, transformOrigin: '50% 50%' })
+
+const CONFIG = {
+  zoom: 1.2,                          // the card is 354px wide in the original preview
+  brand: 'Acme', title: 'Sign in to', sub: 'Welcome back! Please enter your details.',
+  emailPlaceholder: 'you@example.com', email: 'user@acme.com', passwordLen: 9,
+  tEmailClick: .9, tEmailType: 1.3, charTime: .09,     // seconds: click, first key, per key
+  tPwClick: 3.6, tPwType: 4.0, dotTime: .09,
+  tSignClick: 5.8,                    // click on Sign In
+  resetAt: 7.0,
+}
+const DUR = 8
+window.DUR = DUR
+root.style.transform = `scale(${U * CONFIG.zoom})`
+const card = el('div', 'lc', root); S(card, { left: px(640 - 177), top: px(400 - 295) })
+const T = (txt, o) => { const e = el('div', 't', card, txt); S(e, o); return e }
+const logo = el('div', 'abs', card); S(logo, { left: '152px', top: '40px' })
+logo.innerHTML = '<svg width="50" height="50" viewBox="-25 -25 50 50">' + Array.from({ length: 12 }, (_, i) => `<g transform="rotate(${i * 30})"><path d="M-1.6 -12 L1.6 -12 L2.6 -23 Q0 -25 -2.6 -23 Z" fill="#0a0a0a" transform="rotate(${i % 2 ? 6 : 0})"/></g>`).join('') + '</svg>'
+T(`${CONFIG.title} ${CONFIG.brand}`, { left: '0', width: '100%', textAlign: 'center', top: '100px', fontSize: '24px', fontWeight: 600, letterSpacing: '-.01em' })
+T(CONFIG.sub, { left: '0', width: '100%', textAlign: 'center', top: '134px', fontSize: '15px', color: '#6b6b72' })
+T('Email address', { left: '26px', top: '192px', fontSize: '15px', fontWeight: 500 })
+T('Password', { left: '26px', top: '279px', fontSize: '15px', fontWeight: 500 })
+T('Reset password', { right: '26px', top: '279px', fontSize: '15px', fontWeight: 500 })
+const em = el('div', 'inp', card); S(em, { top: '215px' })
+const pw = el('div', 'inp', card); S(pw, { top: '309px' })
+const eye = el('div', 'abs', card, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.7"><path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'); S(eye, { left: '300px', top: '319px' })
+const ck = el('div', 'abs', card, '<svg width="18" height="18" viewBox="0 0 18 18"><rect width="18" height="18" rx="5" fill="#111"/><path d="M4.500 9.200l3 3 6-6.400" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); S(ck, { left: '26px', top: '374px' })
+T('Remember me', { left: '52px', top: '372px', fontSize: '15px' })
+const si = el('div', 'bt', card, 'Sign In'); S(si, { top: '421px', background: '#171717', color: '#fff' })
+el('div', 'bt', card, '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"><circle cx="7.500" cy="16.500" r="3.500"/><path d="M10 14l8-8m-3 3l2.500 2.500"/></svg>Single sign-on (SSO)').style.cssText += ';top:468px;border:1px solid #e1e1e4;box-shadow:0 1px 2px rgba(0,0,0,.06);background:#fff'
+const ln = el('div', 'abs', card); S(ln, { left: '0', top: '532px', width: '100%', height: '1px', background: '#e4e4e7' })
+T('New to ' + CONFIG.brand + '? <span style="color:#0a0a0a;font-weight:500">Sign up</span>', { left: '0', width: '100%', textAlign: 'center', top: '550px', fontSize: '15px', color: '#6b6b72' }).innerHTML = 'New to ' + CONFIG.brand + '? <span style="color:#0a0a0a;font-weight:500">Sign up</span>'
+// scripted cursor: keys = [{t, x, y, click?}], eased between keys; a click shows a short press ring
+const cursorEl = el('div', 'abs', root, '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.8L10.4 19z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
+const ringEl = el('div', 'abs', root); S(ringEl, { width: '34px', height: '34px', marginLeft: '-17px', marginTop: '-17px', borderRadius: '50%', border: '2px solid rgba(120,120,140,.6)', pointerEvents: 'none' })
+function cursorAt(t, keys) {
+  let i = 0; while (i < keys.length - 1 && t >= keys[i + 1].t) i++
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)]
+  const k = b === a ? 0 : eio(seg(t, a.t, b.t))
+  let press = 0; for (const q of keys) if (q.click && t >= q.t && t < q.t + .35) press = 1 - (t - q.t) / .35
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), press }
+}
+function drawCursor(c) {
+  S(cursorEl, { left: px(c.x - 5), top: px(c.y - 3), transform: `scale(${1 - .12 * c.press})`, zIndex: 99 })
+  S(ringEl, { left: px(c.x), top: px(c.y), opacity: c.press * .9, transform: `scale(${.5 + (1 - c.press) * 1.2})`, zIndex: 98 })
+}
+
+cursorEl.firstChild.setAttribute('width', 20); cursorEl.firstChild.setAttribute('height', 20)
+const ox = 640 - 177, oy = 400 - 295
+const keys = [{ t: 0, x: ox + 330, y: oy + 80 }, { t: CONFIG.tEmailClick - .4, x: ox + 200, y: oy + 240 }, { t: CONFIG.tEmailClick, x: ox + 190, y: oy + 236, click: 1 }, { t: 2.8, x: ox + 200, y: oy + 270 }, { t: CONFIG.tPwClick, x: ox + 160, y: oy + 330, click: 1 }, { t: 5.0, x: ox + 200, y: oy + 400 }, { t: CONFIG.tSignClick, x: ox + 180, y: oy + 440, click: 1 }, { t: 7.0, x: ox + 330, y: oy + 120 }, { t: DUR, x: ox + 330, y: oy + 80 }]
+const focus = (e, on) => S(e, { borderColor: on ? '#111' : '#e1e1e4', boxShadow: on ? '0 0 0 3px rgba(0,0,0,.08)' : '0 1px 2px rgba(0,0,0,.06)' })
+
+function render(t) {
+  const c = CONFIG
+  const live = t < c.resetAt
+  const nE = live ? Math.max(0, Math.min(c.email.length, Math.floor((t - c.tEmailType) / c.charTime) + 1)) : 0
+  const nP = live ? Math.max(0, Math.min(c.passwordLen, Math.floor((t - c.tPwType) / c.dotTime) + 1)) : 0
+  const inEmail = t >= c.tEmailClick && t < c.tPwClick && live, inPw = t >= c.tPwClick && t < c.tSignClick && live
+  const caret = (Math.floor(t * 2) % 2 === 0) ? '<span style="display:inline-block;width:1px;height:17px;background:#111;vertical-align:-3px;margin-left:1px"></span>' : '<span style="display:inline-block;width:1px;height:17px;margin-left:1px"></span>'
+  const typing = (e, n, txt, on, ph) => { e.innerHTML = (n ? txt.slice(0, n) : (on ? '' : `<span style="color:#8a8a92">${ph}</span>`)) + (on ? caret : '') }
+  typing(em, nE, c.email, inEmail, c.emailPlaceholder)
+  typing(pw, nP, '•'.repeat(c.passwordLen), inPw, 'Enter your password')
+  if (nP && nP < 99) pw.innerHTML = '<span style="letter-spacing:2px;font-size:17px">' + '•'.repeat(nP) + '</span>' + (inPw ? caret : '')
+  focus(em, inEmail); focus(pw, inPw)
+  const press = t >= c.tSignClick && t < c.tSignClick + .25
+  S(si, { transform: press ? 'scale(.985)' : 'none', background: press ? '#000' : '#171717' })
+  drawCursor(cursorAt(t, keys))
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

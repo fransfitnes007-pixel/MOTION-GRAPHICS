@@ -1,0 +1,94 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fdfdfd;color:#111}
+.row{position:absolute;height:50px}
+.box{position:absolute;left:0;top:8px;width:34px;height:34px;border-radius:9px;background:#f1f1f3;border:1.5px solid #e6e6e9}
+.lab{position:absolute;left:56px;top:0;font-size:33px;line-height:50px;white-space:nowrap}
+.strike{position:absolute;left:56px;top:26px;height:3px;background:#9ca3af;transform-origin:0 50%}
+.cur{position:absolute;left:0;top:0;width:26px;height:26px;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Todo list: clicking a checkbox draws the tick, greys the label and sweeps a strike-through left to right across it. Clicking again takes it back.
+const CONFIG = {
+  items: ['Complete documentation', 'Review pull requests', 'Update dependencies'],
+  clicks: [[.8, 0, 1], [1.7, 1, 1], [2.5, 2, 1], [3.7, 0, 0], [4.0, 1, 0], [4.3, 2, 0]],   // [time, item index, 1 = complete / 0 = undo]
+  list: { x: 330, y: 280, gap: 74 },   // px, top-left of the first row and row spacing
+  tickSec: .18, strikeSec: .3,         // tick draw time and strike sweep time
+  done: '#9ca3af',                     // colour of completed text and strike
+  dur: 5.4,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const rows = C.items.map((txt, i) => {
+  const r = el('div', 'row', stage); S(r, { left: px(C.list.x), top: px(C.list.y + i * C.list.gap), width: '640px' })
+  const b = el('div', 'box', r, '<svg viewBox="0 0 26 26" width="34" height="34" style="position:absolute;left:-1.5px;top:-1.5px"><path d="M7 13.5 11.2 17.5 19 9" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>')
+  const l = el('div', 'lab', r, txt); const s = el('div', 'strike', r); S(s, { width: '0px' })
+  return { r, b, l, s, tick: b.querySelector('path'), w: 0 }
+})
+rows.forEach((o) => { o.w = o.l.offsetWidth; S(o.s, { background: C.done }) })
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="26" height="26"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+const boxPos = (i) => [C.list.x + 17, C.list.y + i * C.list.gap + 25]
+function render(t) {
+  rows.forEach((o, i) => {
+    let on = 0, te = -9; for (const [tt, k, v] of C.clicks) if (k === i && t >= tt) { on = v; te = tt }
+    const tk = seg(t, te, te + C.tickSec), sk = seg(t, te + .06, te + .06 + C.strikeSec)
+    const a = on ? eo(tk) : 1 - eo(tk), s = on ? eo(sk) : 1 - eo(sk)
+    if (te < 0) { /* never clicked */ }
+    o.tick.setAttribute('stroke-dashoffset', String(1 - a))
+    S(o.b, { background: lerp(0, 1, a) > .5 ? '#f4f4f5' : '#f1f1f3' })
+    S(o.s, { width: px(o.w * s) })
+    const g = Math.round(lerp(17, 156, a)), c = `rgb(${g},${g},${Math.round(lerp(17, 175, a))})`
+    S(o.l, { color: c })
+  })
+  // cursor visits each click target
+  const stops = [[0, 640, 140], ...C.clicks.map(([tt, k]) => [tt, ...boxPos(k)]), [C.dur, 640, 140]]
+  let x = 640, y = 140
+  for (let j = 0; j < stops.length - 1; j++) if (t >= stops[j][0] && t <= stops[j + 1][0]) { const u = eio(seg(t, Math.max(stops[j][0], stops[j + 1][0] - .7), stops[j + 1][0])); x = lerp(stops[j][1], stops[j + 1][1], u); y = lerp(stops[j][2], stops[j + 1][2], u) }
+  let press = 0; for (const [tt] of C.clicks) press = Math.max(press, clamp(1 - Math.abs(t - tt) / .1))
+  S(cur, { transform: `translate(${x}px,${y}px) scale(${1 - .18 * press})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>
