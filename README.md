@@ -4,7 +4,11 @@ Make motion-graphics videos with Claude Code: Instagram Reels, TikToks, YouTube 
 
 [![motion-reel-kit showcase film](docs/media/showcase-preview.gif)](docs/media/showcase.mp4)
 
-**[▶ Watch the 50-second showcase with sound](docs/media/showcase.mp4)**. The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Source: [`docs/showcase/`](docs/showcase/).
+**▶ The 50-second showcase, with sound:**
+
+https://github.com/user-attachments/assets/116e8523-d3eb-4d4b-ad42-c2643bd54f8d
+
+The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Full quality: [`docs/media/showcase.mp4`](docs/media/showcase.mp4). Source: [`docs/showcase/`](docs/showcase/).
 
 Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end (local voice, beats pinned to the words, 277 sound effects, App Store end card), still on the placeholder brand.
 
