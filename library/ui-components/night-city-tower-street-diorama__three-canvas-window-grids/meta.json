@@ -1,0 +1,22 @@
+{
+  "slug": "night-city-tower-street-diorama__three-canvas-window-grids",
+  "visual_name": "Night city tower street diorama",
+  "code_name": "Three canvas window grids",
+  "category": "ui-components",
+  "summary": "A dark low-poly three.js city grid at night: dozens of skyscrapers with lit window patterns and blinking red antenna tips, a taller dark-glass tower with a lit sign and a glow that runs up its blue accent lines, glowing street lamps and taxis driving the avenues, under stars.",
+  "tags": [
+    "3d",
+    "background",
+    "hero",
+    "dark"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-texture"
+  ],
+  "duration_sec": 14,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

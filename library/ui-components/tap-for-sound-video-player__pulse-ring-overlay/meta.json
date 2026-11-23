@@ -1,0 +1,24 @@
+{
+  "slug": "tap-for-sound-video-player__pulse-ring-overlay",
+  "visual_name": "Tap for sound video player",
+  "code_name": "Pulse ring overlay",
+  "category": "ui-components",
+  "summary": "An autoplaying muted video in a glass frame with a frosted \"Tap for sound\" pill and a pulsing ring; tapping restarts it with sound.",
+  "tags": [
+    "browser-window",
+    "cta",
+    "loader",
+    "light",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 8.8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

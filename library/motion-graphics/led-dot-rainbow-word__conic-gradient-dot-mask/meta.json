@@ -1,0 +1,23 @@
+{
+  "slug": "led-dot-rainbow-word__conic-gradient-dot-mask",
+  "visual_name": "LED dot rainbow word",
+  "code_name": "Conic gradient dot mask",
+  "category": "motion-graphics",
+  "summary": "A black LED-panel field of dots lit by a slowly spinning rainbow, with white words and a logo popping in on top.",
+  "tags": [
+    "kinetic-type",
+    "background",
+    "transition",
+    "dark",
+    "logo"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-mask",
+    "conic-gradient"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

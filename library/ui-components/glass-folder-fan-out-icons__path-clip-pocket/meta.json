@@ -1,0 +1,23 @@
+{
+  "slug": "glass-folder-fan-out-icons__path-clip-pocket",
+  "visual_name": "Glass folder fan-out icons",
+  "code_name": "Path clip pocket",
+  "category": "ui-components",
+  "summary": "A frosted glass folder with a tabbed front pocket that pops in on scroll; hover fans three app-icon tiles up out of it, hovering a tile lifts it with a name pill and lights its tag.",
+  "tags": [
+    "card",
+    "hover",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "react",
+    "css-transitions",
+    "clip-path-path",
+    "svg"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "laptop-mockup-camera-pan__clamped-zoom-scroll",
+  "visual_name": "Laptop mockup with camera pan",
+  "code_name": "Clamped focus-and-zoom camera inside a laptop screen",
+  "category": "motion-graphics",
+  "summary": "A dark laptop frame shows a tall web page; a virtual camera scrolls it down to a section and zooms in, while a phone springs up beside it and a callout names the section.",
+  "tags": [
+    "browser-window",
+    "phone",
+    "dark",
+    "scroll"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

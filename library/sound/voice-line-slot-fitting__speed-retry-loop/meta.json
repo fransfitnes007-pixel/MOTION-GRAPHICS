@@ -1,0 +1,20 @@
+{
+  "slug": "voice-line-slot-fitting__speed-retry-loop",
+  "visual_name": "Voice line slot fitting",
+  "code_name": "Speed retry loop",
+  "category": "sound",
+  "summary": "Each narration line is rendered, measured, and re-rendered faster if it runs past its slot, up to 1.35x.",
+  "tags": [
+    "voice",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 16.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,20 @@
+{
+  "slug": "address-bar-domain-typewriter__substring-slice-chip",
+  "visual_name": "Address bar domain typewriter",
+  "code_name": "Substring slice typing with pop-in chip",
+  "category": "motion-graphics",
+  "summary": "The address in a browser window is replaced letter by letter with a custom domain, then a green \"connected\" chip pops in at the corner.",
+  "tags": [
+    "browser-window",
+    "cursor",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 2.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

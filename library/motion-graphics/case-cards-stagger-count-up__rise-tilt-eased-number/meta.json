@@ -1,0 +1,21 @@
+{
+  "slug": "case-cards-stagger-count-up__rise-tilt-eased-number",
+  "visual_name": "Three case cards with count-up numbers",
+  "code_name": "Rise, tilt, eased number",
+  "category": "motion-graphics",
+  "summary": "Three dark cards rise from below one after another, tilted a few degrees outward and levelling out, each with a brand header and a big number counting up from zero.",
+  "tags": [
+    "card",
+    "counter",
+    "stat-tile",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

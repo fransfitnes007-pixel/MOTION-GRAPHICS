@@ -1,0 +1,20 @@
+{
+  "slug": "layout-name-filmstrip-push__strip-translate-blur",
+  "visual_name": "Layout name filmstrip push",
+  "code_name": "Panel groups pushing through on translateX with blur",
+  "category": "motion-graphics",
+  "summary": "Each option is a full panel (huge name, small label, laptop and phone) that pushes in from the right and out to the left, one per spoken name, like frames on a strip.",
+  "tags": [
+    "transition",
+    "dark",
+    "carousel"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

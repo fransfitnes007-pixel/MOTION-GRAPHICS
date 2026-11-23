@@ -1,0 +1,24 @@
+{
+  "slug": "pendulum-flip-chrome-wordmark__two-faced-rotatey",
+  "visual_name": "Pendulum-flip chrome wordmark",
+  "code_name": "Two-faced rotateY card",
+  "category": "ui-components",
+  "summary": "A chrome wordmark floating on a breathing glow that dwells facing forward, sweeps through 180 degrees to its back face, dwells again, and swings home, always reading the right way round.",
+  "tags": [
+    "hero",
+    "logo",
+    "3d",
+    "dark",
+    "background"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "css-3d",
+    "perspective"
+  ],
+  "duration_sec": 14,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

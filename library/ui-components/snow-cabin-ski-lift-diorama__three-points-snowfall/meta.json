@@ -1,0 +1,23 @@
+{
+  "slug": "snow-cabin-ski-lift-diorama__three-points-snowfall",
+  "visual_name": "Snow cabin ski lift diorama",
+  "code_name": "Three points snowfall",
+  "category": "ui-components",
+  "summary": "A low-poly three.js winter scene: a warm-lit log cabin with a pillared porch among snow-capped pines, ski chairs gliding along a cable, a steaming geyser and hot spring, and two thousand snow flakes falling in the haze.",
+  "tags": [
+    "3d",
+    "background",
+    "hero",
+    "light"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "points",
+    "canvas-texture"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "dark-ops-scenario-cards__cyan-lime-mono-console",
+  "visual_name": "Dark ops scenario cards",
+  "code_name": "Cyan lime mono console",
+  "category": "dashboards",
+  "summary": "Deep navy console page with a glowing top-right corner, mono cyan caps tag, a giant two-line title, a lime-edged notice bar, a status line and a grid of gradient cards with cyan run buttons.",
+  "tags": [
+    "card",
+    "dark",
+    "hero",
+    "table"
+  ],
+  "tech": [
+    "css",
+    "vanilla-js"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

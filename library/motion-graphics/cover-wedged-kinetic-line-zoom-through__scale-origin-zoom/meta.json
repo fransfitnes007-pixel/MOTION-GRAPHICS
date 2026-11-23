@@ -1,0 +1,22 @@
+{
+  "slug": "cover-wedged-kinetic-line-zoom-through__scale-origin-zoom",
+  "visual_name": "Kinetic line with covers between the words, then zoom-through",
+  "code_name": "Scale-origin zoom",
+  "category": "motion-graphics",
+  "summary": "A three-word headline builds on beats with a video cover popping in between the words, covers scatter around it, then the whole line scales 7.5x around the second cover until the cover fills the frame.",
+  "tags": [
+    "kinetic-type",
+    "hero",
+    "transition",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 3.9,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

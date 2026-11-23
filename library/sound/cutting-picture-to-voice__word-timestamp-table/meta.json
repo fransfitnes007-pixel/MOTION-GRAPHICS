@@ -1,0 +1,22 @@
+{
+  "slug": "cutting-picture-to-voice__word-timestamp-table",
+  "visual_name": "Cutting picture to voice words",
+  "code_name": "Word timestamp table",
+  "category": "sound",
+  "summary": "A speech-to-text pass gives the start time of every word; each scene cut is that time minus a small lead, and the sounds follow.",
+  "tags": [
+    "voice",
+    "transition",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile",
+    "faster-whisper"
+  ],
+  "duration_sec": 24.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

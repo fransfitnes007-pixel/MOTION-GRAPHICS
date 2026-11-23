@@ -1,0 +1,19 @@
+{
+  "slug": "posting-activity-heatmap__weekday-by-week-grid",
+  "visual_name": "Posting activity heatmap",
+  "code_name": "Weekday by week grid with count-tinted cells",
+  "category": "dashboards",
+  "summary": "Eight-week by seven-day heatmap that fills in cell by cell as the count of posts ticks up.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

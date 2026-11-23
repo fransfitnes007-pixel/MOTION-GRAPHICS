@@ -1,0 +1,23 @@
+{
+  "slug": "cta-pill-button-click-through__back-overshoot-press-ripple",
+  "visual_name": "Call-to-action pill with cursor click-through",
+  "code_name": "Back-overshoot pop, press and ripple",
+  "category": "motion-graphics",
+  "summary": "A black pill CTA pops in with overshoot, a big cursor clicks it with a ripple, and the button swells away.",
+  "tags": [
+    "cta",
+    "cursor",
+    "light",
+    "sfx",
+    "end-card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "svg"
+  ],
+  "duration_sec": 2.5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

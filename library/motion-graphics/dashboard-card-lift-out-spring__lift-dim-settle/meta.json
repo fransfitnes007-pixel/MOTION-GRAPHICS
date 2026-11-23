@@ -1,0 +1,24 @@
+{
+  "slug": "dashboard-card-lift-out-spring__lift-dim-settle",
+  "visual_name": "Dashboard cards lifting out of the page",
+  "code_name": "Spring lift with page dim",
+  "category": "motion-graphics",
+  "summary": "A dashboard pushes in from depth, then its four stat cards lift off the page one per half beat on a spring, enlarged and tilted into a row above it while the page dims, and the views chart lifts to the centre and draws left to right.",
+  "tags": [
+    "card",
+    "browser-window",
+    "stat-tile",
+    "chart",
+    "dark",
+    "glow",
+    "3d"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,20 @@
+{
+  "slug": "dark-grid-moving-beam-background__conic-gradient-drift",
+  "visual_name": "Dark grid with moving light",
+  "code_name": "Scrolling grid, rocking conic beam and drifting glow",
+  "category": "motion-graphics",
+  "summary": "A near-black stage with a fine 96px grid that scrolls diagonally, a blurred indigo light beam that rocks slowly and an indigo glow that wanders.",
+  "tags": [
+    "background",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "conic-gradient",
+    "css-blur"
+  ],
+  "duration_sec": 24,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

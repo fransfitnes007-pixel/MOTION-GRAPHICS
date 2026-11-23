@@ -1,0 +1,21 @@
+{
+  "slug": "top-creators-horizontal-bars__vertical-layout-grow",
+  "visual_name": "Top creators horizontal bars",
+  "code_name": "Vertical-layout bar chart with category labels",
+  "category": "dashboards",
+  "summary": "Horizontal violet bars growing from the left over 1.5s, names on the y-axis, a hover band and tooltip stepping down the list.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

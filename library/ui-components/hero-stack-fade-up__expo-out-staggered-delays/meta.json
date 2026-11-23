@@ -1,0 +1,22 @@
+{
+  "slug": "hero-stack-fade-up__expo-out-staggered-delays",
+  "visual_name": "Hero stack fade-up",
+  "code_name": "Expo-out staggered delays",
+  "category": "ui-components",
+  "summary": "A landing hero that builds itself in order: headline, paragraph, buttons and a video card each rise 20 to 32px and fade in on the same expo-out curve, 0.1s apart, with a gradient second line in the headline.",
+  "tags": [
+    "hero",
+    "light",
+    "kinetic-type",
+    "cta"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

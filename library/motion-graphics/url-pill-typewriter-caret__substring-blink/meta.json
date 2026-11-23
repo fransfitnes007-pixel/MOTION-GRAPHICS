@@ -1,0 +1,20 @@
+{
+  "slug": "url-pill-typewriter-caret__substring-blink",
+  "visual_name": "URL pill typewriter with caret",
+  "code_name": "Substring slice with a blinking caret",
+  "category": "motion-graphics",
+  "summary": "A rounded glass pill with a lock icon types a web address letter by letter with a blinking caret that keeps blinking after the last character.",
+  "tags": [
+    "cta",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "backdrop-filter"
+  ],
+  "duration_sec": 2.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

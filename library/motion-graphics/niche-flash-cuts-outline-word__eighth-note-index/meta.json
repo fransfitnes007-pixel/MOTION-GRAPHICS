@@ -1,0 +1,21 @@
+{
+  "slug": "niche-flash-cuts-outline-word__eighth-note-index",
+  "visual_name": "Eighth-note flash cuts with outlined giant word",
+  "code_name": "Eighth-note index cuts",
+  "category": "motion-graphics",
+  "summary": "Five hard cuts at eighth-note spacing, each a tall video cover over a 330px outlined word that slides in 60px, with a label pill under it; the first cut shrinks from 2.4x as if arriving from the previous zoom.",
+  "tags": [
+    "kinetic-type",
+    "transition",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 1.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

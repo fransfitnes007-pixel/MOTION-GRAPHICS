@@ -1,0 +1,19 @@
+{
+  "slug": "drifting-glow-blobs__blurred-orbs-mood-weights",
+  "visual_name": "Drifting glow blobs",
+  "code_name": "Blurred orbs with mood weights",
+  "category": "motion-graphics",
+  "summary": "Three 120px-blurred orbs (gold-brown, navy, oxblood) drift on slow sine paths on near-black; the mood decides which is at full strength.",
+  "tags": [
+    "background",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-blur"
+  ],
+  "duration_sec": 9,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

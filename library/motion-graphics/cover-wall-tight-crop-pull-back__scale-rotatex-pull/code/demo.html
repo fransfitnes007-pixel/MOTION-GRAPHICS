@@ -1,0 +1,230 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cover wall pull-back from a tight crop</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+#stage{background:#050509;color:#fff}
+.layer{position:absolute;inset:0}
+.word{position:absolute;font-weight:800;font-size:168px;letter-spacing:-.05em;line-height:1;white-space:nowrap}
+.wm{position:absolute;text-align:center;font-family:'UnifrakturCook','Old English Text MT',Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:.03em;line-height:1;color:#fff;white-space:nowrap}
+
+.grid{position:absolute;inset:-200px;background-image:linear-gradient(rgba(139,92,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.06) 1px,transparent 1px)}
+
+.win{position:absolute;border-radius:20px;overflow:hidden;background:#0b0b12;box-shadow:0 60px 140px -40px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.09)}
+.win .bar{position:absolute;left:0;right:0;top:0;height:44px;background:#0e0e16;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:8px;padding:0 18px;z-index:3}
+.win .bar i{width:12px;height:12px;border-radius:50%;display:block}
+.win .bar .url{position:absolute;left:50%;transform:translateX(-50%);font-weight:500;font-size:15px;color:rgba(255,255,255,.55);background:rgba(255,255,255,.05);padding:6px 20px;border-radius:9px;white-space:nowrap}
+.win .view{position:absolute;left:0;right:0;top:44px;bottom:0;overflow:hidden}
+.win .view .pg{position:absolute;left:0;top:0;transform-origin:0 0}
+
+
+.pill{position:absolute;display:flex;align-items:center;gap:12px;padding:14px 24px;border-radius:999px;background:rgba(16,12,30,.9);border:1px solid rgba(167,139,250,.5);font-weight:700;font-size:26px;box-shadow:0 0 40px rgba(139,92,246,.45);white-space:nowrap}
+.pill .dot{width:12px;height:12px;border-radius:50%;background:#34D399;box-shadow:0 0 14px #34D399}
+
+
+
+.fd{position:absolute;left:0;top:0;width:1920px;height:1080px;background:#07070d;color:#e8e8f0;overflow:hidden;transform-origin:0 0}
+.fd *{box-sizing:border-box}
+.fd .side{position:absolute;left:0;top:0;width:224px;height:100%;background:#0a0a12;border-right:1px solid rgba(255,255,255,.07)}
+.fd .logo{position:absolute;left:20px;top:22px;font-weight:700;font-size:24px;letter-spacing:.08em;font-family:Georgia,serif}
+.fd .nav{position:absolute;left:12px;width:200px;height:40px;border-radius:10px;padding:10px 16px 0 44px;font-size:15px;color:rgba(255,255,255,.6)}
+.fd .nav.on{background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.35);color:#fff}
+.fd .nav::before{content:'';position:absolute;left:16px;top:11px;width:16px;height:16px;border-radius:4px;border:2px solid currentColor;opacity:.7}
+.fd .btn{position:absolute;border-radius:12px;background:#8B5CF6;color:#fff;font-weight:600;font-size:15px;text-align:center;padding-top:13px;height:44px}
+.fd .top{position:absolute;left:224px;right:0;top:0;height:56px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fc{position:absolute;border-radius:20px;background:#0c0c15;border:1px solid rgba(255,255,255,.08);overflow:hidden;color:#fff}
+.fc .lab{position:absolute;left:22px;top:20px;font-size:13px;color:rgba(255,255,255,.55)}
+.fc .val{position:absolute;left:22px;top:46px;font-size:28px;font-weight:700;letter-spacing:-.01em}
+.fc .sub{position:absolute;left:22px;bottom:16px;font-size:12px;color:rgba(255,255,255,.4)}
+.fc .ico{position:absolute;right:22px;top:20px;width:42px;height:42px;border-radius:12px}
+.fc .ttl{position:absolute;left:22px;top:22px;font-size:15px;font-weight:600;letter-spacing:.08em}
+.fc .ttr{position:absolute;right:22px;top:24px;font-size:12px;color:rgba(255,255,255,.45)}
+.fc .vt{position:absolute;border-radius:12px;overflow:hidden}
+.fc .vt::after{content:'';position:absolute;left:50%;top:50%;margin:-18px 0 0 -18px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.45)}
+.fc .ring2{position:absolute;border-radius:50%;border:14px solid #10b981;display:grid;place-items:center;font-size:36px;font-weight:700}
+.fd .ln{position:absolute;height:12px;border-radius:6px;background:rgba(255,255,255,.1)}
+.fd .fld{position:absolute;height:46px;border-radius:10px;background:#12121c;border:1px solid rgba(255,255,255,.09)}
+
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.2
+window.DUR = DUR
+
+const FS = TALL ? W / 1920 : Math.min(W / 1920, H / 1080)
+const G = Math.max(W / 1920, H / 1080)
+const mkFrame = (parent) => { const f = el('div', 'abs', parent); S(f, { left: px(CX - 960), top: px(CY - 540), width: '1920px', height: '1080px', transform: 'scale(' + FS + ')', transformOrigin: '50% 50%' }); return f }
+const fr = mkFrame(stage)
+const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
+const back = (x, c1 = 2.2) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const ex = (x) => x === 1 ? 1 : 1 - Math.pow(2, -10 * x)
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CURSOR = '<svg viewBox="0 0 24 24" width="40" height="40"><path d="M4 2l16 9-7 2-3 7z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+const cover = (i) => { const h = (i * 47 + 250) % 360, sk = 18 + (i * 7) % 20; return 'radial-gradient(circle at 50% 36%, hsl(' + (20 + (i * 13) % 20) + ',60%,' + (68 - sk / 2) + '%) 0 13%, transparent 14%),radial-gradient(ellipse at 50% 98%, hsl(' + h + ',30%,14%) 0 40%, transparent 41%),linear-gradient(165deg, hsl(' + h + ',70%,52%), hsl(' + (h + 50) % 360 + ',60%,22%))' }
+// persistent dark backdrop. v = 1 is the first variant (64px grid, smaller blob), v = 2 the second variant (80px grid, bigger blob, faster drift)
+function makeBG(v = 2, loop = 0) {
+  const bg = el('div', 'layer'); stage.insertBefore(bg, stage.firstChild)
+  const gr = v === 1 ? 64 : 80, ga = v === 1 ? .07 : .06
+  const grid = el('div', 'grid', bg); S(grid, { backgroundSize: px(gr * G) + ' ' + px(gr * G), backgroundImage: 'linear-gradient(rgba(139,92,246,' + ga + ') 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,' + ga + ') 1px,transparent 1px)' })
+  const gw = (v === 1 ? 1400 : 1600) * G, gh = (v === 1 ? 1000 : 1100) * G
+  const blob = el('div', 'abs', bg); S(blob, { width: px(gw), height: px(gh), borderRadius: '50%', background: 'radial-gradient(closest-side, rgba(' + (v === 1 ? '139,92,246,.28' : '124,58,237,.30') + '), transparent)', filter: 'blur(' + (v === 1 ? 20 : 30) * G + 'px)' })
+  const vg = el('div', 'layer'); S(vg, { background: 'radial-gradient(ellipse at 50% 50%, transparent ' + (v === 1 ? 55 : 60) + '%, rgba(0,0,0,' + (v === 1 ? .65 : .6) + '))', zIndex: 70, pointerEvents: 'none' })
+  return (t) => {
+    const sp = loop ? [2 * gr / loop, gr / loop] : v === 1 ? [6, 4] : [14, 9], w = loop ? 2 * Math.PI / loop : 0
+    grid.style.transform = 'translate(' + ((-t * sp[0]) % gr) * G + 'px,' + ((-t * sp[1]) % gr) * G + 'px)'
+    const p = v === 1 ? [260 + Math.sin(t * (w || .3)) * 200, -100 + Math.cos(t * (w || .25)) * 120] : [160 + Math.sin(t * (w || .5)) * 260, -60 + Math.cos(t * (w || .4)) * 140]
+    S(blob, { left: px(p[0] * G), top: px(p[1] * G) })
+  }
+}
+
+
+// directional blur filters for whip pans
+const svgDefs = el('div', 'abs', stage, '<svg width="0" height="0" style="position:absolute"><defs><filter id="mbx" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur id="mbxg" stdDeviation="0 0"/></filter><filter id="mby" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur id="mbyg" stdDeviation="0 0"/></filter></defs></svg>')
+const mbx = document.getElementById('mbxg'), mby = document.getElementById('mbyg')
+function blur(elm, amt, axis) {
+  if (amt < .5) { elm.style.filter = ''; return }
+  if (axis === 'x') { mbx.setAttribute('stdDeviation', amt + ' 0'); elm.style.filter = 'url(#mbx)' } else { mby.setAttribute('stdDeviation', '0 ' + amt); elm.style.filter = 'url(#mby)' }
+}
+
+
+let CID = 0
+function chartSvg(w, h) {
+  const id = 'cg' + (CID++), n = 40, pts = []
+  for (let i = 0; i <= n; i++) { const x = i / n, y = Math.min(1, Math.pow(x, 1.7) * .92 + .06 * Math.sin(x * 11) * x); pts.push([x * w, h - y * h * .9 - 4]) }
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('')
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="position:absolute;left:0;top:0"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".5"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs>' +
+    [0, 1, 2, 3].map((i) => '<line x1="0" x2="' + w + '" y1="' + ((i + .5) * h / 4) + '" y2="' + ((i + .5) * h / 4) + '" stroke="rgba(255,255,255,.07)"/>').join('') +
+    '<path d="' + line + ' L' + w + ' ' + h + ' L0 ' + h + 'Z" fill="url(#' + id + ')"/><path d="' + line + '" fill="none" stroke="#a78bfa" stroke-width="2.5"/></svg>'
+}
+const STAT = [['Total views', '12,480,200', 'across 48 items', '#2a1f55'], ['Items completed', '48 / 48', 'on schedule', '#16294f'], ['Total spend', '$8,420', 'due next month', '#12382f'], ['Cost per 1,000 views', '$0.74', 'all-in', '#3b2a10']]
+// card kinds: stat0-3, views, delivery, videos, creator, chart, earn
+function mkCard(parent, kind, w, h) {
+  const c = el('div', 'fc', parent); S(c, { width: w + 'px', height: h + 'px' })
+  if (kind.startsWith('stat')) { const s = STAT[+kind[4]]; c.innerHTML = '<div class="lab">' + s[0] + '</div><div class="val">' + s[1] + '</div><div class="sub">' + s[2] + '</div><div class="ico" style="background:' + s[3] + '"></div>' }
+  else if (kind === 'views' || kind === 'chart') {
+    c.innerHTML = '<div class="ttl">' + (kind === 'views' ? 'VIEWS' : 'VIEWS OVER TIME') + '</div><div class="ttr">cumulative, all items</div>'
+    const box = el('div', 'abs', c, chartSvg(w - 60, h - 100)); S(box, { left: '30px', top: '70px' })
+  } else if (kind === 'delivery') {
+    c.innerHTML = '<div class="ttl">PROGRESS</div><div class="ring2" style="left:22px;top:78px;width:124px;height:124px">48</div><div style="position:absolute;left:170px;top:100px;font-weight:600;font-size:15px">Every item delivered</div><div style="position:absolute;left:170px;top:128px;width:230px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.45)">Two updates a day from one named contact.</div>'
+  } else if (kind === 'videos') {
+    c.innerHTML = '<div class="ttl">TOP ITEMS</div><div class="ttr">All items</div>'
+    for (let i = 0; i < 6; i++) { const v = el('div', 'vt', c); S(v, { left: (22 + i * 140) + 'px', top: '58px', width: '130px', height: (h - 80) + 'px', background: cover(i + 3) }) }
+  } else if (kind === 'creator') {
+    c.innerHTML = '<div class="ttl">YOUR CONTACT</div><div style="position:absolute;left:22px;top:62px;width:56px;height:56px;border-radius:50%;background:' + cover(9) + '"></div><div style="position:absolute;left:92px;top:68px;font-weight:600;font-size:17px">Sample Name</div><div style="position:absolute;left:92px;top:94px;font-size:12px;color:rgba(255,255,255,.45)">@handle · design, tech</div><div class="fc" style="left:22px;top:140px;width:190px;height:70px;border-radius:12px"><div class="lab" style="top:14px">Avg views / post</div><div class="val" style="top:34px;font-size:20px">251,953</div></div><div class="fc" style="left:226px;top:140px;width:190px;height:70px;border-radius:12px"><div class="lab" style="top:14px">Engagement</div><div class="val" style="top:34px;font-size:20px">8.9%</div></div>'
+  } else if (kind === 'earn') {
+    c.innerHTML = '<div class="ring2" style="left:26px;top:30px;width:96px;height:96px;border-width:10px;font-size:22px;border-color:#8b5cf6">$8,420</div><div style="position:absolute;left:150px;top:34px;font-weight:600;font-size:17px">Payout breakdown</div><div style="position:absolute;left:150px;top:70px;width:' + (w - 190) + 'px;height:10px;border-radius:5px;background:linear-gradient(90deg,#8b5cf6 0 55%,#38bdf8 55% 85%,#fbbf24 85%)"></div>' + [['Base pay', '$4,600'], ['CPM', '$2,520'], ['Bonuses', '$1,300']].map((r, i) => '<div style="position:absolute;left:150px;top:' + (100 + i * 28) + 'px;font-size:13px;color:rgba(255,255,255,.6)">' + r[0] + '</div><div style="position:absolute;right:30px;top:' + (100 + i * 28) + 'px;font-size:13px">' + r[1] + '</div>').join('')
+  }
+  return c
+}
+const CARDS = { stat0: [404, 282, 322, 116], stat1: [742, 282, 322, 116], stat2: [1080, 282, 322, 116], stat3: [1418, 282, 322, 116], views: [404, 422, 885, 338], delivery: [1304, 422, 435, 338], videos: [404, 786, 885, 300], creator: [1304, 786, 435, 300], chart: [404, 332, 1336, 396], earn: [404, 192, 885, 300] }
+// pages are 1920 wide, 1080 tall (the sign-up page is 1258)
+function mkPage(parent, kind) {
+  const d = el('div', 'fd', parent)
+  d.innerHTML = '<div class="side"><div class="logo">WORDMARK</div>' + ['Dashboard', 'Get started', 'Project', 'Members', 'Items', 'Analytics', 'Billing', 'Group chat'].map((n, i) => '<div class="nav' + (i === (kind === 'posts' ? 4 : kind === 'analytics' ? 5 : kind === 'earn' ? 6 : 0) ? ' on' : '') + '" style="top:' + (96 + i * 44) + 'px">' + n + '</div>').join('') + '<div class="btn" style="left:12px;top:960px;width:200px">New project</div></div><div class="top"></div>'
+  const put = (k, x, y, w, h) => { const c = mkCard(d, k, w || CARDS[k][2], h || CARDS[k][3]); S(c, { left: (x ?? CARDS[k][0]) + 'px', top: (y ?? CARDS[k][1]) + 'px' }); return c }
+  if (kind === 'home') {
+    const b = el('div', 'fc', d); S(b, { left: '404px', top: '88px', width: '1335px', height: '169px', background: 'linear-gradient(100deg,#10122b,#1a1442 60%,#2a1a55)' })
+    b.innerHTML = '<div style="position:absolute;left:40px;top:44px;width:80px;height:80px;border-radius:20px;background:#2563eb"></div><div style="position:absolute;left:140px;top:36px;font-size:15px;color:rgba(255,255,255,.55)">Welcome back</div><div style="position:absolute;left:140px;top:58px;font-size:38px;font-weight:700;letter-spacing:-.02em">Hello, Acme Studio</div><div style="position:absolute;left:140px;top:112px;font-size:15px;color:rgba(255,255,255,.55)">Every view, item and dollar below updates on its own.</div>'
+    ;['stat0', 'stat1', 'stat2', 'stat3', 'views', 'delivery', 'videos', 'creator'].forEach((k) => put(k))
+  } else if (kind === 'analytics') {
+    el('div', 'ln', d).style.cssText = 'left:404px;top:96px;width:220px;height:20px'
+    ;['stat0', 'stat1', 'stat2', 'stat3'].forEach((k) => put(k, null, 160))
+    put('chart', 404, 332)
+    for (let i = 0; i < 4; i++) { const l = el('div', 'ln', d); S(l, { left: '404px', top: (745 + i * 40) + 'px', width: (1336 - i * 220) + 'px' }) }
+  } else if (kind === 'posts') {
+    el('div', 'ln', d).style.cssText = 'left:404px;top:96px;width:140px;height:20px'
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) { const v = el('div', 'fc', d); S(v, { left: (404 + c * 150) + 'px', top: (150 + r * 262) + 'px', width: '138px', height: '246px', borderRadius: '12px', background: cover(r * 9 + c) }) }
+  } else if (kind === 'earn') {
+    put('earn', 404, 192, 885, 300); put('stat2', 1304, 192, 435, 300)
+    for (let i = 0; i < 8; i++) { const l = el('div', 'ln', d); S(l, { left: '404px', top: (540 + i * 46) + 'px', width: (1336 - (i % 3) * 120) + 'px' }) }
+  } else if (kind === 'form') {
+    d.style.height = '1258px'; d.firstChild.style.display = 'none'; d.lastChild.style.display = 'none'
+    d.style.background = '#08080e'
+    const t = el('div', 'ln', d); S(t, { left: '836px', top: '150px', width: '320px', height: '28px' })
+    for (let i = 0; i < 6; i++) { const lb = el('div', 'ln', d); S(lb, { left: '736px', top: (260 + i * 125) + 'px', width: '120px', height: '10px' }); const f = el('div', 'fld', d); S(f, { left: '736px', top: (284 + i * 125) + 'px', width: '520px' }) }
+    const b = el('div', 'btn', d, 'Apply for an account'); S(b, { left: '736px', top: '1030px', width: '520px', height: '48px', paddingTop: '14px', fontSize: '17px' })
+  }
+  return d
+}
+// browser window holding one page; cam() pans and zooms inside it. box = [x, y, w, viewH]
+function win(parent, url, kind, box) {
+  const w = el('div', 'win', parent, '<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url">' + url + '</div></div><div class="view"></div>')
+  S(w, { left: box[0] + 'px', top: box[1] + 'px', width: box[2] + 'px', height: (box[3] + 44) + 'px' })
+  w.pg = mkPage(w.querySelector('.view'), kind); w.vw = box[2]; w.vh = box[3]; w.capH = kind === 'form' ? 1258 : 1080
+  w.pg.style.transform = 'scale(' + box[2] / 1920 + ')'
+  return w
+}
+// fx, fy: focal point in px of the 1920-wide page; z: zoom (1 = page fits window width)
+function cam(w, fx, fy, z) {
+  const k = w.vw / 1920 * z, capH = w.capH
+  const x = clamp(w.vw / 2 - fx * k, w.vw - 1920 * k, 0), y = clamp(w.vh / 2 - fy * k, Math.min(0, w.vh - capH * k), 0)
+  w.pg.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + k + ')'
+}
+
+
+const bgRender = makeBG(2)
+const B = 60 / 128, D = 3.75 // the scene is 8 beats
+const pw = win(fr, 'yourapp.com/app/items', 'posts', [160, 90, 1600, 900])
+const stamps = Array.from({ length: 6 }, (_, i) => el('div', 'pill', fr, '<span class="dot"></span>' + (i % 2 ? 'Live' : 'Approved')))
+const pTitle = el('div', 'word', fr); pTitle.innerHTML = 'Every video <span style="color:#C4B5FD">reviewed.</span>'; S(pTitle, { fontSize: '120px' })
+function render(t) {
+  bgRender(t + 11.25)
+  const lt = t, d = D, on = lt < d
+  vis(pw, on); vis(pTitle, on); stamps.forEach((s) => vis(s, on))
+  if (!on) return
+  // match cut: starts tight on a tile and pulls back to the whole wall
+  const pull = eo5(seg(lt, 0, .7))
+  const scroll = eio(seg(lt, .4, d))
+  const wipeOut = ei(seg(lt, d - .3, d))
+  S(pw, { transform: 'perspective(2000px) rotateX(' + lerp(0, 16, pull) + 'deg) translateY(' + (-wipeOut * 1300) + 'px) scale(' + lerp(3.2, 1.06, pull) + ')', transformOrigin: '540px 400px' })
+  blur(pw, wipeOut * 40, 'y')
+  cam(pw, 960, lerp(300, 760, scroll), lerp(1.5, 1.15, pull))
+  const spots = [[470, 330], [900, 260], [1310, 420], [640, 620], [1110, 680], [1460, 760]]
+  stamps.forEach((p, i) => {
+    const t0 = 1.2 + i * B * .5
+    const k = seg(lt, t0, t0 + .3)
+    S(p, { left: spots[i][0] + 'px', top: (spots[i][1] - wipeOut * 1300) + 'px', opacity: clamp(k * 4) * (1 - seg(lt, d - .5, d - .3)), transform: 'scale(' + lerp(1.8, 1, eo5(k)) + ') rotate(' + (rand(i) - .5) * 10 + 'deg)' })
+  })
+  const tk = eo5(seg(lt, .9, 1.2))
+  S(pTitle, { left: 0, right: 0, textAlign: 'center', top: '860px', opacity: tk * (1 - seg(lt, d - .5, d - .3)), transform: 'translateY(' + (1 - tk) * 40 + 'px)', textShadow: '0 6px 40px rgba(0,0,0,.9)' })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

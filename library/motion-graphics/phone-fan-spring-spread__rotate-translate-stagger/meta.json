@@ -1,0 +1,19 @@
+{
+  "slug": "phone-fan-spring-spread__rotate-translate-stagger",
+  "visual_name": "Phone fan spring spread",
+  "code_name": "Six phones springing into a rotated fan, staggered",
+  "category": "motion-graphics",
+  "summary": "Six phones rise from below and spring out into a fan, rotated up to 17 degrees either side of the middle, with the centre ones in front, beside a two-line headline.",
+  "tags": [
+    "phone",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

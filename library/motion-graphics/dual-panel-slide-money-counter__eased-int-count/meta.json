@@ -1,0 +1,22 @@
+{
+  "slug": "dual-panel-slide-money-counter__eased-int-count",
+  "visual_name": "Two dashboard panels with a money counter",
+  "code_name": "Eased integer count",
+  "category": "motion-graphics",
+  "summary": "Two dashboard panels slide in from opposite sides, tilted a few degrees the opposite way, and a big dollar figure counts up beneath them.",
+  "tags": [
+    "counter",
+    "card",
+    "dark",
+    "glow",
+    "browser-window"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 5.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

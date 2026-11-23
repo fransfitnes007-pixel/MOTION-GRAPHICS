@@ -1,0 +1,21 @@
+{
+  "slug": "cursor-click-ring__glide-press-ring",
+  "visual_name": "Cursor click with ring",
+  "code_name": "Glide, press and expanding ring",
+  "category": "motion-graphics",
+  "summary": "A white arrow cursor eases onto a blue pill button, shrinks slightly on the click and releases a blue ring that grows and fades as the button dips.",
+  "tags": [
+    "cursor",
+    "cta",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "svg"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

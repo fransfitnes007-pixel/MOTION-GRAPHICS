@@ -1,0 +1,23 @@
+{
+  "slug": "stat-tile-band__stagger-count-up",
+  "visual_name": "Stat tile band",
+  "code_name": "Stagger count up",
+  "category": "ui-components",
+  "summary": "Four centred glass stat tiles that rise one after another while their numbers count up.",
+  "tags": [
+    "stat-tile",
+    "counter",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

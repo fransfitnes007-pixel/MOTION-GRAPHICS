@@ -1,0 +1,22 @@
+{
+  "slug": "typing-keystrokes__eased-character-timing",
+  "visual_name": "Typing keystrokes",
+  "code_name": "Eased character timing",
+  "category": "sound",
+  "summary": "One key click per typed character, timed from the same ease-in-out curve that reveals the text on screen.",
+  "tags": [
+    "sfx",
+    "cursor",
+    "form",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 5.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

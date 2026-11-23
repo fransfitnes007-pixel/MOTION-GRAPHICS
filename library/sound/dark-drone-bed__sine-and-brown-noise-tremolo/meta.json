@@ -1,0 +1,22 @@
+{
+  "slug": "dark-drone-bed__sine-and-brown-noise-tremolo",
+  "visual_name": "Dark drone bed",
+  "code_name": "Sine and brown noise with tremolo",
+  "category": "sound",
+  "summary": "A very low, slowly breathing hum made of a 48 Hz sine and rumbling brown noise, faded in and out, with no rhythm or melody.",
+  "tags": [
+    "music",
+    "background",
+    "dark",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "ffmpeg-graph"
+  ],
+  "duration_sec": 14.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

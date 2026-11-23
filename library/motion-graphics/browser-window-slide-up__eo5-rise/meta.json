@@ -1,0 +1,22 @@
+{
+  "slug": "browser-window-slide-up__eo5-rise",
+  "visual_name": "Browser window slide-up",
+  "code_name": "Eased rise with scale settle",
+  "category": "motion-graphics",
+  "summary": "A dark browser window with a URL bar and a dashboard inside rises from below the bottom edge into the lower half of the frame with a very strong ease-out and a small scale-up.",
+  "tags": [
+    "browser-window",
+    "hero",
+    "light",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "svg"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

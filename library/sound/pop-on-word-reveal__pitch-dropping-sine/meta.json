@@ -1,0 +1,21 @@
+{
+  "slug": "pop-on-word-reveal__pitch-dropping-sine",
+  "visual_name": "Pop on a word reveal",
+  "code_name": "Pitch-dropping sine",
+  "category": "sound",
+  "summary": "A tiny bubble-pop made from a sine that drops in pitch, used one per word, in rising steps, in rows or as a spread.",
+  "tags": [
+    "sfx",
+    "kinetic-type",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 8.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

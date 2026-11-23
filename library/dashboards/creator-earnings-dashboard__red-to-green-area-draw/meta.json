@@ -1,0 +1,25 @@
+{
+  "slug": "creator-earnings-dashboard__red-to-green-area-draw",
+  "visual_name": "Creator earnings dashboard",
+  "code_name": "Red-to-green area draw",
+  "category": "dashboards",
+  "summary": "Dark purple glass dashboard where stat cards spring in, dollar counters run up from zero, and an earnings area chart draws itself with a red to amber to green line.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "counter",
+    "dark",
+    "table",
+    "nav"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "recharts",
+    "oklch"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

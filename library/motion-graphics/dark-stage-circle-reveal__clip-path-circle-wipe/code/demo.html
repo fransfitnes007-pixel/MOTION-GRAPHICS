@@ -1,0 +1,111 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dark stage circle reveal</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.line{position:absolute;white-space:nowrap;line-height:1;letter-spacing:-.045em}
+.line .w{display:inline-block;will-change:transform,filter,opacity}
+.grad{background:linear-gradient(100deg,#6d3cff 0%,#9b6bff 45%,#4f7bff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6
+window.DUR = DUR
+// Everything is laid out in a 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// A line of words that rise out of a blur, one per spoken word.
+function line(parent, words, { size = 140, weight = 800, color = '#0b0b10', x = 960, y = 540, align = 'center', gap = .26, cls = '' } = {}) {
+  const L = el('div', 'line ' + cls, parent)
+  S(L, { fontWeight: weight, fontSize: size + 'px', color, top: (y - size / 2) + 'px' })
+  if (align === 'center') S(L, { left: '0', width: '1920px', textAlign: 'center' }); else S(L, { left: x + 'px' })
+  L.ws = words.map((w, i) => { const s = el('span', 'w' + (w.g ? ' grad' : ''), L); s.textContent = w.t; if (i < words.length - 1) s.style.marginRight = gap + 'em'; s.at = w.at; return s })
+  return L
+}
+function wordsIn(L, t, dur = .42) {
+  for (const s of L.ws) {
+    const p = eo5(seg(t, s.at - .04, s.at - .04 + dur))
+    s.style.opacity = p; s.style.filter = `blur(${(1 - p) * 16}px)`
+    s.style.transform = `translateY(${(1 - p) * .38}em) scale(${.92 + .08 * p})`
+  }
+}
+function wordsOut(L, t, t0, dir = -1, dur = .3) {
+  L.ws.forEach((s, i) => {
+    const q = ei(seg(t, t0 + i * .035, t0 + i * .035 + dur)); if (q <= 0) return
+    s.style.opacity = 1 - q; s.style.filter = `blur(${q * 14}px)`; s.style.transform = `translateY(${dir * q * .45}em) scale(${1 - .05 * q})`
+  })
+}
+// light stage: grey base, faint dot grid, four blurred orbs drifting
+const bgL = el('div', 'layer', root); const bgBase = el('div', 'bgfill', bgL); S(bgBase, { background: '#f4f4f6' }); el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(139,92,246,.30)', s: 900, x: 300, y: 120, sp: .09 }, { c: 'rgba(96,165,250,.26)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.14)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.30)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s + 'px', height: o.s + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+const driftOrbs = (t) => { for (const o of orbs) S(o.e, { left: (o.x + Math.sin(t * o.sp * 6 + o.s) * 120) + 'px', top: (o.y + Math.cos(t * o.sp * 5 + o.x) * 90) + 'px' }) }
+// A dark stage sits over the light one. It opens as a growing circle from one point and later closes toward the centre.
+const bgD = el('div', 'layer', root); S(bgD, { zIndex: 5 })
+const dBase = el('div', 'bgfill', bgD); S(dBase, { background: 'radial-gradient(ellipse at 50% 40%, #1a1030 0%, #0a0812 55%, #050409 100%)' })
+el('div', 'dotsd', bgD)
+const bgDGlow = el('div', 'orb', bgD); S(bgDGlow, { width: '1500px', height: '1100px', left: '210px', top: '-60px', background: 'radial-gradient(closest-side, rgba(124,58,237,.38), transparent)' })
+const lightL = line(root, [{ t: 'Light', at: .1 }, { t: 'stage', at: .4 }], { size: 150, y: 540 })
+const darkL = line(bgD, [{ t: 'Dark', at: 1.1 }, { t: 'stage', at: 1.45, g: 1 }], { size: 150, y: 540, color: '#fff' })
+const T_IN = .4, T_OUT = 4.4    // open and close times in seconds
+function render(t) {
+  driftOrbs(t)
+  const dIn = eio5(seg(t, T_IN, T_IN + .6)), dOut = eio5(seg(t, T_OUT, T_OUT + .44))
+  const rD = dIn * (1 - dOut) * 1500   // 1300 can leave a light sliver in the left corners (1382px is needed from (1240,470))
+  vis(bgD, rD > 1); bgD.style.clipPath = `circle(${rD}px at ${dOut > 0 ? 960 : 1240}px ${dOut > 0 ? 540 : 470}px)`
+  S(bgDGlow, { transform: `translate(${Math.sin(t * .7) * 60}px, ${Math.cos(t * .6) * 40}px)` })
+  wordsIn(lightL, t); wordsOut(lightL, t, 3.9, -1)
+  wordsIn(darkL, t); wordsOut(darkL, t, 4.0, -1)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

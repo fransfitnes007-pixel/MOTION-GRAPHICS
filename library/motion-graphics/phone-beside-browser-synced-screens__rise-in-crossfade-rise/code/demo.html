@@ -1,0 +1,136 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Phone beside browser with synced screens</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#f4f5f7;color:#0b0c10;letter-spacing:-0.02em}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(110px)}
+.abs0{position:absolute;left:0;top:0;transform-origin:0 0}
+#br{width:1920px;height:1160px}
+#brwin{position:absolute;inset:0;border-radius:28px;background:#fff;overflow:hidden;box-shadow:0 60px 140px -50px rgba(15,17,26,.38),0 0 0 1.5px rgba(11,12,16,.08)}
+#brtop{position:absolute;left:0;top:0;width:1920px;height:80px;background:#fafafb;border-bottom:1.5px solid rgba(11,12,16,.07)}
+.light{position:absolute;top:30px;width:20px;height:20px;border-radius:50%}
+#brurl{position:absolute;left:510px;top:16px;width:900px;height:48px;border-radius:24px;background:#f1f2f5;display:flex;align-items:center;padding-left:20px;gap:12.5px;font-size:22.5px;font-weight:700;letter-spacing:-0.025em;white-space:nowrap}
+#brview{position:absolute;left:0;top:80px;width:1920px;height:1080px;overflow:hidden;background:#f4f5f7}
+#prog{position:absolute;left:0;top:0;height:5px;background:#5b5ce6;border-radius:0 3px 3px 0;z-index:5}
+.cursor{width:44px;height:44px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));z-index:50}
+.ripple{border-radius:50%;border:4px solid #5b5ce6;z-index:49}
+.fp{position:absolute;left:0;top:0;width:1920px;will-change:transform}
+.fp .sec{position:absolute;left:0;width:1920px;height:1080px}
+.fp .nav{position:absolute;left:320px;top:16px;width:1280px;height:56px;border-radius:28px;background:rgba(255,255,255,.85);box-shadow:0 0 0 1.5px rgba(11,12,16,.07)}
+.fp .bar{position:absolute;border-radius:8px;background:#d9dce4}
+.fp .ink{background:#0b0c10}.fp .acc{background:#5b5ce6}
+.fp .card{position:absolute;border-radius:28px;background:#fff;box-shadow:0 30px 70px -36px rgba(15,17,26,.28),0 0 0 1.5px rgba(11,12,16,.06)}
+#ph{width:458px;height:960px}
+#phbody{position:absolute;inset:0;border-radius:76px;background:#0b0c10;box-shadow:0 60px 120px -40px rgba(15,17,26,.5),0 0 0 2px rgba(255,255,255,.12) inset}
+#phscr{position:absolute;left:14px;top:14px;width:430px;height:932px;border-radius:62px;overflow:hidden;background:#f4f5f7}
+#island{position:absolute;left:166px;top:26px;width:126px;height:36px;border-radius:18px;background:#0b0c10}
+.ps{position:absolute;left:0;top:0;width:430px;height:932px}
+.ps i{position:absolute;display:block;border-radius:20px}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same helper set used across the library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const BLOBS = [['#dfe3ff', .62], ['#ffe1ec', .56], ['#dff6ff', .5]].map(([c, s]) => { const b = el('div', 'blob'); S(b, { background: c, width: px(s * Math.max(W, H)), height: px(s * Math.max(W, H)) }); return b })
+function drawBlobs(t) {
+  const M = Math.max(W, H), tf = (e, x, y) => { e.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)' }
+  tf(BLOBS[0], -0.16 * M + Math.sin(t * 0.35) * 40, -0.2 * M + Math.cos(t * 0.3) * 30); BLOBS[0].style.opacity = 0.75
+  tf(BLOBS[1], W - 0.34 * M + Math.cos(t * 0.28) * 40, H * 0.3 + Math.sin(t * 0.33) * 40); BLOBS[1].style.opacity = 0.62
+  tf(BLOBS[2], W * 0.25 + Math.sin(t * 0.25 + 1) * 50, H - 0.3 * M + Math.cos(t * 0.31) * 30); BLOBS[2].style.opacity = 0.65
+}
+const tf = (e, x, y, s = 1) => { e.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')' }
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+function mkBrowser(parent) {
+  const br = el('div', 'abs0', parent); br.id = 'br'
+  br.innerHTML = '<div id="brwin"><div id="brtop"><i class="light" style="left:30px;background:#ff5f57"></i><i class="light" style="left:62px;background:#febc2e"></i><i class="light" style="left:94px;background:#28c840"></i><div id="brurl"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8a8e99" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="brurltext"></span></div></div><div id="brview"></div></div>'
+  return { br, view: br.querySelector('#brview'), url: br.querySelector('#brurltext'), urlbox: br.querySelector('#brurl') }
+}
+// stand-in for the page screenshot: four 1080px sections drawn with CSS
+function fauxPage(parent) {
+  const fp = el('div', 'fp', parent), r = (c, x, y, w, h, ex) => '<div class="' + c + '" style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;' + (ex || '') + '"></div>'
+  const tint = ['#dfe3ff', '#ffe1ec', '#dff6ff', '#e6f7ec']
+  const s1 = r('bar ink', 190, 150, 640, 40) + [0, 1, 2, 3, 4, 5].map((k) => r('card', 150 + k * 280, 300, 250, 440, 'background:linear-gradient(170deg,' + ['#2f9e6f', '#1f7a6a', '#c2491d', '#6d3fd1', '#4338ca', '#be185d'][k] + ',#0b0c10)')).join('')
+  const s2 = r('bar ink', 190, 150, 520, 40) + r('card', 190, 280, 760, 330, 'background:#0b0c10') + r('bar acc', 240, 330, 220, 70) + [0, 1, 2].map((k) => r('card', 190 + k * 262, 650, 236, 200)).join('') + r('card', 1010, 280, 700, 570)
+  const s3 = r('bar ink', 190, 150, 600, 40) + r('card', 1010, 200, 640, 700) + [0, 1, 2, 3].map((k) => r('bar', 1060, 260 + k * 130, 540, 60, 'background:#eef0f4')).join('') + r('bar ink', 1060, 790, 540, 60, 'border-radius:30px') + r('bar', 190, 250, 600, 18) + r('bar', 190, 284, 520, 18)
+  fp.innerHTML = '<div class="sec" style="top:0;background:linear-gradient(135deg,' + tint[0] + ' 0%,#f4f5f7 55%)">' + r('nav', 320, 16, 1280, 56) + r('bar ink', 190, 330, 560, 44) + r('bar ink', 190, 396, 480, 44) + r('bar', 190, 470, 520, 18) + r('bar', 190, 504, 440, 18) + r('bar ink', 190, 580, 150, 52, 'border-radius:26px') + r('card', 1180, 180, 520, 700, 'background:linear-gradient(160deg,#2a2d3a,#0b0c10)') + '</div>' +
+    [s1, s2, s3].map((s, i) => '<div class="sec" style="top:' + (i + 1) * 1080 + 'px;background:linear-gradient(135deg,' + tint[i + 1] + ' 0%,#f4f5f7 55%)">' + s + '</div>').join('')
+  return fp
+}
+const U = W / (TALL ? 1080 : 1920), DW = W / U, DH = H / U
+const L = TALL ? { G: { x: 50, y: 500, w: 980 }, ph: { x: 610, y: 1010, w: 410 } } : { G: { x: 700, y: 150, w: 1130 }, ph: { x: 1616, y: 414, w: 250 } }   // the original's "section mode" layout
+const BH = 1160, PW = 458
+const DUR = 8
+window.DUR = DUR
+const loopFade = (t, d) => Math.min(seg(t, 0, .25), 1 - seg(t, d - .3, d))
+const ST = [0, 1.6, 3.4, 5.2], SCROLL = [0, 980, 2060, 3140]
+const world = el('div'); S(world, { position: 'absolute', left: 0, top: 0, width: px(DW), height: px(DH), transformOrigin: '0 0', transform: 'scale(' + U + ')' })
+const B = mkBrowser(world); B.url.textContent = 'yourname.example'
+const strip = fauxPage(B.view)
+const ph = el('div', 'abs0', world); ph.id = 'ph'
+ph.innerHTML = '<div id="phbody"></div><div id="phscr"></div><div id="island"></div>'
+const scr = ph.querySelector('#phscr')
+const shapes = [  // four stand-in phone screens: [x, y, w, h, colour]
+  [[30, 150, 300, 36, '#0b0c10'], [30, 210, 240, 36, '#0b0c10'], [30, 290, 360, 20, '#d9dce4'], [30, 330, 320, 20, '#d9dce4'], [30, 420, 380, 460, 'linear-gradient(160deg,#2a2d3a,#0b0c10)']],
+  [[30, 150, 300, 36, '#0b0c10'], ...[0, 1, 2, 3].map((k) => [30 + (k % 2) * 200, 240 + Math.floor(k / 2) * 330, 180, 300, ['#2f9e6f', '#6d3fd1', '#c2491d', '#4338ca'][k]])],
+  [[30, 150, 300, 36, '#0b0c10'], [30, 240, 370, 240, '#0b0c10'], [50, 280, 160, 60, '#5b5ce6'], [30, 520, 170, 150, '#fff'], [230, 520, 170, 150, '#fff'], [30, 700, 370, 150, '#fff']],
+  [[30, 150, 300, 36, '#0b0c10'], ...[0, 1, 2, 3].map((k) => [30, 250 + k * 120, 370, 84, '#eef0f4']), [30, 760, 370, 80, '#0b0c10']],
+]
+const imgs = shapes.map((sh, j) => { const d = el('div', 'ps', scr); d.style.background = 'linear-gradient(135deg,' + ['#dfe3ff', '#ffe1ec', '#dff6ff', '#e6f7ec'][j] + ',#f4f5f7 60%)'; d.innerHTML = sh.map(([x, y, w, h, c]) => '<i style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;background:' + c + '"></i>').join(''); return d })
+const secIndex = (t) => { let i = 0; for (let j = 0; j < ST.length; j++) if (t >= ST[j]) i = j; return i }
+const scrollAt = (t) => { const i = secIndex(t); if (i === 0) return 0; return lerp(SCROLL[i - 1], SCROLL[i], eio(seg(t, ST[i], ST[i] + .85))) }
+
+function render(t) {
+  drawBlobs(t)
+  const exit = eio(seg(t, DUR - .5, DUR))
+  B.br.style.opacity = loopFade(t, DUR)
+  B.br.style.transform = 'translate(' + L.G.x + 'px,' + L.G.y + 'px) scale(' + L.G.w / 1920 + ')'
+  strip.style.transform = 'translateY(' + -scrollAt(t) + 'px)'
+  // phone: rises 120px and fades in 0.7s, ease-out-cubic
+  const psc = L.ph.w / PW, pin = eo(seg(t, .3, 1.0))
+  ph.style.opacity = pin * (1 - exit)
+  tf(ph, L.ph.x, L.ph.y + (1 - pin) * 120 + exit * 40, psc)
+  // screens: the current one fades up from 46px below, the previous one stays underneath until it is covered
+  const si = secIndex(t)
+  imgs.forEach((im, j) => {
+    if (j === si) { const k = j === 0 ? 1 : eo(seg(t, ST[j] + .18, ST[j] + .6)); im.style.opacity = k; im.style.transform = 'translateY(' + (1 - k) * 46 + 'px)'; im.style.zIndex = 2 }
+    else if (j === si - 1) { im.style.opacity = 1; im.style.transform = 'none'; im.style.zIndex = 1 }
+    else { im.style.opacity = 0; im.style.zIndex = 0 }
+  })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

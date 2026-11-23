@@ -1,0 +1,37 @@
+{
+  "slug": "dino-runner-game-over-then-endless-run__pixel-canvas-scripted-jumps",
+  "visual_name": "Dino runner: game over, then the endless run",
+  "code_name": "Pixel canvas, scripted jumps on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A video, 9:16 and 16:9, in the look of the offline dino game: the brand is the dino, obstacles are cacti, it hits one and restarts again and again, then runs at 2x through YourBrand, hits the chrome monogram and cuts to a black end card with the chrome logo.",
+  "tags": [
+    "kinetic-type",
+    "transition",
+    "end-card",
+    "logo",
+    "voice",
+    "sfx",
+    "game",
+    "reel",
+    "dark"
+  ],
+  "tech": [
+    "canvas-2d",
+    "pixel-art",
+    "word-timed-captions"
+  ],
+  "duration_sec": 34,
+  "has_sound": true,
+  "demo_kind": "original-build",
+  "aliases": [
+    "dino",
+    "dino game",
+    "dinosaur",
+    "cactus",
+    "game over",
+    "runner",
+    "x video",
+    "horizontal",
+    "endless run"
+  ]
+}

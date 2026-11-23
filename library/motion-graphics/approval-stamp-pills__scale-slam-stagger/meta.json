@@ -1,0 +1,21 @@
+{
+  "slug": "approval-stamp-pills__scale-slam-stagger",
+  "visual_name": "Approval stamp pills",
+  "code_name": "Scale slam stagger",
+  "category": "motion-graphics",
+  "summary": "Dark glowing pills with a green status dot reading Approved or Live slam onto a wall of video covers one after another, each starting 1.8x large and a few degrees off, then settling.",
+  "tags": [
+    "card",
+    "dark",
+    "glow",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 3.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

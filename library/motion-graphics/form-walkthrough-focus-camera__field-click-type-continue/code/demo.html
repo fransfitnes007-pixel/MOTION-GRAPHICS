@@ -1,0 +1,140 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Form walkthrough with a camera that follows the action</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#f4f5f7;color:#0b0c10;letter-spacing:-0.02em}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(110px)}
+.abs0{position:absolute;left:0;top:0;transform-origin:0 0}
+#br{width:1440px;height:964px}
+#brwin{position:absolute;inset:0;border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 50px 120px -44px rgba(15,17,26,.38),0 0 0 1.2px rgba(11,12,16,.08)}
+#brtop{position:absolute;left:0;top:0;width:1440px;height:64px;background:#fafafb;border-bottom:1.2px solid rgba(11,12,16,.07)}
+.light{position:absolute;top:24px;width:16px;height:16px;border-radius:50%}
+#brurl{position:absolute;left:370px;top:13px;width:700px;height:38px;border-radius:19px;background:#f1f2f5;display:flex;align-items:center;padding-left:16px;gap:10px;font-size:18px;font-weight:600;white-space:nowrap;letter-spacing:-0.01em}
+#brview{position:absolute;left:0;top:64px;width:1440px;height:900px;overflow:hidden;background:#f4f5f7}
+.cursor{width:40px;height:40px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.28));z-index:50}
+.ripple{border-radius:50%;border:4px solid #5b5ce6;z-index:49}
+.pg{position:absolute;left:0;top:0;width:1440px;background:linear-gradient(135deg,#e9ebff,#f4f5f7 55%)}
+.pg i{position:absolute;display:block}
+.fld{background:#fff;border-radius:12px;box-shadow:0 0 0 1.5px rgba(11,12,16,.12)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const BLOBS = [['#dfe3ff', .62], ['#ffe1ec', .56], ['#dff6ff', .5]].map(([c, s]) => { const b = el('div', 'blob'); S(b, { background: c, width: px(s * Math.max(W, H)), height: px(s * Math.max(W, H)) }); return b })
+function drawBlobs(t) {
+  const M = Math.max(W, H), tf = (e, x, y) => { e.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)' }
+  tf(BLOBS[0], -0.16 * M + Math.sin(t * 0.35) * 40, -0.2 * M + Math.cos(t * 0.3) * 30); BLOBS[0].style.opacity = 0.75
+  tf(BLOBS[1], W - 0.34 * M + Math.cos(t * 0.28) * 40, H * 0.3 + Math.sin(t * 0.33) * 40); BLOBS[1].style.opacity = 0.62
+  tf(BLOBS[2], W * 0.25 + Math.sin(t * 0.25 + 1) * 50, H - 0.3 * M + Math.cos(t * 0.31) * 30); BLOBS[2].style.opacity = 0.65
+}
+const tf = (e, x, y, s = 1) => { e.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')' }
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const U = W / (TALL ? 1080 : 1920), DW = W / U, DH = H / U
+const GW = TALL ? 980 : 1250, SC = GW / 1440, BH = 964, VIEW_H = 900
+const G = { x: (DW - GW) / 2, y: (DH - BH * SC) / 2, w: GW }
+const T0 = .8, STEP = 2.6, N = 3, END = T0 + N * STEP
+const DUR = END + .7
+window.DUR = DUR
+const loopFade = (t, d) => Math.min(seg(t, 0, .25), 1 - seg(t, d - .3, d))
+// each step: where the field is, where Continue is, how the click or typing changes the screen
+const STEPS = [
+  { type: 'type', field: { x: 190, y: 330, w: 640, h: 56 }, btn: { x: 700, y: 470, w: 150, h: 48 }, ph: 900 },
+  { type: 'type', field: { x: 190, y: 260, w: 300, h: 56 }, btn: { x: 700, y: 1010, w: 150, h: 48 }, ph: 1320 },
+  { type: 'click', field: { x: 190, y: 300, w: 120, h: 70 }, btn: { x: 700, y: 560, w: 150, h: 48 }, ph: 900 },
+]
+STEPS.forEach((s) => { s.Z = 1.42; s.fo = { x: 650, y: (s.field.y + s.field.h / 2 + s.btn.y) / 2 }; s.sB = Math.max(0, s.btn.y + s.btn.h + 70 - VIEW_H); s.F = { x: s.field.x + Math.min(s.field.w * .35, 150), y: s.field.y + s.field.h / 2 }; s.C = { x: s.btn.x + s.btn.w / 2, y: s.btn.y + s.btn.h / 2 } })
+const world = el('div'); S(world, { position: 'absolute', left: 0, top: 0, width: px(DW), height: px(DH), transformOrigin: '0 0', transform: 'scale(' + U + ')' })
+const br = el('div', 'abs0', world); br.id = 'br'
+br.innerHTML = '<div id="brwin"><div id="brtop"><i class="light" style="left:24px;background:#ff5f57"></i><i class="light" style="left:50px;background:#febc2e"></i><i class="light" style="left:76px;background:#28c840"></i><div id="brurl"><span id="brurltext"></span></div></div><div id="brview"></div></div>'
+const view = br.querySelector('#brview'), urlText = br.querySelector('#brurltext')
+const cam = el('div', 'abs0', view); S(cam, { width: '1440px', height: '900px' })
+// stand-in screens: a card with a title, a few fields, and Continue; "b" is the screen after the click or typing
+const box = (x, y, w, h, st, cls) => '<i class="' + (cls || '') + '" style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;' + (st || '') + '"></i>'
+function screen(i, filled) {
+  const s = STEPS[i], d = el('div', 'pg abs0', cam); d.style.height = s.ph + 'px'
+  let h = box(160, 90, 720, s.ph - 180, 'background:#fff;border-radius:28px;box-shadow:0 30px 70px -36px rgba(15,17,26,.28)') + box(190, 130, 220, 28, 'background:#0b0c10;border-radius:8px') + box(190, 176, 520, 14, 'background:#d9dce4;border-radius:7px')
+  const fields = i === 0 ? [[190, 330, 640, 56]] : i === 1 ? [[190, 260, 300, 56], [530, 260, 300, 56], [190, 380, 640, 56], [190, 500, 640, 150], [190, 700, 640, 56]] : []
+  fields.forEach((f, k) => { h += box(f[0], f[1], f[2], f[3], '', 'fld') + (filled && k < 3 ? box(f[0] + 18, f[1] + f[3] / 2 - 7, f[2] * (k == 2 ? .6 : .55), 14, 'background:#8a8e99;border-radius:7px') : '') })
+  if (i === 2) { ['#5b5ce6', '#e0572a', '#2f9e6f', '#be185d', '#2563eb', '#b8860b'].forEach((c, k) => { h += box(190 + k * 108, 300, 90, 70, 'border-radius:16px;background:linear-gradient(135deg,' + c + ',#0b0c10);box-shadow:' + (filled && k === 1 ? '0 0 0 4px #0b0c10' : 'none')) }); h += box(190, 420, 640, 60, 'background:#eef0f4;border-radius:14px') }
+  h += box(s.btn.x, s.btn.y, s.btn.w, s.btn.h, 'background:#0b0c10;border-radius:24px')
+  h += box(920, 90, 460, 640, 'border-radius:28px;background:' + (i === 2 && filled ? 'linear-gradient(160deg,#ffe8dc,#fff7f1)' : 'linear-gradient(160deg,#dfe3ff,#f4f6ff)') + ';box-shadow:0 30px 70px -36px rgba(15,17,26,.2)') + box(950, 140, 220, 30, 'background:#0b0c10;border-radius:8px') + box(950, 200, 300, 14, 'background:#cfd2dc;border-radius:7px')
+  d.innerHTML = h; return d
+}
+const imgs = STEPS.map((s, i) => ({ a: screen(i, false), b: screen(i, true) }))
+const cur = el('div', 'abs0', cam); cur.innerHTML = '<svg class="abs0 cursor" viewBox="0 0 24 24"><path d="M5 3l14 8.2-6.1 1.5 3.6 6.6-2.6 1.4-3.6-6.6L5.8 18.6z" fill="#0b0c10" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>'; cur.style.zIndex = 50
+const rip = el('div', 'abs0 ripple', cam)
+urlText.textContent = 'yourname.example/setup'
+
+function render(t) {
+  drawBlobs(t)
+  const i = clamp(Math.floor((t - T0) / STEP), 0, N - 1), Ti = T0 + i * STEP, q = t - Ti, st = STEPS[i], prev = i > 0 ? STEPS[i - 1] : null
+  // window: pops in over 0.7s, goes out after the last step
+  const appear = eo(seg(t, T0 - .75, T0 - .05)), exit = eio(seg(t, END, END + .5)), f = lerp(.92, 1, appear) * lerp(1, .95, exit)
+  br.style.opacity = appear * (1 - exit)
+  tf(br, G.x + (1 - f) * G.w / 2, G.y + (1 - f) * BH * SC / 2 + exit * 30, SC * f)
+  // screens: previous step's "after" underneath, this step's "before", then its "after"
+  const scroll = st.sB * eio(seg(q, 1.3, 1.75))
+  imgs.forEach((im) => { im.a.style.display = 'none'; im.b.style.display = 'none' })
+  if (prev && q < .45) { const pb = imgs[i - 1].b; pb.style.display = 'block'; pb.style.opacity = 1; pb.style.zIndex = 1; pb.style.transform = 'translateY(' + -prev.sB + 'px)' }
+  const kin = i === 0 ? 1 : eo(seg(q, 0, .4))
+  const A = imgs[i].a, Bb = imgs[i].b
+  A.style.display = 'block'; A.style.zIndex = 2; A.style.opacity = kin; A.style.transform = 'translateY(' + ((1 - kin) * 28 - scroll) + 'px)'
+  const kb = seg(q, .95, 1.3)
+  Bb.style.display = kb > 0 ? 'block' : 'none'; Bb.style.zIndex = 3; Bb.style.opacity = kb; Bb.style.transform = 'translateY(' + -scroll + 'px)'
+  // camera: push in on the part of the screen being used, and glide between steps
+  const ck = eio(seg(q, 0, .6)), g = eio(seg(t, T0 - .2, T0 + .6)) * (1 - eio(seg(t, END - .35, END)))
+  const pf = prev ? { x: prev.fo.x, y: prev.fo.y - prev.sB, z: prev.Z } : { x: st.fo.x, y: st.fo.y, z: st.Z }
+  const z = 1 + (lerp(pf.z, st.Z, ck) - 1) * g, fx = lerp(pf.x, st.fo.x, ck), fy = lerp(pf.y, st.fo.y - scroll, ck)
+  tf(cam, clamp(720 - fx * z, 1440 - 1440 * z, 0), clamp(450 - fy * z, 900 - 900 * z, 0), z)
+  // cursor, in view coordinates: to the field, click, then to Continue, click
+  const start = prev ? { x: prev.C.x, y: prev.C.y - prev.sB } : { x: 1040, y: 660 }
+  let cx = start.x, cy = start.y
+  const k1 = eio(seg(q, .25, .85)); cx = lerp(start.x, st.F.x, k1); cy = lerp(start.y, st.F.y, k1) - scroll
+  const k2 = eio(seg(q, 1.5, 2.05)); cx = lerp(cx, st.C.x, k2); cy = lerp(cy, st.C.y - scroll, k2)
+  const pressF = q >= .86 && q < 1.0, pressC = q >= 2.16 && q < 2.32
+  cur.style.opacity = seg(t, T0 - .1, T0 + .2) * (1 - exit)
+  tf(cur, cx - 4, cy - 3, pressF || pressC ? .82 : 1)
+  let rk = 0, rx = 0, ry = 0
+  if (q >= .9 && q < 1.35) { rk = seg(q, .9, 1.35); rx = st.F.x; ry = st.F.y - scroll }
+  if (q >= 2.2) { rk = seg(q, 2.2, 2.6); rx = st.C.x; ry = st.C.y - scroll }
+  const rs = 14 + 60 * eo(rk)
+  S(rip, { opacity: rk > 0 && rk < 1 ? .8 * (1 - rk) : 0, width: rs + 'px', height: rs + 'px' }); tf(rip, rx - rs / 2, ry - rs / 2)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

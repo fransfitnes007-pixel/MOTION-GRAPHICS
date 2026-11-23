@@ -1,0 +1,21 @@
+{
+  "slug": "tilted-3d-poster-wall__preserve3d-translatez-drift",
+  "visual_name": "Tilted 3D poster wall",
+  "code_name": "Preserve-3d grid with staggered translateZ and drift",
+  "category": "motion-graphics",
+  "summary": "A 4 by 4 wall of tall video posters tilted in 3D, each tile flying in from far behind in a diagonal ripple, while the whole wall drifts upward.",
+  "tags": [
+    "3d",
+    "background",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "perspective"
+  ],
+  "duration_sec": 3.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

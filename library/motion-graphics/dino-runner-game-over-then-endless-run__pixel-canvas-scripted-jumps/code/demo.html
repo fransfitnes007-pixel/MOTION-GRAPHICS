@@ -1,0 +1,202 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dino runner, game over then endless run</title>
+<!-- A 9:16 short video. The brand is the dino, obstacles are the cacti. Every frame is a pure function of time: window.render(t).
+     URL params: ?w=1080&h=1920&render=1. Everything you would change is in CONFIG. -->
+<style>
+@font-face{font-family:'SFD';font-weight:700;src:local('SF Pro Display Bold'),local('SFProDisplay-Bold'),local('Inter Bold'),local('Helvetica Neue Bold'),local('Arial Bold'),url('fonts/Display-Bold.ttf')}
+@font-face{font-family:'SFD';font-weight:600;src:local('SF Pro Display Semibold'),local('SFProDisplay-Semibold'),local('Inter SemiBold'),local('Helvetica Neue Medium'),local('Arial Bold'),url('fonts/Display-Semibold.ttf')}
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="c"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script>
+(async () => {
+'use strict'
+const CONFIG = {
+  brandTag: 'YOUR BRAND',                 // label over the dino
+  cactusTag: 'BAD OBSTACLE',            // label over the first cactus
+  fails: ['BLOCKED YOU', 'MISSED THE TARGET', 'BROKE EVERYTHING'], // the three that end the run
+  wins: ['CHECKED', 'PLAN LANDED', 'SHIPPED', 'ON TIME', 'APPROVED'], // pops in the endless run
+  throughLine: 'RUNNING THROUGH YOURBRAND',
+  endLines: ['Keep going.', 'Never stop.'],
+  site: 'yourbrand.com',
+  // Dark theme: black page, #0e0e10 cards, #26262a borders, #a1a1aa muted, white ink, chrome logo.
+  ink: '#8b8b93', bright: '#ffffff', paper: '#000000', card: '#161619', border: '#26262a', muted: '#a1a1aa', silver: '#d4d4d8', dark: '#0b0c10',
+  speed1: 125, speed2: 270,               // game pixels per second, before and with YourBrand
+  // Short-video apps cover the right edge (buttons) and the bottom (caption, profile): keep type inside this box.
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+const WORDS = [[0.0, 0.28, "Every"], [0.28, 0.54, "team"], [0.54, 0.96, "building"], [0.96, 1.42, "another"], [1.42, 1.92, "prototype"], [1.92, 2.24, "is"], [2.24, 2.54, "playing"], [2.54, 2.78, "this"], [2.78, 3.06, "game."], [3.58, 3.76, "You're"], [3.76, 3.9, "the"], [3.9, 4.12, "dino."], [4.58, 4.76, "The"], [4.76, 5.06, "cactus"], [5.06, 5.36, "is"], [5.36, 5.52, "a"], [5.52, 5.7, "bad"], [5.7, 6.14, "obstacle."], [6.52, 6.74, "You"], [6.74, 6.88, "dodge"], [6.88, 7.18, "one."], [7.6, 7.7, "You"], [7.7, 7.86, "dodge"], [7.86, 8.22, "two."], [8.76, 8.9, "Then"], [8.9, 9.1, "one"], [9.1, 9.4, "blocks"], [9.4, 9.74, "you,"], [9.86, 10.1, "misses"], [10.1, 10.32, "the"], [10.32, 10.5, "target,"], [10.68, 10.82, "and"], [10.82, 11.08, "breaks"], [11.08, 11.5, "everything."], [12.12, 12.24, "Game"], [12.24, 12.52, "over."], [12.94, 13.16, "So"], [13.16, 13.28, "you"], [13.28, 13.6, "restart."], [14.04, 14.12, "New"], [14.12, 14.5, "attempts."], [15.16, 15.3, "Same"], [15.3, 15.76, "cactus."], [16.28, 16.56, "Every"], [16.56, 16.96, "single"], [16.96, 17.48, "time."], [18.02, 18.18, "Now"], [18.18, 18.38, "watch"], [18.38, 18.58, "the"], [18.58, 18.84, "same"], [18.84, 19.16, "game"], [19.16, 19.52, "running"], [19.52, 19.82, "through"], [19.82, 20.26, "YourBrand."], [20.76, 21.06, "Every"], [21.06, 21.28, "bad"], [21.28, 21.76, "obstacle"], [21.76, 22.26, "cleared"], [22.26, 22.56, "before"], [22.56, 22.74, "you"], [22.74, 23.0, "ever"], [23.0, 23.2, "meet"], [23.2, 23.52, "them."], [23.9, 24.08, "Plans"], [24.08, 24.2, "that"], [24.2, 24.54, "land."], [25.32, 25.32, "Work"], [25.32, 25.52, "that"], [25.52, 25.96, "actually"], [25.96, 26.36, "ships."], [26.88, 27.04, "The"], [27.04, 27.28, "dino"], [27.28, 27.56, "doesn't"], [27.56, 27.9, "restart"], [27.9, 28.24, "anymore."], [28.24, 28.76, "It"], [28.76, 28.92, "just"], [28.92, 29.3, "doesn't"], [29.3, 29.64, "stop."], [30.2, 30.52, "YourBrand,"], [31.02, 31.12, "keep"], [31.12, 31.8, "going."], [32.18, 32.34, "Never"], [32.34, 32.64, "stop."]]
+const Q = new URLSearchParams(location.search), W = +(Q.get('w') || 1080), H = +(Q.get('h') || 1920)
+const stage = document.getElementById('stage'); stage.style.width = W + 'px'; stage.style.height = H + 'px'
+const cv = document.getElementById('c'); cv.width = W; cv.height = H
+const X = cv.getContext('2d')
+// Two layouts: tall 1080x1920 for vertical feeds, wide 1920x1080 for landscape players.
+const WIDE = W > H, DW = WIDE ? 1920 : 1080, DH = WIDE ? 1080 : 1920
+if (WIDE) CONFIG.safe = { left: 70, right: 1850, top: 40, bottom: 1040 }
+const CXM = (CONFIG.safe.left + CONFIG.safe.right) / 2, CAPY = WIDE ? 968 : 1400, TITLEY = WIDE ? 56 : 330
+const K = Math.min(W / DW, H / DH), OX = (W - DW * K) / 2, OY = (H - DH * K) / 2
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3), back = (x) => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2)
+const rng = (s) => () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646
+const img = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src })
+const [gDark, gLight, wordLight] = await Promise.all([BRAND_ASSETS.MARK_DARK, BRAND_ASSETS.MARK_LIGHT, BRAND_ASSETS.WORD_LIGHT].map(img))
+try { await Promise.all([document.fonts.load("700 40px SFD"), document.fonts.load("600 40px SFD")]) } catch (e) {}
+
+// ---------- the game, drawn small and scaled up 3x with hard pixels
+const GW = WIDE ? 384 : 216, GH = 150, S = 5, BY = WIDE ? 150 : 560, GROUND = 118, DX = WIDE ? 70 : 26
+const g = document.createElement('canvas'); g.width = GW; g.height = GH
+const G = g.getContext('2d'); G.imageSmoothingEnabled = false
+const DINO = ['............########..','...........##########.','...........##.#######.','...........##########.','...........##########.','...........#####......','...........########...','#.........#####.......','#........######.......','##.....#########......','###...##########.#....','################......','################......','.##############.......','..############........','...##########.........','....########..........','.....###.###..........','.....##...##..........','.....#....#...........','.....##...##..........']
+function dino(x, y, color, frame, dead) {
+  G.fillStyle = color
+  DINO.forEach((row, r) => { for (let c = 0; c < row.length; c++) if (row[c] === '#') { if (r >= 18 && frame === 1 && c < 8) continue; if (r >= 18 && frame === 2 && c >= 8) continue; G.fillRect(x + c, y + r, 1, 1) } })
+  if (dead) { G.clearRect(x + 12, y + 1, 4, 4); G.fillStyle = color; G.fillRect(x + 12, y + 1, 1, 1); G.fillRect(x + 15, y + 1, 1, 1); G.fillRect(x + 13, y + 2, 2, 2); G.fillRect(x + 12, y + 4, 1, 1); G.fillRect(x + 15, y + 4, 1, 1) }
+}
+function cactus(x, h, color) {
+  G.fillStyle = color
+  G.fillRect(x, GROUND - h, 5, h); G.fillRect(x + 1, GROUND - h - 1, 3, 1)
+  const a = Math.round(h * 0.45)
+  G.fillRect(x - 4, GROUND - a - 6, 2, 7); G.fillRect(x - 4, GROUND - a, 4, 2)
+  G.fillRect(x + 7, GROUND - a - 10, 2, 8); G.fillRect(x + 5, GROUND - a - 3, 4, 2)
+}
+const R0 = rng(11), SPECK = Array.from({ length: 90 }, () => [R0() * 2000, 3 + R0() * 8, 1 + Math.floor(R0() * 3)])
+const CLOUDS = Array.from({ length: 6 }, (_, i) => [i * 330 + R0() * 120, 30 + R0() * 50])
+function ground(scroll, color) {
+  G.fillStyle = color; G.fillRect(0, GROUND, GW, 1)
+  for (const [x, y, w] of SPECK) { const px = ((x - scroll) % 2000 + 2000) % 2000; if (px < GW) G.fillRect(px, GROUND + y, w, 1) }
+  G.globalAlpha = 0.35
+  for (const [x, y0] of CLOUDS) { const y = y0 - 12, px = ((x - scroll * 0.25) % 1980 + 1980) % 1980 - 40; G.fillRect(px + 4, y, 16, 1); G.fillRect(px, y + 3, 30, 1); G.fillRect(px + 2, y + 1, 3, 2); G.fillRect(px + 19, y + 1, 5, 2) }
+  G.globalAlpha = 1
+}
+const JUMP = 0.56, jumpY = (t, at) => { const p = (t - at) / JUMP + 0.5; return p > 0 && p < 1 ? 46 * 4 * p * (1 - p) : 0 }
+const gtext = (s, x, y, size, color, align = 'left') => { G.font = `bold ${size}px ui-monospace,Menlo,monospace`; G.fillStyle = color; G.textAlign = align; G.textBaseline = 'alphabetic'; G.fillText(s, x, y) }
+const pad5 = (n) => String(Math.floor(n)).padStart(5, '0')
+
+// ---------- timeline, from the voiceover's word times
+const T = { tagDino: 3.6, tagCactus: 4.6, j1: 6.95, j2: 8.0, fail: [8.9, 9.75, 10.75], hit: 12.1, restart: 12.95, part2: 18.0, slam: [16.28, 16.56, 16.96, 17.95], wall: 29.75, end: 30.0, dur: 34 }
+const s1 = CONFIG.speed1, s2 = CONFIG.speed2
+const C1 = [[T.j1, 30], [T.j2, 34]].map(([t, h]) => ({ x: s1 * t + DX + 8, h }))
+const TRIPLE = [0, 12, 24].map((o, i) => ({ x: s1 * T.hit + DX + 20 + o, h: 30 + (i === 1 ? 8 : 0) }))
+// The restart montage: a run that ends in the same cactus, faster each time.
+const RUNS = [[13.0, 14.05], [14.3, 15.25], [15.5, 16.3], [16.5, 16.95], [17.1, 17.45], [17.58, 17.85]]
+// The endless run: a jump every beat until the G.
+const J2 = []; for (let t = T.part2 + 0.75, i = 0; t < T.wall - 0.5; t += 0.74 - 0.012 * Math.min(i, 8), i++) J2.push(t)
+const C2 = J2.map((t, i) => ({ x: s2 * (t - T.part2) + DX + 8, h: 26 + (i * 7) % 14, double: i % 3 === 2 }))
+
+function pill(text, cx, cy, size, bg, fg, a = 1, scale = 1) {
+  if (a <= 0) return
+  X.save(); X.globalAlpha = a; X.translate(cx, cy); X.scale(scale, scale)
+  X.font = `${size < 34 ? 600 : 700} ${size}px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif`; const w = X.measureText(text).width + size * 1.1, h = size * 1.75
+  X.fillStyle = bg; X.beginPath(); X.roundRect(-w / 2, -h / 2, w, h, h / 2); X.fill()
+  if (bg !== CONFIG.bright) { X.strokeStyle = 'rgba(255,255,255,.16)'; X.lineWidth = 2; X.stroke() }
+  X.fillStyle = fg; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(text, 0, size * 0.06); X.restore()
+}
+// Captions: three words at a time, the current one dark, hot words in colour.
+const CH = []; for (let i = 0; i < WORDS.length;) { let j = i; while (j < WORDS.length && j - i < 3 && !/[.,?!]$/.test(WORDS[j - 1 < i ? i : j - 1][2]) || j === i) j++; CH.push([i, j]); i = j }
+const HOT = { bad: 1, yourbrand: 1, over: 1, everything: 1, restart: 1 }
+function captions(t, light) {
+  const c = CH.find(([a, b]) => t >= WORDS[a][0] - 0.08 && t < WORDS[b - 1][1] + 0.28); if (!c || (t > T.slam[0] - 0.1 && t < T.slam[3])) return
+  const ws = WORDS.slice(c[0], c[1]); X.font = '700 84px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.textBaseline = 'middle'
+  const sp = 20, widths = ws.map((w) => X.measureText(w[2]).width), total = widths.reduce((a, b) => a + b, 0) + sp * (ws.length - 1)
+  const cxm = CXM; let x = cxm - total / 2
+  const pop = back(seg(t, WORDS[c[0]][0] - 0.08, WORDS[c[0]][0] + 0.1))
+  X.save(); X.translate(cxm, CAPY); X.scale(0.9 + 0.1 * pop, 0.9 + 0.1 * pop); X.translate(-cxm, -CAPY)
+  ws.forEach((w, i) => { const on = t >= w[0] - 0.03, key = w[2].toLowerCase().replace(/[^a-z]/g, ''); X.textAlign = 'left'; X.fillStyle = on ? (HOT[key] ? CONFIG.bright : CONFIG.silver) : 'rgba(161,161,170,.38)'; if (on && HOT[key]) { X.shadowColor = 'rgba(255,255,255,.55)'; X.shadowBlur = 26 } X.fillText(w[2], x, CAPY); X.shadowBlur = 0; x += widths[i] + sp })
+  X.restore()
+}
+
+function render(t) {
+  t = ((t % T.dur) + T.dur) % T.dur
+  X.setTransform(1, 0, 0, 1, 0, 0); X.fillStyle = CONFIG.paper; X.fillRect(0, 0, W, H)
+  X.setTransform(K, 0, 0, K, OX, OY)
+  { const hz = X.createRadialGradient(DW / 2, BY + 200, 40, DW / 2, BY + 200, 900); hz.addColorStop(0, 'rgba(255,255,255,.07)'); hz.addColorStop(1, 'rgba(255,255,255,0)'); X.fillStyle = hz; X.fillRect(0, 0, DW, DH) }
+  const p2 = t >= T.part2, ink = p2 ? CONFIG.bright : CONFIG.ink
+  G.clearRect(0, 0, GW, GH)
+  let scroll, dy = 0, dead = false, score = 0, over = false, restarts = 0, frame = 0
+  const overlays = []
+  if (t < T.restart) {
+    const tt = Math.min(t, T.hit); scroll = s1 * tt; dead = t >= T.hit; over = dead
+    dy = jumpY(tt, T.j1) + jumpY(tt, T.j2); score = tt * 2.5
+    ground(scroll, ink)
+    C1.forEach((c) => cactus(c.x - scroll, c.h, ink)); TRIPLE.forEach((c) => cactus(c.x - scroll, c.h, ink))
+    const cx1 = (C1[0].x - scroll) * S
+    overlays.push(() => {
+      pill(CONFIG.brandTag, DX * S + 34, BY + (GROUND - 46 - dy) * S, 34, CONFIG.bright, CONFIG.dark, seg(t, T.tagDino, T.tagDino + 0.15) * (1 - seg(t, 8.4, 8.7)), back(seg(t, T.tagDino, T.tagDino + 0.25)))
+      if (cx1 > -200) pill(CONFIG.cactusTag, clamp(cx1 + 8, DW * 0.22, DW * 0.74), BY + (GROUND - 56) * S, 34, CONFIG.card, CONFIG.muted, seg(t, T.tagCactus, T.tagCactus + 0.15) * (1 - seg(t, 6.5, 6.8)), back(seg(t, T.tagCactus, T.tagCactus + 0.25)))
+      CONFIG.fails.forEach((f, i) => { const tx = (TRIPLE[i].x - scroll) * S; pill('✕  ' + f, clamp(tx + 8, DW * 0.26, DW * 0.68), BY + (GROUND - 62) * S - 150 - i * 76, 34, CONFIG.card, CONFIG.muted, seg(t, T.fail[i], T.fail[i] + 0.12) * (1 - seg(t, T.restart - 0.15, T.restart)), back(seg(t, T.fail[i], T.fail[i] + 0.25))) })
+    })
+  } else if (!p2) {
+    const k = RUNS.findIndex(([a, b], i) => t >= a && t < (RUNS[i + 1] ? RUNS[i + 1][0] : T.part2)); const [a, b] = RUNS[Math.max(0, k)]
+    restarts = Math.max(0, k) + 1; const tt = clamp(t, a, b), sp = s1 * (1 + 0.25 * k); scroll = 5000 * (k + 1) + sp * (tt - a); dead = t >= b; over = dead; score = (tt - a) * 2.5 * (1 + k)
+    ground(scroll, ink); cactus(5000 * (k + 1) + sp * (b - a) + DX + 20 - scroll, 32 + (k % 3) * 4, ink); if (k % 2) cactus(5000 * (k + 1) + sp * (b - a) + DX + 32 - scroll, 26, ink)
+    overlays.push(() => pill(`RESTART ${restarts}`, CXM, BY - 40, 44, CONFIG.card, CONFIG.silver, 1, back(seg(t, a, a + 0.2))))
+  } else {
+    const tt = Math.min(t, T.wall); scroll = s2 * (tt - T.part2); score = 129 + (tt - T.part2) * 97
+    J2.forEach((j) => { dy += jumpY(tt, j) })
+    // Speed lines.
+    G.fillStyle = 'rgba(255,255,255,.2)'; const R = rng(5); for (let i = 0; i < 14; i++) { const y = 14 + R() * 95, x = ((R() * 700 - scroll * 1.8) % 500 + 500) % 500 - 60; G.fillRect(x, y, 24 + R() * 30, 1) }
+    ground(scroll, ink)
+    C2.forEach((c) => { const x = c.x - scroll; if (x > -30 && x < GW + 10) { cactus(x, c.h, '#4a4a50'); if (c.double) cactus(x + 11, c.h - 6, '#4a4a50') } })
+    const gx = s2 * (T.wall - T.part2) + DX + 26 - scroll; if (gx < GW + 60) overlays.push(() => { X.drawImage(gLight, gx * S - 30, BY + GROUND * S - 330, 330, 330 * gLight.height / gLight.width) })
+    overlays.push(() => {
+      const inA = seg(t, T.part2 + 0.1, T.part2 + 0.4)
+      pill(CONFIG.throughLine, CXM, BY - 40, 36, CONFIG.bright, CONFIG.dark, inA, back(inA))
+      pill('2X SPEED', CONFIG.safe.right - 140, BY + 150, 34, CONFIG.card, CONFIG.bright, inA, back(seg(t, T.part2 + 0.3, T.part2 + 0.6)))
+      J2.forEach((j, i) => { const a = seg(t, j + 0.05, j + 0.15) * (1 - seg(t, j + 0.55, j + 0.8)); if (a > 0) pill('✓ ' + CONFIG.wins[i % CONFIG.wins.length], DX * S + 220, BY + (GROUND - 40) * S - 60 - 70 * seg(t, j, j + 0.8), 34, CONFIG.card, CONFIG.bright, a, 1) })
+    })
+  }
+  frame = dead || dy > 0 ? 0 : 1 + (Math.floor(t * (p2 ? 20 : 11)) % 2)
+  dino(DX, GROUND - 21 - Math.round(dy), ink, frame, dead)
+  X.imageSmoothingEnabled = false; X.drawImage(g, 0, BY, GW * S, GH * S); X.imageSmoothingEnabled = true
+  // A hit shakes the frame red for a moment.
+  const hits = t < T.restart ? [T.hit] : RUNS.map((r) => r[1]); const hk = hits.map((h) => (t >= h ? Math.exp(-(t - h) * 9) : 0)).reduce((a, b) => Math.max(a, b), 0)
+  if (hk > 0.02 && !p2) { X.fillStyle = `rgba(255,255,255,${hk * 0.16})`; X.fillRect(0, 0, DW, DH) }
+  overlays.forEach((f) => f())
+  // EVERY. SINGLE. TIME. Each word slams in on its syllable.
+  if (t >= T.slam[0] && t < T.slam[3]) {
+    const out = 1 - seg(t, T.slam[3] - 0.12, T.slam[3]); X.save(); X.fillStyle = `rgba(0,0,0,${0.88 * out})`; X.fillRect(0, 0, DW, DH)
+    const big = WIDE ? 168 : 190, cy = WIDE ? DH * 0.47 : BY + 240; X.font = `700 ${big}px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.globalAlpha = out
+    const ws = ['EVERY', 'SINGLE', 'TIME.']
+    const draw = (word, i, x, y) => { if (t < T.slam[i]) return; const a = back(seg(t, T.slam[i], T.slam[i] + 0.14)); X.save(); X.translate(x, y); X.scale(1.5 - 0.5 * a, 1.5 - 0.5 * a); X.fillStyle = i === 1 ? CONFIG.bright : CONFIG.silver; if (i === 1) { X.shadowColor = 'rgba(255,255,255,.6)'; X.shadowBlur = 40 } X.fillText(word, 0, 0); X.restore() }
+    if (WIDE) { const gap = 46, wd = ws.map((x) => X.measureText(x).width), tot = wd.reduce((a, b) => a + b, 0) + gap * 2; let x = CXM - tot / 2; ws.forEach((word, i) => { draw(word, i, x + wd[i] / 2, cy); x += wd[i] + gap }) }
+    else ws.forEach((word, i) => draw(word, i, CXM, cy + (i - 1) * big * 1.02))
+    X.restore()
+  }
+  if (t < T.wall) {
+    // The chrome G turns like a coin, top right, for the whole game.
+    const gs = WIDE ? 96 : 110, gx = CONFIG.safe.right - gs / 2 - (WIDE ? 0 : 10), gy = TITLEY + (WIDE ? 14 : 0), sp = Math.cos(t * 2.4)
+    X.save(); X.translate(gx, gy); X.scale(sp, 1); X.shadowColor = 'rgba(255,255,255,.35)'; X.shadowBlur = 22; X.drawImage(gLight, -gs * gLight.width / gLight.height / 2, -gs / 2, gs * gLight.width / gLight.height, gs); X.restore()
+  }
+  if (over && !(t >= T.slam[0] && t < T.slam[3])) { const hh = t < T.restart ? T.hit : RUNS.find((r) => t >= r[1] && t < r[1] + 2)?.[1] ?? t; const a = back(seg(t, hh, hh + 0.18)); X.save(); X.translate(CXM, BY + 250); X.scale(0.8 + 0.2 * a, 0.8 + 0.2 * a); X.font = '700 78px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.textAlign = 'center'; X.fillStyle = CONFIG.bright; if ('letterSpacing' in X) X.letterSpacing = '14px'; X.fillText('GAME OVER', 7, 0); if ('letterSpacing' in X) X.letterSpacing = '0px'; X.restore() }
+  // Top title.
+  if (t < T.wall) { X.font = '600 38px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.textAlign = 'left'; X.textBaseline = 'middle'; X.fillStyle = CONFIG.silver; X.fillText(CONFIG.site, CONFIG.safe.left + 10, TITLEY + (WIDE ? 14 : 0)) }
+  if (t < T.end) captions(t, false)
+  // ---------- the G, the flash, the end card
+  if (t >= T.wall) {
+    const e = seg(t, T.wall, T.wall + 0.5)
+    const gr = X.createRadialGradient(CXM, DH * 0.36, 40, CXM, DH * 0.36, 1100); gr.addColorStop(0, '#1a1a1d'); gr.addColorStop(0.5, '#08080a'); gr.addColorStop(1, '#000')
+    X.save(); X.beginPath(); X.arc(DX * S + 200, BY + (GROUND - 30) * S, eo(e) * 2400, 0, 6.3); X.clip(); X.fillStyle = gr; X.fillRect(0, 0, DW, DH)
+    X.save(); if (WIDE) { X.translate(CXM - 505 * 0.6, -190); X.scale(0.6, 0.6) }
+    const a1 = eo(seg(t, T.wall + 0.25, T.wall + 0.8)), gh = 360
+    X.globalAlpha = a1; X.shadowColor = 'rgba(255,255,255,.3)'; X.shadowBlur = 60; X.drawImage(gLight, 505 - gh * gLight.width / gLight.height / 2, 420 + 30 * (1 - a1), gh * gLight.width / gLight.height, gh)
+    const ww = 560; X.drawImage(wordLight, 505 - ww / 2, 800 + 30 * (1 - a1), ww, ww * wordLight.height / wordLight.width); X.shadowBlur = 0
+    X.fillStyle = '#fff'; X.textAlign = 'center'; X.font = '700 84px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'
+    CONFIG.endLines.forEach((l, i) => { const w0 = WORDS.find((w) => w[2].toLowerCase().startsWith(l.split(' ')[0].toLowerCase()) && w[0] > T.wall); const a = eo(seg(t, (w0 ? w0[0] : T.end + i) - 0.05, (w0 ? w0[0] : T.end + i) + 0.3)); X.globalAlpha = a; X.fillText(l, 505, 1150 + i * 104 + 24 * (1 - a)) })
+    const a3 = eo(seg(t, 32.9, 33.4)); X.globalAlpha = a3; X.font = '600 40px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.fillStyle = CONFIG.muted; X.fillText(CONFIG.site, 505, 1420)
+    X.restore()
+    // The dino never stops: it runs along the bottom of the card, in white.
+    X.globalAlpha = a1; G.clearRect(0, 0, GW, GH); const sc = s2 * (t - T.part2); G.fillStyle = '#fff'; G.fillRect(0, GROUND, GW, 1); for (const [x, y, w] of SPECK) { const px = ((x - sc) % 2000 + 2000) % 2000; if (px < GW) G.fillRect(px, GROUND + y, w, 1) }
+    dino(DX, GROUND - 21, '#fff', 1 + (Math.floor(t * 20) % 2), false)
+    X.imageSmoothingEnabled = false; X.drawImage(g, 0, GROUND - 40, GW, 56, 0, WIDE ? 790 : 1260, GW * S, 56 * S); X.imageSmoothingEnabled = true
+    X.restore()
+    const fl = Math.exp(-(t - T.wall) * 8); if (fl > 0.02) { X.fillStyle = `rgba(255,255,255,${fl})`; X.fillRect(0, 0, DW, DH) }
+  }
+}
+window.DUR = T.dur; window.render = render; window.TIMES = { j1: T.j1, j2: T.j2, hit: T.hit, runs: RUNS, j2s: J2, wall: T.wall }
+render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const tick = (n) => { render((n - t0) / 1000); requestAnimationFrame(tick) }; requestAnimationFrame(tick) }
+})()
+</script></body></html>

@@ -1,0 +1,21 @@
+{
+  "slug": "dashboard-window-3d-fly-in__perspective-cam-pan",
+  "visual_name": "Dashboard window fly-in with camera pan",
+  "code_name": "Perspective cam pan",
+  "category": "motion-graphics",
+  "summary": "A dark browser window flies in in 3D, a virtual camera pans and zooms across its screen capture, the cursor clicks a button, then the window zooms through the lens.",
+  "tags": [
+    "browser-window",
+    "3d",
+    "cursor",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 4.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

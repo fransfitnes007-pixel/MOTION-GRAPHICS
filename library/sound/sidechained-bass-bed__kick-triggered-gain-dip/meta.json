@@ -1,0 +1,20 @@
+{
+  "slug": "sidechained-bass-bed__kick-triggered-gain-dip",
+  "visual_name": "Sidechained bass bed",
+  "code_name": "Kick-triggered gain dip",
+  "category": "sound",
+  "summary": "Offbeat bass, plucks and hats that duck with every kick, so the whole bed pumps.",
+  "tags": [
+    "music",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 9.9,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

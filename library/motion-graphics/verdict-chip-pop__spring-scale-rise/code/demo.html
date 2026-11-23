@@ -1,0 +1,100 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Verdict chip pop</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.chip{position:absolute;display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-radius:999px;font-weight:700;font-size:21px;white-space:nowrap;letter-spacing:-.01em}
+.chip.lt{background:rgba(255,255,255,.92);color:#0b0b10;box-shadow:0 14px 34px -10px rgba(24,16,52,.35),0 0 0 1px rgba(20,16,40,.07)}
+.chip.dk{background:rgba(14,12,22,.86);color:#fff;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3
+window.DUR = DUR
+// Everything is laid out in a 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// Placeholder for a vertical video cover: a gradient with a head-and-shoulders silhouette.
+const coverBg = (i) => { const h = (i * 47 + 250) % 360; return `radial-gradient(circle at 50% 34%, rgba(255,255,255,.55) 0 11%, transparent 12%), radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.35) 0 28%, transparent 29%), linear-gradient(170deg, hsl(${h} 70% 62%), hsl(${(h + 50) % 360} 60% 30%))` }
+// Stand-in for the 1336x688 capture of the verdict card (a late frame of a screen-capture sequence).
+function verdictCap(parent, t, t0 = 0) {
+  const c = parent.querySelector('.vc') || (() => {
+    const c = el('div', 'abs vc', parent); S(c, { left: '0', top: '0', width: '1336px', height: '688px', background: '#0c0b16', transformOrigin: '0 0', overflow: 'hidden', color: '#fff' })   // solid: a dark gradient here dithers differently from frame to frame
+    el('div', 'abs', c, 'Instant feedback before you ship').style.cssText = 'left:60px;top:40px;font:700 20px/1 -apple-system,system-ui;color:#a8a6c0'
+    const th = el('div', 'abs', c); S(th, { left: '60px', top: '90px', width: '240px', height: '420px', borderRadius: '14px', background: 'radial-gradient(circle at 50% 34%, rgba(255,255,255,.55) 0 11%, transparent 12%), radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.35) 0 28%, transparent 29%), #6a4a9c' })   // hard-stop shapes on a flat colour: smooth gradients dither differently from frame to frame
+    const box = el('div', 'abs', c); S(box, { left: '330px', top: '90px', width: '940px', height: '110px', borderRadius: '14px', background: 'rgba(16,185,129,.10)', boxShadow: 'inset 0 0 0 2px rgba(52,211,153,.35)' })
+    el('div', 'abs', box, 'Yes, good to go').style.cssText = 'left:28px;top:22px;font:700 28px/1 -apple-system,system-ui;color:#34d399'
+    el('div', 'abs', box, 'Strong structure, clear message and a flow that holds to the end.').style.cssText = 'left:28px;top:66px;font:500 17px/1 -apple-system,system-ui;color:#7b7a92'
+    c.tiles = [['Clarity', 84, ''], ['Pace', 77, ''], ['Match', 81, '%'], ['Reach', 4800, '']].map(([a, v, u], i) => {
+      const k = el('div', 'abs', c); S(k, { left: (330 + i * 235) + 'px', top: '225px', width: '220px', height: '120px', borderRadius: '14px', background: '#14122200', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.08)' })
+      el('div', 'abs', k, a).style.cssText = 'left:20px;top:18px;font:500 16px/1 -apple-system,system-ui;color:#8a89a0'
+      const n = el('div', 'abs', k); n.style.cssText = 'left:20px;top:50px;font:800 46px/1 -apple-system,system-ui;color:#34d399;font-variant-numeric:tabular-nums'
+      n.v = v; n.u = u; return n
+    })
+    const bar = el('div', 'abs', c); S(bar, { left: '330px', top: '400px', width: '940px', height: '10px', borderRadius: '5px', background: 'linear-gradient(90deg,#6d3cff 0 33%,#34d399 33% 66%,#f59e0b 66%)' })   // hard stops, no dithering
+    return c
+  })()
+  c.tiles.forEach((n) => { n.textContent = fmt(n.v * eo5(seg(t, t0, t0 + .7))) + n.u })
+  return c
+}
+const bg = el('div', 'bgfill', root); S(bg, { background: 'radial-gradient(ellipse at 50% 40%, #1a1030 0%, #0a0912 55%, #050409 100%)' })
+const card = el('div', 'abs', root); S(card, { left: '160px', top: '130px', width: '1603px', height: '826px', borderRadius: '22px', overflow: 'hidden', boxShadow: '0 60px 160px -40px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.09),0 0 120px rgba(124,58,237,.18)' })
+const cap = verdictCap(card, 0); S(cap, { transform: `scale(1.2)` })
+const LIVE = .5
+const good5 = el('div', 'chip dk', root, `<span class="ico" style="background:#16a34a">${CHECK(18)}</span>Good to go`); S(good5, { fontWeight: 800, fontSize: '34px', padding: '16px 28px 16px 18px', gap: '14px', boxShadow: '0 20px 60px -10px rgba(22,163,74,.55),0 0 0 2px rgba(52,211,153,.6)' })
+function render(t) {
+  verdictCap(card, t, .1)
+  const g = spring(seg(t, LIVE + .02, LIVE + .6), 7, 12), out = eio5(seg(t, 2.5, 2.9))
+  S(good5, { left: '1380px', top: '880px', opacity: clamp(g * 1.4) * (1 - out), transform: `scale(${.6 + .4 * g}) translateY(${(1 - g) * 30}px)` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

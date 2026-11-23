@@ -1,0 +1,19 @@
+{
+  "slug": "phone-mockup-spring-rise-tilt__rotate-translate-spring",
+  "visual_name": "Phone mockup spring rise with tilt",
+  "code_name": "Spring translate and rotate from below",
+  "category": "motion-graphics",
+  "summary": "A big phone rises from 200px below with an 8 degree tilt and springs upright to a 3 degree lean, beside a two-line headline, while a social chip pops next to it.",
+  "tags": [
+    "phone",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

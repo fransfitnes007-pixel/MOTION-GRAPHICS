@@ -1,0 +1,89 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stat card row with count-up numbers</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#f4f5f7;color:#0b0c10;letter-spacing:-0.02em}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(110px)}
+.abs0{position:absolute;left:0;top:0;transform-origin:0 0}
+#stHead{font-weight:700;letter-spacing:-0.04em;text-align:center;white-space:nowrap}
+.card{border-radius:40px;background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.95);box-shadow:0 30px 70px -36px rgba(15,17,26,.28),0 1px 0 rgba(255,255,255,.9) inset;display:flex;flex-direction:column;justify-content:center}
+.card b{font-weight:700;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums}
+.card span.lab{font-weight:500;color:#5c606b;letter-spacing:-0.01em}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const BLOBS = [['#dfe3ff', .62], ['#ffe1ec', .56], ['#dff6ff', .5]].map(([c, s]) => { const b = el('div', 'blob'); S(b, { background: c, width: px(s * Math.max(W, H)), height: px(s * Math.max(W, H)) }); return b })
+function drawBlobs(t) {
+  const M = Math.max(W, H), tf = (e, x, y) => { e.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)' }
+  tf(BLOBS[0], -0.16 * M + Math.sin(t * 0.35) * 40, -0.2 * M + Math.cos(t * 0.3) * 30); BLOBS[0].style.opacity = 0.75
+  tf(BLOBS[1], W - 0.34 * M + Math.cos(t * 0.28) * 40, H * 0.3 + Math.sin(t * 0.33) * 40); BLOBS[1].style.opacity = 0.62
+  tf(BLOBS[2], W * 0.25 + Math.sin(t * 0.25 + 1) * 50, H - 0.3 * M + Math.cos(t * 0.31) * 30); BLOBS[2].style.opacity = 0.65
+}
+const tf = (e, x, y, s = 1) => { e.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')' }
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const U = W / (TALL ? 1080 : 1920), DW = W / U, DH = H / U
+const ST = TALL ? { cols: 2, w: 470, h: 310, gap: 40, y: 830, headY: 600, head: 92, val: 104, lab: 31, pad: 44 } : { cols: 4, w: 400, h: 250, gap: 28, y: 450, headY: 250, head: 88, val: 84, lab: 26, pad: 40 }
+const STATS = [{ n: 100, suf: '+', label: 'Projects shipped' }, { n: null, text: '1M+', label: 'Views this year' }, { n: 50, suf: '+', label: 'Clients served' }, { n: 1000, suf: '+', label: 'Members' }]
+const DUR = 3.9
+window.DUR = DUR
+const world = el('div'); S(world, { position: 'absolute', left: 0, top: 0, width: px(DW), height: px(DH), transformOrigin: '0 0', transform: 'scale(' + U + ')' })
+const head = el('div', 'abs0', world); head.id = 'stHead'; head.textContent = 'Numbers on the page.'; S(head, { fontSize: ST.head + 'px', width: DW + 'px' })
+const cards = STATS.map((s) => { const c = el('div', 'abs0 card', world); c.style.cssText += 'width:' + ST.w + 'px;height:' + ST.h + 'px;padding:0 ' + ST.pad + 'px'; c.innerHTML = '<b style="font-size:' + ST.val + 'px"></b><span class="lab" style="font-size:' + ST.lab + 'px;margin-top:' + ST.lab * .55 + 'px">' + s.label + '</span>'; return c })
+const PLUS = (suf) => '<span style="font-size:inherit;font-weight:700;color:#5b5ce6;margin:0">' + suf + '</span>'
+
+function render(t) {
+  drawBlobs(t)
+  const T = t + 21.3                                            // internal clock offset
+  const stOut = eio(seg(T, 24.55, 24.95))
+  const hin = eo(seg(T, 21.45, 21.95))
+  head.style.opacity = hin * (1 - stOut); tf(head, 0, ST.headY + (1 - hin) * 30 - stOut * 20)
+  const totalW = ST.cols * ST.w + (ST.cols - 1) * ST.gap, x0 = (DW - totalW) / 2
+  cards.forEach((c, j) => {
+    const col = j % ST.cols, row = Math.floor(j / ST.cols), k = eo(seg(T, 21.65 + j * .11, 22.2 + j * .11))
+    c.style.opacity = k * (1 - stOut)
+    tf(c, x0 + col * (ST.w + ST.gap), ST.y + row * (ST.h + ST.gap) + (1 - k) * 44 - stOut * 20)
+    const st = STATS[j], ck = eo(seg(T, 21.8 + j * .11, 23.25 + j * .11))   // count: 1.45s, ease-out-cubic
+    const b = c.firstChild
+    b.innerHTML = st.n === null ? st.text.replace('+', PLUS('+')) : Math.round(st.n * ck).toLocaleString('en-US') + PLUS(st.suf)
+    if (st.n === null) { b.style.transformOrigin = '0 50%'; b.style.transform = 'scale(' + lerp(.8, 1, back(seg(T, 21.8 + j * .11, 22.4 + j * .11))) + ')' }
+  })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

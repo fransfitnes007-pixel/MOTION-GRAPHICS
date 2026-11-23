@@ -1,0 +1,21 @@
+{
+  "slug": "phone-grid-tilted-row__preserve-3d-stagger-spring",
+  "visual_name": "Phone grid tilted row",
+  "code_name": "Preserve-3d stagger spring",
+  "category": "motion-graphics",
+  "summary": "A tilted row of seven phones springs up from the middle outward while Syncing spinners flip to green Synced ticks.",
+  "tags": [
+    "phone",
+    "3d",
+    "kinetic-type",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

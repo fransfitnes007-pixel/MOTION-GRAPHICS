@@ -1,0 +1,22 @@
+{
+  "slug": "hanging-polaroid-line-sway__sine-swing-scroll",
+  "visual_name": "Hanging polaroid line",
+  "code_name": "Sine swing scroll",
+  "category": "motion-graphics",
+  "summary": "A row of polaroid prints hangs from a thin string across the top, slides in from the right and drifts left, each swinging on its own pivot, with a large headline blurring in below.",
+  "tags": [
+    "card",
+    "carousel",
+    "dark",
+    "kinetic-type",
+    "marquee"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

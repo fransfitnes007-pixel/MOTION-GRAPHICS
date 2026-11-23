@@ -1,0 +1,125 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Violet AI review dashboard with counting score ring</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#07070f;color:#e9e8f5;letter-spacing:-0.01em}
+.dash{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;border-radius:14px;background:#0b0b17;overflow:hidden;box-shadow:0 0 0 1.5px rgba(150,130,255,.18),0 40px 120px -30px rgba(80,50,200,.5)}
+.dash *{box-sizing:border-box}
+.dash i,.dash div,.dash b,.dash span{position:absolute;display:block;font-style:normal}
+.pn{background:#10101e;border:1px solid rgba(255,255,255,.07);border-radius:14px}
+.tx{white-space:nowrap}
+.gd{background:linear-gradient(90deg,#6d4cff,#b27cff)}
+.bgs{position:absolute;left:0;top:0}
+.dm{position:absolute;width:420px;height:420px;border-radius:44px;transform:rotate(45deg);background:linear-gradient(135deg,rgba(120,90,255,.28),rgba(40,30,120,.1));box-shadow:inset 0 0 0 1.5px rgba(160,140,255,.25)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const U = Math.min(W / 1280, H / 720) * (TALL ? .8 : 1)
+const DUR = 8
+window.DUR = DUR
+const loopFade = (t, d) => Math.min(seg(t, 0, .25), 1 - seg(t, d - .3, d))
+const bg = el('div', 'bgs')
+bg.innerHTML = '<div class="dm" style="left:' + (W * .66) + 'px;top:' + (-H * .55) + 'px"></div><div class="dm" style="left:' + (W * -.1) + 'px;top:' + (H * -.6) + 'px;width:300px;height:300px"></div>'
+const dash = el('div', 'dash')
+const NAV = ['Overview', 'Report Analyzer', 'Performance', 'Trends', 'Saved Reports', 'Calendar', 'Settings']
+const R = (cls, x, y, w, h, st, html) => '<div class="' + cls + '" style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;' + (st || '') + '">' + (html || '') + '</div>'
+const T = (txt, x, y, sz, col, wt, ex) => '<span class="tx" style="left:' + x + 'px;top:' + y + 'px;font-size:' + sz + 'px;color:' + (col || '#e9e8f5') + ';font-weight:' + (wt || 500) + ';' + (ex || '') + '">' + txt + '</span>'
+// folds of the brain: seeded sine squiggles, clipped to the two lobes
+let folds = ''; for (let k = 0; k < 26; k++) { let d = 'M'; const y0 = -95 + k * 7.6; for (let x = -190; x <= 190; x += 10) d += (x > -190 ? 'L' : '') + x + ',' + (y0 + Math.sin(x * .06 + k * 1.7) * 9 + Math.sin(x * .13 + k) * 4).toFixed(1); folds += '<path d="' + d + '" fill="none" stroke="' + (k % 2 ? 'rgba(25,8,80,.4)' : 'rgba(255,205,255,.28)') + '" stroke-width="' + (k % 2 ? 2.2 : 1.2) + '"/>' }
+const brain = '<svg class="bsvg" viewBox="-200 -120 400 240" width="300" height="180" style="position:absolute;left:370px;top:146px"><defs><radialGradient id="lg" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#ff9a4d"/><stop offset=".35" stop-color="#d36bff"/><stop offset="1" stop-color="#5b3cff"/></radialGradient><clipPath id="lobes"><path d="M-4,-98 C-40,-112 -112,-104 -150,-56 C-188,-8 -176,56 -126,84 C-92,104 -44,96 -4,102 Z"/><path d="M4,-98 C40,-112 112,-104 150,-56 C188,-8 176,56 126,84 C92,104 44,96 4,102 Z"/></clipPath><filter id="bl"><feGaussianBlur stdDeviation="14"/></filter></defs><ellipse id="aura" cx="0" cy="0" rx="185" ry="112" fill="#7c4dff" opacity=".28" filter="url(#bl)"/><g clip-path="url(#lobes)"><rect x="-200" y="-120" width="400" height="240" fill="url(#lg)"/>' + folds + '<ellipse id="hot1" cx="-60" cy="-20" rx="48" ry="40" fill="#ff8a3d" opacity=".5" filter="url(#bl)"/><ellipse id="hot2" cx="70" cy="10" rx="50" ry="44" fill="#ff7a3d" opacity=".55" filter="url(#bl)"/></g><line x1="0" y1="-110" x2="0" y2="110" stroke="#0b0b17" stroke-width="4"/></svg>'
+let h = ''
+// sidebar
+h += R('pn', 0, 0, 215, 720, 'border-radius:0;background:#0d0d1a') + R('gd', 18, 18, 34, 34, 'border-radius:10px')
+NAV.forEach((n, i) => { h += (i === 0 ? R('', 14, 80, 188, 38, 'border-radius:10px;background:rgba(120,90,255,.18);box-shadow:inset 0 0 0 1px rgba(150,120,255,.3)') : '') + R('', 30, 92 + i * 49, 16, 14, 'border-radius:4px;background:' + (i ? '#4a4a63' : '#9d85ff')) + T(n, 58, 88 + i * 49, 14, i ? '#b0afc6' : '#d8ccff') })
+h += R('pn', 14, 580, 186, 110) + T('AI Credits', 30, 596, 12, '#b0afc6') + T('2,450 / 5,000', 30, 616, 16, '#fff', 600) + R('', 30, 648, 154, 6, 'border-radius:3px;background:#1d1d33') + R('gd', 30, 648, 76, 6, 'border-radius:3px')
+// header
+h += T('Report Review', 272, 14, 20, '#fff', 600) + T('Analysis to maximise your report&#39;s potential', 272, 44, 12, '#a7a6bd') + R('pn', 877, 18, 115, 34, 'border-radius:9px') + T('Export Report', 905, 27, 12, '#e9e8f5') + R('gd', 1002, 18, 172, 34, 'border-radius:9px') + T('Analyse New Report', 1016, 28, 11, '#fff', 600) + R('', 1200, 18, 34, 34, 'border-radius:50%;background:linear-gradient(135deg,#d8a88a,#5b3b3b)')
+// brain panel
+h += R('pn', 228, 70, 548, 355) + T('Brain Heatmap', 247, 90, 15, '#fff', 600) + R('pn', 600, 86, 154, 26, 'border-radius:8px') + T('Engagement Focus', 624, 92, 11, '#c9c8dc') + brain
+h += R('', 247, 190, 8, 120, 'border-radius:4px;background:linear-gradient(180deg,#ff9a4d,#8a5cff)')
+;[['Curiosity', 'High', 333, 175, '#ff9a4d'], ['Trust', 'Medium', 333, 288, '#8a5cff'], ['Emotional<br>Engagement', 'High', 691, 148, '#ff9a4d'], ['Shareability', 'Very High', 691, 288, '#8a5cff']].forEach(([a, b, x, y, c]) => { h += T(a, x, y, 11, '#b8b7cc') + R('', x, y + (a.length > 12 && a.indexOf('<') > 0 ? 28 : 17), 7, 7, 'border-radius:50%;background:' + c) + T(b, x + 13, y + (a.indexOf('<') > 0 ? 25 : 14), 11, '#d4d3e6') })
+h += R('pn', 247, 354, 510, 52, 'border-radius:10px;background:#0c0c18') + T('This content triggers strong emotional engagement and has excellent shareability.<br>Focus on the highlighted areas to maximise impact.', 303, 362, 11, '#a7a6bd', 500, 'line-height:17px')
+// content overview
+h += R('pn', 228, 440, 548, 270) + T('Report Overview', 250, 456, 15, '#fff', 600) + R('', 250, 478, 214, 116, 'border-radius:8px;background:linear-gradient(180deg,#3a2a5a 0%,#d9626a 46%,#f2a65e 62%,#1b2236 63%,#2c3a5a 100%)') + T('Sunrise_Mountain_Story.mp4', 484, 482, 12, '#fff', 600) + T('A peaceful journey in the mountains<br>with inspiring message.', 484, 540, 11, '#a7a6bd', 500, 'line-height:16px')
+;[['Attention', 89, '#8a5cff'], ['Emotional', 92, '#ff5c8a'], ['Shareability', 85, '#ff9a4d'], ['Retention', 88, '#4fd6a0']].forEach(([a, v, c], i) => { h += R('', 250 + i * 128, 616, 38, 38, 'border-radius:50%;background:' + c + '33') + T(a, 296 + i * 128, 620, 10, '#a7a6bd') + T(v + ' /100', 296 + i * 128, 636, 13, c, 600) })
+// score panel
+h += R('pn', 790, 70, 474, 240) + T('Potential Score', 810, 90, 15, '#fff', 600)
+h += '<svg class="ring" viewBox="0 0 200 200" width="190" height="190" style="position:absolute;left:822px;top:116px"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a5cff"/><stop offset="1" stop-color="#c58bff"/></linearGradient><filter id="rb"><feGaussianBlur stdDeviation="5"/></filter></defs><circle cx="100" cy="100" r="82" fill="none" stroke="#1c1c33" stroke-width="12"/><circle id="arc" cx="100" cy="100" r="82" fill="none" stroke="url(#rg)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 100 100)" stroke-dasharray="515.2" stroke-dashoffset="515.2" filter="url(#rb)" opacity=".7"/><circle id="arc2" cx="100" cy="100" r="82" fill="none" stroke="url(#rg)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 100 100)" stroke-dasharray="515.2" stroke-dashoffset="515.2"/><circle id="head" r="7" fill="#fff" filter="url(#rb)"/></svg>'
+h += '<div id="num" class="tx" style="left:822px;top:178px;width:190px;text-align:center;font-size:56px;font-weight:700;color:#fff;line-height:60px">0</div>' + T('/ 100', 822, 242, 14, '#a7a6bd', 500, 'width:190px;text-align:center') + T('Excellent', 1034, 152, 36, '#a98cff', 600) + T('This report has a very high<br>potential to perform well across<br>multiple channels.', 1034, 204, 12, '#a7a6bd', 500, 'line-height:19px') + R('pn', 1034, 258, 190, 28, 'border-radius:8px;background:#0c0c18') + T('Top 12% of analysed reports', 1046, 265, 10.5, '#8e8ff0')
+// benchmarks
+h += R('pn', 790, 325, 474, 185) + T('Channel Benchmarks', 810, 345, 15, '#fff', 600)
+;[['Search', 92, '#fff'], ['Email', 85, '#ff5c8a'], ['Social', 78, '#ff3b3b'], ['Direct', 70, '#3b7bff']].forEach(([n, v, c], i) => { h += R('', 810, 382 + i * 31, 24, 24, 'border-radius:7px;background:' + (i ? c : '#000')) + T(n, 846, 386 + i * 31, 12.5, '#e9e8f5') + R('', 930, 392 + i * 31, 250, 5, 'border-radius:3px;background:#1d1d33') + R('gd bar' + i, 930, 392 + i * 31, 250 * v / 100, 5, 'border-radius:3px;transform-origin:0 50%') + T(v + '<small style="color:#8a8aa3;font-size:9px"> /100</small>', 1196, 384 + i * 31, 13, '#b79cff', 600) })
+h += '<div id="cols" style="left:0;top:0;width:1280px;height:720px"></div>'
+// recommendations
+h += R('pn', 790, 525, 474, 185) + T('Key Recommendations', 810, 543, 15, '#fff', 600)
+;['Strong opening. Consider adding more visual contrast in the first section.', 'Great emotional arc detected. The pacing is well balanced.', 'Add a clear call to action to lift conversion.'].forEach((s, i) => { h += R('', 806, 572 + i * 45, 440, 40, 'border-radius:9px;background:#0d0d1b') + R('', 818, 582 + i * 45, 22, 22, 'border-radius:7px;background:rgba(138,92,255,.3)') + T(s, 852, 580 + i * 45, 10.5, '#b8b7cc', 500, 'width:290px;white-space:normal;line-height:14px') + R('', 1150, 584 + i * 45, 86, 20, 'border-radius:6px;background:' + ['#3a2d6b', '#1f4a3c', '#5a3d1f'][i]) })
+dash.innerHTML = h
+const num = dash.querySelector('#num'), arc = dash.querySelector('#arc'), arc2 = dash.querySelector('#arc2'), head = dash.querySelector('#head'), cols = dash.querySelector('#cols')
+const aura = dash.querySelector('#aura'), hot1 = dash.querySelector('#hot1'), hot2 = dash.querySelector('#hot2')
+// eight glowing columns that rise inside the benchmark panel (they grow from 1s to 5s)
+const COLS = [.35, .28, .5, .42, .78, .45, .5, .38]
+cols.innerHTML = COLS.map((v, i) => '<div class="col" style="left:' + (872 + i * 38) + 'px;width:26px;bottom:' + (720 - 505) + 'px;height:0;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#ffd0ff,#a87cff);box-shadow:0 0 14px rgba(190,140,255,.6)"></div>').join('')
+const colEls = [...cols.querySelectorAll('.col')]
+const bars = [92, 85, 78, 70].map((v, i) => dash.querySelector('.bar' + i))
+const dots = Array.from({ length: 16 }, (_, i) => { const d = document.createElement('i'); d.style.cssText = 'position:absolute;width:3px;height:3px;border-radius:50%;background:#c9a8ff'; cols.appendChild(d); return { d, x: 800 + (i * 97) % 440, y: 300 + (i * 53) % 200, s: .3 + (i % 5) * .12 } })
+
+function render(t) {
+  const lf = loopFade(t, DUR)
+  // score: counts up with ease-out, settles at 88, then drifts down to 85 (the number wanders in this band)
+  const up = eo(seg(t, .15, 2.6)), val = up * 88 - 3 * eio(seg(t, 3.5, 7.5)) + Math.sin(t * 2.3) * .6 * seg(t, 2.6, 3)
+  const v = Math.max(0, Math.round(val))
+  num.textContent = v
+  const off = 515.2 * (1 - clamp(v / 100))
+  arc.setAttribute('stroke-dashoffset', off.toFixed(2)); arc2.setAttribute('stroke-dashoffset', off.toFixed(2))
+  const a = (-90 + 360 * clamp(v / 100)) * Math.PI / 180; head.setAttribute('cx', (100 + 82 * Math.cos(a)).toFixed(2)); head.setAttribute('cy', (100 + 82 * Math.sin(a)).toFixed(2))
+  bars.forEach((b, i) => { b.style.transform = 'scaleX(' + eo(seg(t, .5 + i * .15, 2.2 + i * .15)) + ')' })
+  colEls.forEach((c, i) => { c.style.height = COLS[i] * 135 * eo(seg(t, .8 + i * .22, 2.4 + i * .22)) * (1 + .04 * Math.sin(t * 2 + i)) + 'px' })
+  dots.forEach((o, i) => { o.d.style.transform = 'translate(' + (o.x + Math.sin(t * o.s + i) * 14) + 'px,' + (o.y - ((t * 18 * o.s * 3 + i * 30) % 140)) + 'px)'; o.d.style.opacity = .35 + .35 * Math.sin(t * 1.5 + i) })
+  aura.setAttribute('opacity', (.22 + .1 * Math.sin(t * 1.6)).toFixed(3)); hot1.setAttribute('opacity', (.45 + .15 * Math.sin(t * 1.3)).toFixed(3)); hot2.setAttribute('opacity', (.5 + .15 * Math.sin(t * 1.1 + 1)).toFixed(3))
+  // camera: push in 1x to 1.22x on the brain and score (0s to 4s), hold, pull back to a framed window (5.6s to 7.8s)
+  const push = eio(seg(t, 0, 4)), pull = eio(seg(t, 5.6, 7.8))
+  const z = lerp(lerp(1, 1.22, push), .97, pull), fx = lerp(lerp(640, 700, push), 640, pull), fy = lerp(lerp(360, 330, push), 360, pull)
+  const sc = U * z
+  dash.style.opacity = lf
+  dash.style.transform = 'translate(' + (CX - fx * sc) + 'px,' + (CY - fy * sc) + 'px) scale(' + sc + ')'
+  bg.style.opacity = seg(t, 5.8, 7.6) * lf
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

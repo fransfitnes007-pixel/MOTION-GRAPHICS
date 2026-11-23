@@ -1,0 +1,22 @@
+{
+  "slug": "deals-money-dashboard__blur-masked-values-stage-bars",
+  "visual_name": "Deals money dashboard",
+  "code_name": "Blur-masked values, stage-coloured bars, earned progress",
+  "category": "dashboards",
+  "summary": "Stat tiles and two bar charts that begin hidden ($\u2022\u2022\u2022\u2022\u2022, blurred) and reveal on a key press, then earned progress bars and a ranked deals list.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,171 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Setup step progress pill</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dots{position:absolute;inset:-120px;background-image:radial-gradient(rgba(20,16,40,.10) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.win{position:absolute;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 60px 140px -40px rgba(24,16,52,.5),0 0 0 1px rgba(20,16,40,.10)}
+.win .bar{position:absolute;left:0;right:0;top:0;height:46px;background:#f7f7f9;border-bottom:1px solid rgba(20,16,40,.07);display:flex;align-items:center;gap:9px;padding:0 20px;z-index:3}
+.win .bar i{width:13px;height:13px;border-radius:50%;display:block}
+.win .bar .url{position:absolute;left:50%;transform:translateX(-50%);font-weight:600;font-size:16px;color:#3a3a48;background:#fff;padding:7px 22px;border-radius:10px;display:flex;align-items:center;gap:8px;box-shadow:0 0 0 1px rgba(20,16,40,.08);white-space:nowrap}
+.win .view{position:absolute;left:0;right:0;top:46px;bottom:0;overflow:hidden;background:#f4f4f6}
+.cap{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;overflow:hidden}
+.cap .ph{position:absolute;border-radius:28px;background:linear-gradient(160deg,#f1c8a4,#9a7352 55%,#2e231a);box-shadow:0 30px 60px -20px rgba(0,0,0,.35)}
+.cap .nav{position:absolute;left:0;right:0;top:0;height:78px;display:flex;align-items:center;gap:36px;padding:0 60px;font-weight:600;font-size:22px;opacity:.7}
+.cap .nav b{margin-right:auto;font-size:26px;opacity:1}
+.cap .nm{position:absolute;font-weight:800;letter-spacing:-.04em;line-height:1.04}
+.cap .sb{position:absolute;font-weight:500;font-size:34px;opacity:.6}
+.cap .pl{position:absolute;height:58px;border-radius:29px;background:#0b0b10;color:#fff;font-weight:700;font-size:22px;display:grid;place-items:center}
+.cap .tile{position:absolute;border-radius:18px;background:linear-gradient(160deg,#d9c1a8,#6e5a49)}
+.phone{position:absolute;border-radius:58px;background:#0c0c10;padding:11px;box-shadow:0 50px 110px -30px rgba(24,16,52,.6),inset 0 0 0 2px #2a2a33,0 0 0 1px rgba(0,0,0,.25)}
+.phone .scr{position:absolute;inset:11px;border-radius:47px;overflow:hidden}
+.phone .isl{position:absolute;left:50%;top:22px;width:34%;height:30px;border-radius:20px;background:#000;transform:translateX(-50%);z-index:4}
+.phone .pc{position:absolute;border-radius:50%;background:linear-gradient(160deg,#f1c8a4,#9a7352 55%,#2e231a)}
+.phone .pb{position:absolute;border-radius:8px}
+
+.chip{position:absolute;display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-radius:999px;font-weight:700;font-size:21px;white-space:nowrap;letter-spacing:-.01em}
+.chip.lt{background:rgba(255,255,255,.94);color:#0b0b10;box-shadow:0 14px 34px -10px rgba(24,16,52,.35),0 0 0 1px rgba(20,16,40,.07)}
+.chip.dk{background:rgba(14,12,22,.86);color:#fff;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+.glass{position:absolute;border-radius:28px;background:rgba(255,255,255,.74);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(24,16,52,.42),0 0 0 1px rgba(20,16,40,.07)}
+.glassd{position:absolute;border-radius:28px;background:rgba(255,255,255,.07);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12)}
+
+.cursor{position:absolute;width:44px;height:44px;z-index:80;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+.ring{position:absolute;border-radius:50%;border:3px solid #5b5ce6;z-index:79}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same helper set used across the library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3
+window.DUR = DUR
+
+const bgL = el('div', 'abs'); S(bgL, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: '#f4f4f6' })
+el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(91,92,230,.26)', s: 900, x: 280, y: 100, sp: .09 }, { c: 'rgba(96,165,250,.24)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.12)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.28)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s * K + 'px', height: o.s * K + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+function bgLight(t) { for (const o of orbs) S(o.e, { left: ((o.x + Math.sin(t * o.sp * 6 + o.s) * 120) * W / 1920) + 'px', top: ((o.y + Math.cos(t * o.sp * 5 + o.x) * 90) * H / 1080) + 'px' }) }
+
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+
+
+const SITES = [
+  { bg: 'linear-gradient(120deg,#e6faf0,#eef2ff)', fg: '#0b0b10', html: '<div class="nav"><b>Alex</b><span>Work</span><span>About</span></div><div class="nm" style="left:110px;top:330px;font-size:70px">Alex Rivera<br><span style="font-weight:500;color:#6b6b7b">Fitness Coach</span></div><div class="pl" style="left:110px;top:560px;width:210px">Work with me</div><div class="ph" style="left:860px;top:150px;width:420px;height:560px"></div>' },
+  { bg: '#f6f4ef', fg: '#0b0b10', html: '<div class="nav"><b>Alex</b><span>Work</span><span>About</span></div><div class="nm" style="left:0;width:1440px;text-align:center;top:150px;font-size:190px">Alex</div><div class="ph" style="left:560px;top:420px;width:320px;height:380px;border-radius:160px 160px 20px 20px"></div>' },
+  { bg: 'linear-gradient(180deg,#0f2438,#0a1522)', fg: '#fff', html: '<div class="tile" style="left:520px;top:120px;width:190px;height:300px"></div><div class="tile" style="left:730px;top:120px;width:190px;height:300px"></div><div class="nm" style="left:0;width:1440px;text-align:center;top:380px;font-size:120px;color:#fff">Alex</div><div class="pl" style="left:600px;top:560px;width:240px;background:#fff;color:#0b0b10">Work with me</div>' },
+  { bg: 'linear-gradient(180deg,#eef0ff,#f7f7fb)', fg: '#0b0b10', html: '<div class="ph" style="left:640px;top:70px;width:160px;height:160px;border-radius:50%"></div><div class="nm" style="left:0;width:1440px;text-align:center;top:260px;font-size:84px">Alex Rivera</div><div class="pl" style="left:560px;top:400px;width:320px">Work with me</div><div class="tile" style="left:420px;top:520px;width:180px;height:260px"></div><div class="tile" style="left:630px;top:520px;width:180px;height:260px"></div><div class="tile" style="left:840px;top:520px;width:180px;height:260px"></div>' },
+  { bg: '#fbfbfc', fg: '#0b0b10', html: '<div class="ph" style="left:70px;top:70px;width:480px;height:760px"></div><div class="nm" style="left:640px;top:260px;font-size:130px">Alex<br>Rivera</div><div class="nm" style="left:640px;top:600px;font-size:96px;color:#5b5ce6">1,000,000</div>' },
+  { bg: 'radial-gradient(ellipse at 50% 40%,#12433f,#071a1c 70%)', fg: '#fff', html: '<div class="tile" style="left:300px;top:300px;width:170px;height:260px;opacity:.5"></div><div class="tile" style="left:970px;top:300px;width:170px;height:260px;opacity:.5"></div><div class="tile" style="left:620px;top:140px;width:200px;height:300px"></div><div class="nm" style="left:0;width:1440px;text-align:center;top:420px;font-size:130px;color:#fff">Alex</div>' },
+]
+function siteIn(parent, i) { const c = el('div', 'cap', parent); c.style.background = SITES[i].bg; c.style.color = SITES[i].fg; if (SITES[i].h) c.style.height = SITES[i].h + 'px'; c.innerHTML = SITES[i].html; return c }
+const LOCK = (c = '#6b6b7b', s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
+// a browser window holding one or more 1440x900 captures; cam() pans and zooms inside it
+const CW = 1440, CH = 900
+function win(parent, url, variants, box) {
+  const w = el('div', 'win', parent, `<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url">${LOCK()}<span class="u"></span></div></div><div class="view"></div>`)
+  S(w, { left: box[0] + 'px', top: box[1] + 'px', width: box[2] + 'px', height: (box[3] + 46) + 'px' })
+  w.view = w.querySelector('.view'); w.u = w.querySelector('.u'); w.u.textContent = url; w.vw = box[2]; w.vh = box[3]; w.box = box
+  w.imgs = variants.map((v, i) => { const im = siteIn(w.view, v); if (i) im.style.display = 'none'; return im })
+  w.cur = 0
+  return w
+}
+function show(w, i) { if (w.cur !== i) { vis(w.imgs[w.cur], false); vis(w.imgs[i], true); w.cur = i } }
+function cam(w, fx, fy, z, capH = CH) {
+  const k = w.vw / CW * z
+  const x = clamp(w.vw / 2 - fx * k, w.vw - CW * k, 0), y = clamp(w.vh / 2 - fy * k, Math.min(0, w.vh - capH * k), 0)
+  for (const im of w.imgs) im.style.transform = `translate(${x}px,${y}px) scale(${k})`
+  w.cx = x; w.cy = y; w.ck = k
+}
+const camPt = (w, px, py) => [w.box[0] + w.cx + px * w.ck, w.box[1] + 46 + w.cy + py * w.ck]
+function phone(parent, v, x, y, w) {
+  const h = w * 2.16
+  const p = el('div', 'phone', parent, '<div class="scr"></div><div class="isl"></div>')
+  S(p, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' })
+  p.scr = p.querySelector('.scr'); p.w = w; p.h = h
+  const dark = SITES[v].fg === '#fff'; p.scr.style.background = SITES[v].bg
+  p.scr.innerHTML = `<div class="pc" style="left:${w * .34}px;top:${w * .3}px;width:${w * .32}px;height:${w * .32}px"></div><div class="pb" style="left:${w * .26}px;top:${w * .72}px;width:${w * .48}px;height:${w * .06}px;background:${dark ? '#fff' : '#0b0b10'}"></div><div class="pb" style="left:${w * .32}px;top:${w * .83}px;width:${w * .36}px;height:${w * .035}px;background:${dark ? '#ffffff55' : '#0b0b1033'}"></div><div class="pb" style="left:${w * .22}px;top:${w * 1.0}px;width:${w * .56}px;height:${w * .11}px;border-radius:${w * .06}px;background:#5b5ce6"></div><div class="pb" style="left:${w * .1}px;top:${w * 1.3}px;width:${w * .8}px;height:${w * .5}px;background:${dark ? '#ffffff14' : '#0b0b100d'}"></div>`
+  return p
+}
+
+
+const CURSOR = '<svg viewBox="0 0 24 24" width="44" height="44"><path d="M4.5 2.5l15 8.6-6.6 1.9-2.9 6.5z" fill="#0b0b10" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+const cursor = el('div', 'cursor', HOST, CURSOR); const ring = el('div', 'ring', HOST)
+function clickAt(t, at, tx, ty, from, t0) {
+  vis(cursor, true)
+  const cp = eio5(seg(t, t0, at - .04))
+  S(cursor, { left: lerp(from[0], tx, cp) + 'px', top: lerp(from[1], ty, cp) + 'px', transform: `scale(${1 - .18 * Math.sin(Math.PI * seg(t, at - .04, at + .12))})` })
+  const rp = seg(t, at, at + .5)
+  if (rp > 0 && rp < 1) { vis(ring, true); const d = 20 + eo(rp) * 130; S(ring, { width: d + 'px', height: d + 'px', left: (tx - d / 2) + 'px', top: (ty - d / 2) + 'px', opacity: 1 - rp }) }
+}
+
+// five placeholder wizard pages appended to the site list
+const page = (title, n) => '<div class="nm" style="left:80px;top:60px;font-size:44px">' + title + '</div>' + [0, 1, 2].map((i) => '<div style="position:absolute;left:80px;top:' + (170 + i * 120) + 'px;width:' + (700 - n * 40) + 'px;height:70px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(20,16,40,.08)"></div>').join('') + '<div style="position:absolute;left:880px;top:130px;width:460px;height:640px;border-radius:28px;background:linear-gradient(160deg,#1b1a3a,#0a0916)"></div><div class="pl" style="left:80px;top:705px;width:220px;background:#0b0b10">Continue</div>'
+;['About you', 'Your look', 'Contact', 'Numbers', 'Address'].forEach((t, n) => SITES.push({ bg: '#f7f7fa', fg: '#0b0b10', html: page(t, n) }))
+const w7 = win(FR, 'yourbrand.link/setup', [6, 7, 8, 9, 10], [340, 250, 1240, 775])
+const prog7 = el('div', 'glass', FR); S(prog7, { left: '660px', top: '930px', width: '600px', height: '96px', borderRadius: '48px', padding: '0 34px', display: 'flex', alignItems: 'center', gap: '24px' })
+prog7.innerHTML = '<div class="num" style="font-weight:800;font-size:30px;white-space:nowrap;letter-spacing:-.01em;font-variant-numeric:tabular-nums">Step <span class="k">1</span> of 7</div><div style="flex:1;height:14px;border-radius:7px;background:rgba(20,16,40,.08);overflow:hidden"><div class="f" style="height:100%;width:0;border-radius:7px;background:linear-gradient(90deg,#6d6ef0,#4f46e5)"></div></div>'
+const prog7k = prog7.querySelector('.k'), prog7f = prog7.querySelector('.f')
+const live7 = el('div', 'chip lt', FR, '<span class="ico" style="background:#16a34a">' + CHECK(17) + '</span>Your site is live'); S(live7, { fontSize: '30px', fontWeight: 800, padding: '16px 28px 16px 16px', left: '1270px', top: '226px', zIndex: 10 })
+const CODE = 1.8                               // the spoken "code": publish is clicked here
+function render(t) {
+  bgLight(t)
+  vis(cursor, false); vis(ring, false)
+  const wi = eo5(seg(t, 0, .6)), out = eio5(seg(t, 2.1, 2.45))
+  S(w7, { opacity: wi * (1 - out), transform: `perspective(2400px) translateY(${(1 - wi) * 140}px) rotateX(${(1 - wi) * 16}deg) scale(${(.9 + .1 * wi) * lerp(1, 1.15, out)})`, filter: out > 0 ? `blur(${out * 12}px)` : '' })
+  const cuts = [0, .26, .56, .98, 1.49]; let si = 0; cuts.forEach((c, i) => { if (t >= c) si = i }); show(w7, si)
+  const zoomPub = eio(seg(t, 1.54, 1.9))
+  cam(w7, lerp(720, 700, zoomPub), lerp(450, 640, zoomPub), lerp(1, 1.45, zoomPub))
+  const pq = eo5(seg(t, .15, .55)); S(prog7, { opacity: pq * (1 - out), transform: `translateY(${(1 - pq) * 40}px)` })
+  const prog = eio(seg(t, .15, CODE)); prog7k.textContent = Math.max(1, Math.min(7, 1 + Math.floor(prog * 6.99))); prog7f.style.width = (prog * 100) + '%'
+  if (t > 1.05 && t < 2.15) { const [tx, ty] = camPt(w7, 654, 725); clickAt(t, CODE, tx, ty, [1600, 1000], 1.05) }
+  const lq = spring(seg(t, CODE + .12, CODE + .55), 8, 12)
+  S(live7, { opacity: clamp(lq * 1.5) * (1 - out), transform: `scale(${.6 + .4 * lq})` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

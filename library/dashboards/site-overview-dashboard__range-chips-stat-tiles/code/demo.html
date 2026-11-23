@@ -1,0 +1,198 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Site overview dashboard</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--ink:#0b0c10;--ink2:#3a3d46;--ink3:#5c606b;--ink4:#686c77;--mist:#f4f5f7;--mist2:#eceef2;--accent:#5b5ce6;--soft:#8b8cf0;--glow:#c7c8ff;--ok:#166534}
+#stage{background:var(--mist);color:var(--ink)}
+.root{position:absolute;transform-origin:0 0;overflow:hidden;background:var(--mist)}
+.abs{position:absolute}
+.blob{position:absolute;border-radius:50%;filter:blur(64px)}
+.glass{background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 8px 32px -12px rgba(15,17,26,.18)}
+.glass-strong{background:rgba(255,255,255,.75);-webkit-backdrop-filter:blur(40px);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.8);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 8px 32px -12px rgba(15,17,26,.18)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid rgba(11,12,16,.1);background:rgba(255,255,255,.6);padding:4px 12px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);line-height:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:12px 20px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:0 2px 10px -2px rgba(15,17,26,.25)}
+.btn-secondary{color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid rgba(11,12,16,.1);background:rgba(255,255,255,.6);padding:8px 14px;font-size:12px;line-height:16px;font-weight:500;color:var(--ink2);min-height:38px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.h-display{font-size:60px;line-height:1.05;font-weight:600;letter-spacing:-.02em}
+.h-section{font-size:48px;line-height:1.25;font-weight:600;letter-spacing:-.02em}
+.lede{font-size:18px;line-height:1.625;color:var(--ink2)}
+.tn{font-variant-numeric:tabular-nums}
+svg.i{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sb{display:flex;align-items:center;gap:12px;border-radius:16px;padding:10px 16px;font-size:15px;line-height:20px;font-weight:500;color:var(--ink2)}
+.sb.on{background:var(--ink);color:#fff}
+.sc{border-radius:16px;padding:16px}
+.pnl{border-radius:24px;padding:18px 20px}
+.tr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font-size:13px}
+.tr+.tr{border-top:1px solid rgba(11,12,16,.05)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (framer-motion equivalents) ----
+// cubic-bezier easing, the same solver CSS uses
+const bez = (x1, y1, x2, y2) => (p) => {
+  if (p <= 0) return 0; if (p >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let s = p; for (let i = 0; i < 8; i++) { const x = ((ax * s + bx) * s + cx) * s - p, d = (3 * ax * s + 2 * bx) * s + cx; if (Math.abs(x) < 1e-5 || !d) break; s -= x / d }
+  return ((ay * s + by) * s + cy) * s
+}
+const E_OUT22 = bez(.22, 1, .36, 1)       // the site's reveal ease [0.22, 1, 0.36, 1]
+const E_EASEOUT = bez(0, 0, .58, 1)       // framer 'easeOut'
+const E_EASEINOUT = bez(.42, 0, .58, 1)   // framer 'easeInOut'
+// framer-motion spring ({type:'spring', stiffness, damping, mass}) from 0 to 1, zero start velocity
+const fspring = (t, stiffness = 100, damping = 10, mass = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(stiffness / mass), z = damping / (2 * Math.sqrt(stiffness * mass))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  if (z === 1) return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+  const s = w0 * Math.sqrt(z * z - 1), r1 = -z * w0 + s, r2 = -z * w0 - s
+  return 1 - (r2 * Math.exp(r1 * t) - r1 * Math.exp(r2 * t)) / (r2 - r1)
+}
+// Reveal: initial {opacity:0,y:18} -> {1,0}, duration .6, ease [.22,1,.36,1]
+const reveal = (t, t0 = 0, dur = .6, y = 18) => { const q = E_OUT22(seg(t, t0, t0 + dur)); return { q, opacity: q, y: (1 - q) * y } }
+const rv = (e, t, t0 = 0, dur = .6, y = 18, extra = '') => { const r = reveal(t, t0, dur, y); S(e, { opacity: r.opacity, transform: `translateY(${r.y}px) ${extra}` }); return r.q }
+// y keyframes [0, a, 0] with easeInOut per segment, repeat Infinity, delay only before the first run
+const bob = (t, a, d, delay = 0) => { if (t < delay) return 0; const u = ((t - delay) % d) / d; return u < .5 ? a * E_EASEINOUT(u * 2) : a * (1 - E_EASEINOUT((u - .5) * 2)) }
+// CountUp: "$203,400", "1B+", "10,000+": digits count up on cubic ease-out
+const cuParse = (raw) => { const m = raw.match(/^([^\d]*)([\d,]*\.?\d+)(.*)$/); if (!m) return null; return { prefix: m[1], value: Number(m[2].replace(/,/g, '')), decimals: (m[2].split('.')[1] || '').length, suffix: m[3], grouped: m[2].includes(',') } }
+const cu = (raw, p) => { const k = cuParse(raw); if (!k) return raw; const n = k.value * (1 - Math.pow(1 - clamp(p), 3)); return k.prefix + n.toLocaleString('en-US', { minimumFractionDigits: k.decimals, maximumFractionDigits: k.decimals, useGrouping: k.grouped || k.value >= 1000 }) + k.suffix }
+const ICONS = {
+  'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>', 'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', check: '<path d="M20 6 9 17l-5-5"/>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>', play: '<polygon points="6 3 20 12 6 21 6 3"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', menu: '<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  'volume-2': '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+  'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>', lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>', eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+  building: '<rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
+  sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  'trending-up': '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>', globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  palette: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', video: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+  'at-sign': '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>', hash: '<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>', 'layout-dashboard': '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  'mouse-pointer': '<path d="M12.586 12.586 19 19"/><path d="M3.688 3.037a.497.497 0 0 0-.651.651l6.5 15.998a.501.501 0 0 0 .947-.062l1.569-6.083a2 2 0 0 1 1.448-1.479l6.124-1.579a.5.5 0 0 0 .063-.947z"/>', 'monitor': '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>', mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  'message-square': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', 'share-2': '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.42" x2="8.59" y1="6.51" y2="10.49"/>',
+  'shopping-bag': '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>', 'file-down': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+}
+const ic = (name, size = 16, sw = 2, style = '') => `<svg class="i" viewBox="0 0 24 24" width="${size}" height="${size}" stroke-width="${sw}" style="${style}">${ICONS[name] || ''}</svg>`
+// a root box of design size dw x dh, scaled to fit the stage and centred, so ?w=&h= (wide or tall) still composes
+const mkRoot = (dw, dh, bg) => { const sc = Math.min(W / dw, H / dh); const r = el('div', 'root', stage); S(r, { width: dw + 'px', height: dh + 'px', left: (W - dw * sc) / 2 + 'px', top: (H - dh * sc) / 2 + 'px', transform: `scale(${sc})` }); if (bg) r.style.background = bg; return r }
+// the site's pastel glow, static (the drifting version is its own skill)
+const blobs = (parent, dw, dh, drift = (i) => '') => {
+  const bl = [['#dfe3ff', .7, -128, -160, 608], ['#ffe1ec', .6, dw + 160 - 544, dh / 3, 544], ['#dff6ff', .6, dw / 3, dh - 480, 480]]
+  const out = bl.map(([c, o, x, y, s], i) => { const b = el('div', 'blob', parent); S(b, { background: c, opacity: o, left: x + 'px', top: y + 'px', width: s + 'px', height: s + 'px' }); return b })
+  const top = el('div', 'abs', parent); S(top, { inset: 0, background: 'radial-gradient(ellipse at top,rgba(255,255,255,.6),transparent 60%)' })
+  return out
+}
+// fade everything out at the end of the loop so it wraps cleanly
+const endFade = (t, d = .45) => 1 - E_EASEINOUT(seg(t, DUR - d, DUR))
+const loopFade = (t) => E_EASEINOUT(seg(t, 0, .3)) * endFade(t)
+const E_TW = bez(.4, 0, .2, 1)   // tailwind transition-all default easing
+
+const DUR = 10
+window.DUR = DUR
+const DW = 1440, DH = 1080
+const root = mkRoot(DW, DH); blobs(root, DW, DH)
+// sidebar
+const side = el('div', 'glass-strong', root); S(side, { position: 'absolute', left: '12px', top: '12px', width: '232px', bottom: '12px', borderRadius: '28px', padding: '14px', overflow: 'hidden' })
+const NAV = [['layout-dashboard', 'Overview'], ['inbox', 'Inbox'], ['palette', 'Design'], ['globe', 'Domain'], ['share-2', 'Become a partner'], ['credit-card', 'Billing'], ['user', 'Profile'], ['hash', 'Headings and text'], ['sparkles', 'Numbers'], ['link', 'Links'], ['video', 'Videos'], ['building', 'Brands'], ['trending-up', 'Results section'], ['gift', 'Wins and awards'], ['eye', 'Case studies'], ['monitor', 'Flagship project'], ['users', 'Results gallery'], ['rocket', 'Studio'], ['calendar', 'Coaching'], ['shopping-bag', 'Accounts']]
+side.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:6px 8px 14px"><span style="display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--ink);color:#fff;font-weight:600">S</span><div><p style="font-weight:600;line-height:20px">Sam Rivera</p><p style="font-size:12px;color:var(--ink3)">sam.example.site</p></div></div>` + NAV.map(([i, n], k) => `<div class="sb ${k === 0 ? 'on' : ''}" style="padding:8px 14px">${ic(i, 18)}${n}</div>`).join('')
+// main
+const main = el('div', 'abs', root); S(main, { left: '280px', top: '40px', width: '620px' })
+main.innerHTML = `<h1 style="font-size:30px;line-height:36px;font-weight:600;letter-spacing:-.025em">Overview</h1><p style="margin-top:4px;font-size:14px;color:var(--ink2)">Visits, clicks and inquiries on your site. First-party, no third-party scripts.</p>
+<div id="chips" style="margin-top:20px;display:flex;gap:8px"><span class="chip" data-d="7">7D</span><span class="chip" data-d="30">30D</span><span class="chip" data-d="90">90D</span><span class="chip" id="rf" style="padding:8px 12px"></span></div><div id="stats" style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div><div id="chart" class="glass pnl" style="margin-top:14px"></div><div id="pnls" style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px"></div>`
+const chips = [...main.querySelectorAll('#chips .chip[data-d]')], rf = main.querySelector('#rf'), stats = main.querySelector('#stats'), chart = main.querySelector('#chart'), pnls = main.querySelector('#pnls')
+const RF = (deg) => `<svg class="i" viewBox="0 0 24 24" width="14" height="14" style="transform:rotate(${deg}deg)"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`
+// preview
+const prevL = el('div', 'abs', root); S(prevL, { left: '940px', top: '40px', width: '480px' })
+prevL.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="display:flex;gap:4px"><span style="display:grid;place-items:center;width:40px;height:36px;border-radius:999px;background:var(--ink);color:#fff">${ic('monitor', 16)}</span><span style="font-size:13px;color:var(--ink3);align-self:center;margin-left:8px">Showing saved site</span></div><span class="btn btn-primary" style="height:36px;padding:0 14px;font-size:13px">${ic('eye', 14)} Hide preview</span></div><div class="glass-strong" style="border-radius:36px;padding:14px;height:880px;overflow:hidden"><div style="height:100%;border-radius:28px;background:linear-gradient(160deg,#e7eaff,#f6f1f6 50%,#fdeef2);padding:28px"><span style="display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--ink);color:#fff;font-weight:600">S</span><span class="eyebrow" style="margin-top:56px">${ic('map-pin', 12, 2, 'color:var(--accent)')} Your city</span><div style="margin-top:16px;font-size:44px;line-height:1.05;font-weight:600;letter-spacing:-.03em">Sam Rivera<span style="display:block;color:var(--ink3)">Designer and writer</span></div><p style="margin-top:22px;font-size:17px;line-height:1.6;color:var(--ink2)">One line about who you help and how.</p><div style="margin-top:24px;display:flex;gap:12px;align-items:center"><span class="btn btn-primary" style="height:48px;padding:0 24px">Work with me ${ic('arrow-up-right', 16)}</span><span style="font-weight:600;color:var(--ink2);display:inline-flex;gap:8px">${ic('file-down', 18)} Media kit</span></div><div style="margin-top:36px;height:420px;border-radius:30px;background:linear-gradient(160deg,#2a2b30,#0f1014)"></div></div></div>`
+const DATA = {
+  0: { views: 0, uniques: 0, clicks: 0, inq: 0, unread: 0, dv: null, dc: null, series: [], top: [], recent: [], countries: [], devices: [], refs: [] },
+  30: { views: 2244, uniques: 1380, clicks: 611, inq: 38, unread: 6, dv: 18, dc: 9, n: 30, seed: 3, top: [['Work with me', '212'], ['Book a call', '148'], ['Press kit', '96'], ['Join the community', '71']], recent: [['Book a call', 'US mobile · 2m ago'], ['Work with me', 'CA desktop · 9m ago'], ['Press kit', 'US mobile · 14m ago']], countries: [['United States', '1,102'], ['Canada', '188'], ['United Kingdom', '164']], devices: [['mobile', '1,730'], ['desktop', '440'], ['tablet', '74']], refs: [['instagram.com', '640'], ['tiktok.com', '512'], ['direct', '388']] },
+  7: { views: 512, uniques: 330, clicks: 143, inq: 9, unread: 2, dv: 4, dc: -3, n: 7, seed: 8, top: [['Work with me', '51'], ['Book a call', '39'], ['Press kit', '22'], ['Join the community', '13']], recent: [['Book a call', 'US mobile · 2m ago'], ['Work with me', 'CA desktop · 9m ago'], ['Press kit', 'US mobile · 14m ago']], countries: [['United States', '260'], ['Canada', '44'], ['United Kingdom', '38']], devices: [['mobile', '396'], ['desktop', '98'], ['tablet', '18']], refs: [['instagram.com', '150'], ['tiktok.com', '121'], ['direct', '90']] },
+  90: { views: 6810, uniques: 4020, clicks: 1904, inq: 112, unread: 6, dv: 31, dc: 22, n: 90, seed: 5, top: [['Work with me', '640'], ['Book a call', '455'], ['Press kit', '301'], ['Join the community', '208']], recent: [['Book a call', 'US mobile · 2m ago'], ['Work with me', 'CA desktop · 9m ago'], ['Press kit', 'US mobile · 14m ago']], countries: [['United States', '3,340'], ['Canada', '610'], ['United Kingdom', '502']], devices: [['mobile', '5,230'], ['desktop', '1,320'], ['tablet', '260']], refs: [['instagram.com', '1,940'], ['tiktok.com', '1,502'], ['direct', '1,180']] },
+}
+const lcg = (s) => () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }
+const seriesOf = (d) => { if (!d.n) return []; const r = lcg(d.seed), base = d.views / d.n; return Array.from({ length: d.n }, (_, i) => ({ v: Math.max(0, Math.round(base * (.55 + r() * .9 + i / d.n * .3))), c: Math.max(0, Math.round(base * .27 * (.5 + r())))})) }
+const stat = (icn, l, v, dlt) => `<div class="glass sc"><div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--ink3)">${ic(icn, 16)} ${l}</div><p class="tn" style="margin-top:4px;font-size:24px;line-height:32px;font-weight:600">${v.toLocaleString('en-US')}</p>${dlt === null || dlt === undefined ? '' : `<p style="display:flex;align-items:center;gap:2px;font-size:12px;color:${dlt >= 0 ? 'var(--ok)' : '#dc2626'}">${dlt >= 0 ? '↗' : '↘'} ${Math.abs(dlt)}% vs previous</p>`}</div>`
+const table = (rows, empty) => rows.length ? rows.map((r) => `<div class="tr"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[0]}</span><span class="tn" style="color:var(--ink3);flex:none">${r[1]}</span></div>`).join('') : `<p style="font-size:14px;color:var(--ink4)">${empty}</p>`
+const panel = (t, inner) => `<div class="glass pnl"><p style="margin-bottom:10px;font-size:14px;font-weight:600">${t}</p>${inner}</div>`
+let drawn = ''
+const draw = (key, days) => {
+  const k = key + ':' + days; if (k === drawn) return; drawn = k
+  const d = DATA[key], ser = seriesOf(d)
+  stats.innerHTML = stat('eye', 'Page views', d.views, d.dv) + stat('users', 'Unique visitors', d.uniques) + stat('mouse-pointer', 'Link clicks', d.clicks, d.dc) + `<div class="glass sc"><div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--ink3)">${ic('inbox', 16)} Inbound</div><p class="tn" style="margin-top:4px;font-size:24px;line-height:32px;font-weight:600">${d.inq}</p><p style="font-size:12px;color:var(--accent)">${d.unread} unread</p></div>`
+  const CW = 600, CH = 140, pad = 4, mx = Math.max(1, ...ser.map((p) => Math.max(p.v, p.c)))
+  const x = (i) => pad + (i / Math.max(1, ser.length - 1)) * (CW - pad * 2), y = (n) => CH - pad - (n / mx) * (CH - pad * 2)
+  const path = (kk) => ser.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[kk]).toFixed(1)}`).join(' ')
+  const flat = !ser.length ? `M${pad},${CH - pad} L${CW - pad},${CH - pad}` : ''
+  chart.innerHTML = `<p style="font-size:14px;font-weight:600">Views and clicks per day</p><svg viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none" style="margin-top:12px;display:block;width:100%;height:144px">${ser.length ? `<path d="${path('v')} L${x(ser.length - 1)},${CH} L${x(0)},${CH} Z" fill="rgba(91,92,230,.12)"/><path d="${path('v')}" fill="none" stroke="#5b5ce6" stroke-width="2" vector-effect="non-scaling-stroke"/><path d="${path('c')}" fill="none" stroke="#0b0c10" stroke-width="2" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>` : `<path d="${flat}" fill="none" stroke="#5b5ce6" stroke-width="2" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`}</svg><div style="margin-top:8px;display:flex;align-items:center;gap:16px;font-size:12px;color:var(--ink3)"><span style="display:flex;align-items:center;gap:6px"><i style="display:inline-block;width:16px;height:8px;border-radius:4px;background:var(--accent)"></i> Views</span><span style="display:flex;align-items:center;gap:6px"><i style="display:inline-block;width:16px;border-top:2px dashed var(--ink)"></i> Clicks</span><span style="margin-left:auto">2025-03-01 to 2025-03-${days === 7 ? '07' : '30'}</span></div>`
+  pnls.innerHTML = panel('Top links', table(d.top, 'No clicks yet')) + panel('Recent clicks', table(d.recent, 'No clicks yet')) + panel('Countries', table(d.countries, 'No views yet')) + panel('Devices', table(d.devices, 'No views yet')) + panel('Referrers', table(d.refs, 'Direct traffic only so far'))
+}
+const cur = el('div', 'abs', root, `<svg viewBox="0 0 24 24" width="30" height="30" style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))"><path d="M5 3l14 8-6.2 1.6L9.6 19z" fill="#fff" stroke="#0b0c10" stroke-width="1.6" stroke-linejoin="round"/></svg>`)
+const ring = el('div', 'abs', root); S(ring, { width: '44px', height: '44px', borderRadius: '50%', border: '2px solid rgba(91,92,230,.9)', marginLeft: '-22px', marginTop: '-22px' })
+// timeline: [click time, chip days (0 = refresh only), loading seconds]
+const CK = [[1.6, 30], [4.6, 7], [7.4, 90]]
+const CHIPX = { 7: 320, 30: 388, 90: 452, rf: 508 }, CHIPY = 144
+function render(t) {
+  S(root, { opacity: loopFade(t) })
+  let days = 30, key = 0, loadT = -9
+  CK.forEach(([ct, d]) => { if (t >= ct) { days = d; loadT = t - ct; key = loadT >= .8 ? d : (key ? key : 0) } })
+  if (t >= CK[1][0] && t < CK[1][0] + .8) key = 30; if (t >= CK[2][0] && t < CK[2][0] + .8) key = 7
+  const shown = t < CK[0][0] ? 0 : key
+  draw(shown, days)
+  chips.forEach((c) => { c.className = 'chip' + (+c.dataset.d === (t < CK[0][0] ? 30 : days) ? ' on' : '') })
+  // refresh icon spins (animate-spin, 1s linear) while loading
+  const loading = CK.some(([ct]) => t >= ct && t < ct + .8)
+  rf.innerHTML = RF(loading ? ((t * 360) % 360) : 0)
+  // pointer
+  let c = null, rp = 0
+  CK.forEach(([ct, d], i) => { const t0 = ct - .9, t1 = ct + .8; if (t >= t0 && t < t1) { const a = E_EASEINOUT(seg(t, t0, ct)), o = E_EASEINOUT(seg(t, ct + .2, t1)); const from = i ? { x: CHIPX[CK[i - 1][1]] + 30, y: CHIPY + 70 } : { x: 700, y: 330 }; const tgt = { x: CHIPX[i === 0 ? 'rf' : d], y: CHIPY }; c = { x: lerp(lerp(from.x, tgt.x, a), tgt.x + 70, o), y: lerp(lerp(from.y, tgt.y, a), tgt.y + 80, o) }; if (t >= ct && t < ct + .35) rp = (t - ct) / .35 } })
+  S(cur, { display: c ? 'block' : 'none', left: c ? c.x + 'px' : 0, top: c ? c.y + 'px' : 0 }); S(ring, { display: rp > 0 ? 'block' : 'none', left: c ? c.x + 'px' : 0, top: c ? c.y + 'px' : 0, opacity: 1 - rp, transform: `scale(${.4 + rp * 1.1})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,19 @@
+{
+  "slug": "skewed-bar-chapter-wipe__staggered-eio5",
+  "visual_name": "Skewed bar chapter wipe",
+  "code_name": "Three skewed bars sweeping across with eio5 stagger",
+  "category": "motion-graphics",
+  "summary": "Three tall indigo bars, skewed 18 degrees, sweep across the frame one behind another and the scene changes behind them.",
+  "tags": [
+    "transition",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-skew"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

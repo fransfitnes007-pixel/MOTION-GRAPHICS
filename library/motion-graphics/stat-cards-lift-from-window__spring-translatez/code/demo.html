@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stat cards lifting out of a window</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.win{position:absolute;border-radius:22px;overflow:hidden;background:#0b0a12;box-shadow:0 60px 140px -40px rgba(24,16,52,.55),0 0 0 1px rgba(20,16,40,.12)}
+.win.dk{box-shadow:0 60px 160px -40px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.09),0 0 120px rgba(124,58,237,.18)}
+.win .bar{position:absolute;left:0;right:0;top:0;height:46px;background:#100f18;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:9px;padding:0 20px;z-index:3}
+.win .bar i{width:13px;height:13px;border-radius:50%;display:block}
+.win .bar .url{position:absolute;left:50%;transform:translateX(-50%);font-weight:500;font-size:15px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);padding:7px 22px;border-radius:10px;display:flex;align-items:center;gap:8px}
+.win .view{position:absolute;left:0;right:0;top:46px;bottom:0;overflow:hidden}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3.4
+window.DUR = DUR
+// Everything is laid out in a 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// Placeholder for a vertical video cover: a gradient with a head-and-shoulders silhouette.
+const coverBg = (i) => { const h = (i * 47 + 250) % 360; return `radial-gradient(circle at 50% 34%, rgba(255,255,255,.55) 0 11%, transparent 12%), radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.35) 0 28%, transparent 29%), linear-gradient(170deg, hsl(${h} 70% 62%), hsl(${(h + 50) % 360} 60% 30%))` }
+// light stage: grey base, faint dot grid, four blurred orbs drifting
+const bgL = el('div', 'layer', root); const bgBase = el('div', 'bgfill', bgL); S(bgBase, { background: '#f4f4f6' }); el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(139,92,246,.30)', s: 900, x: 300, y: 120, sp: .09 }, { c: 'rgba(96,165,250,.26)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.14)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.30)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s + 'px', height: o.s + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+const driftOrbs = (t) => { for (const o of orbs) S(o.e, { left: (o.x + Math.sin(t * o.sp * 6 + o.s) * 120) + 'px', top: (o.y + Math.cos(t * o.sp * 5 + o.x) * 90) + 'px' }) }
+// Stand-ins for the two 1920x1080 captures of a real product screen (screenshots work equally well).
+function dashCap(parent) {
+  const c = el('div', 'abs', parent); S(c, { left: '0', top: '0', width: '1920px', height: '1080px', background: 'linear-gradient(180deg,#0d0b16,#09080f)', transformOrigin: '0 0', overflow: 'hidden', color: '#fff' })
+  const side = el('div', 'abs', c); S(side, { left: 0, top: 0, width: '250px', height: '1080px', background: '#100f1a', borderRight: '1px solid rgba(255,255,255,.06)' })
+  for (let i = 0; i < 7; i++) { const n = el('div', 'abs', side); S(n, { left: '28px', top: (120 + i * 62) + 'px', width: (i === 0 ? 190 : 150 - (i % 3) * 20) + 'px', height: '30px', borderRadius: '9px', background: i === 0 ? 'rgba(139,92,246,.55)' : 'rgba(255,255,255,.08)' }) }
+  const ban = el('div', 'abs', c); S(ban, { left: '290px', top: '90px', width: '1580px', height: '190px', borderRadius: '26px', background: 'linear-gradient(100deg,#2a1b5e,#171233 70%)', boxShadow: '0 0 0 1px rgba(255,255,255,.08)' })
+  const h = el('div', 'abs', ban, 'Hello, Brand'); S(h, { left: '40px', top: '52px', font: '700 44px/1 -apple-system,system-ui', letterSpacing: '-.02em' })
+  const bt = el('div', 'abs', ban, 'Open report'); S(bt, { left: '1242px', top: '74px', width: '240px', height: '48px', borderRadius: '12px', background: '#fff', color: '#0b0b10', font: '700 22px/48px -apple-system,system-ui', textAlign: 'center' })
+  ;[['Total views', '15,117,177'], ['Posts live', '60 / 60'], ['Members', '61,980'], ['Avg score', '39,047']].forEach(([a, b], i) => {
+    const k = el('div', 'abs', c); S(k, { left: (290 + i * 400) + 'px', top: '310px', width: '380px', height: '116px', borderRadius: '18px', background: '#141223', boxShadow: '0 0 0 1px rgba(255,255,255,.07)' })
+    el('div', 'abs', k, a).style.cssText = 'left:26px;top:22px;font:500 20px/1 -apple-system,system-ui;color:#8a89a0'
+    el('div', 'abs', k, b).style.cssText = 'left:26px;top:58px;font:800 40px/1 -apple-system,system-ui;letter-spacing:-.02em'
+  })
+  const ch = el('div', 'abs', c); S(ch, { left: '290px', top: '460px', width: '1060px', height: '330px', borderRadius: '18px', background: '#141223', boxShadow: '0 0 0 1px rgba(255,255,255,.07)' })
+  ch.innerHTML = '<svg viewBox="0 0 1060 330" width="1060" height="330"><defs><linearGradient id="dg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".5"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs><path d="M30 290 C200 280 300 250 420 220 S650 150 780 110 S950 60 1030 40 L1030 330 L30 330Z" fill="url(#dg)"/><path d="M30 290 C200 280 300 250 420 220 S650 150 780 110 S950 60 1030 40" fill="none" stroke="#a78bfa" stroke-width="5"/></svg>'
+  const ring = el('div', 'abs', c); S(ring, { left: '1380px', top: '460px', width: '490px', height: '330px', borderRadius: '18px', background: '#141223', boxShadow: '0 0 0 1px rgba(255,255,255,.07)' })
+  const rg = el('div', 'abs', ring, '60'); S(rg, { left: '165px', top: '85px', width: '160px', height: '160px', borderRadius: '50%', border: '12px solid #34d399', font: '800 54px/136px -apple-system,system-ui', textAlign: 'center' })
+  for (let i = 0; i < 9; i++) { const t = el('div', 'abs', c); S(t, { left: (290 + i * 175) + 'px', top: '820px', width: '155px', height: '230px', borderRadius: '14px', background: coverBg(i) }) }
+  return c
+}
+function briefCap(parent) {
+  const c = el('div', 'abs', parent); S(c, { left: '0', top: '0', width: '1920px', height: '1080px', background: '#0c0b14', transformOrigin: '0 0', overflow: 'hidden', color: '#fff' })
+  el('div', 'abs', c, 'BRIEF').style.cssText = 'left:300px;top:110px;font:800 30px/1 -apple-system,system-ui;letter-spacing:.08em;color:#a78bfa'
+  for (let r = 0; r < 14; r++) for (let col = 0; col < 2; col++) { const l = el('div', 'abs', c); S(l, { left: (300 + col * 820) + 'px', top: (190 + r * 52) + 'px', width: (640 - ((r * 37 + col * 91) % 280)) + 'px', height: '14px', borderRadius: '7px', background: 'rgba(255,255,255,.16)' }) }
+  return c
+}
+// The window sits centred; three stat cards separate from it and hover toward the lens.
+const RUN = 6.18, T0 = 5.9
+const w = el('div', 'win', root, `<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url">app.example.com/client</div></div><div class="view"></div>`)
+S(w, { left: '840px', top: '150px', width: '1000px', height: '608px', transform: 'perspective(2400px) rotateY(-9deg) rotateX(3deg)', transformOrigin: '30% 50%' })
+const view = w.querySelector('.view'); const cap = dashCap(view); const K0 = 1000 / 1920 * 1.1; S(cap, { transform: `translate(-30px,-20px) scale(${K0})` })
+const STATS = [['Total views', '15,117,177'], ['Posts live', '60 / 60'], ['Avg score', '39,047']]
+const lift4 = STATS.map(([a, b], i) => {
+  const c = el('div', 'abs', root); S(c, { width: 322 * 1.08 + 'px', height: 117 * 1.08 + 'px', borderRadius: '18px', background: '#141223', color: '#fff', overflow: 'hidden', boxShadow: '0 40px 90px -24px rgba(24,16,52,.55),0 0 0 1px rgba(167,139,250,.35)' })
+  el('div', 'abs', c, a).style.cssText = 'left:22px;top:20px;font:500 19px/1 -apple-system,system-ui;color:#9a98b4'
+  el('div', 'abs', c, b).style.cssText = 'left:22px;top:54px;font:800 40px/1 -apple-system,system-ui;letter-spacing:-.02em'
+  c.i = i; return c
+})
+function render(t) {
+  t += T0
+  driftOrbs(t)
+  lift4.forEach((c, i) => {
+    const p = spring(seg(t, RUN + .05 + i * .1, RUN + .65 + i * .1), 7, 11), o = ei(seg(t, 8.3, 8.6))
+    S(c, { left: (868 + i * 336) + 'px', top: (612 - i * 4) + 'px', opacity: clamp(p * 1.5) * (1 - o), transform: `perspective(1600px) translateZ(${p * 160}px) translateY(${(1 - p) * 40 - p * 14}px) rotateY(${-10 * (1 - p)}deg)` })
+  })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

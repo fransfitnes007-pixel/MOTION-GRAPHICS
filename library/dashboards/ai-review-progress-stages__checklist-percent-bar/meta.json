@@ -1,0 +1,19 @@
+{
+  "slug": "ai-review-progress-stages__checklist-percent-bar",
+  "visual_name": "AI review progress",
+  "code_name": "Stage checklist with percent bar",
+  "category": "dashboards",
+  "summary": "Twelve stages step through while the bar climbs from 15% to 100%, then the verdict banner replaces the panel.",
+  "tags": [
+    "loader",
+    "card",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

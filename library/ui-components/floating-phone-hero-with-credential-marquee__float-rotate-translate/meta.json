@@ -1,0 +1,23 @@
+{
+  "slug": "floating-phone-hero-with-credential-marquee__float-rotate-translate",
+  "visual_name": "Floating phone hero with credential marquee",
+  "code_name": "Float rotate translate",
+  "category": "ui-components",
+  "summary": "A cream landing hero with a big sans headline and one italic serif accent word, beside a phone mockup that floats and tilts gently on a 7 second loop, with a scrolling credentials strip along the bottom.",
+  "tags": [
+    "hero",
+    "phone",
+    "marquee",
+    "light",
+    "card"
+  ],
+  "tech": [
+    "css-keyframes",
+    "css",
+    "vanilla-js"
+  ],
+  "duration_sec": 14,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "stamped-word-card-burst__spring-from-huge",
+  "visual_name": "Stamped word card burst",
+  "code_name": "Spring from huge",
+  "category": "motion-graphics",
+  "summary": "A post card bursts in from huge and slightly rotated, and a heavy uppercase word with a blue block stamps over it, changing word to word.",
+  "tags": [
+    "kinetic-type",
+    "card",
+    "light",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 3.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

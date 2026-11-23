@@ -1,0 +1,20 @@
+{
+  "slug": "bouncing-badge-and-done-word__damped-sine-bounce",
+  "visual_name": "Bouncing badge and done word",
+  "code_name": "Damped sine bounce with shadow",
+  "category": "motion-graphics",
+  "summary": "A chrome badge hops up and down on decaying bounces over a shrinking and fading shadow, tilting side to side, while a bold dark word pops in next to it.",
+  "tags": [
+    "logo",
+    "kinetic-type",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

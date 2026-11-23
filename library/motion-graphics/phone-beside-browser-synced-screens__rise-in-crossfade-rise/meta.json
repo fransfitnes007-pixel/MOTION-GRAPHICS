@@ -1,0 +1,21 @@
+{
+  "slug": "phone-beside-browser-synced-screens__rise-in-crossfade-rise",
+  "visual_name": "Phone beside browser with synced screens",
+  "code_name": "Rise-in phone, crossfading screens",
+  "category": "motion-graphics",
+  "summary": "A phone rises in next to a browser window and its screens crossfade in step with the page being scrolled.",
+  "tags": [
+    "phone",
+    "browser-window",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

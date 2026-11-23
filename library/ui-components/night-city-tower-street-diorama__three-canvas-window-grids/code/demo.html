@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Night city tower street diorama</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#0a0a2a;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="three.global.js"></script>
+<script>
+(() => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 14
+window.DUR = DUR
+const R = ((seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 })(1234)   // replaces Math.random
+function M(c, o) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, metalness: 0.1, ...o }) }
+function G(c, i) { return new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i || 0.5, roughness: 0.2 }) }
+function B(w, h, d, m) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); mesh.castShadow = true; mesh.receiveShadow = true; return mesh }
+function P(p, m, x, y, z) { m.position.set(x, y, z); p.add(m); return m }
+function Cyl(rt, rb, h, m, seg) { const c = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 12), m); c.castShadow = true; return c }
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setPixelRatio(1); renderer.setSize(W, H)
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1
+renderer.domElement.style.cssText = 'position:absolute;left:0;top:0'; stage.appendChild(renderer.domElement)
+const NIGHT = 0x0a0a2a                                   // the app's night sky colour
+const scene = new THREE.Scene(); scene.background = new THREE.Color(NIGHT); scene.fog = new THREE.FogExp2(NIGHT, 0.004)
+const camera = new THREE.PerspectiveCamera(TALL ? 70 : 52, W / H, 0.5, 2000)
+scene.add(new THREE.AmbientLight(0x8899cc, 0.55)); scene.add(new THREE.HemisphereLight(0x5566aa, 0x222233, 0.5))
+const moon = new THREE.DirectionalLight(0x6688cc, 1.2); moon.position.set(-60, 90, -30); scene.add(moon)
+const g = new THREE.Group(); scene.add(g)
+
+// ---- streets and sidewalks ----
+const asphalt = M(0x333333, { roughness: 0.7, metalness: 0.1 }), sidewalk = M(0x999999, { roughness: 0.6 })
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), asphalt); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; g.add(ground)
+// the source lays streets on the same coordinates as the buildings, so the avenues run through them; here the streets are offset by 20 so each block sits between streets
+for (let s = -4; s <= 3; s++) { const c = s * 40 + 20; P(g, B(300, 0.02, 12, asphalt), 0, 0.02, c); P(g, B(300, 0.1, 2, sidewalk), 0, 0.05, c - 7); P(g, B(300, 0.1, 2, sidewalk), 0, 0.05, c + 7); P(g, B(12, 0.02, 300, asphalt), c, 0.02, 0); P(g, B(2, 0.1, 300, sidewalk), c - 7, 0.05, 0); P(g, B(2, 0.1, 300, sidewalk), c + 7, 0.05, 0) }
+// lane dashes
+const dashMat = new THREE.MeshBasicMaterial({ color: 0xcccc99 })
+for (let s = -4; s <= 3; s++) for (let d = -140; d <= 140; d += 8) { P(g, new THREE.Mesh(new THREE.PlaneGeometry(3, 0.25), dashMat), d, 0.06, s * 40 + 20).rotation.x = -Math.PI / 2 }
+
+// ---- skyscrapers: box + a window grid drawn on a canvas texture (the app places ~4000 glass planes) ----
+const buildingColors = [0x445566, 0x556677, 0x334455, 0x667788, 0x223344, 0x778899]
+function windowTexture(cols, rows, seed) {
+  const c = document.createElement('canvas'); c.width = cols * 8; c.height = rows * 8; const x = c.getContext('2d'); const r = ((s) => () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296 })(seed)
+  x.fillStyle = '#0b1220'; x.fillRect(0, 0, c.width, c.height)
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const lit = r() > 0.55; x.fillStyle = lit ? (r() > 0.5 ? '#ffe9a8' : '#bfe0ff') : '#16233a'; x.fillRect(i * 8 + 1, j * 8 + 1, 6, 6) }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.magFilter = THREE.NearestFilter; return t
+}
+const antennas = []
+let seedN = 1
+for (let bx = -3; bx <= 3; bx++) for (let bz = -3; bz <= 3; bz++) {
+  if (bx === 0 && bz === 0) continue
+  const bh = 20 + R() * 60, bw = 12 + R() * 8, bd = 12 + R() * 8, bc = buildingColors[Math.floor(R() * buildingColors.length)]
+  const cols = Math.floor(bw / 3), rows = Math.floor(bh / 3)
+  const tex = windowTexture(cols * 2, rows * 2, seedN++)
+  const wm = new THREE.MeshStandardMaterial({ color: 0xffffff, map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.9, roughness: 0.3, metalness: 0.3 })
+  const body = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), [M(bc, { roughness: 0.15, metalness: 0.5 }), M(bc, { roughness: 0.15, metalness: 0.5 }), M(bc, { roughness: 0.15, metalness: 0.5 }), M(bc), wm, wm]); body.castShadow = true
+  P(g, body, bx * 40, bh / 2, bz * 40)
+  if (bh > 50) { P(g, Cyl(0.1, 0.05, 8, M(0xcccccc, { metalness: 0.9 })), bx * 40, bh + 4, bz * 40); const tip = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff2222 })); tip.position.set(bx * 40, bh + 8.3, bz * 40); g.add(tip); antennas.push(tip) }
+}
+// ---- the central tower: tallest, dark glass, 20 blue accent lines, lit sign ----
+const hqH = 80
+P(g, B(20, hqH, 20, M(0x1a2a4a, { roughness: 0.08, metalness: 0.7 })), 0, hqH / 2, 0)
+const sc = document.createElement('canvas'); sc.width = 512; sc.height = 256; const x = sc.getContext('2d')
+x.fillStyle = '#1a2a4a'; x.fillRect(0, 0, 512, 256); x.fillStyle = '#3b82f6'; x.font = 'bold 80px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('NORTHSTAR', 256, 100); x.font = 'bold 36px sans-serif'; x.fillStyle = '#fff'; x.fillText('TOWER ONE', 256, 180)
+P(g, new THREE.Mesh(new THREE.PlaneGeometry(16, 8), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(sc), emissive: 0x3b82f6, emissiveIntensity: 0.6 })), 0, hqH - 8, 10.1)
+const accents = []
+for (let al = 0; al < 20; al++) { const a = P(g, B(20.2, 0.1, 0.1, G(0x3b82f6, 0.8)), 0, 3 + al * 4, 10.1); accents.push(a) }
+// ---- street lamps: glowing heads (the app adds a point light to each) plus a few real lights near the tower ----
+for (let sl = -120; sl <= 120; sl += 20) for (const sz of [13, 27, -27, -13]) { P(g, Cyl(0.1, 0.15, 5, M(0x444444, { metalness: 0.8 })), sl, 2.5, sz); P(g, new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff5dd })), sl, 5.3, sz) }
+for (const [lx, lz] of [[-20, 13], [20, 27], [-20, -27], [20, -13]]) { const L = new THREE.PointLight(0xfff5dd, 90, 40); L.position.set(lx, 6, lz); g.add(L) }
+// ---- traffic: taxis drive the cross streets (the app places 8 static cabs, a CarMover class exists for paths) ----
+const cars = []
+function car(color) { const c = new THREE.Group(); P(c, B(2.5, 1, 4.5, M(color)), 0, 0.6, 0); P(c, B(2.1, 0.7, 2.2, M(color)), 0, 1.4, -0.2); for (const [hx, hz] of [[-0.9, 2.25], [0.9, 2.25]]) P(c, new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffcc })), hx, 0.7, hz); for (const [hx, hz] of [[-0.9, -2.25], [0.9, -2.25]]) P(c, new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff2222 })), hx, 0.7, hz); g.add(c); return c }
+for (let i = 0; i < 12; i++) { const lane = (i % 8) - 4, dir = i % 2 ? 1 : -1; cars.push({ obj: car(i % 3 === 2 ? 0xdddddd : 0xffcc00), lane, dir, u0: R(), alongX: i < 8 }) }
+// ---- sky sign ----
+const nc = document.createElement('canvas'); nc.width = 2048; nc.height = 512; const nx = nc.getContext('2d')
+nx.fillStyle = '#fff'; nx.strokeStyle = '#000'; nx.lineWidth = 6; nx.font = 'bold 140px sans-serif'; nx.textAlign = 'center'; nx.strokeText('NORTHSTAR', 1024, 190); nx.fillText('NORTHSTAR', 1024, 190); nx.font = 'bold 60px sans-serif'; nx.strokeText('city office', 1024, 340); nx.fillText('city office', 1024, 340)
+const nt = new THREE.CanvasTexture(nc); nt.colorSpace = THREE.SRGBColorSpace
+P(g, new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshBasicMaterial({ map: nt, transparent: true, side: THREE.DoubleSide, fog: false })), 0, 105, -62)
+// stars
+const sv = []; for (let i = 0; i < 700; i++) { const th = R() * Math.PI * 2, ph = R() * Math.PI * 0.42, r = 500 + R() * 200; sv.push(Math.cos(th) * Math.sin(ph) * r, Math.cos(ph) * r, Math.sin(th) * Math.sin(ph) * r) }
+const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sv, 3)); scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, fog: false, transparent: true, opacity: 0.8 })))
+
+function render(t) {
+  const w = (2 * Math.PI * t) / DUR
+  // cars drive a full cross street in one loop, evenly offset, 300 units wide (wrap at +-150)
+  cars.forEach((c) => {
+    const u = (c.u0 + t / DUR * (c.dir)) % 1, p = ((u < 0 ? u + 1 : u) - 0.5) * 300
+    if (c.alongX) { c.obj.position.set(p, 0, c.lane * 40 + 20 + (c.dir > 0 ? 2.2 : -2.2)); c.obj.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2 }
+    else { c.obj.position.set(c.lane * 40 + 20 + (c.dir > 0 ? 2.2 : -2.2), 0, p); c.obj.rotation.y = c.dir > 0 ? 0 : Math.PI }
+  })
+  antennas.forEach((a, i) => { a.visible = Math.sin(w * 8 + i) > -0.2 })       // blinking red tips
+  accents.forEach((a, i) => { a.material.emissiveIntensity = 0.55 + 0.45 * Math.max(0, Math.sin(w * 3 - i * 0.5)) })   // a glow runs up the tower
+  // camera: slow low sweep through the avenue, looking at the tower
+  const ca = 0.5 + 0.5 * Math.sin(w), cx = -42 + ca * 84
+  camera.position.set(cx * 1.1, 62 + 6 * Math.sin(w * 2), TALL ? 215 : 180); camera.lookAt(0, 34, 0)
+  renderer.render(scene, camera)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+document.fonts.ready.then(() => { render(0); window.__rdy(true) })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+})()
+</script>
+</body></html>

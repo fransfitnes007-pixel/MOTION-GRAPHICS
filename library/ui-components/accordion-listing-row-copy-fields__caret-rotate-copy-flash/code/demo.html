@@ -1,0 +1,170 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Accordion row with copy fields</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --surface2:#F6F9F7;
+  --ink:#101C18; --muted:#5B6B64; --faint:#8A9A93;
+  --accent:#0F6E4F; --accent-ink:#FFFFFF; --accent-soft:#DCEFE6;
+  --urgent:#A83C14; --urgent-soft:#F8E3DA;
+  --line:#D7E0DB; --line-strong:#BCC9C3;
+  --new:#0F6E4F; --likenew:#2C6E9B; --good:#8A6100;
+  --shadow:0 1px 2px rgba(16,28,24,.06),0 4px 14px rgba(16,28,24,.05);
+  --r:12px;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+/* ---- item ---- */
+.item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  margin-bottom:8px;box-shadow:var(--shadow);overflow:hidden}
+.item.done{opacity:.62}
+.head{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:none;
+  border:0;padding:13px 14px;cursor:pointer;color:inherit;font:inherit}
+.num{flex:none;width:26px;height:26px;border-radius:7px;background:var(--surface2);
+  border:1px solid var(--line);display:grid;place-items:center;font:600 11.5px/1 "IBM Plex Mono",monospace;color:var(--muted)}
+.item.done .num{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.htxt{flex:1;min-width:0}
+.htitle{font-weight:600;font-size:14.5px;letter-spacing:-.01em;display:block;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hmeta{font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.cond{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:10px}
+.cond.c-New{color:var(--new)} .cond.c-like{color:var(--likenew)} .cond.c-good{color:var(--good)}
+.price{flex:none;font:700 16px/1 "IBM Plex Mono",monospace}
+.caret{flex:none;color:var(--faint);font-size:12px;transition:transform .2s}
+.item.open .caret{transform:rotate(90deg)}
+.body{border-top:1px solid var(--line);padding:14px;display:grid;gap:12px;background:var(--surface2)}
+
+/* ---- fields ---- */
+.f{display:grid;gap:5px}
+.flab{display:flex;align-items:center;gap:8px;font:600 10.5px/1 Archivo,sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.flab .len{font-family:"IBM Plex Mono",monospace;color:var(--faint);font-weight:500;letter-spacing:0}
+.copy{margin-left:auto;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink);
+  padding:4px 10px;border-radius:7px;font:600 11px/1 Archivo,sans-serif;cursor:pointer}
+.copy:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.copy.ok{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.val{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  font-size:13.5px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:230px;overflow:auto}
+.val.one{white-space:normal;font-weight:500}
+.val.cat{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted)}
+.kws{display:flex;flex-wrap:wrap;gap:5px}
+.kw{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:3px 8px;
+  font:500 11.5px/1.35 "IBM Plex Mono",monospace}
+
+/* ---- platforms ---- */
+.plats{display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  border-top:1px dashed var(--line-strong);padding-top:11px}
+.plats>span{font:600 10.5px/1 Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-right:3px}
+.plat{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  padding:6px 11px;border-radius:99px;font:600 12px/1 Archivo,sans-serif;cursor:pointer}
+.plat[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
+  bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);
+  padding:9px 16px;border-radius:99px;font:600 13px/1 Archivo,sans-serif;z-index:90;
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+#stage{background:var(--bg)}
+.box{position:absolute;color:var(--ink);font-family:Archivo,-apple-system,'Helvetica Neue',Arial,sans-serif}
+.caret,.toast{transition:none}
+.box .toast{position:absolute;left:50%;bottom:-6px;top:auto;opacity:0;transform:none;white-space:nowrap}
+.box .item{margin-bottom:10px}
+.box .body{overflow:hidden}
+.box .val{max-height:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// fit: lay a fixed-width design box out at its own size, then scale it to fill the stage (works for wide and tall).
+function fit(box, cw, fillW = .9, fillH = .88, h) {
+  S(box, { position: 'absolute', width: cw + 'px' }); if (h) box.style.height = h + 'px'
+  const hh = h || box.offsetHeight, s = Math.min(W * fillW / cw, H * fillH / hh)
+  S(box, { left: ((W - cw) / 2) + 'px', top: ((H - hh) / 2) + 'px', transformOrigin: '50% 50%', transform: 'scale(' + s + ')' }); return s
+}
+// rev: fade + rise a node in over [t0, t0+d]
+const rev = (e, t, t0, d = .45, dy = 14) => { const q = eo(seg(t, t0, t0 + d)); S(e, { opacity: q, transform: 'translateY(' + ((1 - q) * dy) + 'px)' }); return q }
+const DUR = 7
+window.DUR = DUR
+const box = el('div', 'box')
+const row = (n, title, price, cond, cls) => `<button class="head"><span class="num">${n}</span><span class="htxt"><span class="htitle">${title}</span><span class="hmeta"><span class="cond ${cls}">${cond}</span><span>Group A</span></span></span><span class="price">${price}</span><span class="caret">▶</span></button>`
+const r1 = el('div', 'item', box, row(1, 'Sample item one, compact description', '$320', 'Like new', 'c-like'))
+const r2 = el('div', 'item', box, row(3, 'Sample item two, a longer working title for the second listing', '$145', 'New', 'c-New'))
+const kws = ['sample one', 'sample two', 'sample three', 'keyword four', 'keyword five', 'keyword six', 'long tail keyword', 'another one']
+const r3 = el('div', 'item', box, row(4, 'Sample item three, compact description', '$60', 'Good', 'c-good'))
+// the open row (inserted between 1 and 2)
+const open = el('div', 'item', box)
+box.insertBefore(open, r2)
+open.innerHTML = row(2, 'Sample open row, with the fields a poster needs', '$215', 'Like new', 'c-like') + `<div class="body">
+ <div class="f"><div class="flab">Title <span class="len">48/80</span><button class="copy" id="c1">Copy</button></div><div class="val one">Sample open row, with the fields a poster needs</div></div>
+ <div class="f"><div class="flab">Category<button class="copy">Copy</button></div><div class="val cat">Group//Sub group//Item type</div></div>
+ <div class="f"><div class="flab">Description <span class="len">214 chars</span><button class="copy" id="c2">Copy</button></div><div class="val">Short placeholder description of the item.\n\n• First bullet point about condition\n• Second bullet point about size\n• Third bullet point about pickup</div></div>
+ <div class="f"><div class="flab">Keywords<button class="copy" id="c3">Copy</button></div><div class="kws">${kws.map((k) => `<span class="kw">${k}</span>`).join('')}</div></div>
+ <div class="plats"><span>Live on</span><button class="plat">Site A</button><button class="plat">Site B</button><button class="plat">Site C</button><button class="plat">Site D</button></div></div>`
+const toast = el('div', 'toast', box, 'Copied title')
+const body = open.querySelector('.body'), caret = open.querySelector('.caret'), num = open.querySelector('.num')
+const copies = ['c1', 'c2', 'c3'].map((id) => open.querySelector('#' + id)), plats = [...open.querySelectorAll('.plat')]
+// measure the open body once, then drive its height from t
+body.style.display = 'grid'; const BH = body.offsetHeight; 
+const CW = 900; const BOXH = 760
+fit(box, CW, .9, .9)
+const state = (e, on, cls) => { if (e.classList.contains(cls) !== on) e.classList.toggle(cls, on) }
+function render(t) {
+  const q = eio(seg(t, .6, 1.3))
+  S(body, { height: px(BH * q), borderTopWidth: q > 0 ? '1px' : '0', paddingTop: px(14 * q), paddingBottom: px(14 * q), opacity: q })
+  S(caret, { transform: `rotate(${q * 90}deg)` })
+  // field reveal: each field fades up a beat after the body opens
+  open.querySelectorAll('.f,.plats').forEach((f, i) => { const k = eo(seg(t, 1 + i * .12, 1.5 + i * .12)); f.style.opacity = k })
+  // copy flashes: button turns solid green ("ok") for 1.2s, toast rides along
+  const ev = [[2.2, copies[0], 'Copied title'], [3.4, copies[1], 'Copied description'], [4.4, copies[2], 'Copied keywords']]
+  let toastQ = 0, label = ''
+  copies.forEach((c, i) => { const [t0, , txt] = ev[i]; const on = t >= t0 && t < t0 + 1.2; state(c, on, 'ok'); c.textContent = on ? 'Copied' : 'Copy'; if (on) { toastQ = Math.min(eo(seg(t, t0, t0 + .18)), 1 - seg(t, t0 + 1, t0 + 1.2)); label = txt } })
+  if (label) toast.textContent = label
+  S(toast, { opacity: toastQ, transform: `translate(-50%, ${(1 - toastQ) * 14}px)` })
+  // platform pills toggle on, one by one
+  plats.forEach((p, i) => p.setAttribute('aria-pressed', t >= 5.3 + i * .35 && (i !== 2 || true) ? 'true' : 'false'))
+  plats[2].setAttribute('aria-pressed', t >= 5.3 + .7 && t < 6.2 ? 'true' : 'false')
+  // finished: row turns "done"
+  const done = t >= 6.2 && t < 6.9
+  state(open, done, 'done')
+  // the loop resets by itself: everything above is a function of t
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

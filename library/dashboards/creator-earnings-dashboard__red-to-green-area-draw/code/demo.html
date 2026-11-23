@@ -1,0 +1,280 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Creator earnings dashboard</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--bg:oklch(.07 .012 285);--fg:oklch(.95 .008 285);--card:oklch(.10 .012 285);--muted:oklch(.55 .027 264);--border:oklch(.20 .02 285);--primary:oklch(.55 .22 290);--sec:oklch(.14 .015 285)}
+#stage{background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif}
+.ui{background:var(--bg)}
+.side{position:absolute;left:0;top:0;bottom:0;width:240px;background:oklch(.09 .012 285);border-right:1px solid var(--border)}
+.side .logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.side .mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,oklch(.62 .22 290),oklch(.45 .22 270));display:grid;place-items:center;font-weight:800;font-size:14px}
+.side .logo small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;line-height:1.2}
+.nav{padding:12px}
+.nav .it{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:4px;border:1px solid transparent}
+.nav .it.on{background:oklch(.55 .22 290/.2);color:var(--fg);border-color:oklch(.55 .22 290/.3)}
+.nav .it svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav .it.on svg{stroke:oklch(.65 .22 290)}
+.side .user{position:absolute;left:12px;right:12px;bottom:12px;padding:12px;border-radius:12px;background:oklch(.14 .015 285/.5);display:flex;gap:12px;align-items:center}
+.side .av{width:32px;height:32px;border-radius:50%;background:oklch(.55 .22 290/.2);border:1px solid oklch(.55 .22 290/.3);display:grid;place-items:center;font-size:12px;font-weight:700;color:oklch(.65 .22 290)}
+.main{position:absolute;left:240px;right:0;top:0;bottom:0}
+.top{height:66px;border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;background:oklch(.07 .012 285/.8)}
+.top h1{font-size:18px;font-weight:700}.top p{font-size:14px;color:var(--muted);margin-top:1px}
+.top .bell{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.page{position:absolute;left:0;right:0;top:67px;bottom:0;padding:22px 24px}
+.glass{background:oklch(.10 .012 285/.8);border:1px solid oklch(.22 .03 285);border-radius:16px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+.stat{position:relative;padding:18px 20px;overflow:hidden;height:136px}
+.stat .blob{position:absolute;top:-64px;right:-64px;width:160px;height:160px;border-radius:50%}
+.stat .ring{position:absolute;inset:0;border-radius:16px}
+.stat .row{position:relative;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.stat .ic{padding:8px;border-radius:12px;display:grid;place-items:center}
+.stat .ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.stat .chg{font-size:12px;font-weight:600;padding:3px 8px;border-radius:99px}
+.stat .val{position:relative;font-size:30px;font-weight:900;line-height:1.15;white-space:nowrap}
+.stat .lab{position:relative;font-size:14px;color:var(--muted)}
+.spark{position:absolute;font-size:12px;font-weight:700;margin-left:4px}
+.charts{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:18px}
+.card{padding:20px}
+.card h3{font-size:16px;font-weight:600}.card .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.reach{margin-bottom:12px;padding:14px;border-radius:12px;background:oklch(.55 .22 290/.08);border:1px solid oklch(.55 .22 290/.15)}
+.reach .n{font-size:18px;font-weight:700}.reach .k{font-size:12px;color:var(--muted)}
+.deal{display:flex;align-items:center;gap:16px;padding:10px 16px;border-radius:12px;border:1px solid oklch(.20 .02 285);margin-bottom:8px}
+.deal .b{width:40px;height:40px;border-radius:12px;background:oklch(.55 .22 290/.15);color:oklch(.65 .18 290);display:grid;place-items:center;font-weight:700;font-size:14px}
+.deal .t{font-size:14px;font-weight:600}.deal .s{font-size:12px;color:var(--muted)}
+.deal .amt{font-size:12px;font-weight:500;margin-top:1px}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;background:oklch(.72 .22 145/.15);color:oklch(.72 .22 145);border:1px solid oklch(.72 .22 145/.3)}
+.pbar{position:relative;height:6px;border-radius:99px;background:oklch(.15 .02 285);overflow:hidden;margin-top:6px;width:112px}
+.pfill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,oklch(.60 .22 25),oklch(.75 .20 75) 50%,oklch(.72 .22 145))}
+.fade{position:absolute;inset:0;background:var(--bg);pointer-events:none}
+.tall .side{display:none}.tall .main{left:0}.tall .stats{grid-template-columns:1fr 1fr}.tall .charts{grid-template-columns:1fr}.tall .stat{height:132px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers shared by the dashboard demos ----
+// CSS cubic-bezier(x1,y1,x2,y2) as a function of progress 0..1 (Newton solve for x)
+const bez = (x1, y1, x2, y2) => (x) => {
+  if (x <= 0) return 0; if (x >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let u = x
+  for (let i = 0; i < 8; i++) { const f = ((ax * u + bx) * u + cx) * u - x, d = (3 * ax * u + 2 * bx) * u + cx; if (Math.abs(f) < 1e-5 || Math.abs(d) < 1e-6) break; u -= f / d }
+  return ((ay * u + by) * u + cy) * u
+}
+const easeOutCss = bez(0, 0, .58, 1)          // CSS ease-out
+const easeCss = bez(.25, .1, .25, 1)             // CSS ease, Recharts default animationEasing
+const easeInOutCss = bez(.42, 0, .58, 1)       // CSS ease-in-out
+const outExpo22 = bez(.22, 1, .36, 1)          // cubic-bezier(0.22,1,0.36,1), used all over the sources
+// framer-motion physics spring, 0 -> 1, t in seconds (stiffness, damping, mass)
+const fmSpring = (t, k = 100, c = 10, m = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+}
+const rng = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }   // fixed-seed random
+const svgEl = (tag, attrs = {}, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const fmtInt = (n) => Math.round(n).toLocaleString('en-US')
+// d3 curveMonotoneX, which is what Recharts type="monotone" draws
+const monotonePath = (pts) => {
+  const n = pts.length; if (n < 2) return ''
+  const dx = [], dy = [], m = [], tg = []
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i] }
+  tg[0] = m[0]; tg[n - 1] = m[n - 2]
+  for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0 } else { const a = tg[i] / m[i], b = tg[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i] } } }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${pts[i][0] + h},${pts[i][1] + tg[i] * h},${pts[i + 1][0] - h},${pts[i + 1][1] - tg[i + 1] * h},${pts[i + 1][0]},${pts[i + 1][1]}` }
+  return d
+}
+// A fixed design-size UI fitted into the stage: 1440x900 wide, 900x1440 tall. CSS under .tall reflows the grids.
+const DW = TALL ? 900 : 1440, DH = TALL ? 1440 : 900
+const UI_SC = Math.min(W / DW, H / DH)
+const ui = el('div', 'ui' + (TALL ? ' tall' : ''))
+S(ui, { position: 'absolute', width: DW + 'px', height: DH + 'px', left: ((W - DW * UI_SC) / 2) + 'px', top: ((H - DH * UI_SC) / 2) + 'px', transform: `scale(${UI_SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+
+const DUR = 7
+window.DUR = DUR
+const ICON = {
+  dollar: '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  check: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  grid: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+  chart: '<line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+}
+const ico = (k) => `<svg viewBox="0 0 24 24">${ICON[k]}</svg>`
+
+// ---- sidebar + header (static) ----
+const side = el('div', 'side', ui)
+el('div', 'logo', side, '<div class="mark">R</div><small>Team<br>Workspace</small>')
+const nav = el('div', 'nav', side)
+;[['grid', 'Dashboard', 1], ['users', 'My Deals'], ['dollar', 'Earnings'], ['chart', 'Analytics'], ['shield', 'Profile']].forEach(([k, n, on]) => el('div', 'it' + (on ? ' on' : ''), nav, ico(k) + `<span>${n}</span>`))
+el('div', 'user', side, '<div class="av">A</div><div><div style="font-size:14px;font-weight:500">Avery Quinn</div><div style="font-size:12px;color:var(--muted)">Creator</div></div>')
+const main = el('div', 'main', ui)
+el('div', 'top', main, '<div><h1>Welcome back, Avery</h1><p>Here\'s your earnings overview</p></div><div class="bell"></div>')
+// DashboardShell wraps the page in motion.div initial {opacity:0,y:8} animate {opacity:1,y:0} duration .4 easeOut
+const page = el('div', 'page', main)
+
+// ---- stat cards ----
+const GREEN = 'oklch(.72 .22 145)', PURPLE = 'oklch(.65 .22 290)', AMBER = 'oklch(.78 .18 75)', GREEN2 = 'oklch(.68 .20 145)'
+const cards = [
+  { label: 'Total Earnings', value: 12480, prefix: '$', icon: 'dollar', color: GREEN, glow: 'oklch(.72 .22 145/.18)', border: 'oklch(.72 .22 145/.35)', change: '+12%', pulse: true },
+  { label: 'Active Deals', value: 3, icon: 'users', color: PURPLE, glow: 'oklch(.65 .22 290/.15)', border: 'oklch(.65 .22 290/.3)', change: '10 total' },
+  { label: 'Pending Payment', value: 2150, prefix: '$', icon: 'clock', color: AMBER, glow: 'oklch(.78 .18 75/.15)', border: 'oklch(.78 .18 75/.3)', change: 'Processing' },
+  { label: 'Completed Deals', value: 7, icon: 'check', color: GREEN2, glow: 'oklch(.68 .20 145/.15)', border: 'oklch(.68 .20 145/.3)', change: 'All time' },
+]
+const statsEl = el('div', 'stats', page)
+cards.forEach((c) => {
+  c.node = el('div', 'stat glass', statsEl)
+  S(c.node, { border: `1px solid ${c.border}` })
+  el('div', 'blob', c.node); S(c.node.lastChild, { background: `radial-gradient(circle, ${c.glow} 0%, transparent 68%)` })
+  if (c.pulse) { c.ring = el('div', 'ring', c.node); S(c.ring, { boxShadow: `0 0 24px ${c.border}`, border: `1px solid ${c.border}` }) }
+  el('div', 'row', c.node, `<div class="ic" style="background:${c.glow};border:1px solid ${c.border};color:${c.color}">${ico(c.icon)}</div><span class="chg" style="background:${c.glow};color:${c.color};border:1px solid ${c.border}">${c.change}</span>`)
+  c.val = el('div', 'val', c.node); S(c.val, { color: c.color, textShadow: `0 0 20px ${c.glow}` })
+  c.sp = el('span', 'spark', document.createElement('div'), '✦'); S(c.sp, { color: GREEN })
+  el('div', 'lab', c.node, c.label)
+})
+
+// ---- earnings chart ----
+const charts = el('div', 'charts', page)
+const ec = el('div', 'card glass', charts); S(ec, { border: '1px solid oklch(.72 .22 145/.15)' })
+el('div', 'hdr', ec, `<div><h3>Earnings Trajectory</h3><div class="sub">Starting from <b style="color:oklch(.60 .22 25)">$0</b> → <b style="color:${GREEN}">$12,480</b></div></div><div style="display:flex;gap:6px;align-items:center;font-size:12px;font-weight:600;color:${GREEN}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Revenue trend</div>`)
+const CW = 720, CH = 200
+const total = 12480
+const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'], fr = [0, .05, .12, .30, .62, 1]
+const data = fr.map((f) => Math.floor(total * f))
+const PL = 45, PR = CW - 5, PT = 5, PB = CH - 30 - 5, YMAX = 16000
+const cs = svgEl('svg', { width: CW, height: CH, viewBox: `0 0 ${CW} ${CH}` }, ec); cs.style.display = 'block'
+const defs = svgEl('defs', {}, cs)
+const g1 = svgEl('linearGradient', { id: 'lineColorGrad', x1: 0, y1: 0, x2: 1, y2: 0 }, defs)
+;[['0%', 'oklch(.60 .22 25)'], ['40%', 'oklch(.75 .20 75)'], ['100%', 'oklch(.72 .22 145)']].forEach(([o, c]) => svgEl('stop', { offset: o, 'stop-color': c }, g1))
+const g2 = svgEl('linearGradient', { id: 'earningsFill', x1: 0, y1: 0, x2: 0, y2: 1 }, defs)
+;[['0%', 'oklch(.72 .22 145)', .35], ['60%', 'oklch(.75 .20 75)', .12], ['100%', 'oklch(.60 .22 25)', .04]].forEach(([o, c, a]) => svgEl('stop', { offset: o, 'stop-color': c, 'stop-opacity': a }, g2))
+const clip = svgEl('clipPath', { id: 'earnClip' }, defs); const clipRect = svgEl('rect', { x: 0, y: 0, width: 0, height: CH }, clip)
+// y axis labels
+for (let i = 0; i <= 4; i++) { const v = i * 4000, y = PB - (v / YMAX) * (PB - PT); svgEl('text', { x: 40, y: y + 4, 'text-anchor': 'end', fill: 'oklch(.50 .027 264)', 'font-size': 11 }, cs).textContent = '$' + v }
+const pts = data.map((v, i) => [PL + (i / 5) * (PR - PL), PB - (v / YMAX) * (PB - PT)])
+months.forEach((m, i) => svgEl('text', { x: pts[i][0], y: CH - 8, 'text-anchor': i === 5 ? 'end' : 'middle', fill: 'oklch(.50 .027 264)', 'font-size': 11 }, cs).textContent = m)
+const gA = svgEl('g', { 'clip-path': 'url(#earnClip)' }, cs)
+const line = monotonePath(pts)
+svgEl('path', { d: `${line}L${pts[5][0]},${PB}L${pts[0][0]},${PB}Z`, fill: 'url(#earningsFill)' }, gA)
+// objectBoundingBox gradients stop working on a flat horizontal bbox; userSpaceOnUse keeps the red-to-green sweep along x
+g1.setAttribute('gradientUnits', 'userSpaceOnUse'); g1.setAttribute('x1', PL); g1.setAttribute('x2', PR)
+svgEl('path', { d: line, fill: 'none', stroke: 'url(#lineColorGrad)', 'stroke-width': 2.5 }, gA)
+
+// ---- social reach ----
+const sr = el('div', 'card glass', charts)
+el('div', 'hdr', sr, '<div style="display:flex;gap:8px;align-items:center"><span style="color:oklch(.65 .22 290)">✦</span><h3>Social Reach</h3></div>')
+const igN = el('p', 'n'); const ttN = el('p', 'n')
+const r1 = el('div', 'reach', sr, `<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><b style="font-size:14px;font-weight:500">Instagram</b><span class="k">@avery.makes</span></div>`)
+const g = el('div', null, r1); S(g, { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' })
+const c1 = el('div', null, g); c1.appendChild(igN); el('div', 'k', c1, 'Followers'); el('div', null, g, '<p class="n">4.8%</p><div class="k">Engagement</div>')
+const r2 = el('div', 'reach', sr, `<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><b style="font-size:14px;font-weight:500">TikTok</b><span class="k">@avery.makes</span></div>`)
+const g3 = el('div', null, r2); S(g3, { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' })
+const c3 = el('div', null, g3); c3.appendChild(ttN); el('div', 'k', c3, 'Followers'); el('div', null, g3, '<p class="n">38.2K</p><div class="k">Avg Views</div>')
+S(r2, { marginBottom: 0 })
+
+// ---- active deals ----
+const dealsCard = el('div', 'card glass', page)
+el('div', 'hdr', dealsCard, `<div style="display:flex;gap:8px;align-items:center"><span style="color:oklch(.65 .22 290)">⇄</span><h3>Active Deals</h3><span style="font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px;background:oklch(.55 .22 290/.15);color:oklch(.65 .18 290)">3</span></div><span style="font-size:12px;font-weight:600;color:${PURPLE}">View all ↗</span>`)
+const R = rng(7)
+const deals = [['N', 'Spring Capsule Launch', 'Northwind Apparel', 4800, 3, 4], ['L', 'Glow Routine Series', 'Brightleaf Skin', 3200, 2, 4], ['P', 'Snack Drop Reels', 'Pixel Snacks', 2400, 1, 3]]
+deals.forEach((d) => {
+  const [ini, title, brand, amount, done, req] = d
+  const progress = done / req, earned = Math.floor(amount * progress)
+  d.progress = progress
+  d.node = el('div', 'deal', dealsCard)
+  el('div', 'b', d.node, ini)
+  el('div', null, d.node, `<div class="t">${title}</div><div class="s">${brand}</div><div class="amt"><span style="color:oklch(.50 .05 285)">$0</span><span style="color:var(--muted)"> → </span><b style="color:${GREEN}">$${earned.toLocaleString()}</b><span style="color:var(--muted)"> / </span><b style="color:${GREEN}">$${amount.toLocaleString()}</b></div>`)
+  S(d.node.lastChild, { flex: 1 })
+  const sp = el('div', null, d.node); S(sp, { width: '112px' })
+  const SW = 112, SH = 36
+  const pt = Array.from({ length: 8 }, (_, i) => { const tt = i / 7, noise = (R() - .5) * amount * .08; return i === 0 ? 0 : Math.max(0, amount * tt * progress + noise) })
+  const mx = Math.max(...pt) || 1
+  const sv = svgEl('svg', { width: SW, height: SH, viewBox: `0 0 ${SW} ${SH}` }, sp); sv.style.display = 'block'
+  const sg = svgEl('linearGradient', { id: 'sp' + ini, gradientUnits: 'userSpaceOnUse', x1: 5, x2: SW - 5, y1: 0, y2: 0 }, svgEl('defs', {}, sv))
+  ;[['0%', 'oklch(.60 .22 25)'], ['50%', 'oklch(.75 .20 75)'], ['100%', 'oklch(.72 .22 145)']].forEach(([o, c]) => svgEl('stop', { offset: o, 'stop-color': c }, sg))
+  const sc = svgEl('clipPath', { id: 'spc' + ini }, sv); d.clip = svgEl('rect', { x: 0, y: 0, width: 0, height: SH }, sc)
+  const sp2 = pt.map((v, i) => [5 + (i / 7) * (SW - 10), SH - 5 - (v / mx) * (SH - 10)])
+  svgEl('path', { d: monotonePath(sp2), fill: 'none', stroke: `url(#sp${ini})`, 'stroke-width': 2, 'clip-path': `url(#spc${ini})` }, sv)
+  const pb = el('div', 'pbar', sp); d.fill = el('div', 'pfill', pb); S(d.fill, { boxShadow: '0 0 6px oklch(.72 .22 145/.6)' })
+  el('span', 'badge', d.node, 'active')
+})
+const fadeEl = el('div', 'fade', ui)
+
+// ---- timing: everything starts at t=0 on mount, like the page does ----
+const COUNT_MS = 1.6, SPARK_AT = (i) => COUNT_MS
+const kf = (t, times, vals) => { // framer keyframe array, easeInOut between keys
+  for (let i = 0; i < times.length - 1; i++) if (t <= times[i + 1]) { const x = easeInOutCss((t - times[i]) / (times[i + 1] - times[i])); return vals[i] + (vals[i + 1] - vals[i]) * x }
+  return vals[vals.length - 1]
+}
+function render(t) {
+  // page wrapper: opacity 0->1, y 8->0 over .4s easeOut
+  const pq = easeOutCss(seg(t, 0, .4)); S(page, { opacity: pq, transform: `translateY(${(1 - pq) * 8}px)` })
+  cards.forEach((c, i) => {
+    const q = fmSpring(t - i * .1, 120, 10)      // delay i*.1, spring stiffness 120
+    S(c.node, { opacity: clamp(q), transform: `translateY(${(1 - q) * 24}px) scale(${.96 + .04 * q})` })
+    const p = clamp(t / COUNT_MS), e = 1 - Math.pow(1 - p, 3)
+    const shown = p >= 1 ? c.value : Math.floor(e * c.value)
+    c.val.textContent = (c.prefix || '') + shown.toLocaleString('en-US')
+    c.val.appendChild(c.sp)
+    const st = t - COUNT_MS
+    if (p >= 1 && c.value > 0 && st < 1.2) { const u = st / 1.2; S(c.sp, { opacity: kf(u, [0, .2, .7, 1], [0, 1, 1, 0]), transform: `translateY(${kf(u, [0, .2, .7, 1], [-8, -18, -22, -28])}px) scale(${kf(u, [0, .2, .7, 1], [.5, 1.3, 1, .8])})` }) } else S(c.sp, { opacity: 0 })
+    if (c.ring) S(c.ring, { opacity: kf((t % 2.5) / 2.5, [0, .5, 1], [.3, .6, .3]) })   // GlowRing: .3 -> .6 -> .3 every 2.5s, easeInOut
+  })
+  // earnings chart: clip rect grows over 1.8s, ease-out
+  clipRect.setAttribute('width', (PL - 5 + (PR - PL + 10) * easeOutCss(seg(t, 0, 1.8))).toFixed(1))
+  const cardQ = easeOutCss(seg(t, .4, .9)); S(ec, { opacity: cardQ, transform: `translateY(${(1 - cardQ) * 20}px)` })
+  const srQ = easeOutCss(seg(t, .5, 1)); S(sr, { opacity: srQ, transform: `translateY(${(1 - srQ) * 20}px)` })
+  igN.textContent = fmtInt(Math.floor((1 - Math.pow(1 - clamp(t / COUNT_MS), 3)) * 48210)); ttN.textContent = fmtInt(Math.floor((1 - Math.pow(1 - clamp(t / COUNT_MS), 3)) * 91340))
+  const dq = easeOutCss(seg(t, .6, 1.1)); S(dealsCard, { opacity: dq, transform: `translateY(${(1 - dq) * 20}px)` })
+  deals.forEach((d, i) => {
+    const q = easeOutCss(seg(t, .7 + i * .1, 1.2 + i * .1)); S(d.node, { opacity: q, transform: `translateX(${(1 - q) * -10}px)` })
+    d.clip.setAttribute('width', (112 * easeCss(seg(t, 0, 1.2))).toFixed(1))
+    S(d.fill, { width: (d.progress * 100 * easeOutCss(seg(t, 0, 1.2))) + '%' })
+  })
+  S(fadeEl, { opacity: seg(t, DUR - .4, DUR) })
+}
+
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

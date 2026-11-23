@@ -1,0 +1,23 @@
+{
+  "slug": "portrait-video-reel__opposed-rows-tall-cards",
+  "visual_name": "Portrait video reel",
+  "code_name": "Opposed rows, tall cards",
+  "category": "ui-components",
+  "summary": "Two rows of 9:16 video cards in glass frames scrolling in opposite directions, each with a niche pill, a creator name and a bottom shade, faded at the edges.",
+  "tags": [
+    "marquee",
+    "carousel",
+    "card",
+    "dark",
+    "scroll"
+  ],
+  "tech": [
+    "react",
+    "css",
+    "css-keyframes"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

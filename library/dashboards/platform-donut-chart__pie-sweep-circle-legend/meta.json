@@ -1,0 +1,21 @@
+{
+  "slug": "platform-donut-chart__pie-sweep-circle-legend",
+  "visual_name": "Platform donut chart",
+  "code_name": "Pie sweep with padding angle and circle legend",
+  "category": "dashboards",
+  "summary": "Donut that sweeps in counter-clockwise from 3 o'clock over 1.5s, then a tooltip over a sector: name, views, post count, percent.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

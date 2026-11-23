@@ -1,0 +1,22 @@
+{
+  "slug": "inquiry-chip-fly-to-inbox__lerp-path-badge-pop",
+  "visual_name": "Inquiry chip flying to inbox",
+  "code_name": "Lerp path chip, window swap and row highlight",
+  "category": "motion-graphics",
+  "summary": "After a form is sent, a message chip lifts off the form, flies across to a second window, the inbox, where the new row lights up and a \"New inquiry\" badge pops.",
+  "tags": [
+    "browser-window",
+    "card",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "spring"
+  ],
+  "duration_sec": 3.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

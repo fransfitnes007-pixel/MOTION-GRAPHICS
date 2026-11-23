@@ -1,0 +1,23 @@
+{
+  "slug": "cover-wall-tight-crop-pull-back__scale-rotatex-pull",
+  "visual_name": "Cover wall pull-back from a tight crop",
+  "code_name": "Scale and rotateX pull",
+  "category": "motion-graphics",
+  "summary": "A grid of video covers starts at 3.2x so one tile fills the screen, pulls back to the whole wall tilted 16 degrees, approval stamps slam on, a title rises, and the wall whips upward out of frame.",
+  "tags": [
+    "browser-window",
+    "transition",
+    "dark",
+    "3d",
+    "kinetic-type",
+    "scroll"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cost comparison big numbers and tables</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{
+  --navy:#002B4E; --blue:#3D95C5;
+  --ground:#FBFCFD; --card:#FFFFFF;
+  --ink:#0E1620; --ink-2:#4A5866; --ink-3:#7C8996;
+  --rule:#DFE5EB; --rule-2:#EDF1F4;
+  --good:#1D6F3F; --bad:#9B2C2C;
+  --shadow:0 1px 2px rgba(0,43,78,.05),0 8px 24px -16px rgba(0,43,78,.18);
+}
+.big{font-size:clamp(26px,6.5vw,38px);font-weight:700;color:var(--navy);letter-spacing:-.02em;
+  line-height:1.05;font-variant-numeric:tabular-nums}
+.bigrow{display:flex;flex-wrap:wrap;gap:14px 40px;margin:6px 0 16px}
+.bigrow .k{font-family:Archivo,sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:2px}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);
+  box-shadow:var(--shadow);margin-bottom:14px;break-inside:avoid}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);padding:12px 16px;border-bottom:1px solid var(--rule);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--rule-2);color:var(--ink-2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;
+  white-space:nowrap;color:var(--ink)}
+td.g,td.n.g{color:var(--good);font-weight:600}
+td.b,td.n.b{color:var(--bad);font-weight:600}
+tr.total td{border-top:2px solid var(--navy);font-weight:600;color:var(--ink)}
+
+#stage{background:var(--ground);color:var(--ink);font-family:"Source Serif 4",Georgia,'Times New Roman',serif}
+.box{position:absolute;line-height:1.5;font-size:17px}
+.box th,.box .k,.box h2{font-family:Archivo,-apple-system,'Helvetica Neue',Arial,sans-serif}
+.box h2{font-size:13px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+.box .sub{font-size:15px;color:var(--ink-3);margin:0 0 18px}
+.box .big{font-family:Archivo,-apple-system,'Helvetica Neue',Arial,sans-serif;font-size:42px}
+.box .tablewrap{overflow:hidden}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// fit: lay a fixed-width design box out at its own size, then scale it to fill the stage (works for wide and tall).
+function fit(box, cw, fillW = .9, fillH = .88, h) {
+  S(box, { position: 'absolute', width: cw + 'px' }); if (h) box.style.height = h + 'px'
+  const hh = h || box.offsetHeight, s = Math.min(W * fillW / cw, H * fillH / hh)
+  S(box, { left: ((W - cw) / 2) + 'px', top: ((H - hh) / 2) + 'px', transformOrigin: '50% 50%', transform: 'scale(' + s + ')' }); return s
+}
+// rev: fade + rise a node in over [t0, t0+d]
+const rev = (e, t, t0, d = .45, dy = 14) => { const q = eo(seg(t, t0, t0 + d)); S(e, { opacity: q, transform: 'translateY(' + ((1 - q) * dy) + 'px)' }); return q }
+const DUR = 7
+window.DUR = DUR
+const box = el('div', 'box')
+el('h2', '', box, 'The money')
+el('p', 'sub', box, 'Published rates, on one sample order.')
+const big = el('div', 'bigrow', box, `<div><span class="k">Order</span><span class="big" id="b0">$0.00</span></div><div><span class="k">Cost, option A</span><span class="big" id="b1" style="color:var(--bad)">up to $0</span></div><div><span class="k">Cost, option B</span><span class="big" id="b2" style="color:var(--good)">≈ $0.00</span></div>`)
+const tA = el('div', 'tablewrap', box, `<table><thead><tr><th>Line</th><th>Option A (today)</th><th class="n">Cost</th></tr></thead><tbody>
+<tr><td>Sender’s outgoing fee</td><td>Typical, $25–$35</td><td class="n b">$29</td></tr>
+<tr><td>Fee refund policy</td><td>Stated on the order page, in full above $10</td><td class="n b">−$29 to us</td></tr>
+<tr><td>Incoming fee to you</td><td>Depends on the account</td><td class="n">$0–15</td></tr>
+<tr><td>Time to cash</td><td>Same day to 3 business days, never weekends</td><td class="n b">0–3 days</td></tr>
+<tr class="total"><td>Effective cost per order</td><td>If the sender claims the fee back</td><td class="n b">up to 8.6%</td></tr></tbody></table>`)
+const tB = el('div', 'tablewrap', box, `<table><thead><tr><th>Line</th><th>Option B (instant)</th><th class="n">Cost</th></tr></thead><tbody>
+<tr><td>Network fee, request message</td><td>Published rate, paid by the requester</td><td class="n g">$0.01</td></tr>
+<tr><td>Network fee, the payment</td><td>Paid by the sender’s bank</td><td class="n g">$0.045</td></tr>
+<tr><td>What banks add on top</td><td>Typically $0.25–$1.00 end to end</td><td class="n g">$0.25–1.00</td></tr>
+<tr><td>Time to cash</td><td>Seconds, 24/7/365</td><td class="n g">seconds</td></tr>
+<tr class="total"><td>Effective cost per order</td><td>On the same order</td><td class="n g">under 0.3%</td></tr></tbody></table>`)
+fit(box, 900, .86, .92)
+const b0 = big.querySelector('#b0'), b1 = big.querySelector('#b1'), b2 = big.querySelector('#b2')
+const rowsA = [...tA.querySelectorAll('tr')].slice(1), rowsB = [...tB.querySelectorAll('tr')].slice(1)
+const fmt = (n) => n.toFixed(2)
+function render(t) {
+  const q = eo(seg(t, .3, 1.6))
+  b0.textContent = '$' + fmt(350 * q); b1.textContent = 'up to $' + Math.round(30 * eo(seg(t, 1.2, 2.2))); b2.textContent = '≈ $' + fmt(.5 * eo(seg(t, 1.6, 2.6)))
+  rev(big, t, 0, .4, 10)
+  rowsA.forEach((r, i) => rev(r, t, 2.4 + i * .28, .3, 8))
+  rowsB.forEach((r, i) => rev(r, t, 4.3 + i * .28, .3, 8))
+  rev(tA, t, 2.2, .3, 0); rev(tB, t, 4.1, .3, 0)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

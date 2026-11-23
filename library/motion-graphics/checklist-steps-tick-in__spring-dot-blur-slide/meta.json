@@ -1,0 +1,20 @@
+{
+  "slug": "checklist-steps-tick-in__spring-dot-blur-slide",
+  "visual_name": "Checklist steps tick-in",
+  "code_name": "Spring dot, blur slide",
+  "category": "motion-graphics",
+  "summary": "Three huge one-word steps slide in from the left through a blur, each with a violet check dot that springs in, then a sentence builds below.",
+  "tags": [
+    "kinetic-type",
+    "light",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "hook-ab-variants__query-param-hook-table",
+  "visual_name": "Hook A/B variants",
+  "code_name": "Query-param hook table",
+  "category": "motion-graphics",
+  "summary": "Three 9:16 frames, hooks A, B and C, each a different two-line opening and card, with the next scene starting at a different time.",
+  "tags": [
+    "kinetic-type",
+    "card",
+    "dark",
+    "voice"
+  ],
+  "tech": [
+    "vanilla-js",
+    "url-params"
+  ],
+  "duration_sec": 7.0,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

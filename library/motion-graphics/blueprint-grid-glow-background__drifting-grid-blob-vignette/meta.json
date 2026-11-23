@@ -1,0 +1,20 @@
+{
+  "slug": "blueprint-grid-glow-background__drifting-grid-blob-vignette",
+  "visual_name": "Dark blueprint grid with drifting purple glow",
+  "code_name": "Drifting grid, blob and vignette",
+  "category": "motion-graphics",
+  "summary": "A near-black field with a faint purple 80px grid creeping diagonally, a large blurred purple ellipse wandering behind it, and a dark vignette on the edges; it sits behind every scene of a video.",
+  "tags": [
+    "background",
+    "dark",
+    "glow"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 12.566,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

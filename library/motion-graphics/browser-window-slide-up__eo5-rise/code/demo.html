@@ -1,0 +1,73 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Browser window slide-up</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--f:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+.layer{position:absolute;inset:0}
+.layer{will-change:transform}
+.win{position:absolute;border-radius:22px;overflow:hidden;background:#0b0a12;box-shadow:0 60px 140px -40px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.12)}
+.win .bar{position:absolute;left:0;right:0;top:0;height:46px;background:#100f18;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:9px;padding:0 20px;z-index:3}
+.win .bar i{width:13px;height:13px;border-radius:50%;display:block}
+.win .bar .url{position:absolute;left:50%;transform:translateX(-50%);font:500 15px var(--f);color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);padding:7px 22px;border-radius:10px}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 2.4
+window.DUR = DUR
+const WW = TALL ? 1000 : 1400, SC = WW / 1400
+const dash = el('div', 'win', stage, `<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url">app.example.com/analytics</div></div>`)
+S(dash, { width: px(WW), height: px(WW * .62) })
+// dashboard placeholder drawn at 1400x822 and scaled to the window; in the full-length version this is a screenshot image
+const side = ['Dashboard', 'Projects', 'Members', 'Items', 'Reports', 'Analytics', 'Billing'].map((n, i) => `<div style="display:flex;align-items:center;gap:12px;height:44px;padding:0 14px;border-radius:10px;font:500 15px var(--f);color:${i === 5 ? '#fff' : 'rgba(255,255,255,.55)'};background:${i === 5 ? 'rgba(124,58,237,.28)' : 'none'}"><i style="width:16px;height:16px;border-radius:5px;background:${i === 5 ? '#a78bfa' : 'rgba(255,255,255,.25)'}"></i>${n}</div>`).join('')
+const tiles = [['Views', '15.1M'], ['Engagement', '8.9%'], ['Link clicks', '61,980'], ['Store visits', '39,047']].map(([a, b]) => `<div style="flex:1;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);padding:18px 20px"><div style="font:500 14px var(--f);color:rgba(255,255,255,.5)">${a}</div><div style="font:700 30px var(--f);color:#fff;margin-top:12px">${b}</div></div>`).join('')
+const pts = Array.from({ length: 41 }, (_, i) => [i * 17.5, 250 - 230 * Math.pow(i / 40, 1.8) * (0.9 + 0.1 * Math.sin(i * 1.7))])
+const area = 'M' + pts.map((p) => p.join(' ')).join(' L') + ' L700 260 L0 260 Z', ln = 'M' + pts.map((p) => p.join(' ')).join(' L')
+const body = el('div', 'abs', dash, `<div style="position:absolute;left:0;top:0;width:250px;height:100%;border-right:1px solid rgba(255,255,255,.06);padding:28px 14px">${side}</div>
+<div style="position:absolute;left:310px;top:48px;right:60px"><div style="font:600 12px var(--f);letter-spacing:.12em;color:#a78bfa">PERFORMANCE</div><div style="font:700 38px var(--f);color:#fff;margin-top:8px">Analytics</div><div style="display:flex;gap:16px;margin-top:34px">${tiles}</div>
+<div style="margin-top:20px;border-radius:14px;border:1px solid rgba(255,255,255,.08);padding:20px 22px;height:420px"><div style="font:600 13px var(--f);letter-spacing:.08em;color:rgba(255,255,255,.6)">VIEWS OVER TIME</div><svg viewBox="0 0 700 260" width="100%" height="330" preserveAspectRatio="none" style="margin-top:14px"><path d="${area}" fill="rgba(124,58,237,.35)"/><path d="${ln}" fill="none" stroke="#a78bfa" stroke-width="3"/></svg></div></div>`)
+S(body, { left: 0, top: '46px', width: '1400px', height: '822px', transformOrigin: '0 0', transform: `scale(${SC})`, background: '#0b0a12' })
+const T0 = .3
+function render(t) {
+  const dq = eo5(seg(t, T0, T0 + .75))
+  S(dash, { left: px(CX - WW / 2), top: px(lerp(H + 40, TALL ? CY - 100 : CY - 20, dq)), transform: `scale(${.92 + .08 * dq})`, transformOrigin: '50% 0' })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

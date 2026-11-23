@@ -1,0 +1,23 @@
+{
+  "slug": "book-title-buy-button-end-card__slam-pop-cursor-click",
+  "visual_name": "Book, title and buy-button end card",
+  "code_name": "Slam, pop and cursor click",
+  "category": "motion-graphics",
+  "summary": "Floating book on the left, serif title and yellow shop button on the right, cursor click, a closing line, fade to black.",
+  "tags": [
+    "end-card",
+    "cta",
+    "3d",
+    "cursor",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d-transform"
+  ],
+  "duration_sec": 8.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

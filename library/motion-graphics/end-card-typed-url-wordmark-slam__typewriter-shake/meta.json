@@ -1,0 +1,23 @@
+{
+  "slug": "end-card-typed-url-wordmark-slam__typewriter-shake",
+  "visual_name": "End card with wordmark slam and typed URL",
+  "code_name": "Typewriter reveal with shake",
+  "category": "motion-graphics",
+  "summary": "On a purple radial field the wordmark drops in from 150 percent with a 20px shake and a white flash, the URL types itself out with a blinking caret, a one-line call to action fades up, and the whole frame fades to black.",
+  "tags": [
+    "end-card",
+    "cta",
+    "logo",
+    "kinetic-type",
+    "sfx",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

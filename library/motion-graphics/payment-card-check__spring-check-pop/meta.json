@@ -1,0 +1,21 @@
+{
+  "slug": "payment-card-check__spring-check-pop",
+  "visual_name": "Payment confirmation card",
+  "code_name": "Spring card with check pop",
+  "category": "motion-graphics",
+  "summary": "A white card with an avatar, a name, a count line and a payment row springs in; a green check circle then pops in and the payment status fades up to solid green.",
+  "tags": [
+    "card",
+    "stat-tile",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 1.7,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "platform-badge-tiles-fly-tick__spring-rise-tick-pop",
+  "visual_name": "Platform badge tiles with ticks",
+  "code_name": "Spring rise, tick pop",
+  "category": "motion-graphics",
+  "summary": "Four white icon tiles fly up from a row of phones, tumbling level as they spring into place, each getting a green tick.",
+  "tags": [
+    "card",
+    "logo",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 2.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

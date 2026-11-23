@@ -1,0 +1,19 @@
+{
+  "slug": "masked-line-rise-headline__overflow-clip-translate",
+  "visual_name": "Masked line rise headline",
+  "code_name": "Words sliding up out of an overflow-hidden line",
+  "category": "motion-graphics",
+  "summary": "A left-aligned headline whose words slide up into view from beneath the bottom edge of their own line, each on its spoken word, then slide back up and out.",
+  "tags": [
+    "kinetic-type",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-overflow-mask"
+  ],
+  "duration_sec": 3.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>URL pill typewriter with caret</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dotsd{position:absolute;inset:-120px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.chip{position:absolute;display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-radius:999px;font-weight:700;font-size:21px;white-space:nowrap;letter-spacing:-.01em}
+.chip.lt{background:rgba(255,255,255,.94);color:#0b0b10;box-shadow:0 14px 34px -10px rgba(24,16,52,.35),0 0 0 1px rgba(20,16,40,.07)}
+.chip.dk{background:rgba(14,12,22,.86);color:#fff;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+.glass{position:absolute;border-radius:28px;background:rgba(255,255,255,.74);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(24,16,52,.42),0 0 0 1px rgba(20,16,40,.07)}
+.glassd{position:absolute;border-radius:28px;background:rgba(255,255,255,.07);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 2.8
+window.DUR = DUR
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+
+const bgD = el('div', 'abs'); S(bgD, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: 'radial-gradient(ellipse at 50% 40%, #16133a 0%, #0a0916 55%, #050409 100%)' })
+el('div', 'dotsd', bgD)
+const bgDGlow = el('div', 'orb', bgD); S(bgDGlow, { width: px(1500 * W / 1920), height: px(1100 * H / 1080), left: px(210 * W / 1920), top: px(-60 * H / 1080), background: 'radial-gradient(closest-side, rgba(91,92,230,.40), transparent)' })
+const glowDrift = (t) => S(bgDGlow, { transform: `translate(${Math.sin(t * .7) * 60}px, ${Math.cos(t * .6) * 40}px)` })
+
+const LOCK = (c = '#6b6b7b', s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
+const url8 = el('div', 'glassd', FR); S(url8, { left: '560px', top: '480px', width: '800px', height: '120px', borderRadius: '60px', display: 'flex', alignItems: 'center', gap: '22px', padding: '0 44px', fontWeight: 700, fontSize: '56px', letterSpacing: '-.02em', color: '#fff' })
+url8.innerHTML = LOCK('rgba(255,255,255,.7)', 38) + '<span class="tx"></span><span class="ca" style="width:5px;height:58px;background:#a5b4fc;border-radius:2px;display:block"></span>'
+const url8t = url8.querySelector('.tx'), url8c = url8.querySelector('.ca')
+// the words "on", "your" and "domain" (timed to the spoken words)
+const ON = .15, YOUR = .65, DOMAIN = 1.09
+function render(t) {
+  S(document.getElementById('stage'), { background: '#050409' })
+  glowDrift(t)
+  const uq = eo5(seg(t, ON - .1, ON + .3))
+  S(url8, { opacity: uq, transform: `translateY(${(1 - uq) * 30}px) scale(${.94 + .06 * uq})` })
+  const dom = 'yourname.com', n = Math.round(clamp(seg(t, YOUR - .05, DOMAIN + .1)) * dom.length)
+  url8t.textContent = dom.slice(0, n); url8c.style.opacity = (Math.floor(t * 3) % 2 || n < dom.length) ? 1 : 0
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

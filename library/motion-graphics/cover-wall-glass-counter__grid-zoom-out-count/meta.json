@@ -1,0 +1,22 @@
+{
+  "slug": "cover-wall-glass-counter__grid-zoom-out-count",
+  "visual_name": "Cover wall with glass counter",
+  "code_name": "Grid zoom-out, count",
+  "category": "motion-graphics",
+  "summary": "A 15x9 wall of vertical covers pulls back from a 3.2x crop behind a glass card whose counter runs to a big figure while a line chart draws.",
+  "tags": [
+    "counter",
+    "chart",
+    "3d",
+    "light",
+    "stat-tile"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg"
+  ],
+  "duration_sec": 4.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

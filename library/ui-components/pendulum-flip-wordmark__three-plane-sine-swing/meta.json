@@ -1,0 +1,23 @@
+{
+  "slug": "pendulum-flip-wordmark__three-plane-sine-swing",
+  "visual_name": "Pendulum flip wordmark",
+  "code_name": "Three plane sine swing",
+  "category": "ui-components",
+  "summary": "A flat white wordmark on a three.js plane swings on its vertical axis like a pendulum through a full half turn each way, flipping its mirror at the edge-on moment so it always reads correctly, over a faint round glow.",
+  "tags": [
+    "3d",
+    "logo",
+    "hero",
+    "dark",
+    "kinetic-type"
+  ],
+  "tech": [
+    "three.js",
+    "react-three-fiber",
+    "webgl"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,20 @@
+{
+  "slug": "headless-screen-capture-pipeline__playwright-frame-sequence",
+  "visual_name": "Headless screen capture pipeline",
+  "code_name": "Playwright frame sequence",
+  "category": "motion-graphics",
+  "summary": "A method for putting real product screens in a video: headless Chrome at 2x for each section, plus a numbered PNG sequence of a running interaction.",
+  "tags": [
+    "browser-window",
+    "loader"
+  ],
+  "tech": [
+    "playwright",
+    "node",
+    "vanilla-js"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

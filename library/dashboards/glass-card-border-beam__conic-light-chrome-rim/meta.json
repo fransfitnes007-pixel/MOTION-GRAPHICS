@@ -1,0 +1,22 @@
+{
+  "slug": "glass-card-border-beam__conic-light-chrome-rim",
+  "visual_name": "Glass card border beam",
+  "code_name": "Masked conic light travelling a glass card's edge",
+  "category": "dashboards",
+  "summary": "Five glass cards on a black page with soft chrome arcs; a white beam circles each card's rim every 7s, offset per card.",
+  "tags": [
+    "card",
+    "dark",
+    "background",
+    "stat-tile"
+  ],
+  "tech": [
+    "vanilla-js",
+    "conic-gradient",
+    "css-mask"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

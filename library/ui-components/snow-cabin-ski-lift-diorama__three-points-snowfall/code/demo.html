@@ -1,0 +1,172 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Snow cabin ski lift diorama</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#8fa3bf;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="three.global.js"></script>
+<script>
+(() => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 12
+window.DUR = DUR
+const R = ((seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 })(77)   // replaces Math.random
+function M(c, o) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, metalness: 0.1, ...o }) }
+function G(c, i) { return new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i || 0.5, roughness: 0.2 }) }
+function B(w, h, d, m) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); mesh.castShadow = true; mesh.receiveShadow = true; return mesh }
+function P(p, m, x, y, z) { m.position.set(x, y, z); p.add(m); return m }
+function Cyl(rt, rb, h, m, seg) { const c = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 12), m); c.castShadow = true; return c }
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setPixelRatio(1); renderer.setSize(W, H)
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95
+renderer.domElement.style.cssText = 'position:absolute;left:0;top:0'; stage.appendChild(renderer.domElement)
+const SKY = 0x8fa3bf                                       // winter dusk haze (the app sets the sky per biome; this value is chosen)
+const scene = new THREE.Scene(); scene.background = new THREE.Color(SKY); scene.fog = new THREE.FogExp2(SKY, 0.006)
+const camera = new THREE.PerspectiveCamera(TALL ? 64 : 50, W / H, 0.5, 2000)
+scene.add(new THREE.AmbientLight(0xdde6ff, 0.55)); scene.add(new THREE.HemisphereLight(0xaac0e0, 0xffffff, 0.55))
+const sun = new THREE.DirectionalLight(0xffe2c0, 1.7); sun.position.set(70, 60, 50); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048)
+Object.assign(sun.shadow.camera, { near: 1, far: 400, left: -150, right: 150, top: 150, bottom: -150 }); sun.shadow.bias = -0.0003; scene.add(sun)
+const fill = new THREE.DirectionalLight(0x8899cc, 0.35); fill.position.set(-60, 40, -30); scene.add(fill)
+
+const g = new THREE.Group(); scene.add(g)
+const dotC = document.createElement('canvas'); dotC.width = 64; dotC.height = 64; { const d = dotC.getContext('2d'), gr = d.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); d.fillStyle = gr; d.fillRect(0, 0, 64, 64) }
+const dotTex = new THREE.CanvasTexture(dotC)
+
+// ---- snowy rolling terrain: the source's height formula ----
+const snowMat = M(0xf0f5ff, { roughness: 0.7, metalness: 0.02 })
+const terrain = new THREE.Mesh(new THREE.PlaneGeometry(400, 400, 80, 80), snowMat); terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true
+const tPos = terrain.geometry.attributes.position
+for (let i = 0; i < tPos.count; i++) { const x = tPos.getX(i), y = tPos.getY(i); tPos.setZ(i, Math.sin(x * 0.02) * 3 + Math.cos(y * 0.03) * 2 + Math.sin(x * 0.05 + y * 0.04) * 1.5) }
+terrain.geometry.computeVertexNormals(); g.add(terrain)
+const ice = new THREE.Mesh(new THREE.CircleGeometry(25, 40), new THREE.MeshPhysicalMaterial({ color: 0x88bbdd, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0.3, clearcoat: 1 })); ice.rotation.x = -Math.PI / 2; P(g, ice, 40, 0.5, 20)
+const driveMat = M(0x555555, { roughness: 0.6, metalness: 0.2 })
+P(g, B(8, 0.15, 80, driveMat), 0, 0.6, 50)
+const circ = new THREE.Mesh(new THREE.RingGeometry(8, 12, 40), driveMat); circ.rotation.x = -Math.PI / 2; P(g, circ, 0, 0.62, 8)
+
+// ---- log cabin ----
+const logMat = M(0x6B4226, { roughness: 0.9 }), logDark = M(0x4A2F1A, { roughness: 0.85 }), whiteMat = M(0xf8f8f8, { roughness: 0.3, metalness: 0.1 })
+const cabinW = 35, cabinD = 25, cabinH = 12
+for (let ly = 0; ly < cabinH; ly += 0.8) {
+  P(g, B(cabinW, 0.7, 0.8, logMat), 0, ly + 0.4 + 1, -cabinD / 2); P(g, B(cabinW, 0.7, 0.8, logMat), 0, ly + 0.4 + 1, cabinD / 2)
+  P(g, B(0.8, 0.7, cabinD, logMat), -cabinW / 2, ly + 0.4 + 1, 0); P(g, B(0.8, 0.7, cabinD, logMat), cabinW / 2, ly + 0.4 + 1, 0)
+}
+P(g, B(cabinW - 2, 0.15, cabinD - 2, whiteMat), 0, 1.1, 0)
+const pillarMat = M(0xd4c5a9, { roughness: 0.3, metalness: 0.4 })
+for (const px of [-10, -4, 4, 10]) { P(g, Cyl(0.8, 0.9, cabinH + 4, pillarMat, 16), px, (cabinH + 4) / 2 + 1, cabinD / 2 + 2); P(g, Cyl(1.1, 0.8, 0.6, pillarMat, 16), px, cabinH + 5.3, cabinD / 2 + 2) }
+P(g, B(24, 0.4, 5, logDark), 0, cabinH + 5, cabinD / 2 + 2)
+const doorMat = M(0x4A2F1A, { roughness: 0.8, metalness: 0.1 })
+P(g, B(3, 7, 0.4, doorMat), -2, 4.5, cabinD / 2 + 0.2); P(g, B(3, 7, 0.4, doorMat), 2, 4.5, cabinD / 2 + 0.2)
+for (const hx of [-0.6, 0.6]) P(g, new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), M(0xffd700, { metalness: 0.9 })), hx, 4.5, cabinD / 2 + 0.5)
+const winGlow = []   // the app's glass windows read as dark at dusk; here they carry the warm interior light
+for (const wx of [-10, -6, 6, 10]) {
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 4), new THREE.MeshStandardMaterial({ color: 0xffd9a0, emissive: 0xffb860, emissiveIntensity: 1.1 })); P(g, win, wx, 6, cabinD / 2 + 0.5); winGlow.push(win)
+  P(g, B(2.7, 0.15, 0.15, logDark), wx, 8.1, cabinD / 2 + 0.5); P(g, B(2.7, 0.15, 0.15, logDark), wx, 3.9, cabinD / 2 + 0.5)
+  P(g, B(0.15, 4.2, 0.15, logDark), wx - 1.3, 6, cabinD / 2 + 0.5); P(g, B(0.15, 4.2, 0.15, logDark), wx + 1.3, 6, cabinD / 2 + 0.5)
+}
+const roofGeo = new THREE.BufferGeometry(), hw = cabinW / 2 + 1, hd = cabinD / 2 + 1, rh = cabinH + 6, y0 = cabinH + 1
+roofGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-hw, y0, -hd, hw, y0, -hd, 0, rh + 1, 0, hw, y0, -hd, hw, y0, hd, 0, rh + 1, 0, hw, y0, hd, -hw, y0, hd, 0, rh + 1, 0, -hw, y0, hd, -hw, y0, -hd, 0, rh + 1, 0]), 3)); roofGeo.computeVertexNormals()
+const roofMesh = new THREE.Mesh(roofGeo, M(0x4A3728, { roughness: 0.85, side: THREE.DoubleSide })); roofMesh.castShadow = true; g.add(roofMesh)
+const roofSnow = new THREE.Mesh(roofGeo, snowMat.clone()); roofSnow.scale.set(1.001, 1.001, 1.001); roofSnow.position.y = 0.12; g.add(roofSnow)
+roofSnow.material.side = THREE.DoubleSide
+const fireLight = new THREE.PointLight(0xff8833, 220, 40); fireLight.position.set(0, 6, 6); g.add(fireLight)
+const doorGlow = new THREE.PointLight(0xffb060, 120, 28); doorGlow.position.set(0, 4, cabinD / 2 + 6); g.add(doorGlow)
+
+// ---- 35 pines, snow-capped, seeded ----
+for (let t = 0; t < 35; t++) {
+  const tx = (R() - 0.5) * 300, tz = (R() - 0.5) * 300
+  if (Math.abs(tx) < 28 && Math.abs(tz) < 24) continue
+  const th = 8 + R() * 10, base = terrain.geometry ? 0 : 0
+  P(g, Cyl(0.3, 0.4, th, M(0x4A3728, { roughness: 0.9 })), tx, th / 2, tz)
+  for (let l = 0; l < 4; l++) { const lr = 3.5 - l * 0.7, ly = th * 0.5 + l * 2; P(g, new THREE.Mesh(new THREE.ConeGeometry(lr, 2.5, 8), M(0x1a5c1a, { roughness: 0.8 })), tx, ly, tz); P(g, new THREE.Mesh(new THREE.ConeGeometry(lr * 0.9, 0.5, 8), snowMat), tx, ly + 1.3, tz) }
+}
+// ---- ski lift: poles, cable, chairs that travel the line ----
+const cableMat = M(0x444444, { metalness: 0.9 }), polePos = []
+for (let sp = 0; sp < 8; sp++) { const spx = -60 + sp * 15, spz = -40; P(g, Cyl(0.2, 0.2, 12, M(0x888888, { metalness: 0.7 })), spx, 6, spz); P(g, B(3, 0.15, 0.15, M(0x888888, { metalness: 0.7 })), spx, 12, spz); polePos.push([spx, spz]) }
+for (let cp = 0; cp < 7; cp++) { const p1 = polePos[cp], p2 = polePos[cp + 1]; const cable = Cyl(0.03, 0.03, 15, cableMat); cable.rotation.z = Math.PI / 2; P(g, cable, (p1[0] + p2[0]) / 2, 12, p1[1]) }
+const chairs = []
+for (let sc = 0; sc < 4; sc++) { const ch = new THREE.Group(); P(ch, B(2, 0.15, 1, M(0x2222ff)), 0, -1.5, 0); P(ch, B(2, 1.5, 0.15, M(0x2222ff)), 0, -0.7, -0.5); P(ch, Cyl(0.04, 0.04, 1.5, cableMat), 0, 0, 0); g.add(ch); chairs.push(ch) }
+// ---- geyser, steam, hot spring ----
+P(g, Cyl(2, 3, 1, M(0x887766, { roughness: 0.9 })), -30, 0.8, 30)
+const steamN = 90, steamBase = [], steamPos = new Float32Array(steamN * 3)
+for (let i = 0; i < steamN; i++) steamBase.push([(R() - 0.5) * 3, R(), (R() - 0.5) * 3])
+const steamGeo = new THREE.BufferGeometry(); steamGeo.setAttribute('position', new THREE.BufferAttribute(steamPos, 3))
+const steamMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2.4, map: dotTex, transparent: true, opacity: 0.5, depthWrite: false }); g.add(new THREE.Points(steamGeo, steamMat))
+const hotSpring = new THREE.Mesh(new THREE.CircleGeometry(5, 28), new THREE.MeshPhysicalMaterial({ color: 0x44bbcc, transparent: true, opacity: 0.6, roughness: 0.02 })); hotSpring.rotation.x = -Math.PI / 2; P(g, hotSpring, -30, 0.5, 40)
+for (let r = 0; r < 10; r++) { const ra = (r / 10) * Math.PI * 2; P(g, new THREE.Mesh(new THREE.SphereGeometry(0.5 + R() * 0.5, 6, 6), M(0x666655, { roughness: 0.9 })), -30 + Math.cos(ra) * 5.5, 0.7, 40 + Math.sin(ra) * 5.5) }
+// ---- 2000 snow flakes: source count, size .3 additive; fall speed is chosen so the loop closes ----
+const snowN = 2000, snowBase = new Float32Array(snowN * 3), snowPos = new Float32Array(snowN * 3), snowSway = new Float32Array(snowN)
+for (let i = 0; i < snowN; i++) { snowBase[i * 3] = (R() - 0.5) * 300; snowBase[i * 3 + 1] = R() * 60; snowBase[i * 3 + 2] = (R() - 0.5) * 300; snowSway[i] = R() * Math.PI * 2 }
+const snowGeo = new THREE.BufferGeometry(); snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3))
+g.add(new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, map: dotTex, transparent: true, opacity: 0.9, depthWrite: false, sizeAttenuation: true })))
+// ---- sky text sign (placeholder) ----
+const sc = document.createElement('canvas'); sc.width = 2048; sc.height = 512; const x = sc.getContext('2d')
+x.fillStyle = '#fff'; x.strokeStyle = '#000'; x.lineWidth = 6; x.font = 'bold 110px sans-serif'; x.textAlign = 'center'; x.strokeText('NORTHSTAR WEAR', 1024, 190); x.fillText('NORTHSTAR WEAR', 1024, 190); x.font = 'bold 55px sans-serif'; x.strokeText('winter lodge', 1024, 340); x.fillText('winter lodge', 1024, 340)
+const skyTex = new THREE.CanvasTexture(sc); skyTex.colorSpace = THREE.SRGBColorSpace
+P(g, new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshBasicMaterial({ map: skyTex, transparent: true, side: THREE.DoubleSide, fog: false })), 0, 42, -75)
+
+function render(t) {
+  const w = (2 * Math.PI * t) / DUR
+  // updateBiomes: snow falls 0.8 + sin(i)*0.4 units/s with a sideways drift of sin(e + i*.1)*.3. A flake re-enters after P = speed * DUR units,
+  // so every flake returns to where it started after one loop (the app respawns it at a random place near the top)
+  for (let i = 0; i < snowN; i++) {
+    const v = 0.8 + Math.sin(i) * 0.4, P_ = v * DUR, band = snowBase[i * 3 + 1] / 60 * (60 - P_), u = (snowSway[i] / (Math.PI * 2) - t / DUR) % 1
+    snowPos[i * 3] = snowBase[i * 3] + (0.3 / (4 * Math.PI / DUR)) * (Math.cos(i * 0.1) - Math.cos(w * 2 + i * 0.1)); snowPos[i * 3 + 1] = band + (u < 0 ? u + 1 : u) * P_ + 0.5; snowPos[i * 3 + 2] = snowBase[i * 3 + 2]
+  }
+  snowGeo.attributes.position.needsUpdate = true
+  // steam: rises 1.5 to 2.5 units/s from the vent up to y 12, then restarts at 1 to 3. Opacity pulses .3 + sin(e*2)*.15
+  for (let i = 0; i < steamN; i++) { const b = steamBase[i], cyc = 2 + (i % 2), u = (b[1] + cyc * t / DUR) % 1; steamPos[i * 3] = -30 + b[0] * (1 + u * 0.5) + Math.sin(w * 3 + i) * 0.5 * u; steamPos[i * 3 + 1] = 1 + u * 11; steamPos[i * 3 + 2] = 30 + b[2] * (1 + u * 0.5) }
+  steamGeo.attributes.position.needsUpdate = true; steamMat.opacity = 0.3 + Math.sin(w * 4) * 0.15
+  // chairs travel the cable from pole 0 to pole 7 and wrap, evenly spaced
+  chairs.forEach((c, i) => { const u = ((t / DUR) + i / 4) % 1; c.position.set(-60 + u * 105, 11.6 + Math.sin(w * 6 + i) * 0.04, -40); c.rotation.z = Math.sin(w * 4 + i * 1.3) * 0.05 })
+  // fire flicker, window glow breathes
+  const fl = 1 + 0.12 * Math.sin(w * 11) + 0.06 * Math.sin(w * 17 + 1); fireLight.intensity = 220 * fl; doorGlow.intensity = 120 * fl; winGlow.forEach((m) => { m.material.emissiveIntensity = 1.0 + 0.2 * Math.sin(w * 11) })
+  // camera: slow drift in front of the cabin
+  const ca = -0.35 + 0.55 * Math.sin(w), cr = TALL ? 96 : 78
+  camera.position.set(Math.sin(ca) * cr + 4, 15 + 2 * Math.sin(w * 2), Math.cos(ca) * cr + 26); camera.lookAt(0, 11, 0)
+  renderer.render(scene, camera)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+document.fonts.ready.then(() => { render(0); window.__rdy(true) })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+})()
+</script>
+</body></html>

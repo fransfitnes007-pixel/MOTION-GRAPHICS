@@ -1,0 +1,22 @@
+{
+  "slug": "agent-creature-lineup__float-aura-blink-status",
+  "visual_name": "Agent creature lineup",
+  "code_name": "Float, aura and blink by status",
+  "category": "ui-components",
+  "summary": "Eight small SVG creatures in a row on a glass stage, one running at a time with pulsing rings and a bobbing smile, finished ones settling with a check badge, pending ones dimmed, plus a status line underneath that swaps text as the run advances.",
+  "tags": [
+    "card",
+    "dark",
+    "hero",
+    "loader"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "svg"
+  ],
+  "duration_sec": 12.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

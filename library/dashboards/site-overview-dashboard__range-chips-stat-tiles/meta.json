@@ -1,0 +1,25 @@
+{
+  "slug": "site-overview-dashboard__range-chips-stat-tiles",
+  "visual_name": "Site overview dashboard",
+  "code_name": "Range chips and stat tiles",
+  "category": "dashboards",
+  "summary": "A glass dashboard: sidebar, range chips with a spinning refresh, four stat tiles, a views and clicks chart and ranked panels beside a live site preview.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "nav",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

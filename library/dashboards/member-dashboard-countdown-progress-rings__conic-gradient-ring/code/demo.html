@@ -1,0 +1,170 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Member dashboard with countdown and progress rings</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--blue:#1290CB;--blued:#0C6C99;--navy:#0A3A52;--teal:#68CCD1;--tealsoft:#DDF2F3;--aqua:#74FFF6;--gold:#C9A24B;--goldd:#A8843A;--goldsoft:#F6EDDA;--ink:#17222B;--ink2:#46555F;--gray:#7C8890;--line:#E8E2D8;--bg:#FAF7F1;--tint:#F2EDE3;--bluetint:#EAF4FA;--shadow:0 10px 40px rgba(10,58,82,.08)}
+#stage{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif}
+.ui{background:var(--bg)}
+.nav{position:absolute;left:140px;right:140px;top:14px;height:50px;border-radius:999px;background:rgba(255,255,255,.8);box-shadow:var(--shadow);display:flex;align-items:center;padding:0 26px;gap:26px;font-size:14px;font-weight:600;color:var(--ink2)}
+.nav b{color:var(--navy);font-weight:800;letter-spacing:-.01em;margin-right:auto}
+.nav .cta{background:var(--blue);color:#fff;padding:9px 20px;border-radius:999px}
+.wrap{position:absolute;left:140px;right:140px;top:84px;bottom:0}
+.dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+.dh h1{font-size:30px;font-weight:800;letter-spacing:-.03em}.dh .sub{font-size:14px;color:var(--gray)}
+.nextup{background:linear-gradient(135deg,var(--navy) 0%,var(--blued) 100%);color:#fff;border-radius:28px;padding:22px 30px;display:flex;align-items:center;gap:26px;box-shadow:var(--shadow)}
+.nextup .eb{color:var(--aqua);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;margin-bottom:4px}
+.nextup h2{font-size:21px;font-weight:800;letter-spacing:-.02em}.nextup .when{color:#cfe7f2;font-size:14px;margin-top:2px}
+.cd{display:flex;gap:10px;margin-left:auto}
+.cdb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;text-align:center;min-width:64px}
+.cdb b{display:block;font-size:24px;line-height:1.1;font-weight:800}.cdb span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#a8cede}
+.join{background:var(--teal);color:var(--navy);font-weight:800;font-size:14px;padding:12px 22px;border-radius:999px}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-top:20px}
+.panel{background:#fff;border-radius:28px;padding:22px 24px;box-shadow:var(--shadow)}
+.panel h3{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.panel h3 .more{font-size:12px;font-weight:700;color:var(--blue)}
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mod{position:relative;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--bg)}
+.mod.lk{opacity:.55}
+.mod .n{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+.mod .nm{font-weight:700;font-size:13px;line-height:1.3;color:var(--navy);margin:4px 0 10px;min-height:34px}
+.ring{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ring i{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;font-style:normal;font-size:9.5px;font-weight:800;color:var(--navy)}
+.lock{position:absolute;top:12px;right:12px;font-size:12px}
+.fw{list-style:none}
+.fw li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--tint);font-size:13.5px}
+.fw .tick{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;margin-top:1px}
+.fw li.done .tick{background:var(--teal);border-color:var(--teal)}
+.fw li.done .txt{color:var(--gray);text-decoration:line-through}
+.fw .due{margin-left:auto;font-size:11.5px;color:var(--gray);white-space:nowrap}
+.col{display:grid;gap:20px;align-content:start}
+.pods{display:flex;gap:10px;margin-bottom:12px}
+.pm{text-align:center}.pm .av{width:46px;height:46px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.pm:first-child .av{background:var(--blue)}.pm .nm{font-size:11px;font-weight:700;color:var(--ink2);margin-top:3px}
+.pmeta{font-size:13px;color:var(--ink2);padding:9px 0;border-top:1px dashed var(--tint);display:flex;justify-content:space-between;gap:8px}
+.win{border-left:3px solid var(--teal);background:var(--bg);border-radius:0 12px 12px 0;padding:11px 14px;font-size:13px;margin-bottom:9px}
+.win .who{font-weight:700;color:var(--navy);font-size:11.5px;margin-top:3px}
+.fade{position:absolute;inset:0;background:var(--bg);pointer-events:none}
+.tall .wrap{left:40px;right:40px}.tall .nav{left:40px;right:40px}.tall .grid{grid-template-columns:1fr}.tall .nextup{flex-wrap:wrap}.tall .mods{grid-template-columns:repeat(3,1fr)}
+
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers shared by the dashboard demos ----
+// CSS cubic-bezier(x1,y1,x2,y2) as a function of progress 0..1 (Newton solve for x)
+const bez = (x1, y1, x2, y2) => (x) => {
+  if (x <= 0) return 0; if (x >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let u = x
+  for (let i = 0; i < 8; i++) { const f = ((ax * u + bx) * u + cx) * u - x, d = (3 * ax * u + 2 * bx) * u + cx; if (Math.abs(f) < 1e-5 || Math.abs(d) < 1e-6) break; u -= f / d }
+  return ((ay * u + by) * u + cy) * u
+}
+const easeOutCss = bez(0, 0, .58, 1)          // CSS ease-out
+const easeCss = bez(.25, .1, .25, 1)             // CSS ease, Recharts default animationEasing
+const easeInOutCss = bez(.42, 0, .58, 1)       // CSS ease-in-out
+const outExpo22 = bez(.22, 1, .36, 1)          // cubic-bezier(0.22,1,0.36,1), used all over the sources
+// framer-motion physics spring, 0 -> 1, t in seconds (stiffness, damping, mass)
+const fmSpring = (t, k = 100, c = 10, m = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+}
+const rng = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }   // fixed-seed random
+const svgEl = (tag, attrs = {}, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const fmtInt = (n) => Math.round(n).toLocaleString('en-US')
+// d3 curveMonotoneX, which is what Recharts type="monotone" draws
+const monotonePath = (pts) => {
+  const n = pts.length; if (n < 2) return ''
+  const dx = [], dy = [], m = [], tg = []
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i] }
+  tg[0] = m[0]; tg[n - 1] = m[n - 2]
+  for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0 } else { const a = tg[i] / m[i], b = tg[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i] } } }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${pts[i][0] + h},${pts[i][1] + tg[i] * h},${pts[i + 1][0] - h},${pts[i + 1][1] - tg[i + 1] * h},${pts[i + 1][0]},${pts[i + 1][1]}` }
+  return d
+}
+// A fixed design-size UI fitted into the stage: 1440x900 wide, 900x1440 tall. CSS under .tall reflows the grids.
+const DW = TALL ? 900 : 1440, DH = TALL ? 1440 : 900
+const UI_SC = Math.min(W / DW, H / DH)
+const ui = el('div', 'ui' + (TALL ? ' tall' : ''))
+S(ui, { position: 'absolute', width: DW + 'px', height: DH + 'px', left: ((W - DW * UI_SC) / 2) + 'px', top: ((H - DH * UI_SC) / 2) + 'px', transform: `scale(${UI_SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+
+const DUR = 8
+window.DUR = DUR
+el('div', 'nav', ui, '<b>Northwind Academy</b><span>Dashboard</span><span>Course</span><span>Pod</span><span>Library</span><span class="cta">Account</span>')
+const wrap = el('div', 'wrap', ui)
+const dh = el('div', 'dh', wrap, '<div><h1>Welcome back, <span style="color:var(--blue)">Learner</span></h1><div class="sub">Cohort 1 · Day 24 of 90 · 6-day streak</div></div><div class="sub">Onboarding status →</div>')
+const nextup = el('div', 'nextup', wrap, '<div><div class="eb">Next live session</div><h2>Module 2 Workshop: Build Your 90-Day Map</h2><div class="when">Thu Sep 10 · 12:00 PM · with the coach</div></div>')
+const cd = el('div', 'cd', nextup); const cdv = ['days', 'hrs', 'min', 'sec'].map((u) => { const b = el('div', 'cdb', cd, `<b>00</b><span>${u}</span>`); return b.firstChild })
+el('div', 'join', nextup, 'Join session')
+const grid = el('div', 'grid', wrap)
+const left = el('div', 'col', grid), right = el('div', 'col', grid)
+const mp = el('div', 'panel', left, '<h3>My 90-Day Map <span class="more">Open course →</span></h3>')
+const mods = el('div', 'mods', mp)
+const MODS = [['Module 1 · Wk 1', 'The Skills Audit', 100], ['Module 2 · Wk 2–3', 'The 90-Day Learning Map', 40], ['Module 3 · Wk 4–5', 'The Practice Engine', 0], ['Module 4 · Wk 6–7', "The Modern Learner's Toolkit", 0], ['Module 5 · Wk 8–9', 'The Reviews and The Asks', 0], ['Module 6 · Wk 10–12', 'The Next-Step Blueprint', 0]]
+const rings = MODS.map(([n, nm, p], i) => { const m = el('div', 'mod' + (i > 1 ? ' lk' : ''), mods, `<div class="n">${n}</div><div class="nm">${nm}</div>`); const r = el('div', 'ring', m, `<i>${p}%</i>`); if (i > 1) el('span', 'lock', m, '🔒'); return { r, p, lab: r.firstChild } })
+const fp = el('div', 'panel', left, '<h3>Fast-win checklist</h3>')
+const fw = el('ul', 'fw', fp)
+;[['Audit scorecard complete', 'Day 3 ✓', 1], ['90-Day Map v1 approved by your pod', 'Day 14'], ['Portfolio update live + 1 post published', 'Day 30'], ['One automation workflow shipped', 'Day 45']].forEach(([tx, d, done]) => el('li', done ? 'done' : '', fw, `<span class="tick">${done ? '✓' : ''}</span><span class="txt">${tx}</span><span class="due">${d}</span>`))
+const pp = el('div', 'panel', right, '<h3>My Pod <span class="more">Pod chat →</span></h3>')
+el('div', 'pods', pp, ['Y', 'D', 'M', 'P', 'T'].map((c, i) => `<div class="pm"><div class="av">${c}</div><div class="nm">${i ? 'Member ' + c : 'You'}</div></div>`).join(''))
+el('div', 'pmeta', pp, '<span>Next pod call</span><b>Tue Sep 8 · 5:00 PM</b>')
+const wp = el('div', 'panel', right, '<h3>Wins Wall <span class="more">All wins →</span></h3>')
+;[['Presented my map to my pod and said the goal out loud for the first time.', 'Member D, Cohort 1'], ['Rewrote my portfolio headline in the workshop and got two messages in 48 hours.', 'Member M, Cohort 1'], ['Made the ask. It was approved this morning.', 'Member P, Cohort 1']].forEach(([q, w]) => el('div', 'win', wp, `"${q}"<div class="who">— ${w}</div>`))
+const fadeEl = el('div', 'fade', ui)
+// .reveal: opacity 0 -> 1, translateY(28px) -> 0, .7s cubic-bezier(.2,.7,.2,1); .d1 .08s .d2 .16s .d3 .24s .d4 .32s
+const rev = bez(.2, .7, .2, 1)
+const reveal = (e, t, delay) => { const q = rev(seg(t, delay, delay + .7)); S(e, { opacity: q, transform: `translateY(${(1 - q) * 28}px)` }) }
+const TARGET = (2 * 86400 + 3 * 3600 + 14 * 60 + 22)   // seconds remaining at t=0 (a countdown that ticks once a second)
+const pad = (n) => (n < 10 ? '0' : '') + n
+function render(t) {
+  reveal(dh, t, 0); reveal(nextup, t, .08); reveal(mp, t, .16); reveal(fp, t, .24); reveal(pp, t, .24); reveal(wp, t, .32)
+  const diff = TARGET - Math.floor(t)    // setInterval(tick, 1000)
+  cdv[0].textContent = Math.floor(diff / 86400); cdv[1].textContent = pad(Math.floor(diff / 3600) % 24); cdv[2].textContent = pad(Math.floor(diff / 60) % 60); cdv[3].textContent = pad(diff % 60)
+  // .ring { background: conic-gradient(var(--teal) calc(var(--p) * 1%), var(--tint) 0) }  (demo sweeps --p up once; the site sets it statically)
+  rings.forEach((g, i) => { const q = outExpo22(seg(t, .6 + i * .08, 1.6 + i * .08)); const p = g.p * q; g.r.style.background = g.p === 100 ? `conic-gradient(var(--blue) ${p}%, var(--tint) 0)` : `conic-gradient(var(--teal) ${p}%, var(--tint) 0)`; g.lab.textContent = Math.round(p) + '%' })
+  S(fadeEl, { opacity: seg(t, DUR - .4, DUR) })
+}
+
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

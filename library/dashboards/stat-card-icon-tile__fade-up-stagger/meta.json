@@ -1,0 +1,20 @@
+{
+  "slug": "stat-card-icon-tile__fade-up-stagger",
+  "visual_name": "Stat cards",
+  "code_name": "Fade-up stagger with tinted icon tile",
+  "category": "dashboards",
+  "summary": "Eight stat cards in two rows, each fading up 16px with a 0.05s stagger, with coloured glows and trend chips.",
+  "tags": [
+    "stat-tile",
+    "card",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

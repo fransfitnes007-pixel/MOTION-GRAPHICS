@@ -1,0 +1,23 @@
+{
+  "slug": "chart-card-wipe-draw-big-total__clip-path-inset-count",
+  "visual_name": "Chart card wipes in with a big counting total",
+  "code_name": "Clip-path inset wipe and count",
+  "category": "motion-graphics",
+  "summary": "An analytics page whips up from below and dims, the line chart lifts out of it to the centre and draws left to right as a 150px total above it counts up from zero.",
+  "tags": [
+    "chart",
+    "counter",
+    "card",
+    "dark",
+    "glow",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

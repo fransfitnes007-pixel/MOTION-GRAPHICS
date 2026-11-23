@@ -1,0 +1,23 @@
+{
+  "slug": "odometer-number-roll__digit-column-translate",
+  "visual_name": "Odometer number roll",
+  "code_name": "Digit column translate",
+  "category": "ui-components",
+  "summary": "A big green figure whose digit columns roll upward through two full cycles and settle left to right, with three smaller counters beside it.",
+  "tags": [
+    "counter",
+    "stat-tile",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

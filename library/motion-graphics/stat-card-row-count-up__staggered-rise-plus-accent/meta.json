@@ -1,0 +1,21 @@
+{
+  "slug": "stat-card-row-count-up__staggered-rise-plus-accent",
+  "visual_name": "Stat card row with count-up numbers",
+  "code_name": "Staggered card rise, eased integer count",
+  "category": "motion-graphics",
+  "summary": "Four frosted white stat cards rise in one after another while their big numbers count up and end in an indigo +.",
+  "tags": [
+    "stat-tile",
+    "counter",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 3.9,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

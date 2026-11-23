@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Headless screen capture pipeline</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 9
+window.DUR = DUR
+// Everything is laid out in a 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+const bgBase = el('div', 'bgfill', root); S(bgBase, { background: '#f4f4f6' }); el('div', 'dots', root)   // plain stage, no blurred orbs
+// A diagram of the method (capture scripts), drawn as a function of time.
+const SECTIONS = ['home', 'start', 'projects', 'team', 'items', 'reviews', 'analytics', 'billing', 'chat']
+const mono = "ui-monospace,'SF Mono',Menlo,monospace"
+const head = el('div', 'abs', root); S(head, { left: '160px', top: '80px', fontWeight: 800, fontSize: '64px', letterSpacing: '-.04em' })
+const sub = el('div', 'abs', root); S(sub, { left: '162px', top: '168px', fontWeight: 600, fontSize: '28px', color: '#6b6b7b' })
+const win = el('div', 'abs', root); S(win, { left: '160px', top: '250px', width: '760px', height: '470px', borderRadius: '20px', background: '#0b0a12', boxShadow: '0 40px 100px -30px rgba(24,16,52,.5),0 0 0 1px rgba(20,16,40,.12)', overflow: 'hidden' })
+win.innerHTML = `<div style="height:44px;background:#100f18;display:flex;align-items:center;gap:8px;padding:0 16px"><i style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></i><i style="width:12px;height:12px;border-radius:50%;background:#febc2e"></i><i style="width:12px;height:12px;border-radius:50%;background:#28c840"></i><span class="u" style="margin-left:24px;font:500 15px ${mono};color:rgba(255,255,255,.6)"></span></div><div class="pg" style="position:absolute;left:0;right:0;top:44px;bottom:0"><div class="bar1" style="position:absolute;left:30px;top:26px;height:18px;border-radius:9px;background:rgba(255,255,255,.18)"></div><div class="body1" style="position:absolute;left:30px;top:66px;right:30px;bottom:30px;border-radius:16px"></div></div>`
+const urlEl = win.querySelector('.u'), pg = win.querySelector('.pg')
+const code = el('div', 'abs', root); S(code, { left: '1000px', top: '250px', width: '760px', height: '470px', borderRadius: '20px', background: '#fff', boxShadow: '0 40px 100px -30px rgba(24,16,52,.4),0 0 0 1px rgba(20,16,40,.08)', padding: '30px 34px', fontFamily: mono, fontSize: '23px', lineHeight: '1.55', color: '#1b1b26', whiteSpace: 'pre' })
+const strip = el('div', 'abs', root); S(strip, { left: '160px', top: '800px', width: '1600px', height: '200px' })
+const thumbs = SECTIONS.map((n, i) => { const c = el('div', 'abs', strip); S(c, { left: (i * 178) + 'px', top: '20px', width: '160px', height: '90px', borderRadius: '10px', background: `linear-gradient(135deg, hsl(${250 + i * 12} 40% 16%), hsl(${270 + i * 12} 50% 28%))`, boxShadow: '0 10px 24px -10px rgba(24,16,52,.5)' }); c.innerHTML = `<div style="position:absolute;left:10px;bottom:8px;font:600 16px ${mono};color:#fff">shot-${n}.png</div>`; return c })
+const frames = Array.from({ length: 70 }, (_, i) => { const c = el('div', 'abs', strip); S(c, { left: (i * 22.8) + 'px', top: '40px', width: '19px', height: '40px', borderRadius: '4px', background: i < 30 ? '#8b5cf6' : '#16a34a' }); return c })
+const tag = el('div', 'abs', strip, ''); S(tag, { left: '0', top: '150px', fontWeight: 700, fontSize: '26px', color: '#55556a' })
+const head3 = el('div', 'abs', strip); S(head3, { left: '0', top: '0', width: '3px', height: '3px' })
+const play = el('div', 'abs', strip); S(play, { top: '28px', width: '4px', height: '64px', borderRadius: '2px', background: '#0b0b10' })
+const CODE = [
+  'await page.goto(`${BASE}?s=${s}`,\n  { waitUntil: \'networkidle\' })\nawait page.waitForTimeout(3500)\nawait page.screenshot({ path: `shot-${s}.png` })\n\n// viewport 1920x1080, deviceScaleFactor: 2',
+  'await page.click(\'button[aria-label="Run the scan"]\')\nfor (let i = 0; i < 70; i++) {\n  await page.screenshot({ path: `f${i}.png`, clip: card })\n  await page.waitForTimeout(60)\n}\n\n// the card box comes from getBoundingClientRect()',
+  'const fi = t < 11.25\n  ? Math.floor(lerp(0, 29, seg(t, 8.5, 11.25)))\n  : Math.min(69, 30 + Math.floor((t - 11.25) * 6))\nframes[fi].style.display = \'\'\n\n// render(t) shows one image: a flip book',
+]
+const HEAD = ['Shoot every screen at 2x', 'Record the run as frames', 'Play the frames back by time']
+const SUB = ['One headless page per section, waiting for the network to settle.', 'A click, then a screenshot of the card every ~120ms.', 'The player picks one frame per render(t), so a render is repeatable.']
+function render(t) {
+  const st = t < 3.2 ? 0 : t < 6.2 ? 1 : 2
+  const u = st === 0 ? 0 : st === 1 ? 3.2 : 6.2
+  const q = eo5(seg(t - u, 0, .4)), qo = ei(seg(t, [3.0, 6.0, 8.7][st], [3.2, 6.2, 9][st]))
+  head.textContent = (st + 1) + '. ' + HEAD[st]; sub.textContent = SUB[st]
+  const op = q * (1 - qo)
+  for (const e of [head, sub, win, code]) { e.style.opacity = op > .999 ? '' : op }   // a settled element carries no opacity, so it is drawn the same way every time
+  code.style.transform = q >= 1 ? '' : `translateY(${(1 - q) * 24}px)`
+  const typed = Math.floor(clamp(seg(t - u, .3, 2.0)) * CODE[st].length); code.textContent = CODE[st].slice(0, typed)
+  // window: sections cycle in stage 1, a card that scans in stage 2, the same card in stage 3
+  const si = st === 0 ? Math.min(8, Math.floor(Math.max(0, t - .3) / .3)) : 5
+  urlEl.textContent = st === 0 ? `page.html?s=${SECTIONS[si]}` : 'page.html?s=reviews'
+  const nf = st === 1 ? Math.floor(Math.max(0, t - 3.4) / .12) : (st === 2 ? 70 : 0)
+  S(pg.querySelector('.bar1'), { width: (st === 0 ? 300 + si * 18 : 420) + 'px' }); pg.querySelector('.body1').style.background = st === 0 ? 'rgba(139,92,246,.22)' : 'rgba(139,92,246,.42)'
+  thumbs.forEach((c, i) => { const p = st === 0 ? back(seg(t, .3 + i * .3, .6 + i * .3)) : 1; S(c, { opacity: st === 0 ? clamp(p * 2) : (st === 1 ? 0 : 0), transform: `scale(${clamp(p, 0, 1.2)})` }) })
+  frames.forEach((c, i) => { c.style.opacity = st === 1 ? (i < nf ? 1 : .12) : (st === 2 ? .5 : 0) })
+  const fi = t < 6.2 ? 0 : Math.floor(lerp(0, 29, eio(seg(t, 6.6, 8.2)))) + (t > 8.3 ? 1 + Math.floor((t - 8.3) * 6) : 0)
+  S(play, { left: (Math.min(fi, 69) * 22.8 - 2) + 'px', opacity: st === 2 ? clamp(seg(t, 6.3, 6.6)) * (1 - qo) : 0 })
+  tag.textContent = st === 0 ? 'shot-*.png at 3840x2160' : st === 1 ? nf + ' of 70 frames' : 'frame ' + Math.min(fi, 69)
+  tag.style.opacity = qo < .001 ? '' : 1 - qo
+  strip.style.opacity = 1
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

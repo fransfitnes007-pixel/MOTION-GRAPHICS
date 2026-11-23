@@ -1,0 +1,22 @@
+{
+  "slug": "logo-marquee-counterscroll-big-number__opposing-translatex",
+  "visual_name": "Big number between two counter-scrolling logo rows",
+  "code_name": "Opposing translateX",
+  "category": "motion-graphics",
+  "summary": "A 270px number counts up to 10,000+ in the middle while two rows of client logos run in opposite directions above and below it, with a small label fading in underneath.",
+  "tags": [
+    "marquee",
+    "counter",
+    "stat-tile",
+    "dark",
+    "glow"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

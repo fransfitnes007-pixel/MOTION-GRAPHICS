@@ -1,0 +1,19 @@
+{
+  "slug": "chapter-rail-progress-line__active-label-swap",
+  "visual_name": "Chapter rail with progress line",
+  "code_name": "Numbered rail with active-label swap and full-width progress bar",
+  "category": "motion-graphics",
+  "summary": "A small uppercase row of chapter numbers at the top left lights the current one and shows only its name, while a thin gradient line along the bottom edge grows across the whole video.",
+  "tags": [
+    "nav",
+    "dark",
+    "logo"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

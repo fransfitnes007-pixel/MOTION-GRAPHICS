@@ -1,0 +1,25 @@
+{
+  "slug": "frosted-stat-tiles-over-photo__tilted-glass-float",
+  "visual_name": "Frosted stat tiles over photo",
+  "code_name": "Tilted glass float",
+  "category": "ui-components",
+  "summary": "A portrait card with five frosted-glass stat tiles tilted in 3D, bobbing out of phase, numbers counting up, photos crossfading.",
+  "tags": [
+    "hero",
+    "card",
+    "stat-tile",
+    "counter",
+    "3d",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

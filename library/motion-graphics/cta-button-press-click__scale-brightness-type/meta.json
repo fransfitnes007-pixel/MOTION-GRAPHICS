@@ -1,0 +1,20 @@
+{
+  "slug": "cta-button-press-click__scale-brightness-type",
+  "visual_name": "CTA button click with typed address",
+  "code_name": "Spring button, press-scale and brightness flash, typed pill underneath",
+  "category": "motion-graphics",
+  "summary": "A big indigo \"Get started\" button springs up, a cursor clicks it, the button dips and flashes brighter, and the web address types itself into a pill beneath.",
+  "tags": [
+    "cta",
+    "cursor",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 2.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

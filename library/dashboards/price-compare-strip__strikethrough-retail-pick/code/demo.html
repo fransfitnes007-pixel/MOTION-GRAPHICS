@@ -1,0 +1,123 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Price compare strip</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --surface2:#F6F9F7;
+  --ink:#101C18; --muted:#5B6B64; --faint:#8A9A93;
+  --accent:#0F6E4F; --accent-ink:#FFFFFF; --accent-soft:#DCEFE6;
+  --urgent:#A83C14; --line:#D7E0DB; --line-strong:#BCC9C3;
+}
+.pricebox{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:11px 12px;
+  display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.pb{display:flex;flex-direction:column;gap:2px;line-height:1.2}
+.pb span{font:600 9.5px/1 Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.pb b{font:600 15px/1 "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.pb.retail b{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+.pb.range b{color:var(--ink)}
+.pb.pick b{color:var(--accent);font-size:19px;font-weight:600}
+.psrc{flex:1 1 100%;font-size:11.5px;color:var(--faint);border-top:1px dashed var(--line);padding-top:7px}
+.pb.mine{border-left:1px solid var(--line);padding-left:14px}
+.pb.mine span{color:var(--accent)}
+.pin{width:104px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;
+  padding:6px 9px;font:600 17px/1 "IBM Plex Mono",monospace;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.pin.warn{border-color:var(--urgent)}
+.pinrow{display:flex;gap:6px;align-items:center}
+.useml{background:none;border:0;color:var(--muted);font:600 11px/1 Archivo,sans-serif;
+  cursor:pointer;text-decoration:underline;padding:4px 2px;white-space:nowrap}
+.addon{display:inline-block;margin-left:8px;background:var(--accent);color:var(--accent-ink);border-radius:5px;padding:2px 7px;font:600 11px/1.4 Archivo,sans-serif}
+@media (max-width:560px){ .pb.mine{border-left:0;padding-left:0;flex-basis:100%} }
+
+#stage{background:#EEF2EF}
+.box{position:absolute;font-family:Archivo,-apple-system,'Helvetica Neue',Arial,sans-serif;color:var(--ink);display:grid;gap:22px}
+.box .pricebox{padding:22px 24px;gap:28px;border-radius:14px}
+.box .pb{gap:6px}
+.box .pb span{font-size:13px}
+.box .pb b{font-size:30px}
+.box .pb.pick b{font-size:38px}
+.box .pin{width:200px;font-size:34px;padding:10px 14px;border-radius:12px}
+.box .useml{font-size:15px}
+.box .psrc{font-size:15px;padding-top:12px}
+.cap{font:700 14px/1 Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:-12px}
+.box .pin{display:flex;align-items:center;min-height:62px;box-sizing:border-box}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// fit: lay a fixed-width design box out at its own size, then scale it to fill the stage (works for wide and tall).
+function fit(box, cw, fillW = .9, fillH = .88, h) {
+  S(box, { position: 'absolute', width: cw + 'px' }); if (h) box.style.height = h + 'px'
+  const hh = h || box.offsetHeight, s = Math.min(W * fillW / cw, H * fillH / hh)
+  S(box, { left: ((W - cw) / 2) + 'px', top: ((H - hh) / 2) + 'px', transformOrigin: '50% 50%', transform: 'scale(' + s + ')' }); return s
+}
+// rev: fade + rise a node in over [t0, t0+d]
+const rev = (e, t, t0, d = .45, dy = 14) => { const q = eo(seg(t, t0, t0 + d)); S(e, { opacity: q, transform: 'translateY(' + ((1 - q) * dy) + 'px)' }); return q }
+const DUR = 6
+window.DUR = DUR
+const box = el('div', 'box')
+// three examples stacked: each strip plays the same 4-beat sequence, offset slightly
+const items = [
+  { r: 450, lo: 250, hi: 350, pick: 325, mine: 300, src: 'Sample retailer, current new price' },
+  { r: 165, lo: 75, hi: 135, pick: 95, mine: 150, src: 'About $55 each new, set of three' },
+  { r: 90, lo: 45, hi: 70, pick: 55, mine: 75, src: 'Sample marketplace, new in box' },
+]
+const strips = items.map((d, i) => {
+  el('div', 'cap', box, ['Typed price inside the range', 'Typed price above the range', 'Typed price above the range'][i] || '')
+  const s = el('div', 'pricebox', box, `<div class="pb retail"><span>Retail</span><b>$${d.r}</b></div><div class="pb range"><span>Resale range</span><b>$${d.lo}–$${d.hi}</b></div><div class="pb pick"><span>My pick</span><b>$${d.pick}</b></div><div class="pb mine"><span>Your price</span><div class="pinrow"><div class="pin"></div><button class="useml">use mine</button></div></div><div class="psrc">${d.src}</div>`)
+  return { s, d, pin: s.querySelector('.pin'), parts: [...s.querySelectorAll('.pb,.psrc')] }
+})
+fit(box, 1000, .86, .9)
+function render(t) {
+  strips.forEach((o, i) => {
+    const t0 = i * .25
+    o.parts.forEach((p, k) => rev(p, t, t0 + .2 + k * .12, .4, 10))
+    // the typed value: types in 3 digits, one every .12s, from t=2.2+i*.2
+    const s = String(o.d.mine), n = Math.floor(clamp((t - (2.2 + i * .15)) / .14, 0, s.length))
+    const txt = n ? '$' + s.slice(0, n) : ''
+    if (o.pin.textContent !== txt) o.pin.textContent = txt
+    // warn border when the typed price is above the resale range high end
+    const typed = n === s.length, warn = typed && o.d.mine > o.d.hi
+    o.pin.classList.toggle('warn', warn)
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

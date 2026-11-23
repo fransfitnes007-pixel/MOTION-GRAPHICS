@@ -1,0 +1,24 @@
+{
+  "slug": "day-night-island-diorama__three-sun-moon-cycle",
+  "visual_name": "Day-night island diorama",
+  "code_name": "Three sun-moon cycle",
+  "category": "ui-components",
+  "summary": "A low-poly three.js island with a tiki hut, lab building, dance floor and palms, where a sun and moon arc across the sky, the sky colour lerps through sunset to a starry night, torches and spotlights come on, and box-bodied agents wander with chat bubbles.",
+  "tags": [
+    "3d",
+    "background",
+    "hero",
+    "dark",
+    "light"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-texture",
+    "sprites"
+  ],
+  "duration_sec": 16,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

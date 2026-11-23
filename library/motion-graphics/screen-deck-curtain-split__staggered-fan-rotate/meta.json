@@ -1,0 +1,23 @@
+{
+  "slug": "screen-deck-curtain-split__staggered-fan-rotate",
+  "visual_name": "Screen deck curtain split",
+  "code_name": "Staggered fan rotate",
+  "category": "motion-graphics",
+  "summary": "Eight app screens stack in the centre, then fan out into two tilted wings left and right while a two-line headline blurs in between them.",
+  "tags": [
+    "card",
+    "hero",
+    "transition",
+    "dark",
+    "browser-window",
+    "kinetic-type"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

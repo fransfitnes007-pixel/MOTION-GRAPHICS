@@ -1,0 +1,21 @@
+{
+  "slug": "gold-timeline-rail__progress-fill-year-ticks",
+  "visual_name": "Gold timeline rail",
+  "code_name": "Progress fill with year ticks",
+  "category": "motion-graphics",
+  "summary": "A horizontal rail fills with gold as four serif years with captions pop on it, then a headline and photo land beneath.",
+  "tags": [
+    "chart",
+    "card",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "playfair-display"
+  ],
+  "duration_sec": 10.7,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Call-to-action pill with cursor click-through</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#f4f5f7;color:#0b0c10;letter-spacing:-0.02em}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(110px)}
+.abs0{position:absolute;left:0;top:0;transform-origin:0 0}
+#btn{display:flex;align-items:center;justify-content:center;background:#0b0c10;color:#fff;font-weight:600;border-radius:999px;box-shadow:0 18px 40px -16px rgba(15,17,26,.55);white-space:nowrap}
+.cursor{width:44px;height:44px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));z-index:50}
+.ripple{border-radius:50%;border:4px solid #5b5ce6;z-index:49}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const BLOBS = [['#dfe3ff', .62], ['#ffe1ec', .56], ['#dff6ff', .5]].map(([c, s]) => { const b = el('div', 'blob'); S(b, { background: c, width: px(s * Math.max(W, H)), height: px(s * Math.max(W, H)) }); return b })
+function drawBlobs(t) {
+  const M = Math.max(W, H), tf = (e, x, y) => { e.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)' }
+  tf(BLOBS[0], -0.16 * M + Math.sin(t * 0.35) * 40, -0.2 * M + Math.cos(t * 0.3) * 30); BLOBS[0].style.opacity = 0.75
+  tf(BLOBS[1], W - 0.34 * M + Math.cos(t * 0.28) * 40, H * 0.3 + Math.sin(t * 0.33) * 40); BLOBS[1].style.opacity = 0.62
+  tf(BLOBS[2], W * 0.25 + Math.sin(t * 0.25 + 1) * 50, H - 0.3 * M + Math.cos(t * 0.31) * 30); BLOBS[2].style.opacity = 0.65
+}
+const tf = (e, x, y, s = 1) => { e.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')' }
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const U = W / (TALL ? 1080 : 1920), DW = W / U, DH = H / U
+const BTN = TALL ? { w: 540, h: 136, font: 54 } : { w: 440, h: 116, font: 46 }
+const CTACLICK = 26.2
+const DUR = 2.5
+window.DUR = DUR
+const world = el('div'); S(world, { position: 'absolute', left: 0, top: 0, width: px(DW), height: px(DH), transformOrigin: '0 0', transform: 'scale(' + U + ')' })
+const btn = el('div', 'abs0', world); btn.id = 'btn'
+btn.innerHTML = 'Get started&nbsp;&nbsp;<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:' + BTN.font * .8 + 'px;height:' + BTN.font * .8 + 'px"><path d="M7 17L17 7M8 7h9v9"/></svg>'
+S(btn, { width: BTN.w + 'px', height: BTN.h + 'px', fontSize: BTN.font + 'px', transformOrigin: '50% 50%' })
+const cur = el('div', 'abs0', world); cur.innerHTML = '<svg class="abs0 cursor" viewBox="0 0 24 24"><path d="M5 3l14 8.2-6.1 1.5 3.6 6.6-2.6 1.4-3.6-6.6L5.8 18.6z" fill="#0b0c10" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+const rip = el('div', 'abs0 ripple', world)
+
+function render(t) {
+  drawBlobs(t)
+  const T = t + 24.9                                            // the source clock
+  const bin = seg(T, 25.0, 25.45), bout = eio(seg(T, CTACLICK + .2, CTACLICK + .55)), press = T >= CTACLICK - .03 && T < CTACLICK + .12 ? .94 : 1
+  const bs = lerp(.7, 1, back(bin)) * press * lerp(1, 1.12, bout)
+  btn.style.opacity = clamp(bin * 2) * (1 - bout)
+  btn.style.transform = 'translate(' + (DW - BTN.w) / 2 + 'px,' + (DH - BTN.h) / 2 + 'px) scale(' + bs + ')'
+  const k2 = eio(seg(T, 25.5, 26.1)), tx = DW / 2 + BTN.w * .16, ty = DH / 2 + BTN.h * .1
+  cur.style.opacity = seg(T, 25.4, 25.6) * (1 - seg(T, CTACLICK + .2, CTACLICK + .4))
+  tf(cur, lerp(DW * .8, tx, k2), lerp(DH * .84, ty, k2), (press < 1 ? .84 : 1) * (TALL ? 1.5 : 1.25))
+  const rk = seg(T, CTACLICK, CTACLICK + .5), rs = 20 + 150 * eo(rk)
+  S(rip, { opacity: rk > 0 && rk < 1 ? .8 * (1 - rk) : 0, width: rs + 'px', height: rs + 'px' }); tf(rip, tx - rs / 2, ty - rs / 2)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

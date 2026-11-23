@@ -1,0 +1,22 @@
+{
+  "slug": "glass-stat-card-count-up__eo5-tabular-million",
+  "visual_name": "Glass stat card counting up",
+  "code_name": "Eo5 count-up in a frosted card with tabular numerals",
+  "category": "motion-graphics",
+  "summary": "A small frosted card slides in and its number counts from 0 to 1,000,000 with a sharp ease-out, turning indigo when it lands.",
+  "tags": [
+    "counter",
+    "stat-tile",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "backdrop-filter",
+    "tabular-nums"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

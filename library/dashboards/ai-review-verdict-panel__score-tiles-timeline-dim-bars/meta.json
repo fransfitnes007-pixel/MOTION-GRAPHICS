@@ -1,0 +1,21 @@
+{
+  "slug": "ai-review-verdict-panel__score-tiles-timeline-dim-bars",
+  "visual_name": "AI review verdict panel",
+  "code_name": "Verdict banner, score tiles, timeline and dimension bars",
+  "category": "dashboards",
+  "summary": "Banner, four score tiles filling, fixes, a section timeline with dots, then the score sheet's bars filling as the page scrolls.",
+  "tags": [
+    "card",
+    "dark",
+    "chart",
+    "table"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transition-rebuilt"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

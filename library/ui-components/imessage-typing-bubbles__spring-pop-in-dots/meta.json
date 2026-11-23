@@ -1,0 +1,21 @@
+{
+  "slug": "imessage-typing-bubbles__spring-pop-in-dots",
+  "visual_name": "iMessage typing bubbles",
+  "code_name": "Spring pop-in dots",
+  "category": "ui-components",
+  "summary": "A progress card where an AI reviewer texts what it is doing: a grey iOS-style bubble pops in from its corner with three bouncing typing dots, swaps to the message, and finished steps stay behind as check-marked bubbles.",
+  "tags": [
+    "card",
+    "dark",
+    "loader"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "spring"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "progress-ring__gradient-dash-offset-glow",
+  "visual_name": "Progress rings",
+  "code_name": "Gradient stroke with animated dash offset",
+  "category": "dashboards",
+  "summary": "Four rings (violet, green, blue, amber) filling to their values over 1.2s and then updating, with a big percentage and a caption inside.",
+  "tags": [
+    "chart",
+    "counter",
+    "dark",
+    "loader"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

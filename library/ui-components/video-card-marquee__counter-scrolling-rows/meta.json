@@ -1,0 +1,25 @@
+{
+  "slug": "video-card-marquee__counter-scrolling-rows",
+  "visual_name": "Video card marquee",
+  "code_name": "Counter-scrolling rows",
+  "category": "ui-components",
+  "summary": "Two counter-scrolling rows of vertical video cards with niche chips; click opens a spring-up glass player sheet.",
+  "tags": [
+    "carousel",
+    "marquee",
+    "card",
+    "modal",
+    "light",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

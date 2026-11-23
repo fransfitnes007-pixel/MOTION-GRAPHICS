@@ -1,0 +1,22 @@
+{
+  "slug": "blurred-feed-strip-speed-scroll__modulo-wrapped-rows",
+  "visual_name": "Blurred feed strip speed scroll",
+  "code_name": "Modulo-wrapped rows",
+  "category": "motion-graphics",
+  "summary": "Three rows of blurred post thumbnails streak left at different speeds while two outlined arrows keep moving to the right.",
+  "tags": [
+    "scroll",
+    "card",
+    "light",
+    "transition",
+    "marquee"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter"
+  ],
+  "duration_sec": 1.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

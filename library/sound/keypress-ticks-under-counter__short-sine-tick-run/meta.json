@@ -1,0 +1,21 @@
+{
+  "slug": "keypress-ticks-under-counter__short-sine-tick-run",
+  "visual_name": "Keypress ticks under a counter",
+  "code_name": "Short sine tick run",
+  "category": "sound",
+  "summary": "Twenty-eight tiny high ticks 28 ms apart, cycling through four pitches, matching a number that counts up fast.",
+  "tags": [
+    "sfx",
+    "counter",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

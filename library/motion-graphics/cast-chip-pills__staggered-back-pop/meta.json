@@ -1,0 +1,21 @@
+{
+  "slug": "cast-chip-pills__staggered-back-pop",
+  "visual_name": "Cast chip pills",
+  "code_name": "Staggered back-pop",
+  "category": "motion-graphics",
+  "summary": "Four dark pill chips with gold initial avatars pop up left to right, 0.22s apart, over the lower third of a photo.",
+  "tags": [
+    "card",
+    "dark",
+    "sfx",
+    "logo"
+  ],
+  "tech": [
+    "vanilla-js",
+    "backdrop-filter"
+  ],
+  "duration_sec": 5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

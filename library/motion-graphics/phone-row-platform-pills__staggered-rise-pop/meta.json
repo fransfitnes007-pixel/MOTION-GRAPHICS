@@ -1,0 +1,21 @@
+{
+  "slug": "phone-row-platform-pills__staggered-rise-pop",
+  "visual_name": "Phone row with platform pills",
+  "code_name": "Staggered rise with bob and popping pills",
+  "category": "motion-graphics",
+  "summary": "Five phones rise from below into a row, each 0.06s after the last, and float up and down out of step while a row of four coloured platform pills and a dark chip pop in above them.",
+  "tags": [
+    "phone",
+    "carousel",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 2.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

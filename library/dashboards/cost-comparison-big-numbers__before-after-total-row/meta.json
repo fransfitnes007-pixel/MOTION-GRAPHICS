@@ -1,0 +1,22 @@
+{
+  "slug": "cost-comparison-big-numbers__before-after-total-row",
+  "visual_name": "Cost comparison big numbers and tables",
+  "code_name": "Before and after total rows",
+  "category": "dashboards",
+  "summary": "Three large figures in a row (order, cost one way, cost the other) above two bordered tables whose last rows carry a heavy navy rule and the effective total.",
+  "tags": [
+    "stat-tile",
+    "table",
+    "counter",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-table",
+    "tabular-nums"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

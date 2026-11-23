@@ -1,0 +1,86 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Chrome logo spin, rise and rings</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.chrome{position:absolute;display:grid;place-items:center;font-weight:900;line-height:1;white-space:nowrap;background:linear-gradient(160deg,#fbfbfd 0%,#6b7280 30%,#f3f4f6 46%,#2a2f3a 62%,#aeb4c0 80%,#1b1f27 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 10px rgba(20,16,40,.28))}
+.chrome.sh{background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.95) 50%,transparent 65%);-webkit-background-clip:text;background-clip:text;mix-blend-mode:screen;filter:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 2.6
+window.DUR = DUR
+// Everything is laid out in the full-length version's 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// light stage: grey base, faint dot grid, four blurred orbs drifting
+const bgL = el('div', 'layer', root); const bgBase = el('div', 'bgfill', bgL); S(bgBase, { background: '#f4f4f6' }); el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(139,92,246,.30)', s: 900, x: 300, y: 120, sp: .09 }, { c: 'rgba(96,165,250,.26)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.14)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.30)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s + 'px', height: o.s + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+const driftOrbs = (t) => { for (const o of orbs) S(o.e, { left: (o.x + Math.sin(t * o.sp * 6 + o.s) * 120) + 'px', top: (o.y + Math.cos(t * o.sp * 5 + o.x) * 90) + 'px' }) }
+// The logo is a chrome-gradient placeholder glyph. Swap in your own mark.
+const g1 = el('div', 'abs', root); S(g1, { left: '780px', top: '120px', width: '360px', height: '450px' })
+const g1i = el('div', 'chrome', g1, 'G'); S(g1i, { inset: 0, fontSize: '470px' })
+const g1shine = el('div', 'chrome sh', g1, 'G'); S(g1shine, { inset: 0, fontSize: '470px' })
+const rings1 = [0, 1, 2].map(() => { const r = el('div', 'abs', root); S(r, { borderRadius: '50%', border: '2px solid rgba(124,58,237,.35)' }); return r })
+function render(t) {
+  driftOrbs(t)
+  const a = spring(seg(t, 0, .7), 6, 9), out = ei(seg(t, 1.5, 1.86))
+  const spin = eio(seg(t, 0, 1.15)) * 360
+  const up = eio5(seg(t, .1, .7))
+  S(g1, { transform: `translateY(${lerp(170, -10, up) - out * 120}px) scale(${(.6 + .4 * a) * lerp(1.15, .62, up) * (1 - out * .4)}) rotateY(${spin}deg)`, opacity: clamp(a * 1.3) * (1 - out), filter: `blur(${(1 - clamp(a * 1.2)) * 18 + out * 10}px)` })
+  g1shine.style.transform = `translateX(${lerp(-120, 120, seg(t, .25, 1.1))}%)`
+  rings1.forEach((r, i) => { const p = eo(seg(t, .08 + i * .16, 1.2 + i * .16)); const d = 300 + p * 1100; S(r, { width: d + 'px', height: d + 'px', left: (960 - d / 2) + 'px', top: (340 - d / 2) + 'px', opacity: (1 - p) * .9 }) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

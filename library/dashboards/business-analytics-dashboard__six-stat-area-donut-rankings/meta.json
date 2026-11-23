@@ -1,0 +1,24 @@
+{
+  "slug": "business-analytics-dashboard__six-stat-area-donut-rankings",
+  "visual_name": "Business analytics dashboard",
+  "code_name": "Six stat cards, area chart, platform donut, rankings table",
+  "category": "dashboards",
+  "summary": "Six stat cards, a 30-day area chart and sweeping platform donut, and a ranked creator table, with a 7d / 30d / 90d toggle.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

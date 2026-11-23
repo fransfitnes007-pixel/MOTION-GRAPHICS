@@ -1,0 +1,11 @@
+{
+  "name": "motion-reel-kit",
+  "owner": { "name": "motion-reel-kit contributors" },
+  "plugins": [
+    {
+      "name": "motion-reel-kit",
+      "source": "./",
+      "description": "Motion-graphics reels and films from a prompt: animation library, renderer, local voice, sound design, viral-format recreation, white-label branding."
+    }
+  ]
+}

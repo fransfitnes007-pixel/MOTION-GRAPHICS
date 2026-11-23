@@ -1,0 +1,24 @@
+{
+  "slug": "collapsible-glass-sidebar-shell__spring-width-collapse",
+  "visual_name": "Collapsible glass sidebar shell",
+  "code_name": "Spring width collapse",
+  "category": "dashboards",
+  "summary": "Dark purple dashboard shell whose sidebar collapses from 240px to a 68px icon rail with a rotating chevron toggle, plus a mobile drawer that springs in over a blurred backdrop, around radar and follower-growth chart panels.",
+  "tags": [
+    "nav",
+    "chart",
+    "dark",
+    "stat-tile",
+    "hover"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "recharts",
+    "oklch"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

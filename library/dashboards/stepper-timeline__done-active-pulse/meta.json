@@ -1,0 +1,21 @@
+{
+  "slug": "stepper-timeline__done-active-pulse",
+  "visual_name": "Stepper timeline",
+  "code_name": "Four-state steps with a pulsing active marker",
+  "category": "dashboards",
+  "summary": "Vertical and horizontal steppers whose states advance (active, blocked, done) while the active marker pulses every 2s.",
+  "tags": [
+    "nav",
+    "card",
+    "dark",
+    "loader"
+  ],
+  "tech": [
+    "vanilla-js",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

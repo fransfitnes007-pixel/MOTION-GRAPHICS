@@ -1,0 +1,243 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Plinko discount drop</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--ink:#0b0c10;--ink2:#3a3d46;--ink3:#5c606b;--ink4:#686c77;--mist:#f4f5f7;--mist2:#eceef2;--accent:#5b5ce6;--soft:#8b8cf0;--glow:#c7c8ff;--ok:#166534}
+#stage{background:var(--mist);color:var(--ink)}
+.root{position:absolute;transform-origin:0 0;overflow:hidden;background:var(--mist)}
+.abs{position:absolute}
+.blob{position:absolute;border-radius:50%;filter:blur(64px)}
+.glass{background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 8px 32px -12px rgba(15,17,26,.18)}
+.glass-strong{background:rgba(255,255,255,.75);-webkit-backdrop-filter:blur(40px);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.8);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 8px 32px -12px rgba(15,17,26,.18)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid rgba(11,12,16,.1);background:rgba(255,255,255,.6);padding:4px 12px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);line-height:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:12px 20px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:0 2px 10px -2px rgba(15,17,26,.25)}
+.btn-secondary{color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid rgba(11,12,16,.1);background:rgba(255,255,255,.6);padding:8px 14px;font-size:12px;line-height:16px;font-weight:500;color:var(--ink2);min-height:38px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.h-display{font-size:60px;line-height:1.05;font-weight:600;letter-spacing:-.02em}
+.h-section{font-size:48px;line-height:1.25;font-weight:600;letter-spacing:-.02em}
+.lede{font-size:18px;line-height:1.625;color:var(--ink2)}
+.tn{font-variant-numeric:tabular-nums}
+svg.i{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pk-board{position:relative;width:100%;height:250px;overflow:hidden;border-radius:22px;background:#111216;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),inset 0 8px 24px rgba(0,0,0,.35)}
+.pk-peg{position:absolute;width:10px;height:10px;border-radius:50%;background:#3d3f45;box-shadow:0 1px 3px rgba(0,0,0,.4);transform:translate(-50%,-50%)}
+.pk-pocket{display:grid;place-items:center;border-right:1px solid rgba(255,255,255,.1);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.pk-ball{position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 32% 26%,#fff 0,#fff 18%,#f1f2f5 45%,#c9ccd3 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (framer-motion equivalents) ----
+// cubic-bezier easing, the same solver CSS uses
+const bez = (x1, y1, x2, y2) => (p) => {
+  if (p <= 0) return 0; if (p >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let s = p; for (let i = 0; i < 8; i++) { const x = ((ax * s + bx) * s + cx) * s - p, d = (3 * ax * s + 2 * bx) * s + cx; if (Math.abs(x) < 1e-5 || !d) break; s -= x / d }
+  return ((ay * s + by) * s + cy) * s
+}
+const E_OUT22 = bez(.22, 1, .36, 1)       // the site's reveal ease [0.22, 1, 0.36, 1]
+const E_EASEOUT = bez(0, 0, .58, 1)       // framer 'easeOut'
+const E_EASEINOUT = bez(.42, 0, .58, 1)   // framer 'easeInOut'
+// framer-motion spring ({type:'spring', stiffness, damping, mass}) from 0 to 1, zero start velocity
+const fspring = (t, stiffness = 100, damping = 10, mass = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(stiffness / mass), z = damping / (2 * Math.sqrt(stiffness * mass))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  if (z === 1) return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+  const s = w0 * Math.sqrt(z * z - 1), r1 = -z * w0 + s, r2 = -z * w0 - s
+  return 1 - (r2 * Math.exp(r1 * t) - r1 * Math.exp(r2 * t)) / (r2 - r1)
+}
+// Reveal: initial {opacity:0,y:18} -> {1,0}, duration .6, ease [.22,1,.36,1]
+const reveal = (t, t0 = 0, dur = .6, y = 18) => { const q = E_OUT22(seg(t, t0, t0 + dur)); return { q, opacity: q, y: (1 - q) * y } }
+const rv = (e, t, t0 = 0, dur = .6, y = 18, extra = '') => { const r = reveal(t, t0, dur, y); S(e, { opacity: r.opacity, transform: `translateY(${r.y}px) ${extra}` }); return r.q }
+// y keyframes [0, a, 0] with easeInOut per segment, repeat Infinity, delay only before the first run
+const bob = (t, a, d, delay = 0) => { if (t < delay) return 0; const u = ((t - delay) % d) / d; return u < .5 ? a * E_EASEINOUT(u * 2) : a * (1 - E_EASEINOUT((u - .5) * 2)) }
+// CountUp: "$203,400", "1B+", "10,000+": digits count up on cubic ease-out
+const cuParse = (raw) => { const m = raw.match(/^([^\d]*)([\d,]*\.?\d+)(.*)$/); if (!m) return null; return { prefix: m[1], value: Number(m[2].replace(/,/g, '')), decimals: (m[2].split('.')[1] || '').length, suffix: m[3], grouped: m[2].includes(',') } }
+const cu = (raw, p) => { const k = cuParse(raw); if (!k) return raw; const n = k.value * (1 - Math.pow(1 - clamp(p), 3)); return k.prefix + n.toLocaleString('en-US', { minimumFractionDigits: k.decimals, maximumFractionDigits: k.decimals, useGrouping: k.grouped || k.value >= 1000 }) + k.suffix }
+const ICONS = {
+  'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>', 'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', check: '<path d="M20 6 9 17l-5-5"/>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>', play: '<polygon points="6 3 20 12 6 21 6 3"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', menu: '<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  'volume-2': '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+  'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>', lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>', eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+  building: '<rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
+  sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  'trending-up': '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>', globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  palette: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', video: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+  'at-sign': '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>', hash: '<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>', 'layout-dashboard': '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  'mouse-pointer': '<path d="M12.586 12.586 19 19"/><path d="M3.688 3.037a.497.497 0 0 0-.651.651l6.5 15.998a.501.501 0 0 0 .947-.062l1.569-6.083a2 2 0 0 1 1.448-1.479l6.124-1.579a.5.5 0 0 0 .063-.947z"/>', 'monitor': '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>', mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  'message-square': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', 'share-2': '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.42" x2="8.59" y1="6.51" y2="10.49"/>',
+  'shopping-bag': '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>', 'file-down': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+}
+const ic = (name, size = 16, sw = 2, style = '') => `<svg class="i" viewBox="0 0 24 24" width="${size}" height="${size}" stroke-width="${sw}" style="${style}">${ICONS[name] || ''}</svg>`
+// a root box of design size dw x dh, scaled to fit the stage and centred, so ?w=&h= (wide or tall) still composes
+const mkRoot = (dw, dh, bg) => { const sc = Math.min(W / dw, H / dh); const r = el('div', 'root', stage); S(r, { width: dw + 'px', height: dh + 'px', left: (W - dw * sc) / 2 + 'px', top: (H - dh * sc) / 2 + 'px', transform: `scale(${sc})` }); if (bg) r.style.background = bg; return r }
+// the site's pastel glow, static (the drifting version is its own skill)
+const blobs = (parent, dw, dh, drift = (i) => '') => {
+  const bl = [['#dfe3ff', .7, -128, -160, 608], ['#ffe1ec', .6, dw + 160 - 544, dh / 3, 544], ['#dff6ff', .6, dw / 3, dh - 480, 480]]
+  const out = bl.map(([c, o, x, y, s], i) => { const b = el('div', 'blob', parent); S(b, { background: c, opacity: o, left: x + 'px', top: y + 'px', width: s + 'px', height: s + 'px' }); return b })
+  const top = el('div', 'abs', parent); S(top, { inset: 0, background: 'radial-gradient(ellipse at top,rgba(255,255,255,.6),transparent 60%)' })
+  return out
+}
+// fade everything out at the end of the loop so it wraps cleanly
+const endFade = (t, d = .45) => 1 - E_EASEINOUT(seg(t, DUR - d, DUR))
+const loopFade = (t) => E_EASEINOUT(seg(t, 0, .3)) * endFade(t)
+const E_TW = bez(.4, 0, .2, 1)   // tailwind transition-all default easing
+
+const DUR = 10
+window.DUR = DUR
+window.LANDINFO = () => LAND
+const DW = 640, DH = 740
+const root = mkRoot(DW, DH); S(root, { background: '#26272c' })
+// ---- physics, copied from the source: fixed 1/240s steps, pegs, walls, pocket capture ----
+const POCKETS = [50, 20, 10, 15, 25, 75]
+const ROWS = [5, 6, 5, 6, 5], FIVE = [16.667, 33.333, 50, 66.667, 83.333], SIX = [8.333, 25, 41.667, 58.333, 75, 91.667]
+const POCKET_H = 44, BALL = 24
+const PH = { gravity: 680, pegRestitution: 0.76, wallRestitution: 0.7, tangentRetention: 0.985, pocketRestitution: 0.3, pocketSpring: 150, pocketDamping: 18, fixedStep: 1 / 240, maxPlayTime: 3.5 }
+const mulberry32 = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+const clampv = (v, a, b) => Math.min(b, Math.max(a, v))
+const pegsFor = (w, h) => { const area = h - POCKET_H, out = []; ROWS.forEach((n, row) => (n === 5 ? FIVE : SIX).forEach((left) => out.push({ x: (left / 100) * w, y: ((10 + row * 18) / 100) * area, r: 5 }))); return out }
+const startSim = (w, h, seed, pegs) => { const rnd = mulberry32(seed); const jitter = (rnd() - 0.5) * 4.4; const s = rnd() - 0.5
+  return { x: w / 2 + jitter, y: -BALL / 2, vx: Math.sign(s || 1) * (16 + Math.abs(s) * 28), vy: 30, elapsed: 0, captureElapsed: 0, mode: 'play', target: -1, targetX: 0, targetY: h * 0.89, floorHits: 0, sleeping: false, landed: false, lastHit: pegs.map(() => -Infinity) } }
+const stepSim = (st, w, h, pegs, dt, force) => {
+  const hits = []; if (st.landed) return hits
+  st.elapsed += dt; const R = BALL / 2
+  if (st.mode === 'play') {
+    st.vy += PH.gravity * dt; st.x += st.vx * dt; st.y += st.vy * dt
+    if (st.x < R) { st.x = R; if (st.vx < 0) st.vx *= -PH.wallRestitution } else if (st.x > w - R) { st.x = w - R; if (st.vx > 0) st.vx *= -PH.wallRestitution }
+    for (let pass = 0; pass < 2; pass++) pegs.forEach((peg, i) => {
+      const dx = st.x - peg.x, dy = st.y - peg.y, min = R + peg.r, d2 = dx * dx + dy * dy
+      if (d2 >= min * min) return
+      const d = Math.sqrt(d2) || min, nx = d2 === 0 ? 0 : dx / d, ny = d2 === 0 ? -1 : dy / d
+      st.x += nx * (min - d); st.y += ny * (min - d)
+      const nv = st.vx * nx + st.vy * ny
+      if (nv >= 0) return
+      const tx = -ny, ty = nx, tv = st.vx * tx + st.vy * ty, rb = -nv * PH.pegRestitution, rt = tv * PH.tangentRetention
+      st.vx = rb * nx + rt * tx; st.vy = rb * ny + rt * ty
+      if (st.elapsed - st.lastHit[i] >= 0.075 && -nv >= 24) { st.lastHit[i] = st.elapsed; hits.push(i) }
+    })
+    if (st.y >= h - POCKET_H || st.elapsed >= PH.maxPlayTime) { const slot = w / 6; st.target = force ?? clampv(Math.floor(st.x / slot), 0, 5); st.targetX = (st.target + 0.5) * slot; st.mode = 'pocket' }
+  } else {
+    st.captureElapsed += dt
+    st.vx += ((st.targetX - st.x) * PH.pocketSpring - st.vx * PH.pocketDamping) * dt; st.x += st.vx * dt
+    const slot = w / 6, left = st.target * slot + R, right = (st.target + 1) * slot - R
+    if (st.x < left) { st.x = left; if (st.vx < 0) st.vx *= -PH.wallRestitution } else if (st.x > right) { st.x = right; if (st.vx > 0) st.vx *= -PH.wallRestitution }
+    if (!st.sleeping) { st.vy += PH.gravity * dt; st.y += st.vy * dt
+      if (st.y >= st.targetY && st.vy > 0) { const inc = st.vy; st.y = st.targetY; st.vy = -inc * PH.pocketRestitution; st.vx *= 0.82; st.floorHits++; if (st.floorHits >= 2 || inc < 90) { st.vy = 0; st.sleeping = true } } }
+    const settled = Math.abs(st.targetX - st.x) < 0.7 && Math.abs(st.vx) < 7
+    if ((st.sleeping && settled) || st.captureElapsed >= 0.9) { st.x = st.targetX; st.y = st.targetY; st.vx = 0; st.vy = 0; st.landed = true }
+  }
+  return hits
+}
+const pickSeed = (w, h, pegs, want) => { for (let seed = 1; seed <= 700; seed++) { const st = startSim(w, h, seed, pegs); let guard = 0; while (!st.landed && guard++ < 2400) stepSim(st, w, h, pegs, PH.fixedStep, null); if (st.target === want) return { seed, force: null } } return { seed: 1, force: want } }
+// ---- the modal ----
+const BW = 448, BH = 250
+const WANT = 4   // the 25% pocket
+const pegs = pegsFor(BW, BH)
+const { seed, force } = pickSeed(BW, BH, pegs, WANT)
+// precompute the whole drop: ball position and peg hits at every fixed step
+const traj = [], hitLog = []
+{ const st = startSim(BW, BH, seed, pegs); let n = 0; traj.push([st.x, st.y]); while (!st.landed && n++ < 4000) { const hs = stepSim(st, BW, BH, pegs, PH.fixedStep, force); hs.forEach((i) => hitLog.push({ i, t: n * PH.fixedStep })); traj.push([st.x, st.y]) } var LAND = n * PH.fixedStep }
+const rnd = mulberry32(7)
+const CONF = ['#5b5ce6', '#ffd25a', '#ff6b9a', '#36d399', '#7cc4ff', '#ffffff']
+const pieces = Array.from({ length: 34 }, (_, i) => ({ a: -150 + (i * 300) / 33 + (rnd() * 12 - 6), d: 70 + rnd() * 90, c: CONF[i % 6], r: rnd() * 720 }))
+const dim = el('div', 'abs', root); S(dim, { inset: 0, background: 'linear-gradient(180deg,#34353b,#202127)' })
+const modal = el('div', '', root); S(modal, { position: 'absolute', left: (DW - 512) / 2 + 'px', top: '40px', width: '512px', borderRadius: '32px', background: '#fff', padding: '32px', boxShadow: '0 40px 90px -30px rgba(0,0,0,.8)' })
+const heading = el('div', '', modal); S(heading, { paddingRight: '32px' })
+modal.insertAdjacentHTML('beforeend', `<span style="position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink3)">${ic('x', 20)}</span>`)
+const boardWrap = el('div', '', modal); S(boardWrap, { marginTop: '16px' })
+const board = el('div', 'pk-board', boardWrap)
+el('div', 'abs', board).style.cssText = 'left:0;right:0;top:0;height:96px;background:radial-gradient(60% 80% at 50% 0%,rgba(91,92,230,.28),transparent 70%);pointer-events:none'
+el('span', 'abs', board).style.cssText = 'left:50%;top:7px;width:40px;height:1px;background:rgba(255,255,255,.25);transform:translateX(calc(-50% - 34px)) rotate(38deg)'
+el('span', 'abs', board).style.cssText = 'left:50%;top:7px;width:40px;height:1px;background:rgba(255,255,255,.25);transform:translateX(calc(-50% + 34px)) rotate(-38deg)'
+const chip = el('span', 'abs', board, 'Your ball'); S(chip, { left: '50%', top: '46px', transform: 'translateX(-50%)', borderRadius: '999px', background: 'rgba(255,255,255,.1)', padding: '4px 10px', fontSize: '10px', fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,.7)' })
+const pegEls = pegs.map((p) => { const e = el('span', 'pk-peg', board); S(e, { left: p.x + 'px', top: p.y + 'px' }); return e })
+const pockets = el('div', 'abs', board); S(pockets, { left: 0, right: 0, bottom: 0, height: POCKET_H + 'px', display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', borderTop: '1px solid rgba(255,255,255,.1)', background: 'linear-gradient(to bottom,rgba(0,0,0,.2),rgba(0,0,0,.6))' })
+const pk = POCKETS.map((v) => { const e = el('div', 'pk-pocket', pockets, v + '%'); e.style.color = v >= 50 ? '#c9b8ff' : 'rgba(255,255,255,.75)'; return e }); pk[5].style.borderRight = '0'
+const ball = el('div', 'pk-ball', board); const logo = el('span', '', ball, 'G'); S(logo, { fontSize: '10px', fontWeight: 800, color: '#14101f', display: 'block', lineHeight: 1 })
+const burst = el('div', 'abs', board); S(burst, { bottom: POCKET_H + 'px', left: '0', width: '0', height: '0' })
+const bits = pieces.map((p) => { const e = el('i', '', burst); S(e, { position: 'absolute', left: '-3px', top: '-8px', width: '6px', height: '9px', borderRadius: '2px', background: p.c, transformOrigin: '50% 100%' }); return e })
+const act = el('div', '', modal); S(act, { marginTop: '16px' })
+const cur = el('div', 'abs', root, `<svg viewBox="0 0 24 24" width="30" height="30" style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))"><path d="M5 3l14 8-6.2 1.6L9.6 19z" fill="#fff" stroke="#0b0c10" stroke-width="1.6" stroke-linejoin="round"/></svg>`)
+const ring = el('div', 'abs', root); S(ring, { width: '44px', height: '44px', borderRadius: '50%', border: '2px solid rgba(91,92,230,.9)', marginLeft: '-22px', marginTop: '-22px' })
+let hState = '', aState = ''
+const T_DROP = 1.6
+const E_PEG = bez(.22, 1, .36, 1)
+const mixc = (a, b, p) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], p))).join(',')})`
+function render(t) {
+  S(root, { opacity: loopFade(t) })
+  const ts = t - T_DROP, dropping = ts >= 0, landed = ts >= LAND
+  const hk = landed ? 'won' : dropping ? 'drop' : 'idle'
+  if (hk !== hState) { hState = hk; heading.innerHTML = hk === 'won' ? `<h2 style="font-size:36px;line-height:1.05;font-weight:700;letter-spacing:-.025em;text-wrap:balance">You won 25% off. Claim your code.</h2><p style="margin-top:6px;font-size:14px;line-height:1.625;color:var(--ink2)">Fill in every line and the code lands in your inbox in seconds. It works once, for 7 days.</p>` : `<span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ffe7a8;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b4a00">${ic('gift', 14)} Everyone wins something</span><h2 style="margin-top:12px;font-size:36px;line-height:1.05;font-weight:700;letter-spacing:-.025em;text-wrap:balance">Drop the ball. Win up to 75% off your order.</h2><p style="margin-top:6px;font-size:14px;line-height:1.625;color:var(--ink2)">One drop per person. The pocket your ball lands in is your discount. No sign-up to drop.</p>` }
+  const ak = hk === 'idle' ? 'i' : hk === 'drop' ? 'd' : 'w'
+  if (ak !== aState) { aState = ak; act.innerHTML = ak === 'w' ? `<span style="display:flex;height:56px;align-items:center;justify-content:center;gap:8px;border-radius:999px;background:var(--accent);color:#fff;font-size:16px;font-weight:700;box-shadow:0 14px 30px -10px rgba(91,92,230,.7)">Claim my code ${ic('arrow-right', 20)}</span>` : `<span style="display:flex;height:56px;align-items:center;justify-content:center;gap:8px;border-radius:999px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;opacity:${ak === 'd' ? .7 : 1};box-shadow:0 2px 10px -2px rgba(15,17,26,.25)">${ak === 'd' ? 'Ball in play…' : 'Drop to win ' + ic('arrow-right', 20)}</span>` }
+  chip.style.display = dropping ? 'none' : 'block'
+  // ball: waiting at the top with a pulsing glow, or following the precomputed physics
+  let bx = BW / 2, by = BALL / 2 + 6
+  if (dropping) { const k = Math.min(traj.length - 1, Math.floor(ts / PH.fixedStep)); [bx, by] = traj[k] }
+  ball.style.transform = `translate(${bx - BALL / 2}px, ${by - BALL / 2}px)`
+  const g = dropping ? 0 : .5 + .5 * Math.sin(t / 1.6 * Math.PI * 2 - Math.PI / 2)
+  ball.style.boxShadow = dropping ? '0 2px 4px rgba(0,0,0,.5),0 0 12px rgba(201,184,255,.55)' : `0 2px 4px rgba(0,0,0,.5),0 0 ${12 + 14 * g}px rgba(${Math.round(lerp(201, 255, g))},${Math.round(lerp(184, 210, g))},${Math.round(lerp(255, 90, g))},${(.55 + .4 * g).toFixed(2)})`
+  logo.style.transform = dropping && !landed ? `rotate(${(ts * 360 / .7) % 360}deg)` : 'none'
+  // peg flash: gk-peg 260ms, scale 1 -> 1.35 -> 1, grey -> lilac -> grey
+  pegEls.forEach((e, i) => { let s = 1, c = '#3d3f45', sh = '0 1px 3px rgba(0,0,0,.4)'; for (const h of hitLog) if (h.i === i && ts >= h.t && ts < h.t + .26) { const u = (ts - h.t) / .26; const p = u < .3 ? E_PEG(u / .3) : 1 - E_PEG((u - .3) / .7); s = 1 + .35 * p; c = mixc([61, 63, 69], [203, 184, 255], p); sh = `0 0 ${10 * p}px rgba(155,130,242,${.9 * p})` } S(e, { transform: `translate(-50%,-50%) scale(${s})`, background: c, boxShadow: sh }) })
+  // landing: pocket glow (900ms) and confetti (650 to 1010ms)
+  pk.forEach((e, i) => { const lit = landed && i === WANT; e.style.background = lit ? 'rgba(255,210,90,.15)' : ''; e.style.color = lit ? '#ffd25a' : POCKETS[i] >= 50 ? '#c9b8ff' : 'rgba(255,255,255,.75)'; if (lit) { const u = seg(ts - LAND, 0, .9); const a = u < .5 ? u * 2 : 1 - (u - .5) * 2 * .5; e.style.boxShadow = `0 0 ${28 * a}px rgba(255,210,90,${(.95 * a).toFixed(2)}), inset 0 0 ${18 * a}px rgba(255,210,90,${(.55 * a).toFixed(2)})` } else e.style.boxShadow = 'none' })
+  burst.style.left = ((WANT + .5) * BW / 6) + 'px'
+  bits.forEach((e, i) => { const p = pieces[i], dur = .65 + (i % 5) * .09, dl = (i % 7) * .018, u = E_PEG(seg(ts - LAND, dl, dl + dur)); const vis = ts - LAND >= dl && ts - LAND < dl + dur; S(e, { display: vis ? 'block' : 'none', opacity: 1 - u, transform: `rotate(${p.a}deg) translateY(${-p.d * u}px) rotate(${p.r * u}deg)` }) })
+  // pointer taps "Drop to win"
+  const tx = 320, ty = 543
+  const a = E_EASEINOUT(seg(t, .2, 1.4)), out = E_EASEINOUT(seg(t, 2.4, 3.2))
+  S(cur, { left: lerp(lerp(560, tx, a), 600, out) + 'px', top: lerp(lerp(640, ty, a), 700, out) + 'px', display: t >= .2 && t < 3.2 ? 'block' : 'none' })
+  const rp = t >= T_DROP - .2 && t < T_DROP + .15 ? (t - (T_DROP - .2)) / .35 : 0
+  S(ring, { left: tx + 'px', top: ty + 'px', display: rp > 0 ? 'block' : 'none', opacity: 1 - rp, transform: `scale(${.4 + rp * 1.1})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

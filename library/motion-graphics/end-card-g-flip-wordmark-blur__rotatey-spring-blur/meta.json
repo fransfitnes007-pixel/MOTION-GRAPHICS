@@ -1,0 +1,21 @@
+{
+  "slug": "end-card-g-flip-wordmark-blur__rotatey-spring-blur",
+  "visual_name": "End card with flipping mark",
+  "code_name": "RotateY spring mark, blur-in wordmark, fading address",
+  "category": "motion-graphics",
+  "summary": "A round mark spins in a full turn above a wordmark that scales down from 120% out of a blur, a shine crosses it, the web address fades up underneath, then everything fades to the stage.",
+  "tags": [
+    "end-card",
+    "logo",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring",
+    "css-filter-blur"
+  ],
+  "duration_sec": 3.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

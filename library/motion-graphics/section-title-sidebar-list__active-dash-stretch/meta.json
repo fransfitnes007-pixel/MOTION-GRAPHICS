@@ -1,0 +1,20 @@
+{
+  "slug": "section-title-sidebar-list__active-dash-stretch",
+  "visual_name": "Section title with progress list",
+  "code_name": "Active dash stretch and text swap",
+  "category": "motion-graphics",
+  "summary": "A left sidebar of eyebrow, big title and description swaps text per section, with a list whose active item gets a stretched dash.",
+  "tags": [
+    "nav",
+    "light",
+    "kinetic-type"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

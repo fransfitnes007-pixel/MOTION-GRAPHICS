@@ -1,0 +1,19 @@
+{
+  "slug": "graded-photo-backdrop-slow-zoom__sepia-grade-cover-fit",
+  "visual_name": "Graded photo backdrop with slow zoom",
+  "code_name": "Sepia grade, cover-fit",
+  "category": "motion-graphics",
+  "summary": "Full-bleed photos cross-dissolve over 0.45s, each slowly zooming from 100% to 112%, graded warm and darkened toward the bottom.",
+  "tags": [
+    "background",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter"
+  ],
+  "duration_sec": 10.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

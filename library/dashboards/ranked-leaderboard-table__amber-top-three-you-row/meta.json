@@ -1,0 +1,19 @@
+{
+  "slug": "ranked-leaderboard-table__amber-top-three-you-row",
+  "visual_name": "Ranked leaderboard table",
+  "code_name": "Rank chips with amber top three and highlighted self row",
+  "category": "dashboards",
+  "summary": "Six ranked rows arriving in turn, top three amber, the viewer's row tinted violet with a YOU tag, views ticking up.",
+  "tags": [
+    "table",
+    "card",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

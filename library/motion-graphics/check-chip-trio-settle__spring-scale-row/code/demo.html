@@ -1,0 +1,119 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Check chip trio settling in a row</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dotsd{position:absolute;inset:-120px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.line{position:absolute;white-space:nowrap;line-height:1;letter-spacing:-.045em;font-weight:800}
+.line .w{display:inline-block;will-change:transform,filter,opacity}
+.grad{background:linear-gradient(100deg,#4338ca 0%,#5b5ce6 45%,#8b5cf6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gradL{background:linear-gradient(100deg,#a5b4fc 0%,#c4b5fd 60%,#e9d5ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.chip{position:absolute;display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-radius:999px;font-weight:700;font-size:21px;white-space:nowrap;letter-spacing:-.01em}
+.chip.lt{background:rgba(255,255,255,.94);color:#0b0b10;box-shadow:0 14px 34px -10px rgba(24,16,52,.35),0 0 0 1px rgba(20,16,40,.07)}
+.chip.dk{background:rgba(14,12,22,.86);color:#fff;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+.glass{position:absolute;border-radius:28px;background:rgba(255,255,255,.74);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(24,16,52,.42),0 0 0 1px rgba(20,16,40,.07)}
+.glassd{position:absolute;border-radius:28px;background:rgba(255,255,255,.07);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3.6
+window.DUR = DUR
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+
+const bgD = el('div', 'abs'); S(bgD, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: 'radial-gradient(ellipse at 50% 40%, #16133a 0%, #0a0916 55%, #050409 100%)' })
+el('div', 'dotsd', bgD)
+const bgDGlow = el('div', 'orb', bgD); S(bgDGlow, { width: px(1500 * W / 1920), height: px(1100 * H / 1080), left: px(210 * W / 1920), top: px(-60 * H / 1080), background: 'radial-gradient(closest-side, rgba(91,92,230,.40), transparent)' })
+const glowDrift = (t) => S(bgDGlow, { transform: `translate(${Math.sin(t * .7) * 60}px, ${Math.cos(t * .6) * 40}px)` })
+
+
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+
+
+function line(words, { size = 140, weight = 800, color = '#0b0b10', y = CY, gap = .26 } = {}) {
+  const P = typeof HOST === 'undefined' ? stage : HOST, LW = typeof HOST === 'undefined' ? W : 1920     // HOST is the 1920x1080 frame when a demo uses one
+  const L = el('div', 'line', P)
+  S(L, { fontSize: size + 'px', fontWeight: weight, color, top: (y - size / 2) + 'px', left: '0', width: LW + 'px', textAlign: 'center' })
+  L.ws = words.map((w, i) => { const s = el('span', 'w' + (w.g ? (color === '#fff' ? ' gradL' : ' grad') : ''), L); s.textContent = w.t; if (i < words.length - 1) s.style.marginRight = gap + 'em'; s.at = w.at; return s })
+  return L
+}
+function wordsIn(L, t, dur = .42) {
+  for (const s of L.ws) {
+    const p = eo5(seg(t, s.at - .04, s.at - .04 + dur))
+    s.style.opacity = p; s.style.filter = `blur(${(1 - p) * 16}px)`
+    s.style.transform = `translateY(${(1 - p) * .38}em) scale(${.92 + .08 * p})`
+  }
+}
+function wordsOut(L, t, t0, dir = -1, dur = .3) {
+  L.ws.forEach((s, i) => {
+    const q = ei(seg(t, t0 + i * .035, t0 + i * .035 + dur)); if (q <= 0) return
+    s.style.opacity = 1 - q; s.style.filter = `blur(${q * 14}px)`; s.style.transform = `translateY(${dir * q * .45}em) scale(${1 - .05 * q})`
+  })
+}
+
+const L8b = line([{ t: 'Setup', at: .81 }, { t: 'is', at: 1.11 }, { t: 'included', at: 1.25, g: 1 }], { size: 116, color: '#fff', y: 250 })
+const L8c = line([{ t: 'on', at: 1.65 }, { t: 'your', at: 2.15 }, { t: 'own', at: 2.31 }, { t: 'terms.', at: 2.59, g: 1 }], { size: 116, color: '#fff', y: 390 })
+// chip times: "once" +.1, "included" +.05, "terms" +.05 (offset from the voice clock)
+const rows8 = [['One payment', .11], ['Setup included', 1.3], ['Nothing monthly', 2.64]].map(([t, at], i) => {
+  const r = el('div', 'chip dk', FR, '<span class="ico" style="background:#16a34a;width:38px;height:38px">' + CHECK(20) + '</span>' + t); S(r, { fontSize: '34px', fontWeight: 800, padding: '16px 30px 16px 16px', gap: '16px' }); r.at = at; r.i = i; return r
+})
+function render(t) {
+  S(document.getElementById('stage'), { background: '#050409' })
+  glowDrift(t)
+  const out = eio5(seg(t, 2.95, 3.3))
+  wordsIn(L8b, t); wordsOut(L8b, t, 2.95, -1, .2)
+  wordsIn(L8c, t); wordsOut(L8c, t, 2.98, -1, .2)
+  rows8.forEach((r) => {
+    const q = spring(seg(t, r.at, r.at + .5), 8, 12), x = [330, 760, 1220][r.i]
+    // the first chip shows alone under a big word, then all three settle in a row
+    const settle = eio5(seg(t, .6, 1.0)), y = r.i === 0 ? lerp(680, 760, settle) : 760
+    S(r, { left: (r.i === 0 ? lerp(760, x, settle) : x) + 'px', top: y + 'px', opacity: clamp(q * 1.5) * (1 - out), transform: `scale(${.6 + .4 * q})` })
+  })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

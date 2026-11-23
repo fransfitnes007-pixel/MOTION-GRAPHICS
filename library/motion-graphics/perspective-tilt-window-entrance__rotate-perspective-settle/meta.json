@@ -1,0 +1,22 @@
+{
+  "slug": "perspective-tilt-window-entrance__rotate-perspective-settle",
+  "visual_name": "Perspective-tilted window entrance",
+  "code_name": "Rotate perspective settle",
+  "category": "motion-graphics",
+  "summary": "A browser window swings in rotated 22 degrees around its vertical axis, opacity rising, then keeps easing flat while the camera pushes into the page and a pill pops in.",
+  "tags": [
+    "browser-window",
+    "hero",
+    "dark",
+    "3d",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 5.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

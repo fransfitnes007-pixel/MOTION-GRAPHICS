@@ -1,0 +1,21 @@
+{
+  "slug": "music-ducking-under-voice__envelope-follower-gain",
+  "visual_name": "Music ducking under a voice",
+  "code_name": "Envelope follower gain",
+  "category": "sound",
+  "summary": "The music drops about 6 dB while a voice is speaking and comes back in the gaps, by following the voice's loudness.",
+  "tags": [
+    "voice",
+    "music",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 14.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

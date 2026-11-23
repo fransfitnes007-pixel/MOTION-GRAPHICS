@@ -1,0 +1,20 @@
+{
+  "slug": "layout-flash-cut-pill-tabs__beat-cut-punch-zoom",
+  "visual_name": "Layout flash-cut with pill tabs",
+  "code_name": "Beat-synced cut with punch zoom and active pill",
+  "category": "motion-graphics",
+  "summary": "A browser window cuts between six page layouts on successive beats while a pill bar below lights the matching name and the window punches in a little on each cut.",
+  "tags": [
+    "browser-window",
+    "nav",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

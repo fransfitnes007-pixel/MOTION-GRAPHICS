@@ -1,0 +1,23 @@
+{
+  "slug": "3d-book-open-push-in__css-3d-cover-hinge",
+  "visual_name": "3D book open and push-in",
+  "code_name": "CSS 3D cover hinge",
+  "category": "motion-graphics",
+  "summary": "A CSS 3D book slides in, its cover swings open at a click, the camera pushes into the page and a white flash cuts to a photo.",
+  "tags": [
+    "3d",
+    "kinetic-type",
+    "transition",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d-transform",
+    "perspective"
+  ],
+  "duration_sec": 9.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

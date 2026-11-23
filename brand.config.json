@@ -1,0 +1,39 @@
+{
+  "_readme": "Edit these values, then run: python3 engine/tools/apply_brand.py. It swaps the placeholder brand everywhere and rebuilds the logo and app icon assets.",
+  "name": "YourBrand",
+  "name_upper": "YOURBRAND",
+  "slug": "yourbrand",
+  "domain": "yourbrand.com",
+  "handle": "@yourbrand",
+  "tagline": "Your tagline here.",
+  "colors": {
+    "background": "#000000",
+    "surface": "#161619",
+    "text": "#FFFFFF",
+    "muted": "#8E8E93",
+    "accent": "#6D97FF",
+    "accent_2": "#FF7A3C",
+    "icon_gradient": ["#7C5CFF", "#3A7BFF"]
+  },
+  "fonts": {
+    "logo_ttf": "",
+    "_logo_ttf_note": "Path to a .ttf/.otf for the chrome wordmark. Empty = first system bold sans found."
+  },
+  "palette": "pictogram-mono",
+  "app_store": {
+    "name": ["YourBrand - Short", "Tagline Here"],
+    "subtitle": "What the app does in one line",
+    "rating": 4.8,
+    "ratings_label": "1.2K RATINGS",
+    "category": "Productivity",
+    "category_icon": "cap",
+    "developer": "YourBrand Inc.",
+    "icon": "",
+    "_icon_note": "Path to a square PNG of your real app icon. Empty = a generated gradient icon with your first letter."
+  },
+  "voice": {
+    "male": "m_smooth",
+    "female": "f_heart",
+    "syllables_per_second": 5.0
+  }
+}

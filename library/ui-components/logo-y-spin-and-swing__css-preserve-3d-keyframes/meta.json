@@ -1,0 +1,22 @@
+{
+  "slug": "logo-y-spin-and-swing__css-preserve-3d-keyframes",
+  "visual_name": "Logo Y spin and swing",
+  "code_name": "CSS preserve-3d keyframes",
+  "category": "ui-components",
+  "summary": "Two small 3D logo loops side by side: a round monogram coin that spins a full 360 degrees on its vertical axis every 6 seconds, and a wordmark that swings between -35 and 35 degrees every 4 seconds.",
+  "tags": [
+    "3d",
+    "logo",
+    "hero",
+    "dark"
+  ],
+  "tech": [
+    "css-keyframes",
+    "css-3d-transform",
+    "perspective"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

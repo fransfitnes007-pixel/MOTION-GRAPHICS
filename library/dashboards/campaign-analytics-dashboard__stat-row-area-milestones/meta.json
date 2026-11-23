@@ -1,0 +1,24 @@
+{
+  "slug": "campaign-analytics-dashboard__stat-row-area-milestones",
+  "visual_name": "Campaign analytics dashboard",
+  "code_name": "Stat row, area chart, milestone bars",
+  "category": "dashboards",
+  "summary": "Sidebar app frame with four stat cards, a cumulative-views area chart that toggles to daily bars, milestone bars and best-performing video tiles.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "card",
+    "nav"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

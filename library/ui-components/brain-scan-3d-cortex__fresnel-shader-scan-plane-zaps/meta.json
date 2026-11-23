@@ -1,0 +1,23 @@
+{
+  "slug": "brain-scan-3d-cortex__fresnel-shader-scan-plane-zaps",
+  "visual_name": "Brain scan 3D cortex",
+  "code_name": "Fresnel shader, scan plane and zaps",
+  "category": "ui-components",
+  "summary": "A translucent violet 3D brain that auto-rotates and swings to face whatever region is being read, regions glowing in their own colours and pulsing, a cyan scan plane sweeping through, electric arcs and sparks jumping between active regions, and a chat bubble pinned to the focus.",
+  "tags": [
+    "3d",
+    "dark",
+    "loader",
+    "hero"
+  ],
+  "tech": [
+    "three.js",
+    "glsl",
+    "webgl",
+    "canvas-2d"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

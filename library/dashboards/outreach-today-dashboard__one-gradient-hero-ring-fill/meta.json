@@ -1,0 +1,25 @@
+{
+  "slug": "outreach-today-dashboard__one-gradient-hero-ring-fill",
+  "visual_name": "Outreach today dashboard",
+  "code_name": "One gradient hero ring fill",
+  "category": "dashboards",
+  "summary": "Near-black violet dashboard with a single gradient hero card, a row of icon-tile stat cards, a violet area chart with a ringed last point and a glowing capacity ring that fills, all revealed from shimmering skeleton placeholders.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "loader",
+    "dark",
+    "hero",
+    "card"
+  ],
+  "tech": [
+    "react",
+    "recharts",
+    "tailwind",
+    "svg"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,24 @@
+{
+  "slug": "numbered-card-grid-and-dark-steps__stagger-in-view-reveal",
+  "visual_name": "Numbered card grid and dark steps panel",
+  "code_name": "Stagger in-view reveal",
+  "category": "ui-components",
+  "summary": "A scroll-triggered sequence: glass cards numbered 01 to 06 stagger in, then a dark rounded steps panel reveals.",
+  "tags": [
+    "card",
+    "scroll",
+    "hero",
+    "light",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

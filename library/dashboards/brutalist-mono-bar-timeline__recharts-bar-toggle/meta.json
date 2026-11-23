@@ -1,0 +1,23 @@
+{
+  "slug": "brutalist-mono-bar-timeline__recharts-bar-toggle",
+  "visual_name": "Brutalist mono bar timeline",
+  "code_name": "Recharts bar toggle",
+  "category": "dashboards",
+  "summary": "Pure black and white monospace analytics page: slab section headers, 2px-ruled metric cells, and a white bar timeline with a two-button toggle and a white tooltip box.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "table",
+    "hover"
+  ],
+  "tech": [
+    "react",
+    "recharts",
+    "css"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

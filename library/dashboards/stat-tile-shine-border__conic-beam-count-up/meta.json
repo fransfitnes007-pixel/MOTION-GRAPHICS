@@ -1,0 +1,22 @@
+{
+  "slug": "stat-tile-shine-border__conic-beam-count-up",
+  "visual_name": "Stat tile with shine border",
+  "code_name": "Rotating conic beam ring with count-up number",
+  "category": "dashboards",
+  "summary": "Four tiles with a tone-coloured beam circling the border every 4s; values tick to new numbers with a 0.6s count and trend pills update.",
+  "tags": [
+    "stat-tile",
+    "card",
+    "counter",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "conic-gradient",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

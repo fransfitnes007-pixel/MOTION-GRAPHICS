@@ -1,0 +1,20 @@
+{
+  "slug": "bracket-caption-tag__fade-in",
+  "visual_name": "Bracket caption tag",
+  "code_name": "Eased fade of a dark label",
+  "category": "motion-graphics",
+  "summary": "A small dark translucent rounded label with white bracketed text fades in centred under the scene's main object.",
+  "tags": [
+    "card",
+    "nav",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 4.5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

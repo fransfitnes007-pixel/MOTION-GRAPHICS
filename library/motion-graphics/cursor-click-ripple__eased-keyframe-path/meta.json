@@ -1,0 +1,20 @@
+{
+  "slug": "cursor-click-ripple__eased-keyframe-path",
+  "visual_name": "Cursor click with gold ripple",
+  "code_name": "Eased keyframe path",
+  "category": "motion-graphics",
+  "summary": "An arrow cursor eases along keyframed points onto a button, dips to 82% on the click and a gold ring expands from it.",
+  "tags": [
+    "cursor",
+    "cta",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 4.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

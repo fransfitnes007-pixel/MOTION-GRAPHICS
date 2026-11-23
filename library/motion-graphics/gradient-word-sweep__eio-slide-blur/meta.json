@@ -1,0 +1,21 @@
+{
+  "slug": "gradient-word-sweep__eio-slide-blur",
+  "visual_name": "Gradient word sweep",
+  "code_name": "Eased slide with peak blur",
+  "category": "motion-graphics",
+  "summary": "A giant orange to violet gradient word sweeps right to left across a white frame, blurring to 10px at its fastest.",
+  "tags": [
+    "kinetic-type",
+    "transition",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter",
+    "background-clip"
+  ],
+  "duration_sec": 2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "orbit-video-ring__3d-carousel-spin",
+  "visual_name": "Orbit video ring",
+  "code_name": "3D carousel spin",
+  "category": "ui-components",
+  "summary": "A black hero with a 152px name over a ring of ten tall video cards turning in 3D; hover pauses it.",
+  "tags": [
+    "hero",
+    "3d",
+    "carousel",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

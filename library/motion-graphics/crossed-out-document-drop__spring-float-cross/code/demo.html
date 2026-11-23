@@ -1,0 +1,81 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Crossed-out document drop</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dots{position:absolute;inset:-120px;background-image:radial-gradient(rgba(20,16,40,.10) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.line{position:absolute;white-space:nowrap;line-height:1;letter-spacing:-.045em;font-weight:800}
+.line .w{display:inline-block;will-change:transform,filter,opacity}
+.grad{background:linear-gradient(100deg,#4338ca 0%,#5b5ce6 45%,#8b5cf6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gradL{background:linear-gradient(100deg,#a5b4fc 0%,#c4b5fd 60%,#e9d5ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.doc{position:absolute;border-radius:14px;background:#fff;box-shadow:0 40px 90px -30px rgba(24,16,52,.45),0 0 0 1px rgba(20,16,40,.08);overflow:hidden}
+.doc .blk{position:absolute;border-radius:8px;background:#e7e7ec}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3.4
+window.DUR = DUR
+
+const bgL = el('div', 'abs'); S(bgL, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: '#f4f4f6' })
+el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(91,92,230,.26)', s: 900, x: 280, y: 100, sp: .09 }, { c: 'rgba(96,165,250,.24)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.12)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.28)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s * K + 'px', height: o.s * K + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+function bgLight(t) { for (const o of orbs) S(o.e, { left: ((o.x + Math.sin(t * o.sp * 6 + o.s) * 120) * W / 1920) + 'px', top: ((o.y + Math.cos(t * o.sp * 5 + o.x) * 90) * H / 1080) + 'px' }) }
+
+const T_CROSS = 1.65, T_SITE = 2.05         // the two voice cue times
+const DK = TALL ? .85 : 1
+const doc = el('div', 'doc'); S(doc, { left: px(CX - 200), top: px(CY - 250), width: '400px', height: '500px' })
+doc.innerHTML = '<div style="position:absolute;left:0;right:0;top:0;height:44px;background:#f2f2f5;border-bottom:1px solid #e5e5ea;display:flex;align-items:center;padding:0 16px;font-weight:600;font-size:15px;color:#8a8a99;gap:8px"><span style="width:16px;height:16px;border-radius:4px;background:#c8c8d0;display:block"></span>portfolio_FINAL_v3.pdf</div>'
+;[[40, 76, 320, 150], [40, 246, 200, 22], [40, 280, 280, 16], [40, 306, 250, 16], [40, 350, 100, 100], [150, 350, 100, 100], [260, 350, 100, 100]].forEach(([x, y, w, h]) => { const b = el('div', 'blk', doc); S(b, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }) })
+const docX = el('div', 'abs', stage, '<svg width="300" height="300" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'); S(docX, { left: px(CX - 150), top: px(CY - 150) })
+const flash = el('div', 'abs'); S(flash, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: '#fff', zIndex: 95, opacity: 0 })
+function render(t) {
+  bgLight(t)
+  const di = spring(seg(t, .2, .9), 6, 9), drop = ei(seg(t, T_SITE + .12, T_SITE + .7))
+  S(doc, { opacity: clamp(di * 1.4) * (1 - drop), transform: `translateY(${(1 - di) * 120 + drop * 520}px) rotate(${-4 + 4 * di + drop * -24}deg) scale(${(.9 + .1 * di) * (1 - drop * .3) * DK})`, filter: `blur(${drop * 10}px) grayscale(${seg(t, T_CROSS, T_CROSS + .3)})` })
+  const xp = spring(seg(t, T_CROSS + .02, T_CROSS + .45), 9, 14)
+  S(docX, { opacity: clamp(xp * 2) * (1 - drop), transform: `translateY(${drop * 520}px) rotate(${drop * -24}deg) scale(${(.4 + .6 * xp) * DK})` })
+  flash.style.opacity = ei(seg(t, 2.72, 2.88)) * .7 * (1 - seg(t, 2.88, 3.1))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

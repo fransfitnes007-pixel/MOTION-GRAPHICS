@@ -1,0 +1,23 @@
+{
+  "slug": "member-dashboard-countdown-progress-rings__conic-gradient-ring",
+  "visual_name": "Member dashboard with countdown and progress rings",
+  "code_name": "Conic gradient ring",
+  "category": "dashboards",
+  "summary": "Warm cream member dashboard with a navy next-session strip and ticking countdown, module tiles with conic-gradient progress rings, a checklist, a pod row and a wins wall, all floating in during a staggered reveal.",
+  "tags": [
+    "stat-tile",
+    "counter",
+    "light",
+    "card",
+    "nav"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "conic-gradient"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

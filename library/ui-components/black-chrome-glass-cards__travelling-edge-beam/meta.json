@@ -1,0 +1,24 @@
+{
+  "slug": "black-chrome-glass-cards__travelling-edge-beam",
+  "visual_name": "Black chrome glass cards",
+  "code_name": "Travelling edge beam",
+  "category": "ui-components",
+  "summary": "Near-black glass cards with a lit chrome top edge, a diagonal sheen and a short bright arc of light that circles each card's border at a different phase.",
+  "tags": [
+    "card",
+    "dark",
+    "background",
+    "hover"
+  ],
+  "tech": [
+    "css",
+    "conic-gradient",
+    "css-mask",
+    "css-houdini-property",
+    "backdrop-filter"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

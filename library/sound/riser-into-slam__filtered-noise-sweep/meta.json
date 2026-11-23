@@ -1,0 +1,22 @@
+{
+  "slug": "riser-into-slam__filtered-noise-sweep",
+  "visual_name": "Riser into a slam",
+  "code_name": "Filtered noise sweep",
+  "category": "sound",
+  "summary": "Two seconds of rising band-passed noise that cuts off on the downbeat, where a sine boom with an air tail hits.",
+  "tags": [
+    "sfx",
+    "music",
+    "transition",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 11.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

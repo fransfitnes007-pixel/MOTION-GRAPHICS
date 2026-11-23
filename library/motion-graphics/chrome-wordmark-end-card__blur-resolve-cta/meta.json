@@ -1,0 +1,23 @@
+{
+  "slug": "chrome-wordmark-end-card__blur-resolve-cta",
+  "visual_name": "Chrome wordmark end card",
+  "code_name": "Blur resolve, spring button, cursor click",
+  "category": "motion-graphics",
+  "summary": "On black, a chrome wordmark resolves out of an 18px blur, a blue pill button rises under it, a cursor clicks it, a URL pill types out and a faint tagline fades in before the whole card fades out.",
+  "tags": [
+    "end-card",
+    "logo",
+    "cta",
+    "cursor",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 3.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

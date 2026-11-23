@@ -1,0 +1,23 @@
+{
+  "slug": "logo-wall-marquee__bobbing-linear-loop",
+  "visual_name": "Logo wall marquee",
+  "code_name": "Bobbing linear loop",
+  "category": "ui-components",
+  "summary": "A slow endless row of brand logos with soft edge fades, each logo drifting up and down out of phase.",
+  "tags": [
+    "logo",
+    "marquee",
+    "carousel",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

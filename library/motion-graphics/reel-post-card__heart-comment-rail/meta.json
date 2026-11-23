@@ -1,0 +1,20 @@
+{
+  "slug": "reel-post-card__heart-comment-rail",
+  "visual_name": "Reel-style post card",
+  "code_name": "Heart and comment rail",
+  "category": "motion-graphics",
+  "summary": "A tall rounded video card with a handle and caption bottom left, a like, comment, save and share rail on the right, and a big red heart that pops in beside it.",
+  "tags": [
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "svg"
+  ],
+  "duration_sec": 4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

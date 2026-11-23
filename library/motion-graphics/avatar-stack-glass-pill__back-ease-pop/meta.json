@@ -1,0 +1,19 @@
+{
+  "slug": "avatar-stack-glass-pill__back-ease-pop",
+  "visual_name": "Avatar stack glass pill",
+  "code_name": "Back-ease pop",
+  "category": "motion-graphics",
+  "summary": "A frosted-glass pill rises in with a row of six overlapping avatars that pop in one by one beside a two-line label.",
+  "tags": [
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "backdrop-filter"
+  ],
+  "duration_sec": 3.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

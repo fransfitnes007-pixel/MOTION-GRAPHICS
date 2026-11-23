@@ -1,0 +1,21 @@
+{
+  "slug": "logo-shine-sweep__masked-gradient-position",
+  "visual_name": "Logo shine sweep",
+  "code_name": "Masked gradient position sweep",
+  "category": "motion-graphics",
+  "summary": "A white diagonal highlight travels once across a chrome logo, clipped to the logo shape with screen blending.",
+  "tags": [
+    "logo",
+    "light",
+    "end-card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-mask",
+    "blend-mode"
+  ],
+  "duration_sec": 2.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

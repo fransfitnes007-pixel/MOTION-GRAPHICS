@@ -1,0 +1,21 @@
+{
+  "slug": "handwritten-annotation__clip-wipe-arrow-draw",
+  "visual_name": "Handwritten annotation with arrow",
+  "code_name": "Clip-path wipe and arrow draw",
+  "category": "motion-graphics",
+  "summary": "A handwritten red note wipes on from the left and a curved hand-drawn arrow traces itself to point at a button.",
+  "tags": [
+    "kinetic-type",
+    "light",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "clip-path"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

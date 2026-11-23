@@ -1,0 +1,20 @@
+{
+  "slug": "wordmark-clip-path-reveal__inset-wipe-shrink-away",
+  "visual_name": "Wordmark wipe reveal",
+  "code_name": "Clip-path inset wipe, then shrink and rise",
+  "category": "motion-graphics",
+  "summary": "A wordmark is revealed from left to right by a hard clip edge on the spoken name, then shrinks to 42% and rises out of frame to make way for the next scene.",
+  "tags": [
+    "logo",
+    "dark",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "clip-path"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

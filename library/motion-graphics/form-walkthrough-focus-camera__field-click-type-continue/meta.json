@@ -1,0 +1,23 @@
+{
+  "slug": "form-walkthrough-focus-camera__field-click-type-continue",
+  "visual_name": "Form walkthrough with a camera that follows the action",
+  "code_name": "Focus-point push-in, before/after screens, scripted cursor",
+  "category": "motion-graphics",
+  "summary": "A browser window tours form steps: camera pushes in on the field, cursor clicks and types, page scrolls to Continue, next step glides in.",
+  "tags": [
+    "browser-window",
+    "cursor",
+    "form",
+    "light",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "svg"
+  ],
+  "duration_sec": 9.3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

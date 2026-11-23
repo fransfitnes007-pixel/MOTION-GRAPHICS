@@ -1,0 +1,24 @@
+{
+  "slug": "setup-wizard-chip-stepper__live-preview-theme",
+  "visual_name": "Setup wizard with chip stepper",
+  "code_name": "Live preview theme",
+  "category": "ui-components",
+  "summary": "A step wizard with chip-style progress, a glass form card and a side preview that updates live with typing and theme choices.",
+  "tags": [
+    "form",
+    "nav",
+    "card",
+    "light",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 14.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

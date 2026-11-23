@@ -1,0 +1,23 @@
+{
+  "slug": "audience-toggle-hero__presence-swap",
+  "visual_name": "Audience toggle hero",
+  "code_name": "Presence swap",
+  "category": "ui-components",
+  "summary": "A segmented audience toggle in the nav that fades the hero copy out and a new audience in, and changes the URL.",
+  "tags": [
+    "hero",
+    "nav",
+    "cta",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

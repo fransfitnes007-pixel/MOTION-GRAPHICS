@@ -1,0 +1,22 @@
+{
+  "slug": "wordmark-slam-shock-ring__spring-scale-shake",
+  "visual_name": "Wordmark slam with shock ring",
+  "code_name": "Spring scale-down, camera shake and expanding ring",
+  "category": "motion-graphics",
+  "summary": "A big logo drops in from 150% size out of a blur, the frame jolts, a ring expands outward, a shine crosses the letters, then the logo shrinks into the top-left corner.",
+  "tags": [
+    "logo",
+    "kinetic-type",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring",
+    "css-filter-blur"
+  ],
+  "duration_sec": 2.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

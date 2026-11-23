@@ -1,0 +1,21 @@
+{
+  "slug": "ai-brain-scan-verdict-card__frame-sequence-camera",
+  "visual_name": "AI brain scan with verdict card",
+  "code_name": "Frame-sequence camera",
+  "category": "motion-graphics",
+  "summary": "A dark scanning window tilts up, the camera starts tight on a glowing brain with callouts, then the view jumps to a result card and pulls back.",
+  "tags": [
+    "browser-window",
+    "dark",
+    "kinetic-type",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "png-sequence"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

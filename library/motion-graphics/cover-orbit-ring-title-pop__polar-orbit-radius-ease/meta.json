@@ -1,0 +1,21 @@
+{
+  "slug": "cover-orbit-ring-title-pop__polar-orbit-radius-ease",
+  "visual_name": "Cover orbit ring around a title",
+  "code_name": "Polar orbit with eased radius",
+  "category": "motion-graphics",
+  "summary": "A 190px title snaps in from 140 percent through a blur while twelve small video covers fly out from the centre and settle into a slowly rotating ellipse around it.",
+  "tags": [
+    "kinetic-type",
+    "hero",
+    "dark",
+    "carousel"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

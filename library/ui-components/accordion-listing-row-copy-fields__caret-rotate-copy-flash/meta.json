@@ -1,0 +1,21 @@
+{
+  "slug": "accordion-listing-row-copy-fields__caret-rotate-copy-flash",
+  "visual_name": "Accordion listing row with copy fields",
+  "code_name": "Caret rotate and copy flash",
+  "category": "ui-components",
+  "summary": "A list of white rows; one opens to a panel of labelled fields, each with a Copy button that flashes solid green, plus platform toggle pills and a toast.",
+  "tags": [
+    "card",
+    "form",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-grid",
+    "aria-pressed"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

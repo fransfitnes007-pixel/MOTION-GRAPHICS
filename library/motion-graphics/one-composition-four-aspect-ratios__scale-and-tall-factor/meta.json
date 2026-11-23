@@ -1,0 +1,19 @@
+{
+  "slug": "one-composition-four-aspect-ratios__scale-and-tall-factor",
+  "visual_name": "One composition, four aspect ratios",
+  "code_name": "Scale and tall factor",
+  "category": "motion-graphics",
+  "summary": "The same scene laid out at four aspect ratios side by side: headline, card and chips re-anchor by a few formulas.",
+  "tags": [
+    "hero",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "playwright"
+  ],
+  "duration_sec": 5.4,
+  "has_sound": true,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

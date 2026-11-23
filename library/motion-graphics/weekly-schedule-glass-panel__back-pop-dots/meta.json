@@ -1,0 +1,20 @@
+{
+  "slug": "weekly-schedule-glass-panel__back-pop-dots",
+  "visual_name": "Weekly schedule glass panel",
+  "code_name": "Back-ease pop dots",
+  "category": "motion-graphics",
+  "summary": "A glass panel slides up with seven weekday cells, and coloured square dots pop into each one left to right.",
+  "tags": [
+    "card",
+    "light",
+    "table"
+  ],
+  "tech": [
+    "vanilla-js",
+    "backdrop-filter"
+  ],
+  "duration_sec": 3.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "activity-timeline-feed__day-groups-rail-icon-badge",
+  "visual_name": "Activity timeline feed",
+  "code_name": "Day groups on a vertical rail with icon badges",
+  "category": "dashboards",
+  "summary": "Events arrive every 1.1s at the top of a Today group, pushing older ones down along a vertical rail.",
+  "tags": [
+    "card",
+    "dark",
+    "table"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "performance-radar-chart__five-axis-polar-fill",
+  "visual_name": "Performance radar chart",
+  "code_name": "Five-axis polar fill growing from the centre",
+  "category": "dashboards",
+  "summary": "Five-point radar whose violet polygon scales out from the centre over 1.5s, then a tooltip on Growth and Engagement.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

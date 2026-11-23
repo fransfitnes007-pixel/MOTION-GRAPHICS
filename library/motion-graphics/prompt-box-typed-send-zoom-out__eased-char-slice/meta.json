@@ -1,0 +1,23 @@
+{
+  "slug": "prompt-box-typed-send-zoom-out__eased-char-slice",
+  "visual_name": "Typed prompt box with send click",
+  "code_name": "Eased char slice",
+  "category": "motion-graphics",
+  "summary": "A glowing prompt box types a sentence on an eased curve, a cursor slides to the send button and clicks, then the box swells and blurs away.",
+  "tags": [
+    "kinetic-type",
+    "cursor",
+    "hero",
+    "dark",
+    "glow",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 5.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

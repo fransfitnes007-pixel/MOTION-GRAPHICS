@@ -1,0 +1,21 @@
+{
+  "slug": "feed-refresh-blur-scroll__ease-in-column-blur",
+  "visual_name": "Feed refresh blur scroll",
+  "code_name": "Ease-in column blur",
+  "category": "motion-graphics",
+  "summary": "A column of post cards accelerates upward off the screen, blurring to 22px mid-move, with a spinning refresh icon above and a black word over it.",
+  "tags": [
+    "scroll",
+    "card",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter"
+  ],
+  "duration_sec": 2.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

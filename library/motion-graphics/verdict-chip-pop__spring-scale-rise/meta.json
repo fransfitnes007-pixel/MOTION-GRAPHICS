@@ -1,0 +1,19 @@
+{
+  "slug": "verdict-chip-pop__spring-scale-rise",
+  "visual_name": "Verdict chip pop",
+  "code_name": "Spring scale rise",
+  "category": "motion-graphics",
+  "summary": "A dark pill with a green check and the words Good to go pops up in the corner of a result screen with a springy overshoot.",
+  "tags": [
+    "card",
+    "dark",
+    "stat-tile"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

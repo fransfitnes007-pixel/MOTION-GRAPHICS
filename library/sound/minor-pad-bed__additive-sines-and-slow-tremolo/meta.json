@@ -1,0 +1,21 @@
+{
+  "slug": "minor-pad-bed__additive-sines-and-slow-tremolo",
+  "visual_name": "Minor pad bed",
+  "code_name": "Additive sines and slow tremolo",
+  "category": "sound",
+  "summary": "A soft A-minor drone of four sine waves that fade in and out, with a second pad that wobbles in phase, for under a voiceover.",
+  "tags": [
+    "music",
+    "background",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "ffmpeg-graph"
+  ],
+  "duration_sec": 15.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

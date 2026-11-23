@@ -1,0 +1,89 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spotlight vignette joke beat</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--f:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+.layer{position:absolute;inset:0}
+.layer{will-change:transform}
+.pop{position:absolute;border-radius:26px;background:#fff;box-shadow:0 50px 110px -30px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.06);transform-origin:50% 0;overflow:hidden}
+.pop .ttl{display:flex;align-items:center;justify-content:space-between;font:700 1em var(--f);letter-spacing:-.02em}
+.tog{width:2.3em;height:1.3em;border-radius:1em;background:#d8d8de;position:relative}
+.tog i{position:absolute;top:.12em;left:.12em;width:1.06em;height:1.06em;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tog.on{background:#34c759}.tog.on i{left:1.12em}
+.fld{border:1.5px solid #e4e4ea;border-radius:.6em;padding:.45em .6em;font:600 .72em var(--f);color:#0b0b10;display:flex;flex-direction:column;gap:.15em}
+.fld b{font:500 .78em var(--f);color:#8a8a96}
+.word{position:absolute;white-space:nowrap;font:600 1em var(--f);letter-spacing:-.02em;transform-origin:50% 50%}
+.big{position:absolute;white-space:nowrap;font:800 1em/0.9 var(--f);letter-spacing:-.055em;transform-origin:50% 50%}
+.grad{background:linear-gradient(92deg,#ff7a3d 0%,#ff2e97 55%,#7c3aed 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bgrad{background:linear-gradient(92deg,#2f6bff,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hand{position:absolute;font:400 1em 'Marker Felt','Noteworthy','Bradley Hand',cursive;white-space:nowrap;transform-origin:0 50%}
+.tag{position:absolute;left:50%;transform:translateX(-50%);padding:.35em .7em;border-radius:.4em;background:rgba(0,0,0,.72);color:#fff;font:600 1em var(--f);white-space:nowrap}
+.spot{position:absolute;inset:0;background:radial-gradient(ellipse 34% 30% at 50% 44%,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 55%,rgba(0,0,0,.92) 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same helper set used across the library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.2
+window.DUR = DUR
+const at = (e, x, y, extra = '') => S(e, { left: px(x), top: px(y), transform: `translate(-50%,-50%) ${extra}` })
+const wordIn = (e, t, t0, x, y, dur = .22) => { const q = spring(seg(t, t0, t0 + dur * 2.2), 8, 12); S(e, { opacity: clamp(q * 1.6), left: px(x), top: px(y), transform: `translate(-50%,-50%) translateY(${(1 - q) * 30}px) scale(${.7 + .3 * q})` }) }
+const rnd = (i, s = 1) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+S(stage, { background: '#000' })
+const jokeCard = el('div', 'pop'); S(jokeCard, { width: px(TALL ? 900 : 1100), padding: px(34 * K), fontSize: px(TALL ? 40 : 46), borderRadius: '30px', background: '#fff' })
+jokeCard.innerHTML = `<div style="display:flex;align-items:center;gap:.7em"><div style="width:2em;height:2em;border-radius:50%;overflow:hidden;flex:none;background:radial-gradient(circle at 50% 38%,#e7b98f 0 26%,transparent 28%),linear-gradient(160deg,#4b4fa8,#171a44)"></div><div style="flex:1"><b style="font:700 1em var(--f)">@creator.name</b><div style="font:500 .78em var(--f);color:#5f5f6b;margin-top:.15em">Update schedule: <b style="color:#0b0b10">Every day ( forever )</b></div></div><div style="padding:.35em .8em;border-radius:.5em;border:1.5px solid #d9d9df;font:600 .7em var(--f)">Following</div></div>`
+const spot = el('div', 'spot')
+const forever = el('div', 'hand', stage, 'Forever?'); S(forever, { fontSize: px(TALL ? 120 : 150), color: '#ffe600', transform: 'rotate(-7deg)', textShadow: '0 0 24px rgba(255,230,0,.45)' })
+const foreverLine = el('div', 'abs', stage, '<svg viewBox="0 0 420 60" width="420" height="60" fill="none" stroke="#ffe600" stroke-width="8" stroke-linecap="round"><path class="p" d="M8 30c70-18 140 22 210 6s130-26 194-4"/></svg>')
+const forever2 = el('div', 'word', stage, 'Forever.'); S(forever2, { fontSize: px(TALL ? 86 : 110), fontWeight: 800, color: '#fff', letterSpacing: '-.04em' })
+// source times, seconds
+const C_JOKE = 21.32, C_END = 25.4, T_F1 = 21.82, T_F2 = 22.82
+function render(t) {
+  const ft = t + 21.2
+  vis(forever, false); vis(foreverLine, false); vis(forever2, false)
+  const q = spring(seg(ft, C_JOKE, C_JOKE + .5), 7, 11), fade = 1 - seg(ft, C_END - .45, C_END - .05)
+  vis(jokeCard, ft >= C_JOKE); S(jokeCard, { left: px(CX - (TALL ? 450 : 550)), top: px(CY - (TALL ? 160 : 130)), transform: `scale(${.85 + .15 * q})`, opacity: clamp(q * 2) * fade })
+  vis(spot, ft >= C_JOKE); spot.style.opacity = fade; spot.style.background = `radial-gradient(ellipse ${TALL ? 48 : 34}% ${TALL ? 22 : 30}% at ${50 + 1.5 * Math.sin(ft * 3)}% 44%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.93) 100%)`
+  if (ft >= T_F1) { const h = seg(ft, T_F1, T_F1 + .5); vis(forever, true); S(forever, { left: px(CX - (TALL ? 330 : 520)), top: px(CY + (TALL ? 120 : 60)), opacity: fade, clipPath: `inset(-30% ${(1 - eo(h)) * 100}% -30% -5%)` }) }
+  if (ft >= T_F1 + .3) { const l = seg(ft, T_F1 + .3, T_F1 + .7); vis(foreverLine, true); S(foreverLine, { left: px(CX - (TALL ? 330 : 520)), top: px(CY + (TALL ? 200 : 150)), opacity: fade }); foreverLine.querySelector('.p').style.strokeDasharray = 460; foreverLine.querySelector('.p').style.strokeDashoffset = 460 * (1 - eo(l)) }
+  if (ft >= T_F2) { vis(forever2, true); wordIn(forever2, ft, T_F2, CX + (TALL ? 120 : 330), CY + (TALL ? 300 : 130)); forever2.style.opacity = Math.min(+forever2.style.opacity || 1, fade) }
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

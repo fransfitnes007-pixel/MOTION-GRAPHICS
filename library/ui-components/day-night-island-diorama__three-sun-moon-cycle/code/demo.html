@@ -1,0 +1,251 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day-night island diorama</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="three.global.js"></script>
+<script>
+(() => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 16
+window.DUR = DUR
+const R = ((seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 })(2024)   // fixed seed, replaces Math.random
+
+// ---------- helpers copied from the renderer ----------
+function M(c, o) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, metalness: 0.1, ...o }) }
+function G(c, i) { return new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i || 0.5, roughness: 0.2 }) }
+function B(w, h, d, m) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); mesh.castShadow = true; mesh.receiveShadow = true; return mesh }
+function P(p, m, x, y, z) { m.position.set(x, y, z); p.add(m); return m }
+function Cyl(rt, rb, h, m, seg) { const c = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 12), m); c.castShadow = true; return c }
+
+// ---------- renderer, scene, camera ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
+renderer.setPixelRatio(1); renderer.setSize(W, H)
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.outputColorSpace = THREE.SRGBColorSpace
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.4
+stage.appendChild(renderer.domElement); renderer.domElement.style.cssText = 'position:absolute;left:0;top:0'
+const scene = new THREE.Scene()
+scene.background = new THREE.Color(0x87CEEB); scene.fog = new THREE.FogExp2(0x87CEEB, 0.003)
+const camera = new THREE.PerspectiveCamera(TALL ? 68 : 50, W / H, 0.5, 2000)
+
+// ---------- lighting (same set as the app) ----------
+const ambLight = new THREE.AmbientLight(0xffffff, 0.5); scene.add(ambLight)
+const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0xf4a460, 0.4); scene.add(hemiLight)
+const sunLight = new THREE.DirectionalLight(0xffffff, 2.5); sunLight.position.set(80, 80, 40); sunLight.castShadow = true
+sunLight.shadow.mapSize.set(2048, 2048); sunLight.shadow.camera.near = 0.5; sunLight.shadow.camera.far = 500
+sunLight.shadow.camera.left = -180; sunLight.shadow.camera.right = 180; sunLight.shadow.camera.top = 180; sunLight.shadow.camera.bottom = -180
+sunLight.shadow.bias = -0.0003; sunLight.shadow.normalBias = 0.02; scene.add(sunLight)
+const fillLight = new THREE.DirectionalLight(0x8899cc, 0.4); fillLight.position.set(-60, 40, -30); scene.add(fillLight)
+const rimLight = new THREE.DirectionalLight(0xffeedd, 0.3); rimLight.position.set(0, 60, 80); scene.add(rimLight)
+const moonLight = new THREE.DirectionalLight(0x4466aa, 0); moonLight.position.set(-60, 50, -30); scene.add(moonLight)
+
+// ---------- stars, sun, moon, glow ----------
+const starVerts = []
+for (let i = 0; i < 800; i++) { const th = R() * Math.PI * 2, ph = R() * Math.PI * 0.45, r = 300 + R() * 200; starVerts.push(Math.cos(th) * Math.sin(ph) * r, Math.cos(ph) * r, Math.sin(th) * Math.sin(ph) * r) }
+const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3))
+const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, transparent: true, opacity: 0, fog: false })
+const stars = new THREE.Points(starGeo, starMat); scene.add(stars)
+const sunSphere = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffdd44, fog: false })); scene.add(sunSphere)
+const moonSphere = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 16), new THREE.MeshBasicMaterial({ color: 0xddeeff, fog: false })); scene.add(moonSphere)
+const flareC = document.createElement('canvas'); flareC.width = 128; flareC.height = 128
+const fx = flareC.getContext('2d'), fg = fx.createRadialGradient(64, 64, 0, 64, 64, 64)
+fg.addColorStop(0, 'rgba(255,240,200,0.8)'); fg.addColorStop(0.3, 'rgba(255,200,100,0.3)'); fg.addColorStop(0.7, 'rgba(255,150,50,0.1)'); fg.addColorStop(1, 'rgba(255,100,0,0)')
+fx.fillStyle = fg; fx.fillRect(0, 0, 128, 128)
+const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(flareC), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); scene.add(sunGlow)
+
+// ---------- the island (Maldives-style biome) ----------
+const g = new THREE.Group(); scene.add(g)
+const sandFloor = new THREE.Mesh(new THREE.CylinderGeometry(80, 85, 2, 48), M(0xf5e6c8, { roughness: 0.9, metalness: 0 })); sandFloor.receiveShadow = true; P(g, sandFloor, 0, -1, 0)
+const lagoon = new THREE.Mesh(new THREE.CylinderGeometry(120, 125, 0.5, 64), new THREE.MeshPhysicalMaterial({ color: 0x00bcd4, transparent: true, opacity: 0.55, roughness: 0.05, metalness: 0.1 })); P(g, lagoon, 0, -0.8, 0)
+const ocean = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshPhysicalMaterial({ color: 0x006994, transparent: true, opacity: 0.85, roughness: 0.05, metalness: 0.15 })); ocean.rotation.x = -Math.PI / 2; P(g, ocean, 0, -1.2, 0)
+const waveMesh = new THREE.Mesh(new THREE.PlaneGeometry(600, 600, 80, 80), new THREE.MeshPhysicalMaterial({ color: 0x0088aa, transparent: true, opacity: 0.3, roughness: 0.02, metalness: 0.1 }))
+waveMesh.rotation.x = -Math.PI / 2; waveMesh.position.y = -0.95; g.add(waveMesh)   // source: y -0.5, which lets the crests poke through the sand on a loop
+const wpos = waveMesh.geometry.attributes.position, wbase = Float32Array.from(wpos.array)
+
+// tiki hut mansion
+const tikiBrown = M(0x8B4513, { roughness: 0.85 }), tikiStraw = M(0xDAA520, { roughness: 0.95 }), tikiDark = M(0x5C3317, { roughness: 0.8 })
+P(g, B(30, 0.4, 20, tikiDark), 0, 1, 0)
+for (let sx = -12; sx <= 12; sx += 6) for (let sz = -8; sz <= 8; sz += 8) P(g, Cyl(0.3, 0.3, 3, tikiBrown), sx, -0.3, sz)
+const roof = new THREE.Mesh(new THREE.ConeGeometry(22, 10, 8), tikiStraw); roof.castShadow = true; P(g, roof, 0, 8, 0)
+const tikiPillarMat = M(0x6B3410, { roughness: 0.9 })
+for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2, px = Math.cos(a) * 14, pz = Math.sin(a) * 9; P(g, Cyl(0.5, 0.6, 5, tikiPillarMat), px, 2.5, pz); P(g, B(0.8, 0.8, 0.15, G(0xff6600, 0.3)), px + Math.cos(a) * 0.5, 3.5, pz + Math.sin(a) * 0.5) }
+P(g, B(12, 1.2, 1.5, tikiBrown), 0, 1.8, -5)
+for (let bs = -5; bs <= 5; bs += 2.5) { P(g, Cyl(0.3, 0.3, 0.8, tikiDark), bs, 1.6, -7); P(g, Cyl(0.45, 0.45, 0.08, M(0xffffff)), bs, 2.05, -7) }
+const torchLights = []
+for (let t = 0; t < 12; t++) {
+  const ta = (t / 12) * Math.PI * 2, tx = Math.cos(ta) * 18, tz = Math.sin(ta) * 14
+  P(g, Cyl(0.08, 0.1, 3, tikiBrown), tx, 1.5, tz); P(g, new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), G(0xff4400, 1.5)), tx, 3.2, tz)
+  if (t % 3 === 0) { const L = new THREE.PointLight(0xff6622, 0.3, 8); L.position.set(tx, 3.5, tz); g.add(L); torchLights.push(L) }
+}
+// lab building with a lit sign (placeholder text)
+P(g, B(16, 12, 12, M(0xeeeeee, { roughness: 0.15, metalness: 0.5 })), 30, 6, 0)
+P(g, new THREE.Mesh(new THREE.PlaneGeometry(14, 10), new THREE.MeshPhysicalMaterial({ color: 0xaaddff, transparent: true, opacity: 0.2, roughness: 0.01 })), 30, 6, 6.01)
+P(g, B(3, 4, 0.3, M(0x111111)), 30, 3, 6.1)
+const lsC = document.createElement('canvas'); lsC.width = 1024; lsC.height = 256
+const lc = lsC.getContext('2d'); lc.fillStyle = '#111'; lc.fillRect(0, 0, 1024, 256); lc.fillStyle = '#22c55e'; lc.font = 'bold 84px sans-serif'; lc.textAlign = 'center'; lc.textBaseline = 'middle'; lc.fillText('NORTHSTAR LABS', 512, 90)
+lc.font = 'bold 42px sans-serif'; lc.fillStyle = '#ffffff'; lc.fillText('OPEN DAILY', 512, 180)
+P(g, new THREE.Mesh(new THREE.PlaneGeometry(14, 3.5), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(lsC), emissive: 0x22c55e, emissiveIntensity: 0.4 })), 30, 13, 6.05)
+// rave floor, speakers, spotlights
+P(g, B(20, 0.3, 20, M(0x111111, { metalness: 0.6 })), -25, 0.5, 0)
+const danceColors = [0xff0066, 0x00ff88, 0x4400ff, 0xff8800, 0x00ccff, 0xff00ff]
+for (let dx = -8; dx <= 8; dx += 4) for (let dz = -8; dz <= 8; dz += 4) P(g, B(3.5, 0.05, 3.5, G(danceColors[Math.floor(R() * danceColors.length)], 0.6)), -25 + dx, 0.7, dz)
+for (const sx of [-35, -15]) { P(g, B(3, 5, 3, M(0x222222)), sx, 3, -10); P(g, Cyl(1.2, 1.2, 0.3, M(0x111111)), sx, 4.5, -8.4); P(g, Cyl(0.6, 0.6, 0.3, M(0x333333)), sx, 3, -8.4); const sl = new THREE.PointLight(0x8b5cf6, 0.4, 10); sl.position.set(sx, 5.5, -10); g.add(sl) }
+const raveLights = []
+for (let rl = 0; rl < 3; rl++) {
+  const L = new THREE.SpotLight(danceColors[rl * 2], 90, 45, Math.PI / 6, 0.5); L.position.set(-25 + (rl - 1) * 6, 12, 0)
+  const tgt = new THREE.Object3D(); tgt.position.set(-25, 0, 0); g.add(tgt); L.target = tgt; L.userData.baseAngle = (rl / 3) * Math.PI * 2; g.add(L); raveLights.push(L)
+  const beam = new THREE.Mesh(new THREE.ConeGeometry(2.2, 12, 12, 1, true), new THREE.MeshBasicMaterial({ color: danceColors[rl * 2], transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); beam.userData.light = L; g.add(beam); L.userData.beam = beam
+}
+// palm trees
+for (let pt = 0; pt < 15; pt++) {
+  const pa = R() * Math.PI * 2, pr = 34 + R() * 36, ptx = Math.cos(pa) * pr, ptz = Math.sin(pa) * pr
+  if (Math.abs(ptx - 30) < 14 && Math.abs(ptz) < 10) continue
+  const trunk = Cyl(0.25, 0.35, 6 + R() * 3, M(0x8B6914, { roughness: 0.9 })); trunk.rotation.z = (R() - 0.5) * 0.2; P(g, trunk, ptx, 3, ptz)
+  for (let f = 0; f < 6; f++) { const fa = (f / 6) * Math.PI * 2, fr = B(0.3, 0.05, 3, M(0x228B22)); fr.rotation.x = 0.5; fr.rotation.y = fa; P(g, fr, ptx + Math.cos(fa) * 1.5, 6.5 + R(), ptz + Math.sin(fa) * 1.5) }
+}
+// floating sky sign
+const ssC = document.createElement('canvas'); ssC.width = 2048; ssC.height = 512
+const sc = ssC.getContext('2d'); sc.fillStyle = '#ffffff'; sc.strokeStyle = '#000000'; sc.lineWidth = 6; sc.font = 'bold 130px sans-serif'; sc.textAlign = 'center'
+sc.strokeText('NORTHSTAR LABS', 1024, 190); sc.fillText('NORTHSTAR LABS', 1024, 190); sc.font = 'bold 60px sans-serif'; sc.strokeText('lagoon outpost', 1024, 340); sc.fillText('lagoon outpost', 1024, 340)
+const skyTex = new THREE.CanvasTexture(ssC); skyTex.colorSpace = THREE.SRGBColorSpace
+P(g, new THREE.Mesh(new THREE.PlaneGeometry(60, 15), new THREE.MeshBasicMaterial({ map: skyTex, transparent: true, side: THREE.DoubleSide, fog: false })), 0, 50, -40)
+
+// clouds, birds, fireflies
+const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, roughness: 1, flatShading: true })
+const clouds = []
+for (let i = 0; i < 14; i++) {
+  const cg = new THREE.Group(), puffs = 3 + Math.floor(R() * 4)
+  for (let p = 0; p < puffs; p++) { const puff = new THREE.Mesh(new THREE.SphereGeometry(4 + R() * 6, 8, 6), cloudMat); puff.position.set((R() - 0.5) * 12, (R() - 0.5) * 2, (R() - 0.5) * 8); puff.scale.y = 0.4 + R() * 0.3; cg.add(puff) }
+  cg.userData = { x0: -200 + R() * 400, y: 80 + R() * 40, z: -100 + R() * 300, k: 1 + Math.floor(R() * 2) }; scene.add(cg); clouds.push(cg)
+}
+const birds = []
+for (let i = 0; i < 8; i++) {
+  const bird = new THREE.Group(), bm = new THREE.MeshBasicMaterial({ color: 0x222222, side: THREE.DoubleSide })
+  const wl = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.3), bm), wr = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.3), bm)
+  wl.position.set(-0.5, 0, 0); wl.rotation.z = 0.3; wr.position.set(0.5, 0, 0); wr.rotation.z = -0.3; bird.add(wl, wr)
+  bird.userData = { wl, wr, r: 40 + R() * 70, y: 50 + R() * 30, a0: R() * Math.PI * 2, k: 1 + Math.floor(R() * 2), ph: R() * Math.PI * 2 }; scene.add(bird); birds.push(bird)
+}
+const ffN = 80, ffPos = new Float32Array(ffN * 3), ffBase = [], ffPh = []
+for (let i = 0; i < ffN; i++) { ffBase.push([(R() - 0.5) * 60, 1.5 + R() * 5, (R() - 0.5) * 40]); ffPh.push(R() * Math.PI * 2) }
+const ffGeo = new THREE.BufferGeometry(); ffGeo.setAttribute('position', new THREE.BufferAttribute(ffPos, 3))
+const ffMat = new THREE.PointsMaterial({ color: 0xffee44, size: 0.5, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+scene.add(new THREE.Points(ffGeo, ffMat))
+
+// ---------- agents: the app's fallback character (box body + head), wandering, with chat bubbles ----------
+const AGENT = [[0x8b5cf6, [[-8, 6], [4, 9], [10, 2], [-2, -2]]], [0x22c55e, [[28, 12], [36, 10], [32, 18]]], [0xf59e0b, [[-30, 8], [-20, -6], [-26, 4]]], [0x3b82f6, [[0, 22], [14, 28], [-6, 30]]], [0xec4899, [[-12, -10], [8, -12], [14, -6]]], [0x14b8a6, [[40, -6], [48, 4], [42, 12]]]]
+const agents = AGENT.map(([col, way], i) => {
+  const a = new THREE.Group()
+  P(a, B(0.5, 0.8, 0.3, M(col)), 0, 0.5, 0); P(a, B(0.4, 0.4, 0.4, M(0xf5c6a0)), 0, 1.1, 0); a.scale.setScalar(3.2); scene.add(a)
+  return { a, way, phase: i * 1.7 }
+})
+const CHAT = ['Deploy is live', 'Numbers up 12%', 'Brief locked in', 'All tasks on track', 'Hook is fire', 'Pipeline looking full']
+const bubbles = CHAT.map((tx, i) => {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 80; const x = c.getContext('2d'), reply = i % 2
+  x.fillStyle = reply ? '#e5e5ea' : '#007aff'; const r = 16, bw = 480, bh = 56
+  x.beginPath(); x.moveTo(16 + r, 12); x.lineTo(16 + bw - r, 12); x.quadraticCurveTo(16 + bw, 12, 16 + bw, 12 + r); x.lineTo(16 + bw, 12 + bh - r); x.quadraticCurveTo(16 + bw, 12 + bh, 16 + bw - r, 12 + bh); x.lineTo(16 + r, 12 + bh); x.quadraticCurveTo(16, 12 + bh, 16, 12 + bh - r); x.lineTo(16, 12 + r); x.quadraticCurveTo(16, 12, 16 + r, 12); x.fill()
+  x.fillStyle = reply ? '#000' : '#fff'; x.font = 'bold 26px -apple-system,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(tx, 256, 40)
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: 0, fog: false, depthTest: false })); spr.scale.set(8, 1.3, 1); spr.renderOrder = 10; scene.add(spr)
+  return { spr, agent: i, t0: 1.0 + i * 2.5 }
+})
+
+// ---------- HUD (the app's clock readout) ----------
+const hud = el('div', null, stage); S(hud, { position: 'absolute', left: px(30 * K), top: px(26 * K), padding: '8px 14px', borderRadius: '8px', background: 'rgba(13,13,26,.75)', border: '1px solid rgba(139,92,246,.35)', color: '#e2e8f0', fontFamily: "'SF Mono',ui-monospace,Menlo,monospace", fontSize: px(18 * K), fontWeight: 600, letterSpacing: '.04em' })
+
+const col = (h) => new THREE.Color(h)
+const skyDay = col(0x87CEEB), skySunset = col(0xff6633), skyNight = col(0x0a0a2a)
+function updateDayNight(dayNightT) {
+  const sunAngle = dayNightT * Math.PI * 2 - Math.PI / 2, sunY = Math.sin(sunAngle), sunX = Math.cos(sunAngle) * 80
+  sunLight.position.set(sunX, Math.max(5, sunY * 80), 40); sunLight.intensity = Math.max(0, sunY) * 2.5; moonLight.intensity = Math.max(0, -sunY) * 0.4
+  sunSphere.position.set(sunX * 3, Math.max(-50, sunY * 200), -100); sunSphere.visible = sunY > -0.1; sunSphere.material.color.setHex(sunY > 0.15 ? 0xffdd44 : 0xff6622)
+  sunGlow.position.copy(sunSphere.position); sunGlow.visible = sunY > -0.05; sunGlow.material.opacity = Math.max(0, Math.min(0.6, sunY * 1.5)); sunGlow.scale.setScalar(30 + sunY * 15)
+  moonSphere.position.set(-sunX * 3, Math.max(-50, -sunY * 200), -100); moonSphere.visible = sunY < 0.1
+  starMat.opacity = sunY < 0 ? Math.min(1, (-sunY) * 3) : 0; stars.visible = sunY < 0.05
+  cloudMat.opacity = sunY > 0 ? 0.6 : 0.15
+  let sky
+  if (sunY > 0.2) sky = skyDay.clone()
+  else if (sunY > -0.05) sky = skyDay.clone().lerp(skySunset, 1 - (sunY + 0.05) / 0.25)
+  else if (sunY > -0.2) sky = skySunset.clone().lerp(skyNight, (-sunY - 0.05) / 0.15)
+  else sky = skyNight.clone()
+  scene.background = sky; scene.fog.color.copy(sky)
+  ambLight.intensity = 0.15 + Math.max(0, sunY) * 0.5; hemiLight.intensity = 0.1 + Math.max(0, sunY) * 0.4
+  renderer.toneMappingExposure = 0.55 + Math.max(0, sunY) * 0.55   // the app uses 0.6 + sunY * 1.0; lowered a little so the pale sand does not clip on a plain background
+  const hh = Math.floor(dayNightT * 24), mm = Math.floor((dayNightT * 24 - hh) * 60)
+  hud.textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}  ${sunY > 0.1 ? 'DAY' : sunY > -0.1 ? 'DUSK/DAWN' : 'NIGHT'}`
+  return sunY
+}
+const smooth = (a, b, x) => a + (b - a) * x
+function agentPos(ag, t) {   // walks the waypoint loop at a steady pace, hopping like the Wanderer ("abs(sin(t*8))*0.07")
+  const pts = ag.way, n = pts.length, u = (((t / DUR) * 1 + ag.phase / 10) % 1 + 1) % 1 * n, i = Math.floor(u), f = u - i
+  const p0 = pts[i % n], p1 = pts[(i + 1) % n], walk = f < 0.7 ? f / 0.7 : 1, moving = f < 0.7
+  return { x: smooth(p0[0], p1[0], walk), z: smooth(p0[1], p1[1], walk), moving, rot: Math.atan2(p1[0] - p0[0], p1[1] - p0[1]) }
+}
+function render(t) {
+  const sunY = updateDayNight(((0.24 + t / DUR) % 1))
+  // waves: every term repeats once per DUR so the loop is seamless
+  const w = (2 * Math.PI * t) / DUR
+  // the app: sin(x*.08 + e*1.5)*.4 + cos(y*.06 + e*1.2)*.3 + sin((x+y)*.05 + e*.8)*.2. Speeds snap to 4, 3 and 2 cycles per loop (1.57, 1.18, .79 rad/s)
+  for (let i = 0; i < wpos.count; i++) { const x = wbase[i * 3], y = wbase[i * 3 + 1]; wpos.setZ(i, Math.sin(x * 0.08 + w * 4) * 0.4 + Math.cos(y * 0.06 + w * 3) * 0.3 + Math.sin((x + y) * 0.05 + w * 2) * 0.2) }
+  wpos.needsUpdate = true
+  clouds.forEach((c) => { const d = c.userData; c.position.set(((d.x0 + 400 * (t / DUR) * d.k + 200) % 400) - 200, d.y, d.z) })
+  birds.forEach((b) => { const d = b.userData, a = d.a0 + w * d.k; b.position.set(Math.cos(a) * d.r, d.y + Math.sin(a * 2) * 3, Math.sin(a) * d.r); b.rotation.y = -a + Math.PI; const fl = Math.sin(t * 9 + d.ph) * 0.5; d.wl.rotation.z = 0.3 + fl; d.wr.rotation.z = -0.3 - fl })
+  ffMat.opacity = sunY < 0 ? Math.min(0.9, -sunY * 3) : 0
+  for (let i = 0; i < ffN; i++) { const b = ffBase[i], p = ffPh[i]; ffPos[i * 3] = b[0] + Math.sin(w * 3 + p) * 2; ffPos[i * 3 + 1] = b[1] + Math.sin(w * 4 + p * 2) * 0.8; ffPos[i * 3 + 2] = b[2] + Math.cos(w * 3 + p) * 2 }
+  ffGeo.attributes.position.needsUpdate = true
+  raveLights.forEach((L, i) => { const a = L.userData.baseAngle + w * 4;   // app: baseAngle + elapsed * 1.5 (snapped to 4 turns a loop)
+    L.target.position.set(-25 + Math.cos(a) * 7, 0, Math.sin(a) * 7); L.target.updateMatrixWorld(); const mid = new THREE.Vector3((L.position.x + L.target.position.x) / 2, 6, (L.position.z + L.target.position.z) / 2); L.userData.beam.position.copy(mid); L.userData.beam.lookAt(L.target.position.x, 0, L.target.position.z); L.userData.beam.rotateX(Math.PI / 2); L.userData.beam.visible = sunY < 0.35 })
+  raveLights.forEach((L) => { L.intensity = 90 * Math.min(1, Math.max(0.15, 0.9 - sunY * 1.5)) })
+  agents.forEach((ag) => { const s = agentPos(ag, t); ag.a.position.set(s.x, s.moving ? 1.05 + Math.abs(Math.sin(t * 8 + ag.phase)) * 0.07 : 1.05, s.z); ag.a.rotation.y = s.rot; ag.pos = s })
+  bubbles.forEach((b) => {   // life 4.5s, fade in .3s, drifts up
+    const age = ((t - b.t0) % DUR + DUR) % DUR, life = 4.5; const op = age < life ? Math.min(1, age / 0.3) * (age > life - 0.8 ? (life - age) / 0.8 : 1) : 0
+    const ap = agents[b.agent].a.position; b.spr.position.set(ap.x, ap.y + 5.4 + Math.min(age, life) * 0.35, ap.z); b.spr.material.opacity = op
+  })
+  // camera: slow aerial sway around the island (the app uses OrbitControls)
+  const ca = 0.55 + 0.45 * Math.sin(w), cr = TALL ? 190 : 150
+  camera.position.set(Math.sin(ca) * cr, 40 + 5 * Math.sin(w * 2), Math.cos(ca) * cr); camera.lookAt(0, TALL ? 26 : 16, -4)
+  renderer.render(scene, camera)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+document.fonts.ready.then(() => { render(0); window.__rdy(true) })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+})()
+</script>
+</body></html>

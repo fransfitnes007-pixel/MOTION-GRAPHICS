@@ -1,0 +1,20 @@
+{
+  "slug": "floating-photo-plate__back-ease-rise-tilt",
+  "visual_name": "Floating photo plate",
+  "code_name": "Back-ease rise with tilt",
+  "category": "motion-graphics",
+  "summary": "Small portrait cards and a larger room photo float into a dark layout with a soft shadow and a gold PHOTO caption fading in below.",
+  "tags": [
+    "card",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d-transform"
+  ],
+  "duration_sec": 5.5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

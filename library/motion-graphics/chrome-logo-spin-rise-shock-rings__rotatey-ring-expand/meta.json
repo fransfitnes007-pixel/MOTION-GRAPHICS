@@ -1,0 +1,21 @@
+{
+  "slug": "chrome-logo-spin-rise-shock-rings__rotatey-ring-expand",
+  "visual_name": "Chrome logo spin, rise and rings",
+  "code_name": "RotateY ring expand",
+  "category": "motion-graphics",
+  "summary": "A chrome logo mark turns a full rotation while rising and shrinking up the frame, with three thin violet rings expanding behind it.",
+  "tags": [
+    "logo",
+    "hero",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Profile tile grid scatter</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--f:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+.layer{position:absolute;inset:0}
+.layer{will-change:transform}
+.line{position:absolute;display:flex;align-items:center;white-space:nowrap;width:max-content;transform:translate(-50%,-50%);z-index:5}
+.word{position:absolute;white-space:nowrap;font:600 1em var(--f);letter-spacing:-.02em;transform-origin:50% 50%}
+.big{position:absolute;white-space:nowrap;font:800 1em/0.9 var(--f);letter-spacing:-.055em;transform-origin:50% 50%}
+.grad{background:linear-gradient(92deg,#ff7a3d 0%,#ff2e97 55%,#7c3aed 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bgrad{background:linear-gradient(92deg,#2f6bff,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tile{position:absolute;border-radius:14px;overflow:hidden;background:#222;box-shadow:0 20px 40px -18px rgba(0,0,0,.6);transform-origin:50% 50%}
+.tile .ph{position:absolute;inset:0}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 2.6
+window.DUR = DUR
+const at = (e, x, y, extra = '') => S(e, { left: px(x), top: px(y), transform: `translate(-50%,-50%) ${extra}` })
+const wordIn = (e, t, t0, x, y, dur = .22) => { const q = spring(seg(t, t0, t0 + dur * 2.2), 8, 12); S(e, { opacity: clamp(q * 1.6), left: px(x), top: px(y), transform: `translate(-50%,-50%) translateY(${(1 - q) * 30}px) scale(${.7 + .3 * q})` }) }
+const rnd = (i, s = 1) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const PHS = [['#3d5a80','#e0a97d','#1d2d44'], ['#7b2d5b','#f0c7a0','#2c1b3a'], ['#2f6b57','#d8a384','#10261f'], ['#c2603a','#f3d2b3','#40201a'], ['#4b4fa8','#e7b98f','#171a44'], ['#8a6a2d','#e9c39f','#2a200c'], ['#2a7d8f','#f1cfae','#0d2b33'], ['#a23b5a','#efc6a8','#2e0f1c']]
+const phBg = (i) => { const [a, skin, b] = PHS[i % PHS.length]; return `radial-gradient(circle at 50% 33%, ${skin} 0 8.5%, transparent 9.2%), radial-gradient(ellipse 27% 19% at 50% 60%, rgba(255,255,255,.22) 0 99%, transparent 100%), linear-gradient(168deg, ${a}, ${b})` }
+const phDiv = (parent, i) => { const d = el('div', 'ph', parent); d.style.background = phBg(i); return d }
+// a sentence that reveals word by word with natural spacing: parts are strings or elements, laid out in one flex row
+function line(parts, size, weight = 500, color = '#0b0b10') {
+  const e = el('div', 'line'); S(e, { gap: px(size * .32), font: `${weight} ${px(size)}/1.1 var(--f)`, letterSpacing: '-.02em', color })
+  e.words = parts.map((p) => { if (typeof p === 'string') { const w = el('span', '', e, p); w.style.display = 'inline-block'; return w } e.appendChild(p); p.style.position = 'relative'; p.style.display = 'inline-block'; return p })
+  return e
+}
+function lineAt(e, t, x, y, times, dur = .4) {
+  vis(e, true); S(e, { left: px(x), top: px(y) })
+  e.words.forEach((w, i) => { vis(w, true); const q = eo(seg(t, times[i], times[i] + dur)); S(w, { opacity: q, transform: `translateY(${(1 - q) * 24}px)`, filter: `blur(${(1 - q) * 6}px)` }) })
+}
+const bold = (txt, cls = '') => { const w = el('span', cls); w.textContent = txt; w.style.fontWeight = 700; return w }
+const NT = TALL ? 36 : 48; const tiles = []; for (let i = 0; i < NT; i++) { const e = el('div', 'tile'); phDiv(e, (i * 7 + 3) % 8); tiles.push(e) }
+// the headline under the phone in the full-length version, static here so the grid has something to land under
+const PW = TALL ? 470 : 330, PH = PW * 2.05, pTop = TALL ? 90 : -30
+const sy = Math.min(pTop + PH + (TALL ? 120 : 90), H - (TALL ? 747 : 344))     // the value at 1080 high; the min keeps it on screen in a smaller frame
+const head = line(['your brand', 'had a', bold('big audience?', 'bgrad')], TALL ? 56 : 78)
+const T0 = .4                       // the tiles start .1s after the headline's last word
+const T_END = T0 + 1.72             // they fade out over .3s before the next scene (10.86s)
+function render(t) {
+  lineAt(head, 99, CX, sy, [0, 0, 0])
+  const rows = TALL ? 3 : 2, cols = Math.ceil(NT / rows), tw = TALL ? 150 : 170, th = tw * 16 / 9 * .6
+  tiles.forEach((e, i) => {
+    const d = rnd(i) * .35, q = spring(seg(t, T0 + d, T0 + .7 + d), 6, 9)
+    const gx = CX + ((i % cols) - (cols - 1) / 2) * (tw + 14) + (Math.floor(i / cols) % 2 ? tw / 2 : 0), gy = sy + (TALL ? 300 : 215) + Math.floor(i / cols) * (th + 14)
+    const fx = CX + (rnd(i, 2) - .5) * 300, fy = CY - 500 * K
+    const fade = 1 - seg(t, T_END - .3, T_END)
+    vis(e, q > 0 && fade > 0); S(e, { left: px(lerp(fx, gx, q)), top: px(lerp(fy, gy, q)), width: px(tw), height: px(th), opacity: clamp(q * 2) * .96 * fade, transform: `translate(-50%,-50%) rotate(${(1 - q) * (rnd(i, 3) - .5) * 90}deg) scale(${.3 + .7 * q})` })
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

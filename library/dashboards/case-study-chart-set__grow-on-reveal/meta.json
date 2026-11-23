@@ -1,0 +1,23 @@
+{
+  "slug": "case-study-chart-set__grow-on-reveal",
+  "visual_name": "Case study chart set",
+  "code_name": "Grow on reveal",
+  "category": "dashboards",
+  "summary": "Four dependency-free charts (bars, share bar, post columns, cumulative line) that grow on reveal with staggered easing.",
+  "tags": [
+    "chart",
+    "card",
+    "light",
+    "scroll"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

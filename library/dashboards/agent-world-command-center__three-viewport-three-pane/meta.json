@@ -1,0 +1,25 @@
+{
+  "slug": "agent-world-command-center__three-viewport-three-pane",
+  "visual_name": "Agent world command center",
+  "code_name": "Three viewport, three pane",
+  "category": "dashboards",
+  "summary": "A desktop-app command centre with a violet title bar, an agent list on the left, a live 3D world in the middle with minimap, camera buttons and chat toasts, and a streaming terminal-style detail panel on the right, opened by a loading bar.",
+  "tags": [
+    "3d",
+    "nav",
+    "dark",
+    "table",
+    "loader",
+    "modal"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "css-grid",
+    "electron"
+  ],
+  "duration_sec": 16,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

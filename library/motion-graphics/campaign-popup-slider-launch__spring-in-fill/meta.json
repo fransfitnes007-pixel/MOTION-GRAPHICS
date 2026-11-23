@@ -1,0 +1,23 @@
+{
+  "slug": "campaign-popup-slider-launch__spring-in-fill",
+  "visual_name": "Project popup with slider and launch",
+  "code_name": "Spring-in card with eased slider fill",
+  "category": "motion-graphics",
+  "summary": "A white popup card springs in with a green toggle, three fields and a budget slider that fills to 68 percent, then a cursor presses the blue launch button and the card fades away.",
+  "tags": [
+    "modal",
+    "form",
+    "cursor",
+    "light",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

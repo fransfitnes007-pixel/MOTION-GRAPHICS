@@ -1,0 +1,20 @@
+{
+  "slug": "confetti-burst__radial-gravity-fade",
+  "visual_name": "Confetti burst",
+  "code_name": "Radial burst with gravity and fade",
+  "category": "motion-graphics",
+  "summary": "26 small blue, yellow, pink, cyan and green dots and squares burst out from the middle of the frame, spin, drop and fade away.",
+  "tags": [
+    "sfx",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "seeded-random"
+  ],
+  "duration_sec": 2.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

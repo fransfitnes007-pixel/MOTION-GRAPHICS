@@ -1,0 +1,118 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Gold and silver metallic title lockup</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay[wght].ttf);font-weight:400 900}
+@font-face{font-family:Rye;src:url(fonts/Rye-Regular.ttf)}
+@font-face{font-family:Vibes;src:url(fonts/GreatVibes-Regular.ttf)}
+:root{--sf:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+html,body{background:#07080b}
+#stage{background:#07080b;color:#f3f1ea;font-family:var(--sf)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}/* placeholder cover: gradients and type styling are cover.html's; the artwork is a CSS dusk scene */
+.cvr{container-type:inline-size;position:absolute;inset:0;overflow:hidden;background:
+ linear-gradient(#17120e,#17120e) 28% 66%/44% 9% no-repeat,linear-gradient(#ffc766,#ffc766) 36% 69%/4% 3% no-repeat,linear-gradient(#ffc766,#ffc766) 50% 69%/4% 3% no-repeat,
+ linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 22%,rgba(0,0,0,0) 52%,rgba(6,5,4,.78) 72%,rgba(6,5,4,.96) 100%),
+ linear-gradient(180deg,#27354d 0%,#4b5a75 40%,#8c7b69 60%,#1c1712 61%)}
+.cvr .au{position:absolute;left:0;right:0;top:5.3cqw;text-align:center;font-family:Vibes;font-size:9.3cqw;color:#fff;text-shadow:0 .2cqw 1cqw rgba(0,0,0,.65)}
+.cvr .rl{position:absolute;left:50%;top:16.4cqw;width:20cqw;height:.12cqw;margin-left:-10cqw;background:linear-gradient(90deg,transparent,#e8c25a 25%,#fff 50%,#e8c25a 75%,transparent)}
+.cvr .tr{position:absolute;left:0;right:0;top:17.7cqw;text-align:center;font-family:PF;font-weight:600;font-size:2.2cqw;letter-spacing:.42em;color:#f1d98a;text-transform:uppercase}
+.cvr .tt{position:absolute;left:0;right:0;top:63cqw;text-align:center;line-height:.82}
+.cvr .the,.cvr .on{display:block;font-family:Vibes;color:#fff;line-height:1;text-shadow:0 .3cqw 1.2cqw rgba(0,0,0,.7)}
+.cvr .the{font-size:9.4cqw;margin-bottom:-2cqw}
+.cvr .on{font-size:6.1cqw;margin:-.1cqw 0 -1.2cqw}
+.cvr .gd,.cvr .sv{display:block;font-family:Rye;font-size:12cqw;letter-spacing:.02em;-webkit-background-clip:text;background-clip:text;color:transparent}
+.cvr .gd{background-image:linear-gradient(180deg,#fff2b3 0%,#f6d35a 22%,#e4a92a 48%,#b67a12 62%,#f7d873 82%,#ffe9a3 100%);filter:drop-shadow(0 .33cqw 0 #4a2f06) drop-shadow(0 .8cqw 1.4cqw rgba(0,0,0,.75))}
+.cvr .sv{background-image:linear-gradient(180deg,#ffffff 0%,#dfe4ea 30%,#a9b1bb 52%,#f4f6f8 68%,#c3c9d2 100%);filter:drop-shadow(0 .33cqw 0 #1d2126) drop-shadow(0 .8cqw 1.4cqw rgba(0,0,0,.75))}
+.cvr .ft{position:absolute;left:0;right:0;bottom:1.7cqw;text-align:center;font-family:PF;font-weight:500;font-size:1.5cqw;letter-spacing:.34em;color:#cfd4dc;text-transform:uppercase;opacity:.85}
+
+#plate2{position:absolute;overflow:hidden;box-shadow:0 100px 160px -40px rgba(0,0,0,.95),0 0 0 1.5px rgba(255,255,255,.15) inset;border-radius:4px 14px 14px 4px}
+#plate2 .gloss{position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.28) 50%,rgba(255,255,255,0) 62%);mix-blend-mode:screen}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+#grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/></filter><rect width='260' height='260' filter='url(%23n)'/></svg>")}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.6) 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3.5
+window.DUR = DUR
+const V = H >= W                                   // vertical-ish layouts (9:16, 4:5, 1:1)
+const SC = V ? W / 1080 : Math.min(W / 1920, H / 1080)   // design scale (the source calls it S; the template's S is the style helper)
+const TR = V ? H / W : 0                         // 1.78 for 9:16, 1.25 for 4:5, 1 for 1:1 (the source calls it TALL)
+const $ = (id) => document.getElementById(id)
+const p = (t, a, b) => (b - a > 0 && isFinite(b - a) ? clamp((t - a) / (b - a)) : t >= a ? 1 : 0)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const backS = (x, c1 = 2.4) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const SOUNDS = []   // {t,type}: cues can be dumped to build a soundtrack
+const snd = (t, type) => { if (!SOUNDS.some((s) => s.t === t && s.type === type)) SOUNDS.push({ t, type }) }
+// pre-load the fonts so offsetWidth measurements are right on the first frame drawn
+const loadFonts = (...f) => f.forEach((x) => document.fonts.load(x))
+const HF = (V ? 100 : 128) * SC    // headline font
+const M = (V ? 72 : 110) * SC      // margin
+// ---------- blobs ----------
+function blobs(t, mood) {
+  // mood: 0 dark/cold, 1 gold warm, 2 red danger
+  const b1 = $('b1'), b2 = $('b2'), b3 = $('b3'), R = Math.max(W, H)
+  const amp = (m) => (mood === m ? 1 : 0.35)
+  ;[[b1, 0.9 * amp(1), 0.25, 0.3, 0.07], [b2, 0.8 * amp(0), 0.78, 0.7, 0.05], [b3, 0.9 * amp(2), 0.5, 0.95, 0.06]].forEach(([el, a, fx, fy, sp], i) => {
+    const sz = R * (0.55 + 0.1 * i)
+    el.style.width = el.style.height = px(sz)
+    el.style.opacity = a * 0.9
+    el.style.transform = `translate(${fx * W - sz / 2 + Math.sin(t * sp * 6 + i) * 0.08 * W}px,${fy * H - sz / 2 + Math.cos(t * sp * 5 + i) * 0.08 * H}px)`
+  })
+}
+
+stage.insertAdjacentHTML('afterbegin', '<div class="blob" id="b1" style="background:#3a2a08"></div><div class="blob" id="b2" style="background:#0f1f3a"></div><div class="blob" id="b3" style="background:#4a1410"></div>')
+
+stage.insertAdjacentHTML('beforeend', '<div id="plate2"><div class="cvr"><div class="au">Author Name</div><div class="rl"></div><div class="tr">A True Story</div><div class="tt"><span class="the">The</span><span class="gd">GOLDEN</span><span class="gd">TITLE</span><span class="on">on</span><span class="sv">SILVER</span><span class="sv">LANE</span></div><div class="ft">Place · Region · 1987</div></div><div class="gloss"></div></div>')
+stage.insertAdjacentHTML('beforeend', '<div id="grain"></div><div id="vig"></div>')
+
+loadFonts('700 20px PF', '600 20px PF', '20px Rye', '20px Vibes')
+// The type is never animated; it sits in the cover plate and a gloss band slides across it:
+//   gloss.style.transform = translateX(lerp(-BW, BW, (sin(t * 0.9) + 1) / 2))
+const PH = Math.min(H * 0.92, W * 1.5), PW = PH / 1.5
+function render(t) {
+  blobs(t, 1)
+  const pl = $('plate2')
+  pl.style.width = px(PW); pl.style.height = px(PH); pl.style.left = px(W / 2 - PW / 2); pl.style.top = px(H / 2 - PH / 2)
+  const gl = pl.querySelector('.gloss'); gl.style.transform = `translateX(${lerp(-PW, PW, (Math.sin(t * 0.9 * 2) + 1) / 2)}px)`
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

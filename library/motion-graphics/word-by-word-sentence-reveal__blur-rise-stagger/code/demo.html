@@ -1,0 +1,93 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Word-by-word sentence reveal</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--f:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+.layer{position:absolute;inset:0}
+.layer{will-change:transform}
+.line{position:absolute;display:flex;align-items:center;white-space:nowrap;width:max-content;transform:translate(-50%,-50%);z-index:5}
+.word{position:absolute;white-space:nowrap;font:600 1em var(--f);letter-spacing:-.02em;transform-origin:50% 50%}
+.big{position:absolute;white-space:nowrap;font:800 1em/0.9 var(--f);letter-spacing:-.055em;transform-origin:50% 50%}
+.grad{background:linear-gradient(92deg,#ff7a3d 0%,#ff2e97 55%,#7c3aed 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bgrad{background:linear-gradient(92deg,#2f6bff,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.note{position:absolute;display:flex;align-items:center;gap:.6em;padding:.55em .9em .55em .6em;border-radius:1em;background:#fff;box-shadow:0 30px 70px -25px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.07);white-space:nowrap;transform-origin:50% 50%;font:600 1em var(--f);letter-spacing:-.015em}
+.note .ic{width:2.4em;height:2.4em;border-radius:.7em;background:#0b0b10;display:grid;place-items:center;flex:none;color:#fff;font-size:1em}
+.note b{display:block;font:700 1em var(--f)}.note small{display:block;font:500 .86em var(--f);color:#5f5f6b;margin-top:.1em}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.2
+window.DUR = DUR
+const at = (e, x, y, extra = '') => S(e, { left: px(x), top: px(y), transform: `translate(-50%,-50%) ${extra}` })
+const wordIn = (e, t, t0, x, y, dur = .22) => { const q = spring(seg(t, t0, t0 + dur * 2.2), 8, 12); S(e, { opacity: clamp(q * 1.6), left: px(x), top: px(y), transform: `translate(-50%,-50%) translateY(${(1 - q) * 30}px) scale(${.7 + .3 * q})` }) }
+const rnd = (i, s = 1) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+// a sentence that reveals word by word with natural spacing: parts are strings or elements, laid out in one flex row
+function line(parts, size, weight = 500, color = '#0b0b10') {
+  const e = el('div', 'line'); S(e, { gap: px(size * .32), font: `${weight} ${px(size)}/1.1 var(--f)`, letterSpacing: '-.02em', color })
+  e.words = parts.map((p) => { if (typeof p === 'string') { const w = el('span', '', e, p); w.style.display = 'inline-block'; return w } e.appendChild(p); p.style.position = 'relative'; p.style.display = 'inline-block'; return p })
+  return e
+}
+function lineAt(e, t, x, y, times, dur = .4) {
+  vis(e, true); S(e, { left: px(x), top: px(y) })
+  e.words.forEach((w, i) => { vis(w, true); const q = eo(seg(t, times[i], times[i] + dur)); S(w, { opacity: q, transform: `translateY(${(1 - q) * 24}px)`, filter: `blur(${(1 - q) * 6}px)` }) })
+}
+const bold = (txt, cls = '') => { const w = el('span', cls); w.textContent = txt; w.style.fontWeight = 700; return w }
+const noteMk = (title, body) => { const n = el('div', 'note'); S(n, { fontSize: px(TALL ? 30 : 34) }); n.innerHTML = `<div class="ic">✦</div><div><b>${title}</b><small>${body}</small></div>`; return n }
+const noteInline = noteMk('App name', 'Your launch is live')
+const A1 = TALL ? line(['your team', 'had a'], 64) : line(['your team', 'had a', bold('big audience?', 'bgrad')], 78)
+const A2 = TALL ? line([bold('big audience?', 'bgrad')], 64) : null
+const B1 = TALL ? line(['We’re gonna'], 50) : line(['We’re gonna', noteInline, bold('find them')], 60)
+const B2 = TALL ? line([noteInline], 50) : null, B3 = TALL ? line([bold('find them')], 50) : null
+function render(t) {
+  [A1, A2, B1, B2, B3].forEach((e) => e && vis(e, false))
+  // sentence 1: three words (times offset so this starts at .3s)
+  const a = [.3, .76, 1.16]
+  if (TALL) { lineAt(A1, t, CX, CY - 300, a.slice(0, 2)); lineAt(A2, t, CX, CY - 210, [a[2]]) }
+  else lineAt(A1, t, CX, CY - 70, a)
+  // sentence 2: the inline card is a word too
+  const b = [1.9, 2.36, 2.46, 2.8]
+  if (TALL) { lineAt(B1, t, CX, CY - 30, [b[0]]); lineAt(B2, t, CX, CY + 70, [b[1]]); lineAt(B3, t, CX, CY + 170, [b[3]]) }
+  else lineAt(B1, t, CX, CY + 90, b)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

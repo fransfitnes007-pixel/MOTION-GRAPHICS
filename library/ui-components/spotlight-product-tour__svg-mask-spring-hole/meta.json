@@ -1,0 +1,22 @@
+{
+  "slug": "spotlight-product-tour__svg-mask-spring-hole",
+  "visual_name": "Spotlight product tour",
+  "code_name": "SVG mask spring hole",
+  "category": "ui-components",
+  "summary": "The page dims to 78% black with a rounded hole cut around one element; the hole springs to the next target on each step, with a violet outline and a tooltip card that places itself beside it and counts the steps.",
+  "tags": [
+    "modal",
+    "dark",
+    "cursor",
+    "nav"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "svg-mask"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

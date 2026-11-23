@@ -1,0 +1,23 @@
+{
+  "slug": "violet-ai-dashboard-score-ring-push-in__counting-ring-glow-brain",
+  "visual_name": "Violet AI review dashboard with counting score ring",
+  "code_name": "Counting ring, rising bars, glowing brain, push-in camera",
+  "category": "motion-graphics",
+  "summary": "A dark violet dashboard with a glowing brain, a score ring counting up to about 85 and rising glowing bars, under a slow push-in and pull-back.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "counter",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "css"
+  ],
+  "duration_sec": 8,
+  "has_sound": true,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

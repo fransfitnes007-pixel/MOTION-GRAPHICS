@@ -1,0 +1,22 @@
+{
+  "slug": "liquid-metal-cta-button__registered-angle-conic-rim",
+  "visual_name": "Liquid metal CTA button",
+  "code_name": "Registered angle conic rim",
+  "category": "ui-components",
+  "summary": "A black glass button inside a brushed-silver chrome rim, with small gold, blue and violet glints that keep travelling round the edge.",
+  "tags": [
+    "cta",
+    "hover",
+    "light",
+    "hero"
+  ],
+  "tech": [
+    "css",
+    "conic-gradient",
+    "css-houdini-property"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

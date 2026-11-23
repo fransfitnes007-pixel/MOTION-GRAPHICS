@@ -1,0 +1,87 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Pendulum flip wordmark</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#000}
+.glow{position:absolute;inset:0;background:radial-gradient(closest-side,hsl(0 0% 100% / .10),transparent 70%)}
+.cap{position:absolute;left:0;right:0;text-align:center;font-size:20px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.35);font-family:ui-monospace,Menlo,monospace}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="three.global.js"></script>
+<script>
+(() => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 7
+window.DUR = DUR
+// Soft radial glow behind the swinging wordmark: closest-side radial-gradient, 10% white, in a square the size of the canvas box
+const BOX = Math.min(W * .78, H * 1.15 * (TALL ? .9 : 1))
+const box = el('div', null, stage); S(box, { position: 'absolute', left: px(CX - BOX / 2), top: px(CY - BOX * .42), width: px(BOX), height: px(BOX * .84) })
+const glow = el('div', 'glow', box)
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true })
+renderer.setPixelRatio(1); renderer.setSize(Math.round(BOX), Math.round(BOX * .84), false)
+renderer.domElement.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%'; box.appendChild(renderer.domElement); renderer.setClearColor(0x000000, 0)
+const scene = new THREE.Scene()
+const camera = new THREE.PerspectiveCamera(45, 1 / .84, 0.1, 100); camera.position.set(0, 0, 4.4)   // the component: position [0,0,4.4], fov 45
+// placeholder wordmark texture (the source loads a white PNG wordmark): drawn on a canvas at the same 2.6 aspect
+const TW = 1560, TH = 600, c = document.createElement('canvas'); c.width = TW; c.height = TH
+const x = c.getContext('2d'); x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'
+x.font = '800 190px -apple-system, "SF Pro Display", Helvetica, Arial, sans-serif'; x.fillText('NORTHSTAR', TW / 2, TH * .40)
+x.font = '300 118px -apple-system, "SF Pro Display", Helvetica, Arial, sans-serif'; x.fillText('L  A  B  S', TW / 2, TH * .72)
+x.fillRect(TW * .1, TH * .55, TW * .8, 6)
+const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8
+const width = 5, aspect = TW / TH, height = width / aspect
+const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false, side: THREE.DoubleSide }))
+scene.add(mesh)
+const cap = el('div', 'cap', stage, 'rotation.y = sin(2πt/7) · π'); S(cap, { top: px(H - 70 * K), fontSize: px(18 * K) })
+function render(t) {
+  // useFrame: swing = sin(t * 2π / 7); rotation.y = swing * π; facing = cos(rotation.y); mirror x when the back faces the camera
+  const swing = Math.sin((t * Math.PI * 2) / 7)
+  mesh.rotation.y = swing * Math.PI
+  const facing = Math.cos(mesh.rotation.y)
+  mesh.scale.x = facing < 0 ? -1 : 1
+  cap.textContent = `rotation.y ${(swing * 180).toFixed(0).padStart(4, ' ')}°`
+  renderer.render(scene, camera)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+document.fonts.ready.then(() => { render(0); window.__rdy(true) })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+})()
+</script>
+</body></html>

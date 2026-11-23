@@ -1,0 +1,19 @@
+{
+  "slug": "pastel-drifting-blobs-background__sine-drift-blur-110",
+  "visual_name": "Pastel drifting blob background",
+  "code_name": "Three blurred circles on slow sine drift",
+  "category": "motion-graphics",
+  "summary": "Three huge blurred pastel circles drift slowly on a pale ground, behind everything in a light video.",
+  "tags": [
+    "background",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter-blur"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,188 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Frosted stat tiles over photo</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--ink:#0b0c10;--ink2:#3a3d46;--ink3:#5c606b;--ink4:#686c77;--mist:#f4f5f7;--mist2:#eceef2;--accent:#5b5ce6;--soft:#8b8cf0;--glow:#c7c8ff;--ok:#166534}
+#stage{background:var(--mist);color:var(--ink)}
+.root{position:absolute;transform-origin:0 0;overflow:hidden;background:var(--mist)}
+.abs{position:absolute}
+.blob{position:absolute;border-radius:50%;filter:blur(64px)}
+.glass{background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 8px 32px -12px rgba(15,17,26,.18)}
+.glass-strong{background:rgba(255,255,255,.75);-webkit-backdrop-filter:blur(40px);backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.8);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 8px 32px -12px rgba(15,17,26,.18)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid rgba(11,12,16,.1);background:rgba(255,255,255,.6);padding:4px 12px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);line-height:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:12px 20px;font-size:14px;line-height:20px;font-weight:600;white-space:nowrap}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:0 2px 10px -2px rgba(15,17,26,.25)}
+.btn-secondary{color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid rgba(11,12,16,.1);background:rgba(255,255,255,.6);padding:8px 14px;font-size:12px;line-height:16px;font-weight:500;color:var(--ink2);min-height:38px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.h-display{font-size:60px;line-height:1.05;font-weight:600;letter-spacing:-.02em}
+.h-section{font-size:48px;line-height:1.25;font-weight:600;letter-spacing:-.02em}
+.lede{font-size:18px;line-height:1.625;color:var(--ink2)}
+.tn{font-variant-numeric:tabular-nums}
+svg.i{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hero-grid{position:absolute;left:32px;top:96px;width:1216px;display:grid;grid-template-columns:604.8px 547.2px;column-gap:64px;align-items:center}
+.photo{position:absolute;inset:0}
+.tile{position:absolute;z-index:10;transform-style:preserve-3d}
+.tile>div{border-radius:20px;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.25);padding:14px 20px;color:#fff;box-shadow:0 24px 60px -20px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.6)}
+.tile .lb{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;font-weight:500;color:rgba(255,255,255,.85);text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.tile .vl{margin-top:2px;font-size:30.4px;line-height:36px;font-weight:600;letter-spacing:-.025em;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.dot{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.7)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- shared helpers (framer-motion equivalents) ----
+// cubic-bezier easing, the same solver CSS uses
+const bez = (x1, y1, x2, y2) => (p) => {
+  if (p <= 0) return 0; if (p >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let s = p; for (let i = 0; i < 8; i++) { const x = ((ax * s + bx) * s + cx) * s - p, d = (3 * ax * s + 2 * bx) * s + cx; if (Math.abs(x) < 1e-5 || !d) break; s -= x / d }
+  return ((ay * s + by) * s + cy) * s
+}
+const E_OUT22 = bez(.22, 1, .36, 1)       // the site's reveal ease [0.22, 1, 0.36, 1]
+const E_EASEOUT = bez(0, 0, .58, 1)       // framer 'easeOut'
+const E_EASEINOUT = bez(.42, 0, .58, 1)   // framer 'easeInOut'
+// framer-motion spring ({type:'spring', stiffness, damping, mass}) from 0 to 1, zero start velocity
+const fspring = (t, stiffness = 100, damping = 10, mass = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(stiffness / mass), z = damping / (2 * Math.sqrt(stiffness * mass))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  if (z === 1) return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+  const s = w0 * Math.sqrt(z * z - 1), r1 = -z * w0 + s, r2 = -z * w0 - s
+  return 1 - (r2 * Math.exp(r1 * t) - r1 * Math.exp(r2 * t)) / (r2 - r1)
+}
+// Reveal: initial {opacity:0,y:18} -> {1,0}, duration .6, ease [.22,1,.36,1]
+const reveal = (t, t0 = 0, dur = .6, y = 18) => { const q = E_OUT22(seg(t, t0, t0 + dur)); return { q, opacity: q, y: (1 - q) * y } }
+const rv = (e, t, t0 = 0, dur = .6, y = 18, extra = '') => { const r = reveal(t, t0, dur, y); S(e, { opacity: r.opacity, transform: `translateY(${r.y}px) ${extra}` }); return r.q }
+// y keyframes [0, a, 0] with easeInOut per segment, repeat Infinity, delay only before the first run
+const bob = (t, a, d, delay = 0) => { if (t < delay) return 0; const u = ((t - delay) % d) / d; return u < .5 ? a * E_EASEINOUT(u * 2) : a * (1 - E_EASEINOUT((u - .5) * 2)) }
+// CountUp: "$203,400", "1B+", "10,000+": digits count up on cubic ease-out
+const cuParse = (raw) => { const m = raw.match(/^([^\d]*)([\d,]*\.?\d+)(.*)$/); if (!m) return null; return { prefix: m[1], value: Number(m[2].replace(/,/g, '')), decimals: (m[2].split('.')[1] || '').length, suffix: m[3], grouped: m[2].includes(',') } }
+const cu = (raw, p) => { const k = cuParse(raw); if (!k) return raw; const n = k.value * (1 - Math.pow(1 - clamp(p), 3)); return k.prefix + n.toLocaleString('en-US', { minimumFractionDigits: k.decimals, maximumFractionDigits: k.decimals, useGrouping: k.grouped || k.value >= 1000 }) + k.suffix }
+const ICONS = {
+  'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>', 'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', check: '<path d="M20 6 9 17l-5-5"/>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>', play: '<polygon points="6 3 20 12 6 21 6 3"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', menu: '<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  'volume-2': '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+  'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>', lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>', eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+  building: '<rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>',
+  sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  'trending-up': '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>', globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  palette: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', video: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+  'at-sign': '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>', hash: '<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>', 'layout-dashboard': '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  'mouse-pointer': '<path d="M12.586 12.586 19 19"/><path d="M3.688 3.037a.497.497 0 0 0-.651.651l6.5 15.998a.501.501 0 0 0 .947-.062l1.569-6.083a2 2 0 0 1 1.448-1.479l6.124-1.579a.5.5 0 0 0 .063-.947z"/>', 'monitor': '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>', mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  'message-square': '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', 'share-2': '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.42" x2="8.59" y1="6.51" y2="10.49"/>',
+  'shopping-bag': '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>', 'file-down': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+}
+const ic = (name, size = 16, sw = 2, style = '') => `<svg class="i" viewBox="0 0 24 24" width="${size}" height="${size}" stroke-width="${sw}" style="${style}">${ICONS[name] || ''}</svg>`
+// a root box of design size dw x dh, scaled to fit the stage and centred, so ?w=&h= (wide or tall) still composes
+const mkRoot = (dw, dh, bg) => { const sc = Math.min(W / dw, H / dh); const r = el('div', 'root', stage); S(r, { width: dw + 'px', height: dh + 'px', left: (W - dw * sc) / 2 + 'px', top: (H - dh * sc) / 2 + 'px', transform: `scale(${sc})` }); if (bg) r.style.background = bg; return r }
+// the site's pastel glow, static (the drifting version is its own skill)
+const blobs = (parent, dw, dh, drift = (i) => '') => {
+  const bl = [['#dfe3ff', .7, -128, -160, 608], ['#ffe1ec', .6, dw + 160 - 544, dh / 3, 544], ['#dff6ff', .6, dw / 3, dh - 480, 480]]
+  const out = bl.map(([c, o, x, y, s], i) => { const b = el('div', 'blob', parent); S(b, { background: c, opacity: o, left: x + 'px', top: y + 'px', width: s + 'px', height: s + 'px' }); return b })
+  const top = el('div', 'abs', parent); S(top, { inset: 0, background: 'radial-gradient(ellipse at top,rgba(255,255,255,.6),transparent 60%)' })
+  return out
+}
+// fade everything out at the end of the loop so it wraps cleanly
+const endFade = (t, d = .45) => 1 - E_EASEINOUT(seg(t, DUR - d, DUR))
+const loopFade = (t) => E_EASEINOUT(seg(t, 0, .3)) * endFade(t)
+const E_TW = bez(.4, 0, .2, 1)   // tailwind transition-all default easing
+
+const DUR = 9
+window.DUR = DUR
+const root = mkRoot(1280, 800); blobs(root, 1280, 800)
+const grid = el('div', 'hero-grid', root)
+const left = el('div', '', grid)
+left.innerHTML = `
+<div id="loc" style="display:flex;gap:8px;flex-wrap:wrap"><span class="eyebrow">${ic('map-pin', 14, 2, 'color:var(--accent)')} Phoenix, AZ</span><span class="eyebrow">${ic('map-pin', 14, 2, 'color:var(--accent)')} Miami, FL</span></div>
+<h1 id="h1" class="h-display" style="margin-top:20px;text-wrap:balance">Sam Rivera<span style="display:block;color:var(--ink3)">Designer, writer and founder</span></h1>
+<p id="lede" class="lede" style="margin-top:24px;max-width:576px;text-wrap:balance">One line about who you help and how, here to grow your project without a single post feeling like an ad.</p>
+<div id="btns" style="margin-top:32px;display:flex;flex-wrap:wrap;gap:12px">
+ <span class="btn btn-primary">Work with me ${ic('arrow-up-right', 16)}</span>
+ <span class="btn btn-secondary glass">${ic('calendar', 16)} Book a call</span>
+ <span class="btn btn-secondary glass">${ic('rocket', 16)} Book a campaign</span>
+ <span class="btn btn-secondary glass">${ic('users', 16)} Join the community</span>
+ <span class="btn" style="color:var(--ink2)">${ic('file-down', 16)} Media kit</span></div>`
+const q = (id) => left.querySelector('#' + id)
+const right = el('div', '', grid); S(right, { position: 'relative', width: '500px', margin: '0 auto', perspective: '1100px', height: '625px' })
+const card = el('div', 'glass-strong', right); S(card, { position: 'absolute', inset: 0, borderRadius: '36px', padding: '8px', overflow: 'hidden', transformOrigin: '50% 50%' })
+const inner = el('div', '', card); S(inner, { position: 'relative', width: '100%', height: '100%', borderRadius: '28px', overflow: 'hidden', background: 'var(--mist2)' })
+const PHOTOS = ['linear-gradient(165deg,#d9b48a 0%,#8a7a52 42%,#2c3b2b 100%)', 'linear-gradient(200deg,#8fb6d9 0%,#6a7fb0 45%,#2a2a4a 100%)']
+const photos = PHOTOS.map((g, i) => { const p = el('div', 'photo', inner); p.style.background = g
+  el('div', 'abs', p).style.cssText = `left:${i ? 24 : 30}%;top:${i ? 26 : 22}%;width:46%;height:52%;border-radius:50% 50% 44% 44%;background:rgba(20,16,12,.55);filter:blur(2px)`
+  el('div', 'abs', p).style.cssText = `left:${i ? 10 : 12}%;top:62%;width:80%;height:60%;border-radius:40% 40% 0 0;background:rgba(15,12,10,.6)`
+  return p })
+const shade = el('div', 'abs', inner); S(shade, { inset: 0, background: 'linear-gradient(to top,rgba(11,12,16,.4),rgba(11,12,16,.05),rgba(11,12,16,.1))' })
+const dots = el('div', 'abs', inner); S(dots, { bottom: 0, left: '50%', transform: 'translateX(-50%)', display: 'flex' })
+const dotEls = [0, 1].map(() => { const b = el('div', '', dots); S(b, { height: '40px', width: '28px', display: 'grid', placeItems: 'center' }); return el('span', 'dot', b) })
+const SPOTS = [
+  { pos: { left: '4%', top: '6%' }, tilt: 'rotateY(22deg) rotateX(4deg)', label: 'Campaigns completed', value: '120+', icon: 'calendar' },
+  { pos: { right: '3%', top: '17%' }, tilt: 'rotateY(-22deg) rotateX(4deg)', label: 'Brands managed', value: '80+', icon: 'building' },
+  { pos: { left: '2%', top: '44%' }, tilt: 'rotateY(24deg) rotateX(-2deg)', label: 'Views, last 12 months', value: '25M+', icon: 'eye' },
+  { pos: { right: '2%', top: '58%' }, tilt: 'rotateY(-24deg) rotateX(-2deg)', label: 'Generated in earnings', value: '$48,200+', icon: 'sparkles' },
+  { pos: { left: '50%', bottom: '5%' }, tilt: 'rotateX(12deg)', label: 'Creator network', value: '9,800+', icon: 'users' },
+]
+const FLOAT = [{ y: -9, d: 5 }, { y: 8, d: 6 }, { y: -7, d: 7 }, { y: 9, d: 5.5 }, { y: -6, d: 6.5 }]
+const tiles = SPOTS.map((s, i) => { const w = el('div', 'tile', right); S(w, { ...s.pos, transform: s.tilt })
+  const d = el('div', '', w, `<div class="lb">${ic(s.icon, 13)}${s.label}</div><div class="vl tn">${s.value}</div>`); return { d, v: d.querySelector('.vl'), s } })
+
+function render(t) {
+  S(root, { opacity: loopFade(t) })
+  const slide = (e, t0, y, dur) => S(e, { transform: `translateY(${(1 - E_EASEINOUT(seg(t, t0, t0 + dur))) * y}px)` })   // initial {y} animate {y:0}, no opacity
+  slide(q('loc'), 0, 12, .5); slide(q('h1'), .05, 16, .6); slide(q('lede'), .12, 16, .6); slide(q('btns'), .2, 16, .6)
+  S(card, { transform: `scale(${.96 + .04 * E_EASEINOUT(seg(t, .15, .85))})` })
+  // photo carousel: every 4.5s, new image fades in from scale 1.04 over .9s easeOut while the old one fades out
+  const sw = seg(t, 4.5, 5.4), k = E_EASEOUT(sw)
+  S(photos[0], { opacity: 1 - k, zIndex: 1 }); S(photos[1], { opacity: k, transform: `scale(${1.04 - .04 * k})`, zIndex: 2 })
+  const pg = E_TW(seg(t, 4.5, 4.65))
+  S(dotEls[0], { width: (20 - 14 * pg) + 'px', background: `rgba(255,255,255,${1 - .3 * pg})` }); S(dotEls[1], { width: (6 + 14 * pg) + 'px', background: `rgba(255,255,255,${.7 + .3 * pg})` })
+  tiles.forEach((o, i) => { const f = FLOAT[i]; S(o.d, { transform: `translateY(${bob(t, f.y, f.d, i * .4)}px)` }); o.v.textContent = cu(o.s.value, seg(t, .2, 1.7)) })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

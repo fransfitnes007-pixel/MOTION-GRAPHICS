@@ -1,0 +1,23 @@
+{
+  "slug": "faq-accordion-glass__height-auto-fade",
+  "visual_name": "Glass FAQ accordion",
+  "code_name": "Height auto fade",
+  "category": "ui-components",
+  "summary": "A single-open FAQ in a glass rounded card with hairline dividers; answers slide open to auto height and fade in.",
+  "tags": [
+    "card",
+    "light",
+    "hover",
+    "nav"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

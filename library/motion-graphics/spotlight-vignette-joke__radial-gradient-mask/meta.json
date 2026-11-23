@@ -1,0 +1,23 @@
+{
+  "slug": "spotlight-vignette-joke__radial-gradient-mask",
+  "visual_name": "Spotlight vignette joke beat",
+  "code_name": "Radial-gradient vignette with a hand-drawn note",
+  "category": "motion-graphics",
+  "summary": "A white profile card in a swaying dark spotlight on black, with a yellow handwritten 'Forever?' wiping on, a wavy underline drawing itself, and a bold white 'Forever.' popping up.",
+  "tags": [
+    "kinetic-type",
+    "dark",
+    "hero",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-gradient",
+    "svg",
+    "clip-path"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

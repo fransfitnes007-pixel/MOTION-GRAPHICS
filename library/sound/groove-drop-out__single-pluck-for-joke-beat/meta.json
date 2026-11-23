@@ -1,0 +1,21 @@
+{
+  "slug": "groove-drop-out__single-pluck-for-joke-beat",
+  "visual_name": "Groove drop-out for a joke beat",
+  "code_name": "Single pluck for a joke beat",
+  "category": "sound",
+  "summary": "The full groove stops dead on a cut, leaving one quiet pluck per bar and two low pops on the punchlines, then an impact and a soft pad take over for the end card.",
+  "tags": [
+    "music",
+    "sfx",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 13.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

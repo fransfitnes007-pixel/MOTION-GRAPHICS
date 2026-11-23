@@ -1,0 +1,21 @@
+{
+  "slug": "sticky-command-bar-stats__flex-wrap-progress-rail",
+  "visual_name": "Sticky command bar with live stats",
+  "code_name": "Flex-wrap progress rail",
+  "category": "ui-components",
+  "summary": "A sticky top bar holding a title, three right-aligned stat blocks, a save-state pill and a thin progress rail that fills as work gets done.",
+  "tags": [
+    "nav",
+    "stat-tile",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-sticky",
+    "flexbox"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

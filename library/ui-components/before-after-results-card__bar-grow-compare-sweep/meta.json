@@ -1,0 +1,24 @@
+{
+  "slug": "before-after-results-card__bar-grow-compare-sweep",
+  "visual_name": "Before and after results card",
+  "code_name": "Bar grow and compare sweep",
+  "category": "ui-components",
+  "summary": "A result card with a counting percent badge, two growing before/after bars and a drag-to-compare report slider.",
+  "tags": [
+    "card",
+    "chart",
+    "stat-tile",
+    "light",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

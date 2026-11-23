@@ -1,0 +1,21 @@
+{
+  "slug": "coverflow-poster-ring__preserve-3d-rotatey",
+  "visual_name": "Coverflow poster ring",
+  "code_name": "Preserve-3d rotateY",
+  "category": "motion-graphics",
+  "summary": "Fourteen vertical covers on a 3D ring spin up toward the camera with category pills, then the front cover rushes the lens into a white flash.",
+  "tags": [
+    "carousel",
+    "3d",
+    "transition",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

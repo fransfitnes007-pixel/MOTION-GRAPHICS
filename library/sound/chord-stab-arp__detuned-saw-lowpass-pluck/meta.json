@@ -1,0 +1,20 @@
+{
+  "slug": "chord-stab-arp__detuned-saw-lowpass-pluck",
+  "visual_name": "Chord stab and arp",
+  "code_name": "Detuned saw lowpass pluck",
+  "category": "sound",
+  "summary": "Short bright synth plucks: an eighth-note arpeggio whose filter opens over twelve beats, then off-beat chord stabs.",
+  "tags": [
+    "music",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 15.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

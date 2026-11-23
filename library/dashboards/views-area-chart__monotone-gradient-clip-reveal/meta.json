@@ -1,0 +1,22 @@
+{
+  "slug": "views-area-chart__monotone-gradient-clip-reveal",
+  "visual_name": "Views area chart",
+  "code_name": "Monotone area with gradient fill and clip reveal",
+  "category": "dashboards",
+  "summary": "Shimmer placeholder, then a monotone violet area drawn in left to right over 1.5s, with a grey cursor line, white-ringed dot and dark tooltip scrubbing across.",
+  "tags": [
+    "chart",
+    "dark",
+    "card",
+    "loader"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

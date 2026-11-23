@@ -1,0 +1,28 @@
+# dependencies and local models
+node_modules/
+.venv/
+pipelines/voice/models/
+__pycache__/
+*.pyc
+.DS_Store
+
+# your private material: reference videos, renders, recordings, keys
+reference/
+**/reference/
+renders/
+out/
+**/vo/*.wav
+**/vo/*.m4a
+**/vo/*.json
+**/build/events*.json
+**/stills/
+*.mp4
+*.mov
+!docs/media/*.mp4
+.env
+.env.*
+*.key
+
+# per-user state
+library/my-aliases.json
+engine/.brand-applied.json

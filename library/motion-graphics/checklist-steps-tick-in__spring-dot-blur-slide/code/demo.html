@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Checklist steps tick-in</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.line{position:absolute;white-space:nowrap;line-height:1;letter-spacing:-.045em}
+.line .w{display:inline-block;will-change:transform,filter,opacity}
+.grad{background:linear-gradient(100deg,#6d3cff 0%,#9b6bff 45%,#4f7bff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.2
+window.DUR = DUR
+// Everything is laid out in the full-length version's 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// light stage: grey base, faint dot grid, four blurred orbs drifting
+const bgL = el('div', 'layer', root); const bgBase = el('div', 'bgfill', bgL); S(bgBase, { background: '#f4f4f6' }); el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(139,92,246,.30)', s: 900, x: 300, y: 120, sp: .09 }, { c: 'rgba(96,165,250,.26)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.14)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.30)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s + 'px', height: o.s + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+const driftOrbs = (t) => { for (const o of orbs) S(o.e, { left: (o.x + Math.sin(t * o.sp * 6 + o.s) * 120) + 'px', top: (o.y + Math.cos(t * o.sp * 5 + o.x) * 90) + 'px' }) }
+// Source clock 4.9s to 8.7s mapped onto 0 to 3.8s. Words and times are placeholders; the formulas are the full-length version's.
+const T0 = 4.9
+const steps4 = [['Plan.', 5.10, 300], ['Draft.', 5.48, 455], ['Ship.', 6.18, 610]].map(([t, at, y]) => {
+  const g = el('div', 'abs', root); S(g, { left: '120px', top: (y - 62) + 'px', display: 'flex', alignItems: 'center', gap: '30px' })
+  const dot = el('div', '', g, CHECK(40)); S(dot, { width: '74px', height: '74px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'linear-gradient(180deg,#8b5cf6,#6d3cff)', boxShadow: '0 14px 30px -8px rgba(109,60,255,.6)' })
+  const w = el('div', '', g); S(w, { fontWeight: 800, fontSize: '128px', letterSpacing: '-.05em', lineHeight: '1' }); w.textContent = t
+  g.dot = dot; g.w = w; g.at = at; return g
+})
+const sub4 = el('div', 'abs', root); S(sub4, { left: '124px', top: '742px', fontWeight: 700, fontSize: '60px', letterSpacing: '-.03em', color: '#1b1b26', width: '900px', lineHeight: '1.1' })
+sub4.innerHTML = '<span class="w4" data-at="6.56">small team</span> <span class="w4" data-at="7.32">for your</span> <span class="w4 grad" data-at="7.76">brand.</span>'
+const sub4w = [...sub4.querySelectorAll('.w4')]; sub4w.forEach((s) => { s.style.display = 'inline-block'; s.at = +s.dataset.at })
+function render(t) {
+  t += T0
+  driftOrbs(t)
+  const out = eio5(seg(t, 8.2, 8.62))
+  steps4.forEach((g) => {
+    const p = eo5(seg(t, g.at - .06, g.at + .38)), pd = spring(seg(t, g.at - .02, g.at + .5), 8, 14)
+    S(g, { opacity: p * (1 - out), transform: `translate(${(1 - p) * -60 - out * 200}px, 0)`, filter: `blur(${(1 - p) * 12 + out * 10}px)` })
+    g.dot.style.transform = `scale(${pd})`
+  })
+  sub4w.forEach((s) => { const p = eo5(seg(t, s.at - .04, s.at + .38)); S(s, { opacity: p * (1 - out), filter: `blur(${(1 - p) * 12}px)`, transform: `translateY(${(1 - p) * 18}px)` }) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

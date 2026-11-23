@@ -1,0 +1,20 @@
+{
+  "slug": "big-number-brand-counter__count-up-snap-short-form",
+  "visual_name": "Big brand number counter",
+  "code_name": "Count up, snap to short form",
+  "category": "motion-graphics",
+  "summary": "A brand mark above a 260px number that counts up, snaps to its short form in violet with a pop, then the next brand replaces it.",
+  "tags": [
+    "counter",
+    "stat-tile",
+    "light",
+    "logo"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 4.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,24 @@
+{
+  "slug": "receipt-printer-paper-feed__clip-path-teeth",
+  "visual_name": "Receipt printer paper feed",
+  "code_name": "Clip-path teeth",
+  "category": "ui-components",
+  "summary": "A black receipt-printer machine prints a monospace slip with a torn zigzag edge and barcode; Pay now flips it to paid.",
+  "tags": [
+    "card",
+    "cta",
+    "form",
+    "dark",
+    "loader"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

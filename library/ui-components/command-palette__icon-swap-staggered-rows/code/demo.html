@@ -1,0 +1,178 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Command palette</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.pg{position:absolute;inset:0;background:#050509;font-family:-apple-system,'SF Pro Display',system-ui,sans-serif}
+.blk{position:absolute;border-radius:16px;background:#0d0d1a;border:1px solid #1a1a2e}
+.scr{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.dlg{position:absolute;left:50%;top:50px;width:576px;margin-left:-288px;border-radius:16px;border:1px solid #1a1a2e;background:#0d0d1a;box-shadow:0 28px 56px -24px rgba(0,0,0,.9);overflow:hidden;color:#fff}
+.inp{position:relative;height:48px;border-bottom:1px solid #1a1a2e}
+.inp .q{position:absolute;left:16px;top:0;line-height:48px;font-size:14px;color:#fff;white-space:pre}
+.inp .ph{position:absolute;left:16px;top:0;line-height:48px;font-size:14px;color:#6b7280}
+.inp .cr{position:absolute;top:15px;width:1px;height:18px;background:#fff}
+.inp .ic{position:absolute;right:16px;top:16px;width:16px;height:16px;color:#6b7280}
+.lst{position:relative;padding:8px;height:250px;overflow:hidden}
+.gh{padding:8px 12px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#6b7280}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:8px;padding:8px 12px;font-size:14px;color:rgba(255,255,255,.85)}
+.row.sel{background:rgba(139,92,246,.15);color:#fff}
+.row .l{display:flex;align-items:center;gap:10px;min-width:0}
+.row .l svg{width:16px;height:16px;flex-shrink:0;color:#a78bfa}
+.row .l b{font-weight:500}
+.row .l em{font-style:normal;font-size:12px;color:#6b7280}
+.row .rr{display:flex;align-items:center;gap:8px;font-size:11px;color:#6b7280}
+.row kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid #1a1a2e;background:#13131f;border-radius:4px;padding:2px 6px}
+.row .cr2{width:12px;height:12px}
+.ft{display:flex;justify-content:space-between;border-top:1px solid #1a1a2e;padding:8px 16px;font-size:11px;color:#6b7280}
+.ft kbd{font:11px ui-monospace,Menlo,monospace;border:1px solid #1a1a2e;background:#13131f;border-radius:4px;padding:0 4px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers (framer-motion style easing and springs, evaluated from t) ----
+const bez = (x1, y1, x2, y2) => {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  const X = (s) => ((ax * s + bx) * s + cx) * s, Y = (s) => ((ay * s + by) * s + cy) * s
+  return (x) => { if (x <= 0) return 0; if (x >= 1) return 1; let s = x; for (let i = 0; i < 8; i++) { const e = X(s) - x; if (Math.abs(e) < 1e-6) break; const d = (3 * ax * s + 2 * bx) * s + cx; if (Math.abs(d) < 1e-6) break; s -= e / d } return Y(s) }
+}
+const EASE = { linear: (x) => x, easeInOut: bez(.42, 0, .58, 1), easeOut: bez(0, 0, .58, 1), easeIn: bez(.42, 0, 1, 1), expo: bez(.16, 1, .3, 1), out: bez(0, 0, .58, 1) }
+// keyframes that loop forever, like animate={{ x: [a, b, c] }} transition={{ duration, repeat: Infinity, ease, times, repeatDelay }}
+const kf = (t, vals, o = {}) => {
+  const { dur = 1, delay = 0, times, ease = EASE.easeInOut, repeatDelay = 0, repeat = true } = o
+  let l = t - delay; if (l < 0) return vals[0]
+  const per = dur + repeatDelay
+  if (repeat) l = l % per; else l = Math.min(l, dur)
+  if (l >= dur) return vals[vals.length - 1]
+  const p = l / dur, n = vals.length - 1, tm = times || vals.map((_, i) => i / n)
+  let i = 0; while (i < n - 1 && p > tm[i + 1]) i++
+  const q = (p - tm[i]) / (tm[i + 1] - tm[i])
+  return vals[i] + (vals[i + 1] - vals[i]) * ease(q)
+}
+// framer spring from 0 to 1 (stiffness, damping, mass), starting at t0
+const sp = (t, k = 100, c = 10, m = 1, t0 = 0) => {
+  const x = t - t0; if (x <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * x) * (Math.cos(wd * x) + (z * w0 / wd) * Math.sin(wd * x)) }
+  if (z === 1) return 1 - Math.exp(-w0 * x) * (1 + w0 * x)
+  const s = w0 * Math.sqrt(z * z - 1), r1 = -z * w0 + s, r2 = -z * w0 - s
+  return 1 - (r2 * Math.exp(r1 * x) - r1 * Math.exp(r2 * x)) / (r2 - r1)
+}
+const mix = (a, b, p) => a + (b - a) * p
+// design box: build at DW x DH and scale to fit whatever W x H the renderer asks for
+const fitBox = (DW, DH, bg) => {
+  const box = el('div', 'abs', stage); const FS = Math.min(W / DW, H / DH)
+  S(box, { left: '0px', top: '0px', width: DW + 'px', height: DH + 'px', transformOrigin: '0 0', transform: `translate(${(W - DW * FS) / 2}px,${(H - DH * FS) / 2}px) scale(${FS})`, overflow: 'hidden' })
+  if (bg) S(stage, { background: bg })
+  return box
+}
+const $ = (e, q) => e.querySelector(q)
+// drop Chrome's cached raster so a frame never depends on the one drawn before it (keeps render(t) pure with filters and transforms)
+const fresh = (b) => { b.style.display = 'none'; void b.offsetHeight; b.style.display = '' }
+// a CSS-transition-like value: events [{t, to, dur, delay, ease}] each start from wherever the value was when they began (interrupts are continuous)
+const animTo = (t, init, events, i = events.length - 1) => {
+  if (i < 0) return init
+  const e = events[i], start = e.t + (e.delay || 0)
+  if (t < start) return animTo(t, init, events, i - 1)
+  const from = animTo(start, init, events, i - 1), p = clamp((t - start) / e.dur)
+  return from + (e.to - from) * (e.ease || EASE.easeOut)(p)
+}
+
+const DUR = 7
+window.DUR = DUR
+const DW = 800, DH = 500
+const box = fitBox(DW, DH, '#050509')
+el('div', 'pg', box)
+;[[40, 40, 220, 120], [280, 40, 220, 120], [520, 40, 240, 120], [40, 190, 460, 250], [520, 190, 240, 250]].forEach(([x, y, w, h]) => { const b = el('div', 'blk', box); S(b, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }) })
+const scrim = el('div', 'scr', box)
+const dlg = el('div', 'dlg', box); S(dlg, { left: '50%', width: '576px', marginLeft: '-288px' })
+const ICON = {
+  home: '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/>', megaphone: '<path d="M4 15l16-9v12z"/><path d="M8 13v6"/>', wallet: '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M16 13h2M3 10h18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>', card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+}
+// items: label, hint, group, icon, shortcut
+const ITEMS = [
+  ['Go to Overview', 'dashboard', 'Navigate', 'home', 'G O'], ['Open campaigns', 'all briefs', 'Navigate', 'megaphone', 'G C'], ['Open payouts', 'invoices and balances', 'Navigate', 'wallet', 'G P'],
+  ['New campaign', 'set the pay rule once', 'Actions', 'plus', 'N'], ['Invite a member', 'by email', 'Actions', 'user', ''], ['Pay a member', 'approve and send', 'Actions', 'card', ''], ['Run a review', 'score a draft', 'Actions', 'scan', 'R'],
+  ['Payment settings', 'bank details', 'Settings', 'gear', ''],
+]
+const QUERY = 'pay', TYPE0 = 1.9, KEY = .22
+const svg = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`
+dlg.innerHTML = `<div class="inp"><span class="ph">What's up?</span><span class="q"></span><span class="cr"></span><span class="ic s">${svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>')}</span><span class="ic d">${svg('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>')}</span></div><div class="lst"></div>
+  <div class="ft"><span>Press <kbd>⌘ K</kbd> to open commands</span><span>ESC to cancel</span></div>`
+const q = $(dlg, '.q'), ph = $(dlg, '.ph'), cr = $(dlg, '.cr'), icS = $(dlg, '.ic.s'), icD = $(dlg, '.ic.d'), lst = $(dlg, '.lst')
+// rows: one element per item, mounted when shown (cmdk unmounts filtered-out rows), each fading up with delay min(i, 8) * .03
+const rows = ITEMS.map((it) => el('div', 'row', lst, `<div class="l">${svg(ICON[it[3]])}<b>${it[0]}</b><em>${it[1]}</em></div><div class="rr">${it[4] ? `<kbd>${it[4]}</kbd>` : ''}<span>${it[2]}</span><svg class="cr2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4v7a4 4 0 0 1-4 4H4M9 10l-5 5 5 5"/></svg></div>`))
+const heads = ['Navigate', 'Actions', 'Settings'].map((g) => el('div', 'gh', lst, g))
+const T_OPEN = .6, T_ARROW = 4.2, T_ENTER = 5.2, T_CLOSE = T_ENTER
+function render(t) {
+  vis(scrim, t >= T_OPEN - .01 && t < T_CLOSE + .15); vis(dlg, t >= T_OPEN && t < T_CLOSE + .15)
+  const open = animTo(t, 0, [{ t: T_OPEN, to: 1, dur: .15, ease: EASE.easeInOut }, { t: T_CLOSE, to: 0, dur: .15, ease: EASE.easeInOut }])
+  S(scrim, { opacity: String(open) })
+  const inn = sp(t - T_OPEN, 400, 32), out = clamp((t - T_CLOSE) / .15)
+  const oy = t < T_CLOSE ? mix(-12, 0, inn) : mix(0, -8, EASE.easeInOut(out)), os = t < T_CLOSE ? mix(.98, 1, inn) : mix(1, .98, out)
+  S(dlg, { opacity: String(t < T_CLOSE ? clamp((t - T_OPEN) / .15) : 1 - out), transform: `translateY(${oy.toFixed(2)}px) scale(${os.toFixed(4)})` })
+  // typing
+  const nch = Math.max(0, Math.min(QUERY.length, Math.floor((t - TYPE0) / KEY) + 1)), typed = t < TYPE0 ? '' : QUERY.slice(0, nch)
+  q.textContent = typed; vis(ph, !typed)
+  S(cr, { left: 16 + (typed ? q.offsetWidth : 0) + 'px', opacity: Math.floor(t * 2) % 2 === 0 || typed ? '1' : '0' })
+  // search icon leaves down (y 14) and the send icon arrives from above (y -14) over .2s when the first letter is typed
+  const sw = typed ? EASE.easeInOut(clamp((t - TYPE0) / .2)) : 0
+  S(icS, { opacity: String(1 - sw), transform: `translateY(${14 * sw}px)` }); S(icD, { opacity: String(sw), transform: `translateY(${-14 * (1 - sw)}px)` })
+  // which rows are in the list
+  const match = (it) => !typed || (it[0] + ' ' + it[1]).toLowerCase().includes(typed.toLowerCase())
+  let y = 0, shown = []
+  ;[['Navigate', 0], ['Actions', 3], ['Settings', 7]].forEach(([g, start], gi) => {
+    const items = ITEMS.map((it, i) => [it, i]).filter(([it, i]) => it[2] === g && match(it))
+    if (!items.length) { vis(heads[gi], false); return }
+    S(heads[gi], { display: '', position: 'absolute', left: '8px', right: '8px', top: 8 + y + 'px' }); y += 26
+    items.forEach(([it, i], k) => { shown.push(i); const e = rows[i], ord = shown.length - 1; S(e, { display: '', position: 'absolute', left: '8px', right: '8px', top: 8 + y + 'px' }); y += 36 })
+  })
+  rows.forEach((e, i) => { if (!shown.includes(i)) vis(e, false) })
+  // selected row: the first, or the second after ArrowDown; rows fade up (y 8 to 0, .2s, delay min(i, 8) * .03) once, when the palette opens
+  const selIdx = t >= T_ARROW ? 1 : 0
+  shown.forEach((i, ord) => { const e = rows[i], inner = e.children
+    const a = clamp((t - T_OPEN - Math.min(ord, 8) * .03) / .2), qq = EASE.easeOut(a)
+    e.classList.toggle('sel', ord === selIdx); S(inner[0], { opacity: String(qq), transform: `translateY(${(1 - qq) * 8}px)` })
+    S($(e, '.cr2'), { opacity: ord === selIdx ? '1' : '0' }) })
+  fresh(box)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

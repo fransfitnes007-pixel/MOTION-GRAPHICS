@@ -1,0 +1,22 @@
+{
+  "slug": "final-master__tanh-soft-clip-fade-loudnorm",
+  "visual_name": "Final master",
+  "code_name": "Tanh soft clip, fade and loudnorm",
+  "category": "sound",
+  "summary": "The last steps before export: a soft clip, a curved fade-out, a limiter and loudness normalisation, with before and after.",
+  "tags": [
+    "music",
+    "voice",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile",
+    "ffmpeg"
+  ],
+  "duration_sec": 13.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

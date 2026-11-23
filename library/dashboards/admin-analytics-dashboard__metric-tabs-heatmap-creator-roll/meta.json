@@ -1,0 +1,24 @@
+{
+  "slug": "admin-analytics-dashboard__metric-tabs-heatmap-creator-roll",
+  "visual_name": "Admin analytics dashboard",
+  "code_name": "Metric tabs, posting heatmap, creator roll",
+  "category": "dashboards",
+  "summary": "Stat cards, an eight-tile counter row, a metric-tab chart that morphs between area and bars, a posting heatmap and two glow-card tables with platform-coloured columns.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

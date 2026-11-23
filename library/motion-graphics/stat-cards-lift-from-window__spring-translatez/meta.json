@@ -1,0 +1,20 @@
+{
+  "slug": "stat-cards-lift-from-window__spring-translatez",
+  "visual_name": "Stat cards lifting out of a window",
+  "code_name": "Spring translateZ",
+  "category": "motion-graphics",
+  "summary": "Three stat cards separate from the bottom of a product window one after another and spring toward the viewer.",
+  "tags": [
+    "card",
+    "stat-tile",
+    "3d"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,20 @@
+{
+  "slug": "half-time-d-minor-bed__pad-and-sixteenth-arp",
+  "visual_name": "Half-time D minor bed",
+  "code_name": "Pad and sixteenth arp",
+  "category": "sound",
+  "summary": "A slower, heavier bed in D minor at 104 BPM: a saw pad, a quiet 16th-note arp, a half-time kick and clap, and a slow sidechain dip.",
+  "tags": [
+    "music",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 14.9,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "tier-coloured-bars__per-bar-cell-fill",
+  "visual_name": "Tier-coloured bar chart",
+  "code_name": "Per-bar Cell colours with a metric switch",
+  "category": "dashboards",
+  "summary": "Twelve per-post bars; the pill control switches to Earned and the bars morph to new heights while taking tier colours.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

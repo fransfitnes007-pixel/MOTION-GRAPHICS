@@ -1,0 +1,42 @@
+{
+  "slug": "dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax",
+  "visual_name": "Dino runner, Arizona sunset",
+  "code_name": "Pixel canvas, Bayer-dithered sky, mesa parallax, scripted jumps on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "The dino-game video, 9:16 and 16:9, on a pixel desert sunset: the product is a silhouette dino, a bad launch is the cactus; it crashes and restarts, then runs white at 2x through YourBrand into the chrome monogram and a black end card.",
+  "tags": [
+    "kinetic-type",
+    "transition",
+    "end-card",
+    "logo",
+    "voice",
+    "sfx",
+    "game",
+    "reel",
+    "background",
+    "pixel-art",
+    "brand"
+  ],
+  "tech": [
+    "canvas-2d",
+    "pixel-art",
+    "bayer-dither",
+    "parallax",
+    "word-timed-captions"
+  ],
+  "duration_sec": 40,
+  "has_sound": true,
+  "demo_kind": "original-build",
+  "aliases": [
+    "dino sunset",
+    "arizona",
+    "arizona sunset",
+    "sunset",
+    "desert",
+    "dino 2",
+    "mesa",
+    "pixel sky",
+    "dithered sky",
+    "dino reel"
+  ]
+}

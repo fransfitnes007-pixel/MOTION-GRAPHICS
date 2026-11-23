@@ -1,0 +1,16 @@
+{
+ "pace": {"syllables_per_second": 5.0, "tolerance": 0.04, "note": "Viral faceless narration measured about 3.9 syl/s; owners usually find that slow. 5.0 reads fast and clean."},
+ "m_smooth": {"mode": "preset", "model": "mlx-community__Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit", "speaker": "ryan", "temperature": 0.6,
+   "instruct": "Confident, upbeat narrator with a steady, level pitch and a relaxed low voice. Speaks fast in one smooth, continuous flow, words linking naturally. Engaging but not hyped, no big rises in pitch, no long pauses.",
+   "note": "Best long-form male. Record long scripts line by line with reel_vo.py --f0 130-165."},
+ "m_excited": {"mode": "preset", "model": "mlx-community__Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit", "speaker": "ryan",
+   "instruct": "Very excited, upbeat and fast-paced, like a hyped creator sharing a discovery. Bright, smiling, smooth and confident, speaking quickly with no long pauses."},
+ "m_bright": {"mode": "preset", "model": "mlx-community__Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit", "speaker": "aiden",
+   "instruct": "Very excited, upbeat and fast-paced, like a hyped creator sharing a discovery. Bright, smiling, smooth and confident, speaking quickly with no long pauses."},
+ "m_bright_deep": {"mode": "preset", "model": "mlx-community__Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit", "speaker": "aiden", "pitch": -2,
+   "instruct": "Very excited, upbeat and fast-paced, like a hyped creator sharing a discovery. Bright, smiling, smooth and confident, speaking quickly with no long pauses."},
+ "f_heart": {"mode": "kokoro", "model": "mlx-community__Kokoro-82M-bf16", "voice": "af_heart", "speed": 1.15, "note": "Fastest to generate; very consistent."},
+ "f_bella": {"mode": "kokoro", "model": "mlx-community__Kokoro-82M-bf16", "voice": "af_bella", "speed": 1.15},
+ "m_michael": {"mode": "kokoro", "model": "mlx-community__Kokoro-82M-bf16", "voice": "am_michael", "speed": 1.15},
+ "m_fenrir": {"mode": "kokoro", "model": "mlx-community__Kokoro-82M-bf16", "voice": "am_fenrir", "speed": 1.15}
+}

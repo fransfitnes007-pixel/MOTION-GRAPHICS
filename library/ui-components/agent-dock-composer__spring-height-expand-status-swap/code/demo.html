@@ -1,0 +1,167 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Agent dock composer</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#0c0c10;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0c0c10;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Inter,system-ui,sans-serif}
+.ui{background:radial-gradient(ellipse at 50% 20%,#17171f 0%,#0b0b0f 70%)}
+.ph{position:absolute;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.dock{position:absolute;width:520px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:#0a0a0a;padding:8px;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;height:36px}
+.av{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#38bdf8);display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0}
+.nm{font-size:14px;line-height:14px;font-weight:500}
+.st{position:relative;height:16px;margin-top:4px;font-size:12px;line-height:16px;color:#a3a3a3;overflow:visible}
+.st span{position:absolute;left:0;top:0;white-space:nowrap}
+.btns{margin-left:auto;display:flex;gap:6px}
+.db{height:36px;display:flex;align-items:center;gap:6px;border-radius:8px;padding:0 6px;font-size:14px;font-weight:500;justify-content:center}
+.db svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.db kbd{display:inline-flex;width:24px;height:24px;border-radius:6px;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:rgba(255,255,255,.1)}
+.db.on{background:#8b5cf6}.db.on kbd{background:rgba(0,0,0,.25)}
+.comp{overflow:hidden}
+.ta{position:relative;margin-bottom:8px;height:112px;padding:8px 36px 8px 8px;font-size:14px;line-height:24px;white-space:pre-wrap}
+.ta .x{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:#a3a3a3}
+.ta .x svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.cursor{position:absolute;width:22px;height:22px;z-index:20;pointer-events:none}
+.fade{position:absolute;inset:0;background:#0b0b0f;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers shared by the dashboard demos ----
+// CSS cubic-bezier(x1,y1,x2,y2) as a function of progress 0..1 (Newton solve for x)
+const bez = (x1, y1, x2, y2) => (x) => {
+  if (x <= 0) return 0; if (x >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let u = x
+  for (let i = 0; i < 8; i++) { const f = ((ax * u + bx) * u + cx) * u - x, d = (3 * ax * u + 2 * bx) * u + cx; if (Math.abs(f) < 1e-5 || Math.abs(d) < 1e-6) break; u -= f / d }
+  return ((ay * u + by) * u + cy) * u
+}
+const easeOutCss = bez(0, 0, .58, 1)          // CSS ease-out
+const easeCss = bez(.25, .1, .25, 1)             // CSS ease, Recharts default animationEasing
+const easeInOutCss = bez(.42, 0, .58, 1)       // CSS ease-in-out
+const outExpo22 = bez(.22, 1, .36, 1)          // cubic-bezier(0.22,1,0.36,1), used all over the sources
+// framer-motion physics spring, 0 -> 1, t in seconds (stiffness, damping, mass)
+const fmSpring = (t, k = 100, c = 10, m = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+}
+const rng = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }   // fixed-seed random
+const svgEl = (tag, attrs = {}, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const fmtInt = (n) => Math.round(n).toLocaleString('en-US')
+// d3 curveMonotoneX, which is what Recharts type="monotone" draws
+const monotonePath = (pts) => {
+  const n = pts.length; if (n < 2) return ''
+  const dx = [], dy = [], m = [], tg = []
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i] }
+  tg[0] = m[0]; tg[n - 1] = m[n - 2]
+  for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0 } else { const a = tg[i] / m[i], b = tg[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i] } } }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${pts[i][0] + h},${pts[i][1] + tg[i] * h},${pts[i + 1][0] - h},${pts[i + 1][1] - tg[i + 1] * h},${pts[i + 1][0]},${pts[i + 1][1]}` }
+  return d
+}
+// A fixed design-size UI fitted into the stage: 1440x900 wide, 900x1440 tall. CSS under .tall reflows the grids.
+const DW = TALL ? 900 : 1440, DH = TALL ? 1440 : 900
+const UI_SC = Math.min(W / DW, H / DH)
+const ui = el('div', 'ui' + (TALL ? ' tall' : ''))
+S(ui, { position: 'absolute', width: DW + 'px', height: DH + 'px', left: ((W - DW * UI_SC) / 2) + 'px', top: ((H - DH * UI_SC) / 2) + 'px', transform: `scale(${UI_SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+
+const DUR = 13
+window.DUR = DUR
+// something behind the dock so it reads as a floating bar
+const phs = [[120, 90, 600, 220], [740, 90, 580, 100], [740, 210, 280, 100], [1040, 210, 280, 100], [120, 340, 1200, 200], [120, 560, 380, 120], [520, 560, 380, 120], [920, 560, 400, 120]]
+phs.forEach(([x, y, w, h]) => { const p = el('div', 'ph', ui); S(p, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }) })
+const DL = (DW - 520) / 2, DB = 60                       // dock left, distance from the bottom
+const dock = el('div', 'dock', ui); S(dock, { left: DL + 'px', bottom: DB + 'px' })
+// column-reverse: the bar is the bottom row, the composer grows upward out of it
+const comp = el('div', 'comp', dock); const ta = el('div', 'ta', comp, '<span class="x"><svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span>'); const taTxt = el('span', null, ta); const ph0 = el('span', null, ta); ph0.textContent = 'Type something here...'; S(ph0, { color: '#737373' })
+const row = el('div', 'row', dock); el('div', 'av', row, 'N')
+const mid = el('div', null, row); el('div', 'nm', mid, 'Nova'); const st = el('div', 'st', mid)
+const stEls = {}; ['Ready', 'Working...', 'Listening…'].forEach((s) => { stEls[s] = el('span', null, st, s) })
+const btns = el('div', 'btns', row)
+const ICON = { mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>', chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', send: '<path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/>' }
+const vb = el('div', 'db', btns); S(vb, { width: '98px' }); const cb = el('div', 'db', btns); S(cb, { width: '92px' })
+const cur = el('div', 'cursor', ui, '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 2l15 8-6.5 2L9 19z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>')
+const fadeEl = el('div', 'fade', ui)
+const MSG = 'Draft this week\'s summary for the team.'
+// schedule
+const T = { chat: 1.4, type0: 2.1, type1: 4.6, send: 5.4, workEnd: 8.6, voice: 9.4, voiceEnd: 12.0 }
+const fm = bez(.22, 1, .36, 1)
+const kfs = (t, keys) => { let o = keys[0]; for (let i = 0; i < keys.length - 1; i++) if (t >= keys[i][0] && t <= keys[i + 1][0]) { const q = easeInOutCss((t - keys[i][0]) / (keys[i + 1][0] - keys[i][0] || 1)); return [keys[i][1] + (keys[i + 1][1] - keys[i][1]) * q, keys[i][2] + (keys[i + 1][2] - keys[i][2]) * q] } return [keys[keys.length - 1][1], keys[keys.length - 1][2]] }
+const heightOf = (t) => {   // composer: animate height 0 <-> 132, .3s with cubic-bezier(.22,1,.36,1); open from chat click until the send click
+  const open0 = T.chat + .1, close0 = T.send + .15
+  if (t < open0) return 0
+  if (t < close0) return 132 * fm(seg(t, open0, open0 + .3))
+  return 132 * (1 - fm(seg(t, close0, close0 + .3)))
+}
+let lastStatus = null, statusT0 = 0
+function statusAt(t) { return t < T.send + .15 ? (t >= T.voice - 99 ? 'Ready' : 'Ready') : t < T.workEnd ? 'Working...' : t < T.voice + .1 ? 'Ready' : t < T.voiceEnd ? 'Listening…' : 'Ready' }
+const changes = [0, T.send + .15, T.workEnd, T.voice + .1, T.voiceEnd]
+function render(t) {
+  const composing = t >= T.chat + .1 && t < T.send + .15
+  const listening = t >= T.voice + .1 && t < T.voiceEnd
+  S(comp, { height: heightOf(t) + 'px', opacity: clamp(heightOf(t) / 132) })
+  // the buttons: Voice (V) / Stop, Chat (C) / Send
+  vb.className = 'db' + (listening ? ' on' : ''); vb.innerHTML = `<svg viewBox="0 0 24 24">${ICON.mic}</svg><span>${listening ? 'Stop' : 'Voice'}</span><kbd>V</kbd>`
+  cb.innerHTML = `<svg viewBox="0 0 24 24">${composing ? ICON.send : ICON.chat}</svg><span>${composing ? 'Send' : 'Chat'}</span><kbd>C</kbd>`
+  // typed text
+  const n = Math.floor(clamp((t - T.type0) / (T.type1 - T.type0)) * MSG.length)
+  taTxt.textContent = (t >= T.type0 && t < T.send + .15) ? MSG.slice(0, n) + (Math.floor(t * 2) % 2 ? '|' : '') : ''
+  S(ph0, { display: (n === 0 && t < T.type0) && composing ? '' : 'none' })
+  // status line: AnimatePresence popLayout. exit {opacity 0, y -6}, enter from {opacity 0, y 6}, .16s easeOut
+  const cur_ = statusAt(t); let ci = 0; for (let i = 0; i < changes.length; i++) if (t >= changes[i]) ci = i
+  const ct = t - changes[ci]
+  for (const k in stEls) {
+    const e = stEls[k]; let o = 0, y = 0
+    if (k === cur_) { const q = easeOutCss(seg(ct, 0, .16)); o = ci === 0 ? 1 : q; y = ci === 0 ? 0 : (1 - q) * 6 }
+    else if (ci > 0) { const prev = statusAt(changes[ci] - .01); if (k === prev) { const q = easeOutCss(seg(ct, 0, .16)); o = 1 - q; y = -6 * q } }
+    S(e, { opacity: o, transform: `translateY(${y}px)` })
+  }
+  // cursor targets (design px): Voice and Chat buttons sit on the bar's right
+  const barY = 900 - DB - 8 - 18, chatX = DL + 520 - 8 - 46, voiceX = chatX - 46 - 6 - 49
+  const [cx, cy] = kfs(t, [[0, 1000, 640], [.9, chatX + 4, barY + 6], [T.chat + .1, chatX + 4, barY + 6], [T.chat + .9, 960, 600], [T.send - .8, 960, 600], [T.send, chatX + 4, barY + 6], [T.send + .2, chatX + 4, barY + 6], [T.send + 1, 1000, 640], [T.voice - .9, 1000, 640], [T.voice, voiceX + 4, barY + 6], [T.voice + .2, voiceX + 4, barY + 6], [T.voice + 1, 1050, 620], [T.voiceEnd - .8, 1050, 620], [T.voiceEnd, voiceX + 4, barY + 6], [T.voiceEnd + .2, voiceX + 4, barY + 6], [DUR, 1000, 640]])
+  S(cur, { left: cx + 'px', top: cy + 'px' })
+  S(fadeEl, { opacity: seg(t, DUR - .4, DUR) })
+}
+
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

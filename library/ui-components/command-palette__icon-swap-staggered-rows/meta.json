@@ -1,0 +1,23 @@
+{
+  "slug": "command-palette__icon-swap-staggered-rows",
+  "visual_name": "Command palette",
+  "code_name": "Icon swap, staggered rows",
+  "category": "ui-components",
+  "summary": "A dark command palette that drops in from above, its rows fading up one after another; typing swaps the search icon for a send icon with a vertical slide and narrows the list, with a purple selected row and a hint footer.",
+  "tags": [
+    "modal",
+    "dark",
+    "form",
+    "cursor"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "cmdk",
+    "spring"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

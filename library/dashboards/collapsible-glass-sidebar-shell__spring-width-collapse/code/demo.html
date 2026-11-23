@@ -1,0 +1,270 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Collapsible glass sidebar shell</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--bg:oklch(.07 .012 285);--fg:oklch(.95 .008 285);--card:oklch(.10 .012 285);--muted:oklch(.55 .027 264);--border:oklch(.20 .02 285);--primary:oklch(.55 .22 290);--sec:oklch(.14 .015 285)}
+#stage{background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif}
+.ui{background:var(--bg)}
+.side{position:absolute;left:0;top:0;bottom:0;width:240px;background:oklch(.09 .012 285);border-right:1px solid var(--border)}
+.side .logo,.drawer .logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.side .mark,.drawer .mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,oklch(.62 .22 290),oklch(.45 .22 270));display:grid;place-items:center;font-weight:800;font-size:14px}
+.side .logo small,.drawer .logo small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;line-height:1.2}
+.nav{padding:12px}
+.nav .it{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:4px;border:1px solid transparent}
+.nav .it.on{background:oklch(.55 .22 290/.2);color:var(--fg);border-color:oklch(.55 .22 290/.3)}
+.nav .it svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav .it.on svg{stroke:oklch(.65 .22 290)}
+.side .user,.drawer .user{position:absolute;left:12px;right:12px;bottom:12px;padding:12px;border-radius:12px;background:oklch(.14 .015 285/.5);display:flex;gap:12px;align-items:center}
+.side .av,.drawer .av{width:32px;height:32px;border-radius:50%;background:oklch(.55 .22 290/.2);border:1px solid oklch(.55 .22 290/.3);display:grid;place-items:center;font-size:12px;font-weight:700;color:oklch(.65 .22 290)}
+.main{position:absolute;left:240px;right:0;top:0;bottom:0}
+.top{height:66px;border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;background:oklch(.07 .012 285/.8)}
+.top h1{font-size:18px;font-weight:700}.top p{font-size:14px;color:var(--muted);margin-top:1px}
+.top .bell{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.page{position:absolute;left:0;right:0;top:67px;bottom:0;padding:22px 24px}
+.glass{background:oklch(.10 .012 285/.8);border:1px solid oklch(.22 .03 285);border-radius:16px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+.stat{position:relative;padding:18px 20px;overflow:hidden;height:136px}
+.stat .blob{position:absolute;top:-24px;right:-24px;width:80px;height:80px;border-radius:50%;filter:blur(24px)}
+.stat .ring{position:absolute;inset:0;border-radius:16px}
+.stat .row{position:relative;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.stat .ic{padding:8px;border-radius:12px;display:grid;place-items:center}
+.stat .ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.stat .chg{font-size:12px;font-weight:600;padding:3px 8px;border-radius:99px}
+.stat .val{position:relative;font-size:30px;font-weight:900;line-height:1.15;white-space:nowrap}
+.stat .lab{position:relative;font-size:14px;color:var(--muted)}
+.spark{position:absolute;font-size:12px;font-weight:700;margin-left:4px}
+.charts{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:18px}
+.card{padding:20px}
+.card h3{font-size:16px;font-weight:600}.card .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.reach{margin-bottom:12px;padding:14px;border-radius:12px;background:oklch(.55 .22 290/.08);border:1px solid oklch(.55 .22 290/.15)}
+.reach .n{font-size:18px;font-weight:700}.reach .k{font-size:12px;color:var(--muted)}
+.deal{display:flex;align-items:center;gap:16px;padding:10px 16px;border-radius:12px;border:1px solid oklch(.20 .02 285);margin-bottom:8px}
+.deal .b{width:40px;height:40px;border-radius:12px;background:oklch(.55 .22 290/.15);color:oklch(.65 .18 290);display:grid;place-items:center;font-weight:700;font-size:14px}
+.deal .t{font-size:14px;font-weight:600}.deal .s{font-size:12px;color:var(--muted)}
+.deal .amt{font-size:12px;font-weight:500;margin-top:1px}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;background:oklch(.72 .22 145/.15);color:oklch(.72 .22 145);border:1px solid oklch(.72 .22 145/.3)}
+.pbar{position:relative;height:6px;border-radius:99px;background:oklch(.15 .02 285);overflow:hidden;margin-top:6px;width:112px}
+.pfill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,oklch(.60 .22 25),oklch(.75 .20 75) 50%,oklch(.72 .22 145))}
+.fade{position:absolute;inset:0;background:var(--bg);pointer-events:none}
+.tall .side{display:none}.tall .main{left:0}.tall .stats{grid-template-columns:1fr 1fr}.tall .charts{grid-template-columns:1fr}.tall .stat{height:132px}
+/* shell demo additions */
+.frame{position:absolute;border:1px solid oklch(.22 .03 285);border-radius:18px;overflow:hidden;background:var(--bg)}
+.frame .side{position:absolute;overflow:hidden}
+.frame .main{position:absolute}
+.frame .nav .it{white-space:nowrap}
+.frame .nav .it .lab{overflow:hidden}
+.tog{position:absolute;top:20px;width:24px;height:24px;border-radius:50%;background:var(--primary);border:1px solid oklch(.55 .22 290/.5);display:grid;place-items:center;box-shadow:0 4px 10px rgba(0,0,0,.5);z-index:5}
+.tog svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.mini-stat{padding:14px;border-radius:14px;background:oklch(.10 .012 285/.8);border:1px solid oklch(.22 .03 285)}
+.mini-stat .k{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.mini-stat .v{font-size:22px;font-weight:700}
+.pcard{padding:16px;border-radius:16px;background:oklch(.10 .012 285/.8);border:1px solid oklch(.22 .03 285)}
+.pcard h4{font-size:15px;font-weight:600;margin-bottom:8px}
+.cursor{position:absolute;width:22px;height:22px;z-index:20;pointer-events:none;}
+.drawer{position:absolute;left:0;top:0;bottom:0;width:256px;background:oklch(.09 .012 285);border-right:1px solid var(--border);z-index:12}
+.back{position:absolute;inset:0;background:rgba(0,0,0,.6);;z-index:11}
+.hb{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.hb svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers shared by the dashboard demos ----
+// CSS cubic-bezier(x1,y1,x2,y2) as a function of progress 0..1 (Newton solve for x)
+const bez = (x1, y1, x2, y2) => (x) => {
+  if (x <= 0) return 0; if (x >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let u = x
+  for (let i = 0; i < 8; i++) { const f = ((ax * u + bx) * u + cx) * u - x, d = (3 * ax * u + 2 * bx) * u + cx; if (Math.abs(f) < 1e-5 || Math.abs(d) < 1e-6) break; u -= f / d }
+  return ((ay * u + by) * u + cy) * u
+}
+const easeOutCss = bez(0, 0, .58, 1)          // CSS ease-out
+const easeCss = bez(.25, .1, .25, 1)             // CSS ease, Recharts default animationEasing
+const easeInOutCss = bez(.42, 0, .58, 1)       // CSS ease-in-out
+const outExpo22 = bez(.22, 1, .36, 1)          // cubic-bezier(0.22,1,0.36,1), used all over the sources
+// framer-motion physics spring, 0 -> 1, t in seconds (stiffness, damping, mass)
+const fmSpring = (t, k = 100, c = 10, m = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+}
+const rng = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }   // fixed-seed random
+const svgEl = (tag, attrs = {}, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const fmtInt = (n) => Math.round(n).toLocaleString('en-US')
+// d3 curveMonotoneX, which is what Recharts type="monotone" draws
+const monotonePath = (pts) => {
+  const n = pts.length; if (n < 2) return ''
+  const dx = [], dy = [], m = [], tg = []
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i] }
+  tg[0] = m[0]; tg[n - 1] = m[n - 2]
+  for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0 } else { const a = tg[i] / m[i], b = tg[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i] } } }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${pts[i][0] + h},${pts[i][1] + tg[i] * h},${pts[i + 1][0] - h},${pts[i + 1][1] - tg[i + 1] * h},${pts[i + 1][0]},${pts[i + 1][1]}` }
+  return d
+}
+// A fixed design-size UI fitted into the stage: 1440x900 wide, 900x1440 tall. CSS under .tall reflows the grids.
+const DW = TALL ? 900 : 1440, DH = TALL ? 1440 : 900
+const UI_SC = Math.min(W / DW, H / DH)
+const ui = el('div', 'ui' + (TALL ? ' tall' : ''))
+S(ui, { position: 'absolute', width: DW + 'px', height: DH + 'px', left: ((W - DW * UI_SC) / 2) + 'px', top: ((H - DH * UI_SC) / 2) + 'px', transform: `scale(${UI_SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+
+const DUR = 9
+window.DUR = DUR
+const ICON = {
+  grid: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+  dollar: '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  chart: '<line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+}
+const ico = (k) => `<svg viewBox="0 0 24 24">${ICON[k]}</svg>`
+const NAV = [['grid', 'Dashboard'], ['users', 'My Deals'], ['dollar', 'Earnings'], ['chart', 'Analytics', 1], ['shield', 'Credentials']]
+const navHTML = (labels) => NAV.map(([k, n, on]) => `<div class="it${on ? ' on' : ''}" style="${labels ? '' : 'justify-content:center;padding-left:0;padding-right:0'}">${ico(k)}${labels ? `<span class="lab">${n}</span>` : ''}</div>`).join('')
+const timeline = {}  // see render()
+
+// ================= desktop frame =================
+const FX = TALL ? 20 : 20, FY = TALL ? 24 : 40, FW = TALL ? 860 : 1010, FH = TALL ? 780 : 820
+const fr = el('div', 'frame', ui); S(fr, { left: FX + 'px', top: FY + 'px', width: FW + 'px', height: FH + 'px' })
+const dside = el('div', 'side', fr)
+const dlogo = el('div', 'logo', dside, '<div class="mark">R</div>')
+const dlogoTxt = el('small', null, dlogo, 'Team<br>Workspace')
+const dnav = el('div', 'nav', dside)
+const dnavState = { open: null }
+const duser = el('div', 'user', dside, '<div class="av">A</div><div class="un"><div style="font-size:14px;font-weight:500">Avery Quinn</div><div style="font-size:12px;color:var(--muted)">Creator</div></div>')
+const tog = el('div', 'tog', fr, '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>')
+const dmain = el('div', 'main', fr)
+el('div', 'top', dmain, '<div><h1>Analytics</h1><p>Instagram &amp; TikTok performance metrics</p></div><div class="bell"></div>')
+const dpage = el('div', 'page', dmain)
+const tabs = el('div', null, dpage); S(tabs, { display: 'flex', gap: '8px', marginBottom: '16px' })
+el('div', null, tabs, 'Instagram'); S(tabs.lastChild, { padding: '9px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 500, background: 'linear-gradient(135deg,oklch(.55 .22 290),oklch(.45 .22 270))', boxShadow: '0 0 20px oklch(.55 .22 290/.3)' })
+el('div', null, tabs, 'TikTok'); S(tabs.lastChild, { padding: '9px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: 500, color: 'var(--muted)', background: 'oklch(.14 .015 285)', border: '1px solid oklch(.22 .03 285)' })
+const mst = el('div', null, dpage); S(mst, { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px', marginBottom: '16px' })
+;[['Followers', '48,210', 'oklch(.65 .18 290)'], ['Avg Likes', '3,884', 'oklch(.65 .18 310)'], ['Avg Views', '38.2K', 'oklch(.75 .18 75)'], ['Engagement', '4.8%', 'oklch(.65 .18 145)']].forEach(([k, v, c]) => el('div', 'mini-stat', mst, `<div class="k"><i style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block"></i>${k}</div><div class="v">${v}</div>`))
+const cg = el('div', null, dpage); S(cg, { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' })
+const radarCard = el('div', 'pcard', cg, '<h4>Performance Radar</h4>')
+const lineCard = el('div', 'pcard', cg, '<h4>Follower Growth</h4>')
+// radar
+const RS = 330, rsvg = svgEl('svg', { width: '100%', height: RS, viewBox: `0 0 ${RS * 1.2} ${RS}` }, radarCard); rsvg.style.display = 'block'
+const rcx = RS * .6, rcy = RS / 2 + 4, rr = 88
+const axes = ['Followers', 'Engagement', 'Avg Likes', 'Reach', 'Posts'], rv = [72, 48, 61, 35, 54]
+const ang = (i) => -Math.PI / 2 + (i / 5) * Math.PI * 2
+const polar = (i, k) => [rcx + Math.cos(ang(i)) * rr * k, rcy + Math.sin(ang(i)) * rr * k]
+for (let k = 1; k <= 4; k++) svgEl('polygon', { points: axes.map((_, i) => polar(i, k / 4).join(',')).join(' '), fill: 'none', stroke: 'oklch(.25 .04 285)' }, rsvg)
+axes.forEach((a, i) => { svgEl('line', { x1: rcx, y1: rcy, x2: polar(i, 1)[0], y2: polar(i, 1)[1], stroke: 'oklch(.25 .04 285)' }, rsvg); const p = polar(i, 1.2); svgEl('text', { x: p[0], y: p[1] + 4, 'text-anchor': 'middle', fill: 'oklch(.55 .027 264)', 'font-size': 11 }, rsvg).textContent = a })
+const rpoly = svgEl('polygon', { fill: 'oklch(.55 .22 290)', 'fill-opacity': .2, stroke: 'oklch(.55 .22 290)', 'stroke-width': 2 }, rsvg)
+// line chart
+const LH = 330, lsvg = svgEl('svg', { width: '100%', height: LH }, lineCard); lsvg.style.display = 'block'
+const lclipD = svgEl('clipPath', { id: 'lclip2' }, svgEl('defs', {}, lsvg)); const lclipR = svgEl('rect', { x: 0, y: 0, width: 0, height: LH }, lclipD)
+const lgrid = svgEl('g', {}, lsvg), lg = svgEl('g', { 'clip-path': 'url(#lclip2)' }, lsvg)
+const lpath = svgEl('path', { fill: 'none', stroke: 'oklch(.55 .22 290)', 'stroke-width': 2 }, lg)
+const ldots = [0, 1, 2, 3, 4, 5, 6].map(() => svgEl('circle', { r: 4, fill: 'oklch(.55 .22 290)' }, lg))
+const lval = [41200, 42100, 43800, 44500, 45900, 47100, 48210], lday = ['Mar 1', 'Mar 2', 'Mar 3', 'Mar 4', 'Mar 5', 'Mar 6', 'Mar 7']
+const ytxt = [0, 1, 2, 3, 4].map(() => svgEl('text', { fill: 'oklch(.55 .027 264)', 'font-size': 11, 'text-anchor': 'end' }, lgrid))
+const xtxt = lday.map((d) => { const e = svgEl('text', { fill: 'oklch(.55 .027 264)', 'font-size': 11, 'text-anchor': 'middle' }, lgrid); e.textContent = d; return e })
+
+// ================= phone frame =================
+const PX = TALL ? 270 : 1100, PY = TALL ? 840 : 70, PW = 330, PH = TALL ? 560 : 760
+const ph = el('div', 'frame', ui); S(ph, { left: PX + 'px', top: PY + 'px', width: PW + 'px', height: PH + 'px', borderRadius: '34px', border: '8px solid #14141c', overflow: 'visible' })
+const ptop = el('div', null, ph); S(ptop, { height: '56px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px', padding: '14px 12px 0' })
+const hb = el('div', 'hb', ptop, '<svg viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>')
+el('div', null, ptop, '<b style="font-size:16px">Analytics</b>')
+const pbody = el('div', null, ph); S(pbody, { padding: '14px', display: 'grid', gap: '12px' })
+;[['Followers', '48,210'], ['Engagement', '4.8%']].forEach(([k, v]) => el('div', 'mini-stat', pbody, `<div class="k">${k}</div><div class="v">${v}</div>`))
+el('div', 'pcard', pbody, '<h4>Follower Growth</h4><div style="height:110px;border-radius:10px;background:linear-gradient(180deg,oklch(.55 .22 290/.25),transparent)"></div>')
+const pback = el('div', 'back', ph)
+const pdrawer = el('div', 'drawer', ph)
+const plogo = el('div', 'logo', pdrawer, '<div class="mark">R</div><small>Team<br>Workspace</small>')
+const pnav = el('div', 'nav', pdrawer, navHTML(true))
+el('div', 'user', pdrawer, '<div class="av">A</div><div><div style="font-size:14px;font-weight:500">Avery Quinn</div><div style="font-size:12px;color:var(--muted)">Creator</div></div>')
+
+// cursor
+const cur = el('div', 'cursor', ui, '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 2l15 8-6.5 2L9 19z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>')
+
+const fadeEl = el('div', 'fade', ui)
+const kfn = (t, times, vals, ease = easeInOutCss) => { for (let i = 0; i < times.length - 1; i++) if (t <= times[i + 1]) { const x = ease(clamp((t - times[i]) / (times[i + 1] - times[i]))); return vals[i] + (vals[i + 1] - vals[i]) * x } return vals[vals.length - 1] }
+// ---- schedule (seconds) ----
+const T_COLLAPSE = 1.9, T_EXPAND = 4.2, T_OPEN = 5.8, T_CLOSE = 8.0
+let lastLabels = null
+function render(t) {
+  // desktop sidebar width: 240 -> 68 -> 240, duration .3 easeInOut
+  const wq = (a, b, t0) => a + (b - a) * easeInOutCss(seg(t, t0, t0 + .3))
+  const sw = t < T_EXPAND ? wq(240, 68, T_COLLAPSE) : wq(68, 240, T_EXPAND)
+  const open = !(t >= T_COLLAPSE && t < T_EXPAND)   // labels render conditionally on sidebarOpen
+  if (lastLabels !== open) { dnav.innerHTML = navHTML(open); S(dlogoTxt, { display: open ? '' : 'none' }); S(duser.querySelector('.un'), { display: open ? '' : 'none' }); S(duser, { justifyContent: open ? '' : 'center', padding: open ? '12px' : '12px 0' }); lastLabels = open }
+  S(dside, { width: sw + 'px', height: '100%' }); S(dlogo, { justifyContent: open ? '' : 'center', padding: open ? '20px' : '20px 0' })
+  const lq = open ? easeOutCss(seg(t, t < T_EXPAND ? 0 : T_EXPAND + .0, (t < T_EXPAND ? 0 : T_EXPAND) + .3)) : 1
+  S(dlogoTxt, { opacity: open ? lq : 1 }); S(duser, { opacity: 1 })
+  S(dmain, { left: sw + 'px', top: 0, right: 0, bottom: 0 })
+  const rot = t < T_EXPAND ? wq(0, 180, T_COLLAPSE) : wq(180, 0, T_EXPAND)
+  S(tog, { left: (sw - 12) + 'px' }); tog.firstChild.style.transform = `rotate(${rot}deg)`
+  const pq = easeOutCss(seg(t, 0, .4)); S(dpage, { opacity: pq, transform: `translateY(${(1 - pq) * 8}px)` })
+  // radar: scale from centre over 1.5s
+  const rq = easeCss(seg(t, 0, 1.5)); rpoly.setAttribute('points', rv.map((v, i) => polar(i, v / 100 * rq).join(',')).join(' '))
+  // line chart redraws at the container's current width (ResponsiveContainer)
+  const lw = lineCard.clientWidth - 32, PLx = 44, PRx = lw - 8, PTy = 10, PBy = LH - 30
+  lsvg.setAttribute('viewBox', `0 0 ${lw} ${LH}`)
+  const lmin = 40000, lmax = 50000
+  const lp = lval.map((v, i) => [PLx + (i / 6) * (PRx - PLx), PBy - ((v - lmin) / (lmax - lmin)) * (PBy - PTy)])
+  lpath.setAttribute('d', monotonePath(lp)); lp.forEach((p, i) => { ldots[i].setAttribute('cx', p[0]); ldots[i].setAttribute('cy', p[1]) })
+  ytxt.forEach((e, i) => { e.setAttribute('x', PLx - 8); e.setAttribute('y', PBy - (i / 4) * (PBy - PTy) + 4); e.textContent = (lmin + i * 2500).toLocaleString('en-US') })
+  xtxt.forEach((e, i) => { e.setAttribute('x', lp[i][0]); e.setAttribute('y', LH - 8); e.style.display = (lw < 330 && i % 2) ? 'none' : ''; e.setAttribute('text-anchor', i === 6 ? 'end' : 'middle') })
+  lclipR.setAttribute('width', (lw * easeCss(seg(t, 0, 1.5))).toFixed(1))
+  // phone drawer: spring x -280 -> 0 (stiffness 200, damping 25); backdrop fades; exit is the same spring back
+  let dx, bo
+  if (t < T_CLOSE) { const q = fmSpring(t - T_OPEN, 200, 25); dx = -280 * (1 - q); bo = clamp((t - T_OPEN) / .3) } else { const q = fmSpring(t - T_CLOSE, 200, 25); dx = -280 * q; bo = 1 - clamp((t - T_CLOSE) / .3) }
+  if (t < T_OPEN) { dx = -280; bo = 0 }
+  S(pdrawer, { display: dx <= -255 ? 'none' : '', left: dx + 'px', clipPath: `inset(0 0 0 ${Math.max(0, -dx)}px)` })   /* left instead of transform: a transformed child inside a rounded overflow:hidden frame is rasterised differently from frame to frame */; S(pback, { opacity: bo, display: bo > 0.001 ? '' : 'none' })
+  // cursor path
+  const togX = FX + sw + 0, togY = FY + 32
+  const hbX = PX + 8 + 30, hbY = PY + 8 + 14 + 26
+  const xs = [[0, 1100, 760], [1.0, togX + 6, togY + 6], [T_COLLAPSE, togX + 6, togY + 6], [T_COLLAPSE + .6, 760, 520], [3.3, togX + 6, togY + 6], [T_EXPAND, togX + 6, togY + 6], [T_EXPAND + .7, 1000, 600], [5.0, hbX, hbY], [T_OPEN, hbX, hbY], [6.6, 1180, 700], [7.5, 1180, 700], [8.2, 1180, 700]]
+  let cx = xs[0][1], cy = xs[0][2]
+  for (let i = 0; i < xs.length - 1; i++) if (t >= xs[i][0] && t <= xs[i + 1][0]) { const q = easeInOutCss((t - xs[i][0]) / (xs[i + 1][0] - xs[i][0] || 1)); cx = xs[i][1] + (xs[i + 1][1] - xs[i][1]) * q; cy = xs[i][2] + (xs[i + 1][2] - xs[i][2]) * q }
+  if (t > xs[xs.length - 1][0]) { cx = xs[xs.length - 1][1]; cy = xs[xs.length - 1][2] }
+  S(cur, { left: cx + 'px', top: cy + 'px' })
+  S(fadeEl, { opacity: seg(t, DUR - .4, DUR) })
+}
+
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,20 @@
+{
+  "slug": "solid-curtain-sweep-wipe__translatex-percent",
+  "visual_name": "Solid colour curtain sweep",
+  "code_name": "translateX percent sweep",
+  "category": "motion-graphics",
+  "summary": "A flat purple gradient panel sweeps left to right across the whole frame in 0.45 seconds, and the next page scales up from 92 percent behind it as the panel leaves.",
+  "tags": [
+    "transition",
+    "dark",
+    "browser-window"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

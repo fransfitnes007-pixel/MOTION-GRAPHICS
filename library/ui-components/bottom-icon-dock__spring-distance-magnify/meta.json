@@ -1,0 +1,23 @@
+{
+  "slug": "bottom-icon-dock__spring-distance-magnify",
+  "visual_name": "Bottom icon dock",
+  "code_name": "Spring distance magnify",
+  "category": "ui-components",
+  "summary": "A floating glass dock of icon buttons that swell toward the pointer on springs, with a tooltip above the button under the pointer and a dot under the active one.",
+  "tags": [
+    "nav",
+    "hover",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "css",
+    "backdrop-filter"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

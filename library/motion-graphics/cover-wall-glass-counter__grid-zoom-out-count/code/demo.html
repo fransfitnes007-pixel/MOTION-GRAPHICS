@@ -1,0 +1,125 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cover wall with glass counter</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.glass{position:absolute;border-radius:28px;background:rgba(255,255,255,.72);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(24,16,52,.45),0 0 0 1px rgba(20,16,40,.07)}
+
+.tile{position:absolute;border-radius:16px;overflow:hidden;background:#111;box-shadow:0 16px 40px -14px rgba(0,0,0,.55)}
+
+.num{font-variant-numeric:tabular-nums}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.8
+window.DUR = DUR
+// Everything is laid out in the full-length version's 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// Placeholder for a vertical video cover: a gradient with a head-and-shoulders silhouette.
+const coverBg = (i) => { const h = (i * 47 + 250) % 360; return `radial-gradient(circle at 50% 34%, rgba(255,255,255,.55) 0 11%, transparent 12%), radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.35) 0 28%, transparent 29%), linear-gradient(170deg, hsl(${h} 70% 62%), hsl(${(h + 50) % 360} 60% 30%))` }
+// light stage: grey base, faint dot grid, four blurred orbs drifting
+const bgL = el('div', 'layer', root); const bgBase = el('div', 'bgfill', bgL); S(bgBase, { background: '#f4f4f6' }); el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(139,92,246,.30)', s: 900, x: 300, y: 120, sp: .09 }, { c: 'rgba(96,165,250,.26)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.14)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.30)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s + 'px', height: o.s + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+const driftOrbs = (t) => { for (const o of orbs) S(o.e, { left: (o.x + Math.sin(t * o.sp * 6 + o.s) * 120) + 'px', top: (o.y + Math.cos(t * o.sp * 5 + o.x) * 90) + 'px' }) }
+const T0 = 22.3
+const WT = { ten: 22.59, creators: 23.46, over: 24.42, billion: 24.86 }
+const s9 = el('div', 'layer', root)
+const grid9 = el('div', 'abs', s9); S(grid9, { left: '960px', top: '540px', width: '0', height: '0' })
+const G9 = []
+// the full-length version's tiles carry a 40px-blur shadow; 135 of them make the page slow to paint, so the demo uses a light one
+
+for (let r = -4; r <= 4; r++) for (let c = -7; c <= 7; c++) {
+  const t = el('div', 'tile', grid9); const k = (r + 4) * 15 + (c + 7)
+  S(t, { width: '150px', height: '266px', left: (c * 170 - 75) + 'px', top: (r * 286 - 133) + 'px', borderRadius: '14px', boxShadow: '0 4px 10px -6px rgba(0,0,0,.5)', background: coverBg((k * 7 + 3) % 14) })
+  t.r = r; t.c = c; t.d = Math.hypot(r * 1.6, c); G9.push(t)
+}
+const veil9 = el('div', 'layer', s9); S(veil9, { background: 'linear-gradient(180deg, rgba(244,244,246,0) 62%, rgba(244,244,246,.96) 90%), radial-gradient(ellipse at 50% 46%, rgba(244,244,246,.92) 0%, rgba(244,244,246,.55) 38%, rgba(244,244,246,0) 70%)' })
+const card9 = el('div', 'glass', s9); S(card9, { left: '430px', top: '300px', width: '1060px', height: '420px', borderRadius: '44px' })
+const n9a = el('div', 'abs num', card9); S(n9a, { left: 0, right: 0, top: '70px', textAlign: 'center', fontWeight: 800, fontSize: '200px', letterSpacing: '-.055em', lineHeight: '1' })
+const s9a = el('div', 'abs', card9); S(s9a, { left: 0, right: 0, top: '290px', textAlign: 'center', fontWeight: 600, fontSize: '50px', color: '#55556a', letterSpacing: '-.02em' })
+// the views line draws across the bottom
+const chart9 = el('div', 'abs', s9); S(chart9, { left: '160px', top: '790px', width: '1600px', height: '260px', opacity: 0 })
+chart9.innerHTML = `<svg viewBox="0 0 1600 260" width="1600" height="260"><defs><linearGradient id="cg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".35"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs><path id="ca" d="" fill="url(#cg)"/><path id="cl" d="" fill="none" stroke="#6d3cff" stroke-width="6" stroke-linecap="round"/></svg>`
+const CA = chart9.querySelector('#ca'), CL = chart9.querySelector('#cl')
+const CHART = Array.from({ length: 60 }, (_, i) => { const x = i / 59; return Math.pow(x, 1.8) * .9 + .05 * Math.sin(i * .9) * x + .02 })
+const counter = (e, t, a, b, from, to, f = (v) => fmt(v)) => { e.textContent = f(lerp(from, to, eo5(seg(t, a, b)))) }
+const T_OUT = 26.18   // the exit time
+function render(t) {
+  t += T0
+  driftOrbs(t)
+  const z = lerp(3.2, 1, eio5(seg(t, 22.4, 23.6))) * lerp(1, .9, eio(seg(t, 23.6, 26.4))), out = eio5(seg(t, T_OUT, T_OUT + .32))
+  S(grid9, { transform: `scale(${z * lerp(1, 1.6, out)}) rotate(${-4 + 4 * eio(seg(t, 22.4, 23.6))}deg)`, opacity: 1 - out })
+  G9.forEach((tl) => { const p = eo5(seg(t, 22.4 + tl.d * .045, 22.85 + tl.d * .045)); S(tl, { opacity: p, transform: `scale(${.7 + .3 * p})` }) })
+  const bl = seg(t, 24.3, 24.8)
+  veil9.style.opacity = lerp(.9, 1, bl) * (1 - out)
+  const ci = spring(seg(t, WT.ten - .05, WT.ten + .55), 7, 11)
+  S(card9, { opacity: clamp(ci * 1.4) * (1 - out), transform: `scale(${(.85 + .15 * ci) * (1 - out * .2)})` })
+  if (t < WT.over - .05) { counter(n9a, t, WT.ten, WT.creators + .1, 400, 5000, (v) => fmt(v) + (t > WT.creators + .1 ? '+' : '')); s9a.textContent = 'members' }
+  else {
+    const p = seg(t, WT.over - .05, WT.billion + .1)
+    n9a.textContent = t < WT.billion + .1 ? fmt(lerp(5000000, 500000000, eo5(p))) : '500M+'
+    s9a.textContent = 'views tracked'
+  }
+  const sw = 1 - Math.abs(seg(t, WT.over - .2, WT.over + .1) * 2 - 1); n9a.style.filter = sw > 0 ? `blur(${sw * 10}px)` : ''
+  n9a.style.fontSize = t >= WT.billion + .1 ? '230px' : (t >= WT.over - .05 ? '170px' : '200px')
+  n9a.style.color = (t >= WT.creators + .1 && t < WT.over - .05) || t >= WT.billion + .1 ? '#6d3cff' : '#0b0b10'
+  const cp = eo5(seg(t, WT.over, 25.9))
+  chart9.style.opacity = eo5(seg(t, WT.over - .1, WT.over + .3)) * (1 - out)
+  const n = Math.max(2, Math.round(cp * CHART.length)), pts = CHART.slice(0, n).map((v, i) => [i * 1600 / 59, 240 - v * 220])
+  const d = 'M' + pts.map((p) => p.join(',')).join(' L')
+  CL.setAttribute('d', d); CA.setAttribute('d', d + ` L${pts[pts.length - 1][0]},260 L0,260 Z`)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

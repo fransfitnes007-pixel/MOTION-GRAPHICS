@@ -1,0 +1,22 @@
+{
+  "slug": "logo-glitch-slice-blur-reveal__clip-path-inset-slices",
+  "visual_name": "Logo glitch-slice blur reveal",
+  "code_name": "Clip-path inset slices",
+  "category": "motion-graphics",
+  "summary": "A wordmark fades up out of a 10px blur while shrinking from 125 percent, flickering through random horizontal slices for the first half second, with a tagline sliding in under it.",
+  "tags": [
+    "logo",
+    "kinetic-type",
+    "dark",
+    "glow",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

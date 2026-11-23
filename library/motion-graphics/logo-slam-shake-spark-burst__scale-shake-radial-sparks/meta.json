@@ -1,0 +1,22 @@
+{
+  "slug": "logo-slam-shake-spark-burst__scale-shake-radial-sparks",
+  "visual_name": "Logo slam with shake and spark burst",
+  "code_name": "Scale, shake, radial sparks",
+  "category": "motion-graphics",
+  "summary": "On the beat a wordmark slams in from 170 percent with a hard 26px shake, a white flash and 26 sparks bursting outward, then zooms through the screen at the end.",
+  "tags": [
+    "logo",
+    "transition",
+    "dark",
+    "glow",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

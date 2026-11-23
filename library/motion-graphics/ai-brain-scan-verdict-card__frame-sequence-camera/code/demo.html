@@ -1,0 +1,174 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AI brain scan with verdict card</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.layer{position:absolute;inset:0}
+.bgfill{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px}
+.dots{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-image:radial-gradient(rgba(20,16,40,.11) 1.3px,transparent 1.6px);background-size:34px 34px;background-position:-4px -4px}
+.dotsd{position:absolute;left:-4000px;top:-4000px;width:9920px;height:9080px;background-position:-4px -4px;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.line{position:absolute;white-space:nowrap;line-height:1;letter-spacing:-.045em}
+.line .w{display:inline-block;will-change:transform,filter,opacity}
+.grad{background:linear-gradient(100deg,#6d3cff 0%,#9b6bff 45%,#4f7bff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.win{position:absolute;border-radius:22px;overflow:hidden;background:#0b0a12;box-shadow:0 60px 140px -40px rgba(24,16,52,.55),0 0 0 1px rgba(20,16,40,.12)}
+.win.dk{box-shadow:0 60px 160px -40px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.09),0 0 120px rgba(124,58,237,.18)}
+.win .bar{position:absolute;left:0;right:0;top:0;height:46px;background:#100f18;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:9px;padding:0 20px;z-index:3}
+.win .bar i{width:13px;height:13px;border-radius:50%;display:block}
+.win .bar .url{position:absolute;left:50%;transform:translateX(-50%);font-weight:500;font-size:15px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);padding:7px 22px;border-radius:10px;display:flex;align-items:center;gap:8px}
+.win .view{position:absolute;left:0;right:0;top:46px;bottom:0;overflow:hidden}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.6
+window.DUR = DUR
+// Everything is laid out in the full-length version's 1920x1080 space inside #root, scaled to fit whatever W x H the page is given.
+const U = Math.min(W / 1920, H / 1080)
+const root = el('div', 'abs'); S(root, { left: '0', top: '0', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `translate(${(W - 1920 * U) / 2}px,${(H - 1080 * U) / 2}px) scale(${U})` })
+const ei4 = (x) => x * x * x * x
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+const back = (x, s = 1.9) => { const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+// A line of words that rise out of a blur, one per spoken word.
+function line(parent, words, { size = 140, weight = 800, color = '#0b0b10', x = 960, y = 540, align = 'center', gap = .26, cls = '' } = {}) {
+  const L = el('div', 'line ' + cls, parent)
+  S(L, { fontWeight: weight, fontSize: size + 'px', color, top: (y - size / 2) + 'px' })
+  if (align === 'center') S(L, { left: '0', width: '1920px', textAlign: 'center' }); else S(L, { left: x + 'px' })
+  L.ws = words.map((w, i) => { const s = el('span', 'w' + (w.g ? ' grad' : ''), L); s.textContent = w.t; if (i < words.length - 1) s.style.marginRight = gap + 'em'; s.at = w.at; return s })
+  return L
+}
+function wordsIn(L, t, dur = .42) {
+  for (const s of L.ws) {
+    const p = eo5(seg(t, s.at - .04, s.at - .04 + dur))
+    s.style.opacity = p; s.style.filter = `blur(${(1 - p) * 16}px)`
+    s.style.transform = `translateY(${(1 - p) * .38}em) scale(${.92 + .08 * p})`
+  }
+}
+function wordsOut(L, t, t0, dir = -1, dur = .3) {
+  L.ws.forEach((s, i) => {
+    const q = ei(seg(t, t0 + i * .035, t0 + i * .035 + dur)); if (q <= 0) return
+    s.style.opacity = 1 - q; s.style.filter = `blur(${q * 14}px)`; s.style.transform = `translateY(${dir * q * .45}em) scale(${1 - .05 * q})`
+  })
+}
+// Placeholder for a vertical video cover: a gradient with a head-and-shoulders silhouette.
+const coverBg = (i) => { const h = (i * 47 + 250) % 360; return `radial-gradient(circle at 50% 34%, rgba(255,255,255,.55) 0 11%, transparent 12%), radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.35) 0 28%, transparent 29%), linear-gradient(170deg, hsl(${h} 70% 62%), hsl(${(h + 50) % 360} 60% 30%))` }
+const rand = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
+// Stand-in for the 1336x688 capture of the verdict card (frames 30+ of the full-length version's sequence).
+function verdictCap(parent, t, t0 = 0) {
+  const c = parent.querySelector('.vc') || (() => {
+    const c = el('div', 'abs vc', parent); S(c, { left: '0', top: '0', width: '1336px', height: '688px', background: '#0c0b16', transformOrigin: '0 0', overflow: 'hidden', color: '#fff' })   // solid: a dark gradient here dithers differently from frame to frame
+    el('div', 'abs', c, 'Instant feedback before you publish').style.cssText = 'left:60px;top:40px;font:700 20px/1 -apple-system,system-ui;color:#a8a6c0'
+    const th = el('div', 'abs', c); S(th, { left: '60px', top: '90px', width: '240px', height: '420px', borderRadius: '14px', background: 'radial-gradient(circle at 50% 34%, rgba(255,255,255,.55) 0 11%, transparent 12%), radial-gradient(ellipse at 50% 80%, rgba(255,255,255,.35) 0 28%, transparent 29%), #6a4a9c' })   // hard-stop shapes on a flat colour: smooth gradients dither differently from frame to frame
+    const box = el('div', 'abs', c); S(box, { left: '330px', top: '90px', width: '940px', height: '110px', borderRadius: '14px', background: 'rgba(16,185,129,.10)', boxShadow: 'inset 0 0 0 2px rgba(52,211,153,.35)' })
+    el('div', 'abs', box, 'Yes, good to go').style.cssText = 'left:28px;top:22px;font:700 28px/1 -apple-system,system-ui;color:#34d399'
+    el('div', 'abs', box, 'Strong opening, clear hook and a pattern that holds attention to the end.').style.cssText = 'left:28px;top:66px;font:500 17px/1 -apple-system,system-ui;color:#7b7a92'
+    c.tiles = [['Hook', 84, ''], ['Pace', 77, ''], ['Match', 81, '%'], ['Reach', 4800, '']].map(([a, v, u], i) => {
+      const k = el('div', 'abs', c); S(k, { left: (330 + i * 235) + 'px', top: '225px', width: '220px', height: '120px', borderRadius: '14px', background: '#14122200', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.08)' })
+      el('div', 'abs', k, a).style.cssText = 'left:20px;top:18px;font:500 16px/1 -apple-system,system-ui;color:#8a89a0'
+      const n = el('div', 'abs', k); n.style.cssText = 'left:20px;top:50px;font:800 46px/1 -apple-system,system-ui;color:#34d399;font-variant-numeric:tabular-nums'
+      n.v = v; n.u = u; return n
+    })
+    const bar = el('div', 'abs', c); S(bar, { left: '330px', top: '400px', width: '940px', height: '10px', borderRadius: '5px', background: 'linear-gradient(90deg,#6d3cff 0 33%,#34d399 33% 66%,#f59e0b 66%)' })   // hard stops, no dithering
+    return c
+  })()
+  c.tiles.forEach((n) => { n.textContent = fmt(n.v * eo5(seg(t, t0, t0 + .7))) + n.u })
+  return c
+}
+// Dark stage behind (see the circle-reveal skill for how it opens).
+const bg = el('div', 'bgfill', root); S(bg, { background: 'radial-gradient(ellipse at 50% 40%, #1a1030 0%, #0a0812 55%, #050409 100%)' })
+const T0 = 8.3
+const BR = { w: 1336, h: 688 }
+const w5 = el('div', 'win dk', root, `<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url">app.example.com/reviews</div></div><div class="view"></div>`)
+S(w5, { left: '160px', top: '210px', width: '1600px', height: (1600 * BR.h / BR.w + 46) + 'px' })
+w5.view = w5.querySelector('.view'); w5.vw = 1600; w5.vh = 1600 * BR.h / BR.w
+// Stand-in for frames 0-29 of the capture: a glowing strand "brain" with callouts that light up in turn.
+const runCap = el('div', 'abs', w5.view); S(runCap, { left: '0', top: '0', width: BR.w + 'px', height: BR.h + 'px', background: 'radial-gradient(ellipse at 48% 54%, #1b1238, #0a0912 70%)', transformOrigin: '0 0', overflow: 'hidden' })
+const CXb = 640, CYb = 370, strands = []
+let svg = `<svg viewBox="0 0 ${BR.w} ${BR.h}" width="${BR.w}" height="${BR.h}" style="position:absolute;left:0;top:0" fill="none" stroke-linecap="round">`
+// two hemispheres of wobbling concentric folds, plus short random strands inside the outline
+for (const h of [-1, 1]) for (let j = 0; j < 11; j++) {
+  const cx = CXb + h * 150, r = 26 + j * 15, pts = []
+  for (let k = 0; k <= 64; k++) {
+    const th = k / 64 * Math.PI * 2, rad = r * (1 + .09 * Math.sin(th * 5 + j + h) + .05 * Math.sin(th * 9 + 2 * j))
+    pts.push([h < 0 ? Math.min(cx + rad * 1.08 * Math.cos(th), CXb - 7) : Math.max(cx + rad * 1.08 * Math.cos(th), CXb + 7), CYb + rad * .98 * Math.sin(th) - 10 * Math.cos(th * .5)])
+  }
+  svg += `<path d="M${pts.map((q) => q[0].toFixed(0) + ' ' + q[1].toFixed(0)).join(' L')}" stroke="rgb(${150 + (j * 9) % 70},${130 + (j * 13) % 60},255)" stroke-width="${1.2 + (j % 3) * .5}" opacity=".3" stroke-linejoin="round"/>`
+}
+for (let i = 0; i < 60; i++) {
+  const a = rand(i * 3 + 1) * Math.PI * 2, rr = Math.sqrt(rand(i * 3 + 2)) * .9
+  let x = CXb + 300 * rr * Math.cos(a), y = CYb + 210 * rr * Math.sin(a), dir = rand(i * 5 + 7) * Math.PI * 2, d = `M${x.toFixed(0)} ${y.toFixed(0)}`
+  for (let k = 0; k < 3; k++) { dir += (rand(i * 13 + k) - .5) * 1.6; x += Math.cos(dir) * 30; y += Math.sin(dir) * 30; d += ` L${x.toFixed(0)} ${y.toFixed(0)}` }
+  svg += `<path d="${d}" stroke="#c4b5fd" stroke-width="1.4" opacity=".3"/>`
+}
+runCap.innerHTML = svg + '</svg>'; const paths = [...runCap.querySelectorAll('path')]
+const calls = [['Score A - 8/10', 'Stacked white and red text keeps a new visual event every 1 to 2 seconds.', 9.0, 10.0, 760, 330], ['Score B - 9/10', 'Trending sound sets the mood and the cuts follow its rhythm.', 10.0, 11.0, 330, 400]].map(([h, b, a, e, x, y]) => {
+  const c = el('div', 'abs', runCap); S(c, { left: x + 'px', top: y + 'px', width: '330px', padding: '14px 18px', borderRadius: '14px', background: 'rgba(30,28,44,.9)', boxShadow: '0 0 0 1px rgba(255,255,255,.1)', font: '500 17px/1.3 -apple-system,system-ui', color: '#e8e8f4' })
+  c.innerHTML = `<div style="color:#34d399;font-weight:700;margin-bottom:6px">${h}</div>${b}`; c.a = a; c.e = e; return c
+})
+const hook5 = el('div', 'abs', w5.view); S(hook5, { left: 0, top: 0, width: '78px', height: '126px', borderRadius: '8px', transformOrigin: '0 0', display: 'none', background: coverBg(3) })
+const L5a = line(root, [{ t: 'Checked', at: 9.38 }, { t: 'by', at: 9.68 }, { t: 'AI.', at: 10.10, g: 1 }], { size: 118, color: '#fff', y: 118 })
+const L5b = line(root, [{ t: 'Before', at: 10.80 }, { t: 'it', at: 11.30 }, { t: 'goes', at: 11.48 }, { t: 'live.', at: 11.66, g: 1 }], { size: 118, color: '#fff', y: 118 })
+const vc = verdictCap(w5.view, 0); S(vc, { display: 'none' })
+function render(t) {
+  t += T0
+  const wi = eo5(seg(t, 8.35, 9.0)), out = eio5(seg(t, 12.15, 12.6))
+  // this steps through a 70-frame PNG sequence: frames 0-29 are the scan, frames 30+ the verdict
+  const verdict = t >= 11.25
+  vis(runCap, !verdict); vis(vc, verdict)
+  paths.forEach((p, i) => { const f = .5 + .5 * Math.sin(t * 2.2 + i * .7); p.setAttribute('opacity', (.22 + .6 * f * f).toFixed(2)) })
+  calls.forEach((c) => { const q = eo5(seg(t, c.a, c.a + .3)) * (1 - eo5(seg(t, c.e - .3, c.e))); c.style.opacity = q })
+  verdictCap(w5.view, t, 11.25)
+  const pull = eio5(seg(t, 11.15, 11.75))
+  const z = lerp(lerp(2.05, 1.75, eio(seg(t, 8.6, 11.1))), 1.08, pull)
+  const fx = lerp(lerp(640, 600, seg(t, 8.6, 11)), 760, pull), fy = lerp(370, 330, pull)
+  const k = w5.vw / BR.w * z
+  const x = clamp(w5.vw / 2 - fx * k, w5.vw - BR.w * k, 0), y = clamp(w5.vh / 2 - fy * k, Math.min(0, w5.vh - BR.h * k), 0)
+  const cur = verdict ? vc : runCap
+  cur.style.transform = `translate(${x}px,${y}px) scale(${k})`
+  vis(hook5, verdict); if (verdict) hook5.style.transform = `translate(${x + 60 * k}px,${y + 90 * k}px) scale(${k * 240 / 78})`
+  S(w5, { opacity: wi * (1 - out), transform: `perspective(2400px) translateY(${(1 - wi) * 120 + out * -60}px) rotateX(${(1 - wi) * 16}deg) scale(${(.9 + .1 * wi) * (1 - out * .12)})`, filter: out > 0 ? `blur(${out * 12}px)` : '' })
+  wordsIn(L5a, t); wordsOut(L5a, t, 10.62, -1, .24)
+  wordsIn(L5b, t); wordsOut(L5b, t, 12.12, -1, .26)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

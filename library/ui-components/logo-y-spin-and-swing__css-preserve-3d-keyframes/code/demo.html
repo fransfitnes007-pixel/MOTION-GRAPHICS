@@ -1,0 +1,77 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Logo Y spin and swing</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#07070a;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:radial-gradient(ellipse at 50% 40%,#16161d 0%,#07070a 70%);color:#fff;font-family:-apple-system,'SF Pro Display',system-ui,sans-serif}
+.persp{position:absolute;perspective:600px}
+.flat{transform-style:preserve-3d}
+.lab{position:absolute;text-align:center;font-size:20px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45);font-family:ui-monospace,Menlo,monospace;white-space:nowrap}
+.mono{width:100%;height:100%;border-radius:50%;background:linear-gradient(145deg,#f4f6fa,#8a93a3 55%,#e8ecf2);display:grid;place-items:center;color:#0b0b10;font-weight:800;letter-spacing:-.04em}
+.wm{font-weight:800;letter-spacing:.14em;background:linear-gradient(135deg,#f5f5f8 30%,#a5a5f0 70%,#7b7bf7 100%);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const easeInOutCss = (x) => { const bz = (x1,y1,x2,y2) => (p) => { if (p<=0) return 0; if (p>=1) return 1; const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx,cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by; let u=p; for(let i=0;i<8;i++){const f=((ax*u+bx)*u+cx)*u-p,d=(3*ax*u+2*bx)*u+cx; if(Math.abs(f)<1e-5||Math.abs(d)<1e-6)break; u-=f/d} return ((ay*u+by)*u+cy)*u }; return bz(.42,0,.58,1)(x) }  // CSS ease-in-out
+const DUR = 12      // lcm of the 6s spin and the 4s swing, so both loops close
+window.DUR = DUR
+// layout: two stations side by side (stacked in tall)
+const S1 = { x: TALL ? CX : W * .27, y: TALL ? H * .3 : CY }, S2 = { x: TALL ? CX : W * .7, y: TALL ? H * .68 : CY }
+const SZ = 300 * K
+const p1 = el('div', 'persp', stage); S(p1, { left: px(S1.x - SZ / 2), top: px(S1.y - SZ / 2), width: px(SZ), height: px(SZ) })
+const coin = el('div', 'flat', p1); S(coin, { width: '100%', height: '100%' }); const mono = el('div', 'mono', coin, 'N'); S(mono, { fontSize: px(SZ * .56) })
+el('div', 'lab', stage, 'rl-spin-y · 6s linear · rotateY 0 → 360'); S(stage.lastChild, { left: px(S1.x - 400 * K), width: px(800 * K), top: px(S1.y + SZ / 2 + 50 * K), fontSize: px(18 * K) })
+const WW = 700 * K
+const p2 = el('div', 'persp', stage); S(p2, { left: px(S2.x - WW / 2), top: px(S2.y - 60 * K), width: px(WW), height: px(120 * K), perspective: '800px' })
+const word = el('div', 'flat wm', p2, 'NORTHSTAR'); S(word, { width: '100%', textAlign: 'center', fontSize: px(78 * K), lineHeight: px(120 * K) })
+const cap2 = el('div', 'lab', stage, 'logo-swing · 4s ease-in-out · rotateY -35 ↔ 35'); S(cap2, { left: px(S2.x - 400 * K), width: px(800 * K), top: px(S2.y + SZ / 2 + 50 * K), fontSize: px(18 * K) })
+const hud = el('div', 'lab', stage); S(hud, { left: 0, right: 0, top: px(40 * K), fontSize: px(22 * K) })
+function render(t) {
+  // @keyframes rl-spin-y { from rotateY(0) to rotateY(360deg) }  animation: 6s linear infinite
+  const a = ((t % 6) / 6) * 360
+  S(coin, { transform: `rotateY(${a}deg)` })
+  // @keyframes logo-swing { 0% -35deg; 50% 35deg; 100% -35deg }  animation: 4s ease-in-out infinite (the easing applies to each half)
+  const u = (t % 4) / 4, b = u < .5 ? -35 + 70 * easeInOutCss(u * 2) : 35 - 70 * easeInOutCss((u - .5) * 2)
+  S(word, { transform: `rotateY(${b}deg)` })
+  hud.textContent = `spin ${a.toFixed(0).padStart(3, ' ')}°     swing ${b.toFixed(0).padStart(3, ' ')}°`
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

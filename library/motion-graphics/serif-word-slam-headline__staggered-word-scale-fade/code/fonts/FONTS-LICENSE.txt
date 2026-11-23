@@ -1,0 +1,2 @@
+Fonts in this folder are open-licensed. Playfair Display, Rye and Great Vibes: SIL Open Font License 1.1. Special Elite: Apache License 2.0.
+Full texts: LICENSES/ at the repository root.

@@ -1,0 +1,22 @@
+{
+  "slug": "browser-window-focal-camera-zoom__focal-point-transform",
+  "visual_name": "Browser window with focal camera zoom",
+  "code_name": "Focal point transform",
+  "category": "motion-graphics",
+  "summary": "A browser window holding a dashboard page, with a virtual camera that eases into one area of the page, then slides across to another, while status pills pop in beside it.",
+  "tags": [
+    "browser-window",
+    "hero",
+    "dark",
+    "scroll",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

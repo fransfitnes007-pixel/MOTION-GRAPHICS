@@ -1,0 +1,70 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Confetti burst</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--f:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+.layer{position:absolute;inset:0}
+.layer{will-change:transform}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 2.2
+window.DUR = DUR
+const at = (e, x, y, extra = '') => S(e, { left: px(x), top: px(y), transform: `translate(-50%,-50%) ${extra}` })
+const wordIn = (e, t, t0, x, y, dur = .22) => { const q = spring(seg(t, t0, t0 + dur * 2.2), 8, 12); S(e, { opacity: clamp(q * 1.6), left: px(x), top: px(y), transform: `translate(-50%,-50%) translateY(${(1 - q) * 30}px) scale(${.7 + .3 * q})` }) }
+const rnd = (i, s = 1) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CURSOR = '<svg viewBox="0 0 24 24" width="44" height="44"><path d="M4.5 2.5l15 8.6-6.6 1.9-2.9 6.5z" fill="#fff" stroke="#0b0b10" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+const HEART = (f = '#fff') => `<svg viewBox="0 0 24 24" fill="${f}"><path d="M12 21s-7.5-4.6-9.5-9.3C1 7.9 3.6 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.4 0 6 3.4 4.5 7.2C19.5 16.4 12 21 12 21z"/></svg>`
+const COMMENT = `<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.8 2 11.5c0 2.3 1.1 4.4 2.9 5.9L4 21l4.6-2c1.1.3 2.2.5 3.4.5 5.5 0 10-3.8 10-8.5S17.5 3 12 3z"/></svg>`
+const SHARE = `<svg viewBox="0 0 24 24" fill="#fff"><path d="M13 4l8 7-8 7v-4.2C7.6 13.8 4.6 15.6 3 19c0-6.2 3.8-10.1 10-10.8V4z"/></svg>`
+const SAVE = (f = '#fff') => `<svg viewBox="0 0 24 24" fill="${f}"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>`
+const CHECK = (c = '#fff') => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+const confetti = Array.from({ length: 26 }, (_, i) => { const e = el('div', 'abs'); S(e, { width: px(14 * K), height: px(14 * K), borderRadius: i % 3 ? '50%' : '3px', background: ['#2f6bff', '#ffd23d', '#ff2e97', '#38bdf8', '#1f8f3e'][i % 5] }); return e })
+const check = el('div', 'abs', stage, CHECK()); S(check, { width: px(150 * K), height: px(150 * K), borderRadius: '50%', background: '#1f8f3e', display: 'grid', placeItems: 'center', fontSize: px(90 * K) })
+const T0 = .5                                  // the burst starts at the "results" word, 20.65s
+function render(t) {
+  const ck = spring(seg(t, T0 - .05, T0 + .35), 8, 12); S(check, { left: px(CX), top: px(CY), transform: `translate(-50%,-50%) scale(${ck})` })
+  confetti.forEach((e, i) => { const u = seg(t, T0, T0 + 1.15); const a = rnd(i, 7) * Math.PI * 2, sp = 300 + rnd(i, 8) * 420; vis(e, u > 0 && u < 1); S(e, { left: px(CX + Math.cos(a) * sp * eo(u) * K), top: px(CY + Math.sin(a) * sp * eo(u) * K + 500 * u * u * K), opacity: 1 - u * u, transform: `rotate(${u * 720 * rnd(i, 9)}deg)` }) })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

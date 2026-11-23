@@ -1,0 +1,20 @@
+{
+  "slug": "countdown-readout__digit-slide-crossfade-pulse",
+  "visual_name": "Countdown readout",
+  "code_name": "Digit slide crossfade and pulse",
+  "category": "ui-components",
+  "summary": "A big monospace timer where each digit that changes slides up out of its slot while the next one slides in from below, with a pulsing clock icon, a green Running label and a thin bar draining underneath.",
+  "tags": [
+    "counter",
+    "dark"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "popLayout"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

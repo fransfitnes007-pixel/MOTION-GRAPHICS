@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tilted 3D poster wall</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dots{position:absolute;inset:-120px;background-image:radial-gradient(rgba(20,16,40,.10) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+.tile{position:absolute;border-radius:16px;overflow:hidden;background:#111;box-shadow:0 16px 40px -14px rgba(0,0,0,.5)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3.2
+window.DUR = DUR
+
+const bgL = el('div', 'abs'); S(bgL, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: '#f4f4f6' })
+el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(91,92,230,.26)', s: 900, x: 280, y: 100, sp: .09 }, { c: 'rgba(96,165,250,.24)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.12)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.28)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s * K + 'px', height: o.s * K + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+function bgLight(t) { for (const o of orbs) S(o.e, { left: ((o.x + Math.sin(t * o.sp * 6 + o.s) * 120) * W / 1920) + 'px', top: ((o.y + Math.cos(t * o.sp * 5 + o.x) * 90) * H / 1080) + 'px' }) }
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+const VIDEOS = .33                       // the word "videos" (timed to the spoken word)
+const wall5 = el('div', 'abs', FR); S(wall5, { left: '490px', top: '0', width: '940px', height: '1080px', perspective: '1800px' })
+const wall5in = el('div', 'abs', wall5); S(wall5in, { left: '0', top: '0', width: '940px', height: '1080px', transformStyle: 'preserve-3d' })
+const T5 = []
+for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+  const t = el('div', 'tile', wall5in); S(t, { width: '196px', height: '348px', left: (40 + c * 218 + (r % 2) * 40) + 'px', top: (-120 + r * 370) + 'px' })
+  const i = r * 4 + c, h = (i * 47 + 200) % 360     // a stand-in for the video poster
+  t.innerHTML = `<div style="position:absolute;inset:0;background:linear-gradient(160deg,hsl(${h} 45% 62%),hsl(${h} 40% 22%))"></div><div style="position:absolute;left:50%;top:34%;width:84px;height:84px;margin-left:-42px;border-radius:50%;background:rgba(255,255,255,.28)"></div><div style="position:absolute;left:24px;right:24px;bottom:34px;height:12px;border-radius:6px;background:rgba(255,255,255,.45)"></div>`
+  t.r = r; t.c = c; T5.push(t)
+}
+function render(t) {
+  bgLight(t)
+  S(wall5in, { transform: `rotateX(14deg) rotateY(-18deg) translateY(${-(t * 70)}px)` })
+  T5.forEach((tl) => { const d = tl.r + tl.c * .6, p = eo5(seg(t, VIDEOS - .1 + d * .05, VIDEOS + .35 + d * .05)); S(tl, { opacity: p * .55, transform: `translateZ(${(1 - p) * -400}px)` }) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

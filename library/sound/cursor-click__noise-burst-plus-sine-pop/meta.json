@@ -1,0 +1,21 @@
+{
+  "slug": "cursor-click__noise-burst-plus-sine-pop",
+  "visual_name": "Cursor click",
+  "code_name": "Noise burst plus sine pop",
+  "category": "sound",
+  "summary": "A dry mouse click made of a 60 ms burst of high-passed noise with a 1600 Hz pop underneath.",
+  "tags": [
+    "sfx",
+    "cursor",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

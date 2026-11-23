@@ -1,0 +1,22 @@
+{
+  "slug": "timeline-accordion-glass-cards__dot-rail-height-auto",
+  "visual_name": "Timeline accordion of glass cards",
+  "code_name": "Dot rail, height auto",
+  "category": "ui-components",
+  "summary": "A vertical hairline with a dot per item and a frosted glass card beside each; the cards rise in one after another on scroll, and clicking one opens its detail with a height and fade animation while the dot turns blue and the chevron flips.",
+  "tags": [
+    "card",
+    "light",
+    "scroll",
+    "hover"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "backdrop-filter"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

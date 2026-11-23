@@ -1,0 +1,21 @@
+{
+  "slug": "word-by-word-sentence-reveal__blur-rise-stagger",
+  "visual_name": "Word-by-word sentence reveal",
+  "code_name": "Blur-rise stagger with inline elements",
+  "category": "motion-graphics",
+  "summary": "A one-line sentence appears one word at a time, each word rising out of a light blur, with a gradient bold phrase and a small app notification card placed inline as words.",
+  "tags": [
+    "kinetic-type",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter",
+    "flexbox"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

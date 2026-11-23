@@ -1,0 +1,137 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>CTA button click with typed address</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dots{position:absolute;inset:-120px;background-image:radial-gradient(rgba(20,16,40,.10) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.line{position:absolute;white-space:nowrap;line-height:1;letter-spacing:-.045em;font-weight:800}
+.line .w{display:inline-block;will-change:transform,filter,opacity}
+.grad{background:linear-gradient(100deg,#4338ca 0%,#5b5ce6 45%,#8b5cf6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gradL{background:linear-gradient(100deg,#a5b4fc 0%,#c4b5fd 60%,#e9d5ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.cursor{position:absolute;width:44px;height:44px;z-index:80;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+.ring{position:absolute;border-radius:50%;border:3px solid #5b5ce6;z-index:79}
+
+.chip{position:absolute;display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-radius:999px;font-weight:700;font-size:21px;white-space:nowrap;letter-spacing:-.01em}
+.chip.lt{background:rgba(255,255,255,.94);color:#0b0b10;box-shadow:0 14px 34px -10px rgba(24,16,52,.35),0 0 0 1px rgba(20,16,40,.07)}
+.chip.dk{background:rgba(14,12,22,.86);color:#fff;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+.glass{position:absolute;border-radius:28px;background:rgba(255,255,255,.74);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(24,16,52,.42),0 0 0 1px rgba(20,16,40,.07)}
+.glassd{position:absolute;border-radius:28px;background:rgba(255,255,255,.07);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12)}
+.btn{position:absolute;display:flex;align-items:center;justify-content:center;gap:16px;border-radius:999px;background:linear-gradient(180deg,#6d6ef0,#5b5ce6);color:#fff;font-weight:700;font-size:46px;letter-spacing:-.02em;box-shadow:0 30px 70px -18px rgba(91,92,230,.7),inset 0 1px 0 rgba(255,255,255,.35)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 2.8
+window.DUR = DUR
+
+const bgL = el('div', 'abs'); S(bgL, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: '#f4f4f6' })
+el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(91,92,230,.26)', s: 900, x: 280, y: 100, sp: .09 }, { c: 'rgba(96,165,250,.24)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.12)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.28)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s * K + 'px', height: o.s * K + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+function bgLight(t) { for (const o of orbs) S(o.e, { left: ((o.x + Math.sin(t * o.sp * 6 + o.s) * 120) * W / 1920) + 'px', top: ((o.y + Math.cos(t * o.sp * 5 + o.x) * 90) * H / 1080) + 'px' }) }
+
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+
+function line(words, { size = 140, weight = 800, color = '#0b0b10', y = CY, gap = .26 } = {}) {
+  const P = typeof HOST === 'undefined' ? stage : HOST, LW = typeof HOST === 'undefined' ? W : 1920     // HOST is the 1920x1080 frame when a demo uses one
+  const L = el('div', 'line', P)
+  S(L, { fontSize: size + 'px', fontWeight: weight, color, top: (y - size / 2) + 'px', left: '0', width: LW + 'px', textAlign: 'center' })
+  L.ws = words.map((w, i) => { const s = el('span', 'w' + (w.g ? (color === '#fff' ? ' gradL' : ' grad') : ''), L); s.textContent = w.t; if (i < words.length - 1) s.style.marginRight = gap + 'em'; s.at = w.at; return s })
+  return L
+}
+function wordsIn(L, t, dur = .42) {
+  for (const s of L.ws) {
+    const p = eo5(seg(t, s.at - .04, s.at - .04 + dur))
+    s.style.opacity = p; s.style.filter = `blur(${(1 - p) * 16}px)`
+    s.style.transform = `translateY(${(1 - p) * .38}em) scale(${.92 + .08 * p})`
+  }
+}
+function wordsOut(L, t, t0, dir = -1, dur = .3) {
+  L.ws.forEach((s, i) => {
+    const q = ei(seg(t, t0 + i * .035, t0 + i * .035 + dur)); if (q <= 0) return
+    s.style.opacity = 1 - q; s.style.filter = `blur(${q * 14}px)`; s.style.transform = `translateY(${dir * q * .45}em) scale(${1 - .05 * q})`
+  })
+}
+
+
+const CURSOR = '<svg viewBox="0 0 24 24" width="44" height="44"><path d="M4.5 2.5l15 8.6-6.6 1.9-2.9 6.5z" fill="#0b0b10" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+const cursor = el('div', 'cursor', HOST, CURSOR); const ring = el('div', 'ring', HOST)
+function clickAt(t, at, tx, ty, from, t0) {
+  vis(cursor, true)
+  const cp = eio5(seg(t, t0, at - .04))
+  S(cursor, { left: lerp(from[0], tx, cp) + 'px', top: lerp(from[1], ty, cp) + 'px', transform: `scale(${1 - .18 * Math.sin(Math.PI * seg(t, at - .04, at + .12))})` })
+  const rp = seg(t, at, at + .5)
+  if (rp > 0 && rp < 1) { vis(ring, true); const d = 20 + eo(rp) * 130; S(ring, { width: d + 'px', height: d + 'px', left: (tx - d / 2) + 'px', top: (ty - d / 2) + 'px', opacity: 1 - rp }) }
+}
+
+const LOCK = (c = '#6b6b7b', s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
+const ARROW = (c = '#fff', s = 38) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg>`
+// word times, 20.05s earlier: "get" .32, "yours" .44, "at" .7 (the click), "yourbrand" 1.04, "link" 1.82
+const GET = .32, YOURS = .44, AT = .7, GROWTH = 1.04, LINK = 1.82
+const L9 = line([{ t: 'Get', at: GET }, { t: 'yours', at: YOURS, g: 1 }], { size: 150, y: 300 })
+const btn9 = el('div', 'btn', FR, 'Get started ' + ARROW('#fff', 40)); S(btn9, { left: '610px', top: '440px', width: '700px', height: '136px' })
+const url9 = el('div', 'glass', FR); S(url9, { left: '620px', top: '660px', width: '680px', height: '104px', borderRadius: '52px', display: 'flex', alignItems: 'center', gap: '20px', padding: '0 40px', fontWeight: 700, fontSize: '50px', letterSpacing: '-.02em' })
+url9.innerHTML = LOCK('#6b6b7b', 32) + '<span class="tx"></span><span class="ca" style="width:5px;height:52px;background:#5b5ce6;border-radius:2px;display:block"></span>'
+const url9t = url9.querySelector('.tx'), url9c = url9.querySelector('.ca')
+function render(t) {
+  bgLight(t)
+  vis(cursor, false); vis(ring, false)
+  const out = eio5(seg(t, 2.33, 2.65))
+  wordsIn(L9, t); wordsOut(L9, t, 2.3, -1, .22)
+  const b = spring(seg(t, .07, .7), 7, 11), press = 1 - .05 * Math.sin(Math.PI * seg(t, AT - .02, AT + .16))
+  S(btn9, { opacity: clamp(b * 1.5) * (1 - out), transform: `translateY(${(1 - b) * 50}px) scale(${(.9 + .1 * b) * press})`, filter: `brightness(${1 + .25 * (1 - seg(t, AT, AT + .5)) * (t > AT ? 1 : 0)})` })
+  const u = eo5(seg(t, GROWTH - .25, GROWTH + .15))
+  S(url9, { opacity: u * (1 - out), transform: `translateY(${(1 - u) * 30}px)` })
+  const txt = 'yourbrand.link', n = Math.round(clamp(seg(t, GROWTH - .1, LINK + .2)) * txt.length)
+  url9t.textContent = txt.slice(0, n); url9c.style.opacity = (Math.floor(t * 3) % 2 || n < txt.length) ? 1 : 0
+  if (t > .1 && t < 2.15) { clickAt(t, AT, 1200, 520, [1700, 1000], .1); S(cursor, { opacity: 1 - seg(t, 1.85, 2.1) }) }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

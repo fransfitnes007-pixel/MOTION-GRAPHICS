@@ -1,0 +1,160 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Video review scan overlay</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.pg{position:absolute;inset:0;background:#050509;font-family:-apple-system,'SF Pro Display',system-ui,sans-serif}
+.fr{position:absolute;left:190px;top:20px;width:260px;height:462px;border-radius:24px;border:1px solid #1a1a2e;background:#000;overflow:hidden;box-shadow:0 25px 50px -12px rgba(139,92,246,.10)}
+.sc{position:absolute;inset:0}
+.hd{position:absolute;width:74px;height:74px;left:50%;margin-left:-37px;top:36%;border-radius:50%}
+.bd{position:absolute;width:170px;height:200px;left:50%;margin-left:-85px;top:52%;border-radius:85px 85px 0 0}
+.hook{position:absolute;left:12%;right:12%;top:9%;height:14%;border-radius:10px;background:rgba(255,255,255,.92)}
+.hook::after{content:"";position:absolute;left:12px;right:30px;top:14px;height:10px;border-radius:5px;background:rgba(0,0,0,.68);box-shadow:0 18px 0 -1px rgba(0,0,0,.5)}
+.band{position:absolute;left:0;right:0;height:64px;pointer-events:none;background:linear-gradient(to bottom,transparent,rgba(139,92,246,.35),transparent)}
+.band i{position:absolute;left:0;right:0;top:50%;height:1px;background:#A78BFA;box-shadow:0 0 12px #A78BFA}
+.fb{position:absolute;pointer-events:none;border-radius:8px}
+.fb span{position:absolute;left:0;border-radius:4px;padding:0 6px;font-size:10px;font-weight:700;color:#000;line-height:16px;white-space:nowrap}
+.ro{position:absolute;left:12px;right:12px;bottom:12px;border-radius:12px;background:rgba(0,0,0,.65);padding:8px 12px}
+.ro .a{display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:rgba(255,255,255,.8)}
+.ro .b{margin-top:6px;height:4px;border-radius:9999px;background:rgba(255,255,255,.15);overflow:hidden}
+.ro .b i{display:block;height:100%;border-radius:9999px;background:#A78BFA}
+.idle{position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.pb{width:64px;height:64px;border-radius:9999px;background:#8B5CF6;display:grid;place-items:center;box-shadow:0 0 40px rgba(139,92,246,.7)}
+.pp{border-radius:9999px;background:rgba(0,0,0,.6);padding:4px 12px;font-size:12px;font-weight:600;color:#fff}
+.mu{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:9999px;background:rgba(0,0,0,.55);display:grid;place-items:center}
+.cap{position:absolute;left:190px;width:260px;top:492px;text-align:center;font-size:11px;color:#6b7280}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers (framer-motion style easing and springs, evaluated from t) ----
+const bez = (x1, y1, x2, y2) => {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  const X = (s) => ((ax * s + bx) * s + cx) * s, Y = (s) => ((ay * s + by) * s + cy) * s
+  return (x) => { if (x <= 0) return 0; if (x >= 1) return 1; let s = x; for (let i = 0; i < 8; i++) { const e = X(s) - x; if (Math.abs(e) < 1e-6) break; const d = (3 * ax * s + 2 * bx) * s + cx; if (Math.abs(d) < 1e-6) break; s -= e / d } return Y(s) }
+}
+const EASE = { linear: (x) => x, easeInOut: bez(.42, 0, .58, 1), easeOut: bez(0, 0, .58, 1), easeIn: bez(.42, 0, 1, 1), expo: bez(.16, 1, .3, 1), out: bez(0, 0, .58, 1) }
+// keyframes that loop forever, like animate={{ x: [a, b, c] }} transition={{ duration, repeat: Infinity, ease, times, repeatDelay }}
+const kf = (t, vals, o = {}) => {
+  const { dur = 1, delay = 0, times, ease = EASE.easeInOut, repeatDelay = 0, repeat = true } = o
+  let l = t - delay; if (l < 0) return vals[0]
+  const per = dur + repeatDelay
+  if (repeat) l = l % per; else l = Math.min(l, dur)
+  if (l >= dur) return vals[vals.length - 1]
+  const p = l / dur, n = vals.length - 1, tm = times || vals.map((_, i) => i / n)
+  let i = 0; while (i < n - 1 && p > tm[i + 1]) i++
+  const q = (p - tm[i]) / (tm[i + 1] - tm[i])
+  return vals[i] + (vals[i + 1] - vals[i]) * ease(q)
+}
+// framer spring from 0 to 1 (stiffness, damping, mass), starting at t0
+const sp = (t, k = 100, c = 10, m = 1, t0 = 0) => {
+  const x = t - t0; if (x <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * x) * (Math.cos(wd * x) + (z * w0 / wd) * Math.sin(wd * x)) }
+  if (z === 1) return 1 - Math.exp(-w0 * x) * (1 + w0 * x)
+  const s = w0 * Math.sqrt(z * z - 1), r1 = -z * w0 + s, r2 = -z * w0 - s
+  return 1 - (r2 * Math.exp(r1 * x) - r1 * Math.exp(r2 * x)) / (r2 - r1)
+}
+const mix = (a, b, p) => a + (b - a) * p
+// design box: build at DW x DH and scale to fit whatever W x H the renderer asks for
+const fitBox = (DW, DH, bg) => {
+  const box = el('div', 'abs', stage); const FS = Math.min(W / DW, H / DH)
+  S(box, { left: '0px', top: '0px', width: DW + 'px', height: DH + 'px', transformOrigin: '0 0', transform: `translate(${(W - DW * FS) / 2}px,${(H - DH * FS) / 2}px) scale(${FS})`, overflow: 'hidden' })
+  if (bg) S(stage, { background: bg })
+  return box
+}
+const $ = (e, q) => e.querySelector(q)
+// drop Chrome's cached raster so a frame never depends on the one drawn before it (keeps render(t) pure with filters and transforms)
+const fresh = (b) => { b.style.display = 'none'; void b.offsetHeight; b.style.display = '' }
+// a CSS-transition-like value: events [{t, to, dur, delay, ease}] each start from wherever the value was when they began (interrupts are continuous)
+const animTo = (t, init, events, i = events.length - 1) => {
+  if (i < 0) return init
+  const e = events[i], start = e.t + (e.delay || 0)
+  if (t < start) return animTo(t, init, events, i - 1)
+  const from = animTo(start, init, events, i - 1), p = clamp((t - start) / e.dur)
+  return from + (e.to - from) * (e.ease || EASE.easeOut)(p)
+}
+
+const DUR = 11
+window.DUR = DUR
+const box = fitBox(640, 512, '#050509')
+el('div', 'pg', box)
+const STAGES = ['Uploading your draft', 'Waiting for the reviewer', 'Opening the file', 'Reading frames and cuts', 'Transcribing what you say', 'Reading the text on screen', 'Scoring against the brief', 'Writing the fixes']
+const T0 = 1.2, STEP = 1.1, VDUR = 23
+const fr = el('div', 'fr', box)
+const sc = el('div', 'sc', fr); const hd = el('div', 'hd', sc), bd = el('div', 'bd', sc); el('div', 'hook', sc)
+const SCENES = [[0, '#4c1d95', '#1e1b4b', '#f0abfc'], [3, '#0e7490', '#082f49', '#fde68a'], [6.5, '#9f1239', '#4c0519', '#fecdd3'], [10, '#166534', '#052e16', '#bbf7d0'], [14, '#b45309', '#451a03', '#fed7aa'], [18, '#1d4ed8', '#172554', '#bfdbfe']]
+const mu = el('div', 'mu', fr, '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4zM23 9l-6 6M17 9l6 6"/></svg>')
+const band = el('div', 'band', fr, '<i></i>')
+const face = el('div', 'fb', fr, '<span style="top:-20px;background:#f472b6">face · FFA</span>'); S(face, { left: '24%', top: '30%', width: '52%', height: '22%', border: '2px solid rgba(244,114,182,.9)', boxShadow: '0 0 20px rgba(244,114,182,.5)' })
+const txt = el('div', 'fb', fr, '<span style="bottom:-20px;background:#fcd34d">text · VWFA</span>'); S(txt, { left: '8%', top: '6%', width: '84%', height: '18%', border: '2px solid rgba(252,211,77,.9)', boxShadow: '0 0 20px rgba(251,191,36,.5)' })
+const ro = el('div', 'ro', fr, '<div class="a"><span class="s"></span><span class="tm"></span></div><div class="b"><i></i></div>')
+const idle = el('div', 'idle', fr, '<div class="pb"><svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" style="margin-left:4px"><path d="M6 4l14 8-14 8z"/></svg></div><div class="pp">Run the reviewer</div>')
+el('div', 'cap', box, 'Draft v2 · @creator · placeholder video')
+const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0')
+const RUN_END = T0 + STAGES.length * STEP
+function render(t) {
+  const state = t < T0 ? 'idle' : t < RUN_END + .45 ? 'running' : 'done'
+  const at = t < T0 ? 0 : Math.min(STAGES.length, Math.floor((t - T0) / STEP))
+  const vt = state === 'idle' ? 0 : ((t - T0) % VDUR)
+  // the placeholder video: a new scene at each cut, the speaker bobbing
+  let sce = SCENES[0]; for (const s of SCENES) if (vt >= s[0]) sce = s
+  S(sc, { background: `linear-gradient(160deg, ${sce[1]}, ${sce[2]})` })
+  const bob = Math.sin(vt * 3) * 3
+  S(hd, { background: sce[3], transform: `translateY(${bob.toFixed(1)}px)` }); S(bd, { background: sce[3], opacity: '.9', transform: `translateY(${bob.toFixed(1)}px)` })
+  vis(idle, state === 'idle')
+  // scan band: top 0% to 100% to 0%, 2.4s linear, once at >= 2; exits with a fade when the run stops
+  const bt = t - (T0 + 2 * STEP), scanning = state === 'running' && at >= 2
+  if (scanning || (state === 'done' && t < RUN_END + .45 + .3)) {
+    const p = (bt / 2.4) % 1, top = p < .5 ? p * 2 : 2 - p * 2
+    const ex = state === 'done' ? 1 - clamp((t - (RUN_END + .45)) / .3) : 1
+    S(band, { display: '', top: (top * 462 - 32).toFixed(1) + 'px', opacity: String(ex) })
+  } else vis(band, false)
+  // face box at stage 3, text box at stage 5: opacity 0 to 1 and scale 1.15 (1.1) to 1; both leave when the run ends
+  const box2 = (e, since, from) => { if (since < 0 || state !== 'running') return vis(e, false); const q = sp(since, 500, 25), o = EASE.easeOut(clamp(since / .3)); S(e, { display: '', opacity: String(o), transform: `scale(${(from - (from - 1) * q).toFixed(4)})` }) }
+  box2(face, t - (T0 + 3 * STEP), 1.15); box2(txt, t - (T0 + 5 * STEP), 1.1)
+  vis(ro, state !== 'idle')
+  $(ro, '.s').textContent = state === 'done' ? 'Reviewed' : STAGES[Math.min(at, STAGES.length - 1)]
+  $(ro, '.tm').textContent = fmt(vt) + ' / ' + fmt(VDUR)
+  $(ro, '.b i').style.width = (vt / VDUR * 100).toFixed(2) + '%'
+  fresh(box)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

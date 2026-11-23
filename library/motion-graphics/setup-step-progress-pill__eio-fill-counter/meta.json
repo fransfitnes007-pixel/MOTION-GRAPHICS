@@ -1,0 +1,21 @@
+{
+  "slug": "setup-step-progress-pill__eio-fill-counter",
+  "visual_name": "Setup step progress pill",
+  "code_name": "Eio fill bar with floor-stepped counter",
+  "category": "motion-graphics",
+  "summary": "A frosted pill under a window counts \"Step 1 of 7\" up to \"Step 7 of 7\" while its indigo bar fills, as the screens inside the window cut through the steps, ending on a click and a \"live\" chip.",
+  "tags": [
+    "browser-window",
+    "nav",
+    "cursor",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 3,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

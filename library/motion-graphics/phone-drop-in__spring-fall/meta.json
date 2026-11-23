@@ -1,0 +1,21 @@
+{
+  "slug": "phone-drop-in__spring-fall",
+  "visual_name": "Phone drop-in",
+  "code_name": "Spring fall from above",
+  "category": "motion-graphics",
+  "summary": "A dark phone with a video on its screen drops from above the frame and bounces once into place, with a sentence building word by word beneath it.",
+  "tags": [
+    "phone",
+    "hero",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 3.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

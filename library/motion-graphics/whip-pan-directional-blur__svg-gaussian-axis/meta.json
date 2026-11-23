@@ -1,0 +1,21 @@
+{
+  "slug": "whip-pan-directional-blur__svg-gaussian-axis",
+  "visual_name": "Whip pan with directional motion blur",
+  "code_name": "SVG gaussian blur on one axis",
+  "category": "motion-graphics",
+  "summary": "Full-frame windows whip in and out: one flies up from below smeared vertically, exits sideways to the left smeared horizontally, and the next arrives from the right, each blur fading as the move settles.",
+  "tags": [
+    "transition",
+    "browser-window",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

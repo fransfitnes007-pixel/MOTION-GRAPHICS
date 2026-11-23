@@ -1,0 +1,21 @@
+{
+  "slug": "whoosh-on-cut__lowpassed-noise-sweep",
+  "visual_name": "Whoosh on a cut",
+  "code_name": "Lowpassed noise sweep",
+  "category": "sound",
+  "summary": "A short airy sweep of band-passed noise that peaks on a hard cut, with variants for a scroll, a downward sweep and a wipe.",
+  "tags": [
+    "sfx",
+    "transition",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 7.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

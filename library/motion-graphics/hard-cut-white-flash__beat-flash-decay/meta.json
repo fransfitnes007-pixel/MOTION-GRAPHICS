@@ -1,0 +1,20 @@
+{
+  "slug": "hard-cut-white-flash__beat-flash-decay",
+  "visual_name": "White flash on a hard cut",
+  "code_name": "Beat flash decay",
+  "category": "motion-graphics",
+  "summary": "A full-frame white layer jumps to 55 percent opacity on the first frame of each cut and drains linearly to zero in 0.12 seconds, so a straight cut between flat colour fields reads as a hit.",
+  "tags": [
+    "transition",
+    "sfx",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

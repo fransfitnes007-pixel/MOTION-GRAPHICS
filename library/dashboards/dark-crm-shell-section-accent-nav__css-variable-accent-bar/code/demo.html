@@ -1,0 +1,214 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dark CRM shell with section accent nav</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--bg:#09090b;--bg2:#0e0e12;--surface:rgba(255,255,255,.032);--surface2:rgba(255,255,255,.055);--surface3:rgba(255,255,255,.08);--border:rgba(255,255,255,.075);--border2:rgba(255,255,255,.14);--t1:#f4f4f5;--t2:#a1a1aa;--t3:#52525b;--t4:#3f3f46;--green:#4ade80;--r:10px;--rs:6px}
+#stage{background:var(--bg);color:var(--t1);font-family:Inter,-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;-webkit-font-smoothing:antialiased}
+.ui{background:var(--bg)}
+.glow1{position:absolute;top:-130px;right:-70px;width:800px;height:800px;background:radial-gradient(ellipse,rgba(139,92,246,.065) 0%,transparent 65%)}
+.glow2{position:absolute;bottom:-180px;left:110px;width:600px;height:600px;background:radial-gradient(ellipse,rgba(96,165,250,.04) 0%,transparent 65%)}
+.sb{position:absolute;left:0;top:0;bottom:0;width:236px;background:rgba(11,11,15,.95);border-right:1px solid var(--border)}
+.sb .hd{padding:18px 14px 12px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:10px}.mk{width:32px;height:32px;background:#fff;color:#000;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:12px;letter-spacing:-.04em}
+.logo b{font-size:14px;font-weight:700;letter-spacing:-.03em;display:block}.logo small{font-size:10.5px;color:var(--t4)}
+.srch{display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--t4);font-size:12.5px}
+.srch kbd{margin-left:auto;font-size:10px;background:var(--surface3);border:1px solid var(--border);padding:1px 6px;border-radius:3px}
+.snav{padding:10px 8px}
+.gl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t4);padding:10px 10px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);color:var(--t2);font-size:13.5px;font-weight:450;position:relative;border:1px solid transparent;margin-bottom:1px}
+.ni svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;opacity:.75;stroke-linecap:round;stroke-linejoin:round}
+.ni.act{background:var(--surface2);border-color:var(--border);font-weight:500}
+.ni.act svg{opacity:1}
+.ni .bar{position:absolute;left:-1px;top:50%;width:3px;height:14px;margin-top:-7px;border-radius:0 3px 3px 0;display:none}
+.ni.act .bar{display:block}
+.prof{position:absolute;left:8px;right:8px;bottom:8px;display:flex;align-items:center;gap:9px;padding:9px 10px;border-top:1px solid var(--border)}
+.prof .av{width:28px;height:28px;background:#fff;color:#000;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.prof .st{margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(74,222,128,.5)}
+.mn{position:absolute;left:236px;right:0;top:0;bottom:0;overflow:hidden}
+.ph{padding:28px 32px 18px;display:flex;align-items:flex-start;justify-content:space-between}
+.pt{font-size:24px;font-weight:700;letter-spacing:-.04em;line-height:1.1}.ps{font-size:14px;color:var(--t2);margin-top:3px}
+.acts{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;padding:8px 16px;border-radius:var(--rs);font-size:14px;font-weight:500;border:1px solid transparent}
+.btn.p{background:#fff;color:#000}.btn.s{background:var(--surface);color:var(--t1);border-color:var(--border)}
+.pc{padding:0 32px}
+.sg{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 4px 24px rgba(0,0,0,.35)}
+.sc .ir{display:flex;align-items:center;gap:6px;margin-bottom:10px}.sc .ir i{width:12px;height:12px;border-radius:3px;background:var(--t3)}.sc .ir span{font-size:12px;color:var(--t3);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.sc .v{font-size:32px;font-weight:700;letter-spacing:-.05em;line-height:1;margin-bottom:8px}
+.sc .c{font-size:13px;font-weight:450;color:var(--green)}.sc .c.n{color:var(--t3)}
+.g3{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 4px 24px rgba(0,0,0,.35)}
+.ch{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.ai{display:flex;gap:11px;padding:11px 18px;border-bottom:1px solid var(--border)}.ai:last-child{border:0}
+.ai .d{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}.ai .x{font-size:13.5px;color:var(--t2);line-height:1.5;flex:1}.ai .x b{color:var(--t1);font-weight:500}.ai .tm{font-size:12px;color:var(--t4)}
+.live{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3)}.live i{width:6px;height:6px;border-radius:50%;background:#4ade80;display:inline-block}
+.tm2{display:flex;gap:8px;padding:6px 16px}.tm2 i{width:7px;height:7px;border-radius:50%;margin-top:6px;flex-shrink:0}.tm2 div{font-size:12.5px;font-weight:500}.tm2 small{display:block;font-size:11px;color:var(--t3);font-weight:400}
+.bb{padding:10px 16px}.bb .r{margin-bottom:9px}.bb .rt{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:4px}.bb .tr{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}.bb .f{height:100%;border-radius:2px}
+.board{display:flex;gap:10px;align-items:flex-start}
+.col{width:268px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 4px 24px rgba(0,0,0,.35)}
+.col .hh{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.col .nm{font-size:13px;font-weight:600;color:var(--t2);display:flex;align-items:center;gap:7px}.col .nm i{width:7px;height:7px;border-radius:50%}
+.col .cnt{font-size:11px;font-weight:700;color:var(--t3);background:var(--surface3);padding:1px 7px;border-radius:4px}
+.cards{padding:8px;display:flex;flex-direction:column;gap:7px}
+.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:13px 14px}
+.pcard .n{font-size:14px;font-weight:500;margin-bottom:6px}.pcard .m{font-size:12px;color:var(--t3);display:flex;justify-content:space-between}.pcard .m b{font-size:13px;color:var(--t2);font-weight:600}
+.pcard .dt{font-size:11.5px;color:var(--t4);margin-top:5px}
+.tabs2{display:flex;gap:6px;margin-bottom:14px}.tabs2 div{padding:6px 12px;border-radius:var(--rs);font-size:13px;color:var(--t2);border:1px solid transparent}.tabs2 div.on{background:var(--surface3);color:var(--t1);border-color:var(--border2)}
+.fb{display:flex;align-items:center;gap:12px;margin-bottom:10px}.fl{font-size:13px;color:var(--t2);width:110px;flex-shrink:0}.ft{flex:1;height:28px;background:var(--surface2);border-radius:4px;overflow:hidden}.ff{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:10px;font-size:12px;font-weight:600;color:rgba(0,0,0,.7)}.fv{font-size:13px;font-weight:600;width:44px;text-align:right}
+.fade2{position:absolute;inset:0;background:var(--bg);pointer-events:none}
+.tall .sb{display:none}.tall .mn{left:0}.tall .sg{grid-template-columns:1fr 1fr}.tall .g3{grid-template-columns:1fr}.tall .board{flex-wrap:wrap}
+.appt{display:flex;gap:16px;padding:16px 20px;align-items:flex-start;border-right:1px solid var(--border)}.appt:last-child{border:0}.adb{width:44px;text-align:center;background:rgba(255,255,255,.05);border-radius:8px;padding:6px 4px}.am{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--t3)}.ad{font-size:22px;font-weight:700;line-height:1.1;letter-spacing:-.03em}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers shared by the dashboard demos ----
+// CSS cubic-bezier(x1,y1,x2,y2) as a function of progress 0..1 (Newton solve for x)
+const bez = (x1, y1, x2, y2) => (x) => {
+  if (x <= 0) return 0; if (x >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let u = x
+  for (let i = 0; i < 8; i++) { const f = ((ax * u + bx) * u + cx) * u - x, d = (3 * ax * u + 2 * bx) * u + cx; if (Math.abs(f) < 1e-5 || Math.abs(d) < 1e-6) break; u -= f / d }
+  return ((ay * u + by) * u + cy) * u
+}
+const easeOutCss = bez(0, 0, .58, 1)          // CSS ease-out
+const easeCss = bez(.25, .1, .25, 1)             // CSS ease, Recharts default animationEasing
+const easeInOutCss = bez(.42, 0, .58, 1)       // CSS ease-in-out
+const outExpo22 = bez(.22, 1, .36, 1)          // cubic-bezier(0.22,1,0.36,1), used all over the sources
+// framer-motion physics spring, 0 -> 1, t in seconds (stiffness, damping, mass)
+const fmSpring = (t, k = 100, c = 10, m = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+}
+const rng = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }   // fixed-seed random
+const svgEl = (tag, attrs = {}, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const fmtInt = (n) => Math.round(n).toLocaleString('en-US')
+// d3 curveMonotoneX, which is what Recharts type="monotone" draws
+const monotonePath = (pts) => {
+  const n = pts.length; if (n < 2) return ''
+  const dx = [], dy = [], m = [], tg = []
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i] }
+  tg[0] = m[0]; tg[n - 1] = m[n - 2]
+  for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0 } else { const a = tg[i] / m[i], b = tg[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i] } } }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${pts[i][0] + h},${pts[i][1] + tg[i] * h},${pts[i + 1][0] - h},${pts[i + 1][1] - tg[i + 1] * h},${pts[i + 1][0]},${pts[i + 1][1]}` }
+  return d
+}
+// A fixed design-size UI fitted into the stage: 1440x900 wide, 900x1440 tall. CSS under .tall reflows the grids.
+const DW = TALL ? 900 : 1440, DH = TALL ? 1440 : 900
+const UI_SC = Math.min(W / DW, H / DH)
+const ui = el('div', 'ui' + (TALL ? ' tall' : ''))
+S(ui, { position: 'absolute', width: DW + 'px', height: DH + 'px', left: ((W - DW * UI_SC) / 2) + 'px', top: ((H - DH * UI_SC) / 2) + 'px', transform: `scale(${UI_SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+
+const DUR = 11
+window.DUR = DUR
+el('div', 'glow1', ui); el('div', 'glow2', ui)
+const I = { grid: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>', chart: '<line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>', users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>', pipe: '<rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="4" height="7"/>', cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>', mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>', send: '<path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/>', zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>', spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>', cog: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>' }
+const ic = (k) => `<svg viewBox="0 0 24 24">${I[k]}</svg>`
+// each section owns an accent colour; the active item takes it as text colour and left bar
+const NAV = [['Overview', [['grid', 'Dashboard', '#ffffff', 'dashboard'], ['chart', 'Analytics', '#facc15', 'analytics']]], ['CRM', [['users', 'Contacts', '#60a5fa'], ['pipe', 'Pipeline', '#4ade80', 'pipeline'], ['cal', 'Calendar', '#f472b6']]], ['Engage', [['mail', 'Inbox', '#c084fc'], ['send', 'Campaigns', '#fb923c'], ['zap', 'Automations', '#2dd4bf']]], ['Assistant', [['spark', 'AI Agent', '#a78bfa'], ['cog', 'Settings', '#f4f4f5']]]]
+const sb = el('div', 'sb', ui)
+el('div', 'hd', sb, '<div class="logo"><div class="mk">OS</div><div><b>Ops Console</b><small>Workspace</small></div></div><div class="srch">⌕<span>Search</span><kbd>⌘K</kbd></div>')
+const snav = el('div', 'snav', sb); const items = {}
+NAV.forEach(([g, list]) => { el('div', 'gl', snav, g); list.forEach(([k, n, c, v]) => { const it = el('div', 'ni', snav, ic(k) + `<span>${n}</span><i class="bar"></i>`); it.dataset.accent = c; items[v || n] = it }) })
+el('div', 'prof', sb, '<div class="av">A</div><div><div style="font-size:13px;font-weight:500">Alex Morgan</div><div style="font-size:11px;color:var(--t4)">Owner</div></div><div class="st"></div>')
+const mn = el('div', 'mn', ui)
+const vc = el('div', null, mn); S(vc, { position: 'absolute', inset: 0 })
+// ---- view 1: dashboard ----
+const v1 = el('div', null, vc); S(v1, { position: 'absolute', inset: 0 })
+el('div', 'ph', v1, '<div><div class="pt">Good morning, Alex</div><div class="ps">Here\'s what\'s happening across your businesses today.</div></div><div class="acts"><span class="btn s">+ Add Contact</span><span class="btn p">New Campaign</span></div>')
+const pc1 = el('div', 'pc', v1)
+const sg = el('div', 'sg', pc1)
+const SC = [['Total Contacts', 1248, '↑ 36 this week', 0], ['Active Leads', 412, '↑ 33% of contacts', 0], ['Pipeline Value', 86400, '14 deals won total', 0, 1], ['Messages Sent', 5290, '↑ 214 this week', 0], ['Open Tasks', 7, '⚠ needs attention', 1]]
+const scEls = SC.map(([l, v, c, neu, cur], i) => { const n = el('div', 'sc', sg, `<div class="ir"><i></i><span>${l}</span></div><div class="v">0</div><div class="c${neu ? ' n' : ''}" ${i === 4 ? 'style="color:#f87171"' : ''}>${c}</div>`); return { n, v: n.querySelector('.v'), val: v, cur } })
+const g3 = el('div', 'g3', pc1)
+const act = el('div', 'card', g3, '<div class="ch"><span class="ct">Recent Activity</span><span class="live"><i></i>Live</span></div>')
+;[['#60a5fa', '<b>Jordan Lee</b> replied to Spring outreach', '2m'], ['#4ade80', 'Deal won: <b>Northwind Co</b> moved to Won', '18m'], ['#c084fc', '<b>14 contacts</b> added from the web form', '1h'], ['#facc15', 'Campaign <b>Spring Offer</b> sent to 320 people', '3h'], ['#fb923c', 'Task due: send proposal to <b>Pixel Foods</b>', '5h']].forEach(([c, x, tm]) => el('div', 'ai', act, `<div class="d" style="background:${c}"></div><div class="x">${x}</div><div class="tm">${tm}</div>`))
+const rcol = el('div', null, g3); S(rcol, { display: 'flex', flexDirection: 'column', gap: '12px' })
+const tk = el('div', 'card', rcol, '<div class="ch"><span class="ct">Open Tasks</span><span style="font-size:12px;color:var(--t2)">View all →</span></div>')
+;[['Send proposal to Pixel Foods', 'Today', '#f87171'], ['Review Spring Offer results', 'Tomorrow', '#facc15'], ['Call back Northwind Co', 'Fri', '#60a5fa']].forEach(([t, d, c]) => el('div', 'tm2', tk, `<i style="background:${c}"></i><div>${t}<small>${d}</small></div>`))
+const bb = el('div', 'card', rcol, '<div class="ch"><span class="ct">By Business</span></div>'); const bbb = el('div', 'bb', bb)
+const bfs = [['Brand A', 520, '#60a5fa'], ['Brand B', 430, '#4ade80'], ['Brand C', 298, '#c084fc']].map(([n, c, col]) => { const r = el('div', 'r', bbb, `<div class="rt"><span>${n}</span><b style="color:var(--t1)">${c}</b></div><div class="tr"><div class="f" style="width:${Math.round(c / 1248 * 100)}%;background:${col}"></div></div>`); return { f: r.querySelector('.f'), w: Math.round(c / 1248 * 100) } })
+const ap = el('div', 'card', pc1, '<div class="ch"><span class="ct">Upcoming appointments</span><span style="font-size:12px;color:var(--t2)">Calendar →</span></div>'); S(ap, { marginTop: '14px' })
+const apr = el('div', null, ap); S(apr, { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' })
+;[['MAR', '12', 'Discovery call: Maple Studio', '10:00 AM · Video'], ['MAR', '13', 'Proposal review: Pixel Foods', '1:30 PM · In person'], ['MAR', '15', 'Onboarding: Atlas Gym', '9:00 AM · Video']].forEach(([m, d, t2, mt], i) => el('div', 'appt', apr, `<div class="adb"><div class="am">${m}</div><div class="ad">${d}</div></div><div><div style="font-size:14px;font-weight:600;margin-bottom:3px">${t2}</div><div style="font-size:12px;color:var(--t3)">${mt}</div></div>`))
+// ---- view 2: pipeline ----
+const v2 = el('div', null, vc); S(v2, { position: 'absolute', inset: 0 })
+el('div', 'ph', v2, '<div><div class="pt">Pipeline</div><div class="ps">Drag deals between stages.</div></div><div class="acts"><span class="btn p">+ New Deal</span></div>')
+const pc2 = el('div', 'pc', v2); el('div', 'tabs2', pc2, '<div class="on">All</div><div>Brand A</div><div>Brand B</div><div>Brand C</div>')
+const board = el('div', 'board', pc2)
+const STG = [['Lead', '#60a5fa', [['Maple Studio', '$4,200', 'Mar 12'], ['Orbit Fitness', '$2,800', 'Mar 14'], ['Daybreak Cafe', '$1,500', 'Mar 18']]], ['Contacted', '#facc15', [['Northwind Co', '$9,600', 'Mar 10'], ['Lumen Labs', '$3,300', 'Mar 15']]], ['Proposal', '#c084fc', [['Pixel Foods', '$12,000', 'Mar 09'], ['Harbor Dental', '$5,400', 'Mar 11']]], ['Won', '#4ade80', [['Atlas Gym', '$7,800', 'Mar 02']]]]
+const colEls = STG.map(([n, c, cards], i) => { const col = el('div', 'col', board, `<div class="hh"><span class="nm"><i style="background:${c}"></i>${n}</span><span class="cnt">${cards.length}</span></div>`); const cs = el('div', 'cards', col); const cardEls = cards.map(([a, b, d]) => el('div', 'pcard', cs, `<div class="n">${a}</div><div class="m"><span>Proposal</span><b>${b}</b></div><div class="dt">Due ${d}</div>`)); return { col, cardEls } })
+// ---- view 3: analytics ----
+const v3 = el('div', null, vc); S(v3, { position: 'absolute', inset: 0 })
+el('div', 'ph', v3, '<div><div class="pt">Analytics</div><div class="ps">Conversion funnel and revenue by business.</div></div>')
+const pc3 = el('div', 'pc', v3)
+const fc = el('div', 'card', pc3, '<div class="ch"><span class="ct">Conversion funnel</span></div>'); const fbd = el('div', null, fc); S(fbd, { padding: '20px' })
+const FUN = [['Total Contacts', 1248, '#60a5fa'], ['Active Leads', 412, '#a78bfa'], ['Qualified', 188, '#4ade80'], ['Proposal', 74, '#fbbf24'], ['Won', 31, '#4ade80']]
+const funEls = FUN.map(([l, n, c]) => { const r = el('div', 'fb', fbd, `<div class="fl">${l}</div><div class="ft"><div class="ff" style="background:${c};width:0%"></div></div><div class="fv">${n.toLocaleString('en-US')}</div>`); return { ff: r.querySelector('.ff'), w: Math.max(4, Math.round(n / 1248 * 100)), n } })
+const rv = el('div', 'card', pc3, '<div class="ch"><span class="ct">Revenue by business</span></div>'); S(rv, { marginTop: '14px' }); const rvb = el('div', null, rv); S(rvb, { padding: '20px' })
+const REV = [['Brand A', 42800, '#60a5fa'], ['Brand B', 31200, '#4ade80'], ['Brand C', 12400, '#c084fc']]
+const revEls = REV.map(([l, n, c]) => { const r = el('div', 'fb', rvb, `<div class="fl">${l}</div><div class="ft"><div class="ff" style="background:${c};width:0%"></div></div><div class="fv" style="width:70px">$${n.toLocaleString('en-US')}</div>`); return { ff: r.querySelector('.ff'), w: Math.round(n / 42800 * 100) } })
+const fadeEl = el('div', 'fade2', ui)
+// view schedule
+const V = [[0, 3.8, 'dashboard', v1], [3.8, 7.4, 'pipeline', v2], [7.4, 11, 'analytics', v3]]
+const hexA = (c) => c
+function render(t) {
+  const cur = V.find((v) => t >= v[0] && t < v[1]) || V[2]
+  Object.values(items).forEach((it) => { const on = it === items[cur[2]]; it.classList.toggle('act', on); const c = it.dataset.accent; it.style.color = on ? c : ''; it.querySelector('.bar').style.background = c })
+  V.forEach((v) => { const on = v === cur; v[3].style.display = on ? '' : 'none'; if (on) { const q = easeCss(seg(t, v[0], v[0] + .18)); S(vc, { opacity: q, transform: `translateY(${(1 - q) * 8}px)` }) } })   // .fade-in: .18s ease, 8px
+  // stat cards: statEnter .4s ease, delay .06s * i; counters start i*80ms, 900ms ease-out cubic
+  scEls.forEach((s, i) => { const q = easeCss(seg(t, i * .06, i * .06 + .4)); S(s.n, { opacity: q, transform: `translateY(${(1 - q) * 10}px)` }); const p = clamp((t - i * .08) / .9), e = 1 - Math.pow(1 - p, 3); s.v.textContent = (s.cur ? '$' : '') + Math.round(s.val * e).toLocaleString('en-US') })
+  bfs.forEach((b) => S(b.f, { width: b.w * easeCss(seg(t, .3, 1.1)) + '%' }))
+  const t2 = t - 3.8
+  colEls.forEach((c, i) => c.cardEls.forEach((cd, j) => { const q = easeCss(seg(t2, .1 + i * .05 + j * .05, .1 + i * .05 + j * .05 + .3)); S(cd, { opacity: q, transform: `translateY(${(1 - q) * 6}px)` }) }))
+  const t3 = t - 7.4
+  funEls.forEach((f, i) => S(f.ff, { width: f.w * easeCss(seg(t3, .15 + i * .05, .15 + i * .05 + .8)) + '%' }))   // .funnel-fill transition width .8s ease
+  revEls.forEach((f, i) => S(f.ff, { width: f.w * easeCss(seg(t3, .45 + i * .05, .45 + i * .05 + .8)) + '%' }))
+  S(fadeEl, { opacity: seg(t, DUR - .4, DUR) })
+}
+
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

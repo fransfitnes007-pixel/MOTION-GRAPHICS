@@ -1,0 +1,23 @@
+{
+  "slug": "glass-pill-nav__scroll-glass-morph",
+  "visual_name": "Glass pill nav",
+  "code_name": "Scroll glass morph",
+  "category": "ui-components",
+  "summary": "A floating pill nav that fades from transparent to frosted glass after 12px of scroll, with a glass dropdown menu on mobile.",
+  "tags": [
+    "nav",
+    "light",
+    "hover",
+    "scroll"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

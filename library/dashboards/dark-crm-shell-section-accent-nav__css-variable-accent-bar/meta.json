@@ -1,0 +1,23 @@
+{
+  "slug": "dark-crm-shell-section-accent-nav__css-variable-accent-bar",
+  "visual_name": "Dark CRM shell with section accent nav",
+  "code_name": "CSS variable accent bar",
+  "category": "dashboards",
+  "summary": "Near-black zinc CRM shell whose sidebar active item takes a different accent colour per section, with a matching left bar, over stat cards that count up, a kanban pipeline and a funnel of growing bars.",
+  "tags": [
+    "nav",
+    "stat-tile",
+    "counter",
+    "dark",
+    "table",
+    "chart"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-variables"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

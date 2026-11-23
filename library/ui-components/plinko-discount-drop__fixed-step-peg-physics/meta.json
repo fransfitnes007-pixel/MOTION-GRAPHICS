@@ -1,0 +1,24 @@
+{
+  "slug": "plinko-discount-drop__fixed-step-peg-physics",
+  "visual_name": "Plinko discount drop",
+  "code_name": "Fixed-step peg physics",
+  "category": "ui-components",
+  "summary": "A ball bounces down a peg board with real physics into a discount pocket, which glows gold under a confetti burst.",
+  "tags": [
+    "modal",
+    "card",
+    "cta",
+    "form",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

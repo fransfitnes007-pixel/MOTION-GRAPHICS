@@ -1,0 +1,23 @@
+{
+  "slug": "ai-agent-team-stage__character-status-live-feed",
+  "visual_name": "AI agent team stage",
+  "code_name": "Character states and live narration feed",
+  "category": "dashboards",
+  "summary": "A 4 x 2 stage of eight creature characters (waiting, working, done, failed) with a progress pill, speech bubble and a narrating live feed.",
+  "tags": [
+    "dashboard",
+    "card",
+    "dark",
+    "loader",
+    "3d"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

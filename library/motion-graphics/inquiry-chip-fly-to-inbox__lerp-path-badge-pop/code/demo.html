@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Inquiry chip flying to inbox</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dots{position:absolute;inset:-120px;background-image:radial-gradient(rgba(20,16,40,.10) 1.3px,transparent 1.6px);background-size:34px 34px}
+.orb{position:absolute;border-radius:50%;filter:blur(70px)}
+
+.win{position:absolute;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 60px 140px -40px rgba(24,16,52,.5),0 0 0 1px rgba(20,16,40,.10)}
+.win .bar{position:absolute;left:0;right:0;top:0;height:46px;background:#f7f7f9;border-bottom:1px solid rgba(20,16,40,.07);display:flex;align-items:center;gap:9px;padding:0 20px;z-index:3}
+.win .bar i{width:13px;height:13px;border-radius:50%;display:block}
+.win .bar .url{position:absolute;left:50%;transform:translateX(-50%);font-weight:600;font-size:16px;color:#3a3a48;background:#fff;padding:7px 22px;border-radius:10px;display:flex;align-items:center;gap:8px;box-shadow:0 0 0 1px rgba(20,16,40,.08);white-space:nowrap}
+.win .view{position:absolute;left:0;right:0;top:46px;bottom:0;overflow:hidden;background:#f4f4f6}
+.cap{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;overflow:hidden}
+.cap .ph{position:absolute;border-radius:28px;background:linear-gradient(160deg,#f1c8a4,#9a7352 55%,#2e231a);box-shadow:0 30px 60px -20px rgba(0,0,0,.35)}
+.cap .nav{position:absolute;left:0;right:0;top:0;height:78px;display:flex;align-items:center;gap:36px;padding:0 60px;font-weight:600;font-size:22px;opacity:.7}
+.cap .nav b{margin-right:auto;font-size:26px;opacity:1}
+.cap .nm{position:absolute;font-weight:800;letter-spacing:-.04em;line-height:1.04}
+.cap .sb{position:absolute;font-weight:500;font-size:34px;opacity:.6}
+.cap .pl{position:absolute;height:58px;border-radius:29px;background:#0b0b10;color:#fff;font-weight:700;font-size:22px;display:grid;place-items:center}
+.cap .tile{position:absolute;border-radius:18px;background:linear-gradient(160deg,#d9c1a8,#6e5a49)}
+.phone{position:absolute;border-radius:58px;background:#0c0c10;padding:11px;box-shadow:0 50px 110px -30px rgba(24,16,52,.6),inset 0 0 0 2px #2a2a33,0 0 0 1px rgba(0,0,0,.25)}
+.phone .scr{position:absolute;inset:11px;border-radius:47px;overflow:hidden}
+.phone .isl{position:absolute;left:50%;top:22px;width:34%;height:30px;border-radius:20px;background:#000;transform:translateX(-50%);z-index:4}
+.phone .pc{position:absolute;border-radius:50%;background:linear-gradient(160deg,#f1c8a4,#9a7352 55%,#2e231a)}
+.phone .pb{position:absolute;border-radius:8px}
+
+.chip{position:absolute;display:flex;align-items:center;gap:10px;padding:11px 18px 11px 14px;border-radius:999px;font-weight:700;font-size:21px;white-space:nowrap;letter-spacing:-.01em}
+.chip.lt{background:rgba(255,255,255,.94);color:#0b0b10;box-shadow:0 14px 34px -10px rgba(24,16,52,.35),0 0 0 1px rgba(20,16,40,.07)}
+.chip.dk{background:rgba(14,12,22,.86);color:#fff;box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+.glass{position:absolute;border-radius:28px;background:rgba(255,255,255,.74);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(24,16,52,.42),0 0 0 1px rgba(20,16,40,.07)}
+.glassd{position:absolute;border-radius:28px;background:rgba(255,255,255,.07);backdrop-filter:blur(24px);box-shadow:0 40px 100px -30px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12)}
+
+.cursor{position:absolute;width:44px;height:44px;z-index:80;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+.ring{position:absolute;border-radius:50%;border:3px solid #5b5ce6;z-index:79}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 3.6
+window.DUR = DUR
+
+const bgL = el('div', 'abs'); S(bgL, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: '#f4f4f6' })
+el('div', 'dots', bgL)
+const orbs = [
+  { c: 'rgba(91,92,230,.26)', s: 900, x: 280, y: 100, sp: .09 }, { c: 'rgba(96,165,250,.24)', s: 820, x: 1300, y: 520, sp: .07 },
+  { c: 'rgba(236,72,153,.12)', s: 700, x: 900, y: 760, sp: .11 }, { c: 'rgba(148,163,184,.28)', s: 600, x: 1500, y: -120, sp: .06 },
+].map((o) => { const e = el('div', 'orb', bgL); S(e, { width: o.s * K + 'px', height: o.s * K + 'px', background: `radial-gradient(closest-side, ${o.c}, transparent)` }); return { ...o, e } })
+function bgLight(t) { for (const o of orbs) S(o.e, { left: ((o.x + Math.sin(t * o.sp * 6 + o.s) * 120) * W / 1920) + 'px', top: ((o.y + Math.cos(t * o.sp * 5 + o.x) * 90) * H / 1080) + 'px' }) }
+
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+
+const CHECK = (size = 22, col = '#fff') => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+
+// two simple windows: a form and an inbox with one row to highlight
+function mini(parent, url, box, html) {
+  const w = el('div', 'win', parent, '<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="url"><span class="u"></span></div></div><div class="view"></div>')
+  S(w, { left: box[0] + 'px', top: box[1] + 'px', width: box[2] + 'px', height: (box[3] + 46) + 'px' }); w.querySelector('.u').textContent = url
+  w.querySelector('.view').innerHTML = html; return w
+}
+const bar = (x, y, w, h, c = '#e7e7ec') => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:8px;background:${c}"></div>`
+const w6a = mini(FR, 'example.com/contact', [180, 250, 1100, 688], bar(80, 60, 360, 36, '#cfd0d8') + bar(80, 120, 700, 20) + bar(80, 200, 440, 64) + bar(560, 200, 440, 64) + bar(80, 300, 440, 64) + bar(560, 300, 440, 64) + bar(80, 400, 920, 150) + bar(80, 580, 920, 64, '#0b0b10'))
+const w6b = mini(FR, 'example.com/app/inbox', [640, 250, 1100, 688], bar(0, 0, 220, 642, '#f0f0f4') + bar(260, 50, 200, 34, '#cfd0d8') + bar(260, 120, 770, 22) + bar(260, 160, 770, 80, '#fafafd') + bar(260, 270, 770, 80, '#fafafd') + bar(260, 380, 770, 80, '#fafafd') + bar(260, 490, 770, 80, '#fafafd'))
+const msg6 = el('div', 'chip lt', FR, '<span class="ico" style="background:#eef0ff"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5b5ce6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg></span>Sam Rivera · Brand Co<span style="color:#8a8a99;font-weight:600">· 4 videos</span>'); S(msg6, { fontSize: '25px', fontWeight: 800, padding: '14px 24px 14px 15px', zIndex: 10 })
+const hl6 = el('div', 'abs', FR); S(hl6, { borderRadius: '16px', border: '4px solid #5b5ce6', boxShadow: '0 0 0 8px rgba(91,92,230,.16)', left: '920px', top: '506px', width: '770px', height: '90px', zIndex: 9 })
+const new6 = el('div', 'chip lt', FR, '<span class="ico" style="background:#5b5ce6;color:#fff;font-weight:800;font-size:15px">1</span>New inquiry'); S(new6, { fontSize: '24px', fontWeight: 800, left: '1490px', top: '226px', zIndex: 10 })
+const FORM = 1.13, DASH = 2.46             // spoken "form" and "dashboard" (12.13s and 13.41s, 11.0s earlier)
+function render(t) {
+  bgLight(t)
+  const out = eio5(seg(t, 2.95, 3.3)), ai = eo5(seg(t, 0, .6)), sw = eio5(seg(t, 1.55, 2.25))
+  S(w6a, { opacity: ai * (1 - sw), transform: `perspective(2400px) translateY(${(1 - ai) * 120}px) rotateX(${(1 - ai) * 14}deg) translateX(${sw * -260}px) scale(${1 - sw * .14})`, filter: sw > 0 ? `blur(${sw * 8}px)` : '' })
+  const bi = eio5(seg(t, 1.6, 2.3))
+  S(w6b, { opacity: bi * (1 - out), transform: `perspective(2400px) translateX(${(1 - bi) * 500}px) rotateY(${(1 - bi) * -26}deg) scale(${lerp(.9, 1, bi) * (1 + out * .3)})`, filter: out > 0 ? `blur(${out * 10}px)` : '' })
+  // the chip leaves the form on "form" and travels to the inbox
+  const mf = eo5(seg(t, FORM + .05, FORM + .45)), mt = eio5(seg(t, 1.6, 2.35))
+  S(msg6, { left: lerp(620, 900, mt) + 'px', top: lerp(lerp(860, 800, mf), 520, mt) + 'px', opacity: mf * (1 - ei(seg(t, 2.35, 2.55))), transform: `scale(${(.7 + .3 * mf) * lerp(1, .8, mt)})` })
+  const q = eo5(seg(t, 2.3, 2.6)); S(hl6, { opacity: q * (1 - out), transform: `scale(${1.15 - .15 * q})` })
+  const nq = spring(seg(t, DASH + .05, DASH + .5), 8, 13)
+  S(new6, { opacity: clamp(nq * 1.5) * (1 - out), transform: `scale(${.6 + .4 * nq})` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

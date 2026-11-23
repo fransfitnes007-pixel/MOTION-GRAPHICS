@@ -1,0 +1,23 @@
+{
+  "slug": "link-in-bio-stack__staggered-glass-rows",
+  "visual_name": "Link-in-bio stack",
+  "code_name": "Staggered glass rows",
+  "category": "ui-components",
+  "summary": "A mobile link-in-bio with an avatar header, stat tiles and grouped glass link rows that fade up one after another.",
+  "tags": [
+    "card",
+    "phone",
+    "light",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 10,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

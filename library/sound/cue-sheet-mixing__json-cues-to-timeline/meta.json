@@ -1,0 +1,23 @@
+{
+  "slug": "cue-sheet-mixing__json-cues-to-timeline",
+  "visual_name": "Cue-sheet mixing",
+  "code_name": "JSON cues to timeline",
+  "category": "sound",
+  "summary": "The page records every click, key and whoosh with its time as it plays; a script turns that list into a finished sound track.",
+  "tags": [
+    "sfx",
+    "voice",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile",
+    "json",
+    "ffmpeg-graph"
+  ],
+  "duration_sec": 9.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

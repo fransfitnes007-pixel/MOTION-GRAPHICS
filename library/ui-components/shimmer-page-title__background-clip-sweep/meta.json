@@ -1,0 +1,21 @@
+{
+  "slug": "shimmer-page-title__background-clip-sweep",
+  "visual_name": "Shimmer page title",
+  "code_name": "Background clip sweep",
+  "category": "ui-components",
+  "summary": "A page heading in white with a soft lilac highlight that sweeps across the letters once, then rests for four seconds before sweeping again, under a small violet eyebrow.",
+  "tags": [
+    "kinetic-type",
+    "dark",
+    "hero"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "background-clip-text"
+  ],
+  "duration_sec": 5.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

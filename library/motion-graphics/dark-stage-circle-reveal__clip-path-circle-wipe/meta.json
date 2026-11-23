@@ -1,0 +1,20 @@
+{
+  "slug": "dark-stage-circle-reveal__clip-path-circle-wipe",
+  "visual_name": "Dark stage circle reveal",
+  "code_name": "Clip-path circle wipe",
+  "category": "motion-graphics",
+  "summary": "A near-black purple stage opens as a growing circle from an off-centre point over a light scene, and later closes back to the centre.",
+  "tags": [
+    "transition",
+    "background",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "clip-path"
+  ],
+  "duration_sec": 6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "price-compare-strip__strikethrough-retail-pick",
+  "visual_name": "Price compare strip",
+  "code_name": "Strikethrough retail and pick",
+  "category": "dashboards",
+  "summary": "A white strip of small-caps labelled numbers: retail struck through, a resale range, a large green pick, and a typed-price input that turns rust when it is out of range.",
+  "tags": [
+    "stat-tile",
+    "form",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-flexbox",
+    "tabular-nums"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

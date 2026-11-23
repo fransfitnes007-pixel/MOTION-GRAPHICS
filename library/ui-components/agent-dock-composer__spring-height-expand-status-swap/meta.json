@@ -1,0 +1,23 @@
+{
+  "slug": "agent-dock-composer__spring-height-expand-status-swap",
+  "visual_name": "Agent dock composer",
+  "code_name": "Spring height expand status swap",
+  "category": "ui-components",
+  "summary": "A slim near-black dock pinned to the bottom with an avatar, a name and a live status line, and two keyboard-shortcut buttons; pressing Chat grows a text composer upward out of the bar while the status line swaps with a small slide.",
+  "tags": [
+    "card",
+    "hover",
+    "dark",
+    "form",
+    "cursor"
+  ],
+  "tech": [
+    "react",
+    "motion-react",
+    "tailwind"
+  ],
+  "duration_sec": 13,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

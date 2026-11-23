@@ -1,0 +1,22 @@
+{
+  "slug": "ui-callout-leader-line__lerp-line-draw-label",
+  "visual_name": "UI callout with leader line",
+  "code_name": "Pulsing dot, drawn leader line and label pill",
+  "category": "motion-graphics",
+  "summary": "A ringed dot lands on a real part of a screen, a line draws out from it, and a dark label pill fades in at the line end, one callout per spoken word.",
+  "tags": [
+    "card",
+    "dark",
+    "cursor",
+    "stat-tile"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "spring"
+  ],
+  "duration_sec": 4.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

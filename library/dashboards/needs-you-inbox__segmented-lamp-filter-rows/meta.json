@@ -1,0 +1,21 @@
+{
+  "slug": "needs-you-inbox__segmented-lamp-filter-rows",
+  "visual_name": "Needs-you inbox",
+  "code_name": "Spring lamp segmented filter over action rows",
+  "category": "dashboards",
+  "summary": "Six-option pill control; the lamp springs between options (300 / 30) and the list below filters to that kind.",
+  "tags": [
+    "nav",
+    "card",
+    "dark",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "framer-motion-rebuilt"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

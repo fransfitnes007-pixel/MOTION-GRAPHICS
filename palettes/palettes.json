@@ -1,0 +1,4688 @@
+{
+ "signature": [
+  {
+   "id": "arizona-sunset",
+   "name": "Arizona sunset (pixel dino reel)",
+   "use": "Dithered pixel sky behind a runner game; warm, scenic, reads well on phones. Type stays in the dark UI colours.",
+   "sky": [
+    "#1A0A38",
+    "#35104F",
+    "#641A63",
+    "#A3285F",
+    "#D9414A",
+    "#F46A33",
+    "#FF9A35",
+    "#FFC65A"
+   ],
+   "dusk": [
+    "#0A0520",
+    "#170838",
+    "#33104F",
+    "#641A66",
+    "#A52A62",
+    "#DD4D48",
+    "#F47A36",
+    "#FFAB45"
+   ],
+   "floor": [
+    "#3A1638",
+    "#241028",
+    "#150A1C",
+    "#0A0510"
+   ],
+   "sun": [
+    "#FFF3B0",
+    "#FFD670",
+    "#FF9D4A"
+   ],
+   "silhouette": "#170B20",
+   "rim": "#FFB057",
+   "ui_card": "#161619",
+   "from": "motion-graphics/dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax"
+  },
+  {
+   "id": "pictogram-mono",
+   "name": "Pictogram parable (black and white)",
+   "use": "Faceless explainer reels: white pictogram people on a dashed ground, black dot-grid background, white capsule tags, one soft glow behind the subject. Colour only on the end card.",
+   "colors": {
+    "background": "#000000",
+    "dot_grid": "rgba(255,255,255,0.075)",
+    "ink": "#FFFFFF",
+    "grey_people": [
+     "#8F8F8F",
+     "#A6A6A6",
+     "#B0B0B0"
+    ],
+    "labels": "#BDBDBD",
+    "tag_fill": "#FFFFFF",
+    "tag_text": "#000000"
+   },
+   "end_card_app_store_dark": {
+    "blue": "#0A84FF",
+    "grey": "#8E8E93",
+    "line": "#38383A"
+   },
+   "from": "pipelines/pictogram-reel"
+  },
+  {
+   "id": "dark-ember",
+   "name": "Dark ember title beats",
+   "use": "Black stage, white words, one hot orange-to-pink accent on the key word or card.",
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#FFFFFF",
+    "#FF6A3D",
+    "#FF2E97",
+    "#111111"
+   ],
+   "from": "motion-graphics/dark-ember-title-beat__word-reveal-inline-card"
+  },
+  {
+   "id": "gold-book",
+   "name": "Gold and black book film",
+   "use": "Long-form, premium: black, warm gold gradients on serif titles (Playfair, Rye), red accent for dates.",
+   "colors": [
+    "#000000",
+    "#07080B",
+    "#17120E",
+    "#E8B43A",
+    "#FFC766",
+    "#E8C25A",
+    "#FFB347",
+    "#D8463A"
+   ],
+   "from": "motion-graphics/gold-timeline-rail__progress-fill-year-ticks"
+  },
+  {
+   "id": "violet-ai",
+   "name": "Violet AI dashboard",
+   "use": "Product films for AI tools: deep navy-black, violet glow, lavender text, one orange score accent.",
+   "colors": [
+    "#0B0B17",
+    "#000000",
+    "#8A5CFF",
+    "#A7A6BD",
+    "#E9E8F5",
+    "#FF9A4D",
+    "#FFFFFF"
+   ],
+   "from": "motion-graphics/violet-ai-dashboard-score-ring-push-in__counting-ring-glow-"
+  },
+  {
+   "id": "chrome-cobalt",
+   "name": "Chrome wordmark and cobalt CTA",
+   "use": "End cards and logo reveals: black, liquid-chrome logo, cobalt-to-sky blue button.",
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#FFFFFF",
+    "#2563EB",
+    "#2F6BFF",
+    "#38BDF8"
+   ],
+   "from": "motion-graphics/chrome-wordmark-end-card__blur-resolve-cta"
+  },
+  {
+   "id": "rainbow-led",
+   "name": "LED dot rainbow word",
+   "use": "One pivot word in a conic rainbow dot mask on black.",
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#FF2E97",
+    "#38BDF8",
+    "#FFFFFF",
+    "#2A2A2E"
+   ],
+   "from": "motion-graphics/led-dot-rainbow-word__conic-gradient-dot-mask"
+  },
+  {
+   "id": "light-studio",
+   "name": "Light studio with drifting orbs",
+   "use": "Bright, clean SaaS films: off-white stage, near-black ink, soft indigo and sky orbs.",
+   "colors": [
+    "#F4F4F6",
+    "#F2F2F4",
+    "#0B0B10",
+    "#141028",
+    "#5B5CE6",
+    "#60A5FA"
+   ],
+   "from": "motion-graphics/light-orb-dot-background__blurred-orbs-drift"
+  },
+  {
+   "id": "cursor-yellow",
+   "name": "Cream and click yellow",
+   "use": "Screen-demo moments: dark stage, cream cards, a yellow cursor ripple.",
+   "colors": [
+    "#07080B",
+    "#0B0C10",
+    "#F3F1EA",
+    "#FFD814",
+    "#FFFFFF"
+   ],
+   "from": "motion-graphics/cursor-click-ripple__eased-keyframe-path"
+  }
+ ],
+ "by_piece": [
+  {
+   "piece": "dashboards/activity-timeline-feed__day-groups-rail-icon-badge",
+   "name": "Activity timeline feed",
+   "tags": [
+    "card",
+    "dark",
+    "table"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#1A1A2E",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#050509",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/admin-analytics-dashboard__metric-tabs-heatmap-creator-roll",
+   "name": "Admin analytics dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#1A1A2E",
+    "#0D0D1A",
+    "#A78BFA",
+    "#3B82F6",
+    "#10B981",
+    "#34D399",
+    "#F59E0B"
+   ]
+  },
+  {
+   "piece": "dashboards/admin-overview-dashboard__kpi-tiles-needs-you-activity",
+   "name": "Admin overview dashboard",
+   "tags": [
+    "stat-tile",
+    "dashboard",
+    "card",
+    "dark",
+    "nav"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#1A1A2E",
+    "#6B7280",
+    "#0D0D1A",
+    "#10B981",
+    "#34D399",
+    "#A78BFA",
+    "#3B82F6",
+    "#F59E0B"
+   ]
+  },
+  {
+   "piece": "dashboards/agent-world-command-center__three-viewport-three-pane",
+   "name": "Agent world command center",
+   "tags": [
+    "3d",
+    "nav",
+    "dark",
+    "table",
+    "loader",
+    "modal"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#22C55E",
+    "#000000",
+    "#0D0D1A",
+    "#A78BFA",
+    "#EF4444",
+    "#F59E0B",
+    "#3B82F6",
+    "#EC4899"
+   ]
+  },
+  {
+   "piece": "dashboards/ai-agent-team-stage__character-status-live-feed",
+   "name": "AI agent team stage",
+   "tags": [
+    "dashboard",
+    "card",
+    "dark",
+    "loader",
+    "3d"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#0A0A12",
+    "#6B7280",
+    "#A78BFA",
+    "#10B981",
+    "#34D399",
+    "#3B82F6"
+   ]
+  },
+  {
+   "piece": "dashboards/ai-review-progress-stages__checklist-percent-bar",
+   "name": "AI review progress",
+   "tags": [
+    "loader",
+    "card",
+    "dark"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#34D399",
+    "#0D0D1A",
+    "#A78BFA",
+    "#10B981",
+    "#1A1A2E",
+    "#3B82F6",
+    "#050509"
+   ]
+  },
+  {
+   "piece": "dashboards/ai-review-verdict-panel__score-tiles-timeline-dim-bars",
+   "name": "AI review verdict panel",
+   "tags": [
+    "card",
+    "dark",
+    "chart",
+    "table"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#34D399",
+    "#1A1A2E",
+    "#050509",
+    "#6B7280",
+    "#0D0D1A",
+    "#10B981",
+    "#F59E0B",
+    "#EF4444"
+   ]
+  },
+  {
+   "piece": "dashboards/analytics-bento-line-and-funnel__path-draw-day-scrub",
+   "name": "Analytics bento: line and funnel",
+   "tags": [
+    "chart",
+    "card",
+    "stat-tile",
+    "light",
+    "dark",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#5B5CE6",
+    "#0B0C10",
+    "#0F111A",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77"
+   ]
+  },
+  {
+   "piece": "dashboards/brutalist-mono-bar-timeline__recharts-bar-toggle",
+   "name": "Brutalist mono bar timeline",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "table",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "dashboards/business-analytics-dashboard__six-stat-area-donut-rankings",
+   "name": "Business analytics dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#1A1A2E",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#F59E0B",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/campaign-analytics-dashboard__stat-row-area-milestones",
+   "name": "Campaign analytics dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "card",
+    "nav"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#000000",
+    "#6B7280",
+    "#A78BFA",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#34D399",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/case-study-chart-set__grow-on-reveal",
+   "name": "Case study chart set",
+   "tags": [
+    "chart",
+    "card",
+    "light",
+    "scroll"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#5B5CE6",
+    "#8B8CF0",
+    "#3A3D46",
+    "#686C77",
+    "#0F111A",
+    "#5C606B",
+    "#000000",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "dashboards/collapsible-glass-sidebar-shell__spring-width-collapse",
+   "name": "Collapsible glass sidebar shell",
+   "tags": [
+    "nav",
+    "chart",
+    "dark",
+    "stat-tile",
+    "hover"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#14141C"
+   ]
+  },
+  {
+   "piece": "dashboards/copilot-chat-panel__bubbles-suggestion-chips-thinking",
+   "name": "Copilot chat panel",
+   "tags": [
+    "card",
+    "dark",
+    "form"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#1A1A2E",
+    "#6B7280",
+    "#050509",
+    "#0D0D1A",
+    "#34D399",
+    "#A78BFA",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/cost-comparison-big-numbers__before-after-total-row",
+   "name": "Cost comparison big numbers and tables",
+   "tags": [
+    "stat-tile",
+    "table",
+    "counter",
+    "light"
+   ],
+   "colors": [
+    "#002B4E",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3D95C5",
+    "#FBFCFD",
+    "#FFFFFF",
+    "#0E1620",
+    "#4A5866",
+    "#7C8996"
+   ]
+  },
+  {
+   "piece": "dashboards/creator-earnings-dashboard__red-to-green-area-draw",
+   "name": "Creator earnings dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "counter",
+    "dark",
+    "table",
+    "nav"
+   ],
+   "colors": [
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "dashboards/dark-crm-shell-section-accent-nav__css-variable-accent-bar",
+   "name": "Dark CRM shell with section accent nav",
+   "tags": [
+    "nav",
+    "stat-tile",
+    "counter",
+    "dark",
+    "table",
+    "chart"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#4ADE80",
+    "#000000",
+    "#60A5FA",
+    "#C084FC",
+    "#FACC15",
+    "#F4F4F5",
+    "#FB923C",
+    "#A78BFA",
+    "#F87171"
+   ]
+  },
+  {
+   "piece": "dashboards/dark-ops-scenario-cards__cyan-lime-mono-console",
+   "name": "Dark ops scenario cards",
+   "tags": [
+    "card",
+    "dark",
+    "hero",
+    "table"
+   ],
+   "colors": [
+    "#000000",
+    "#06101C",
+    "#0B0B10",
+    "#0C1B2C",
+    "#173B54",
+    "#EDF8FF",
+    "#88A4B9",
+    "#3EDCFF",
+    "#BAFB64",
+    "#173A51"
+   ]
+  },
+  {
+   "piece": "dashboards/deal-pipeline-board__stage-columns-drag-drop-cards",
+   "name": "Deal pipeline board",
+   "tags": [
+    "dashboard",
+    "card",
+    "dark",
+    "nav"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#1A1A2E",
+    "#0D0D1A",
+    "#6B7280",
+    "#34D399",
+    "#A78BFA",
+    "#3B82F6",
+    "#10B981",
+    "#F59E0B"
+   ]
+  },
+  {
+   "piece": "dashboards/deals-funnel-dashboard__stage-bars-stall-chart-rates-table",
+   "name": "Deals funnel dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#6B7280",
+    "#0D0D1A",
+    "#3B82F6",
+    "#10B981",
+    "#34D399",
+    "#1A1A2E",
+    "#A78BFA",
+    "#F59E0B"
+   ]
+  },
+  {
+   "piece": "dashboards/deals-money-dashboard__blur-masked-values-stage-bars",
+   "name": "Deals money dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#6B7280",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#34D399",
+    "#A78BFA",
+    "#3B82F6",
+    "#10B981",
+    "#F59E0B"
+   ]
+  },
+  {
+   "piece": "dashboards/glass-card-border-beam__conic-light-chrome-rim",
+   "name": "Glass card border beam",
+   "tags": [
+    "card",
+    "dark",
+    "background",
+    "stat-tile"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#6B7280",
+    "#A1A1AA",
+    "#0D0D1A",
+    "#000000",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6"
+   ]
+  },
+  {
+   "piece": "dashboards/member-dashboard-countdown-progress-rings__conic-gradient-ring",
+   "name": "Member dashboard with countdown and progress rings",
+   "tags": [
+    "stat-tile",
+    "counter",
+    "light",
+    "card",
+    "nav"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0A3A52",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#1290CB",
+    "#0C6C99",
+    "#68CCD1",
+    "#DDF2F3",
+    "#74FFF6"
+   ]
+  },
+  {
+   "piece": "dashboards/multi-line-chart__white-total-coloured-accounts",
+   "name": "Multi-line account chart",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#6B7280",
+    "#A78BFA",
+    "#34D399",
+    "#3B82F6",
+    "#60A5FA",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/needs-you-inbox__segmented-lamp-filter-rows",
+   "name": "Needs-you inbox",
+   "tags": [
+    "nav",
+    "card",
+    "dark",
+    "hover"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#10B981",
+    "#34D399",
+    "#A78BFA",
+    "#3B82F6",
+    "#F59E0B"
+   ]
+  },
+  {
+   "piece": "dashboards/outreach-today-dashboard__one-gradient-hero-ring-fill",
+   "name": "Outreach today dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "loader",
+    "dark",
+    "hero",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#111118",
+    "#F59E0B",
+    "#16161F",
+    "#1F1F2A",
+    "#8B8B9C",
+    "#22C55E",
+    "#4ADE80",
+    "#FBBF24",
+    "#FFFFFF"
+   ]
+  },
+  {
+   "piece": "dashboards/payout-breakdown-stacked-bar__base-cpm-bonus",
+   "name": "Payout breakdown bar",
+   "tags": [
+    "chart",
+    "card",
+    "dark",
+    "counter"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#A78BFA",
+    "#34D399",
+    "#3B82F6",
+    "#10B981",
+    "#FBBF24"
+   ]
+  },
+  {
+   "piece": "dashboards/performance-radar-chart__five-axis-polar-fill",
+   "name": "Performance radar chart",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#A78BFA",
+    "#0D0D1A",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981",
+    "#9CA3AF"
+   ]
+  },
+  {
+   "piece": "dashboards/platform-donut-chart__pie-sweep-circle-legend",
+   "name": "Platform donut chart",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981",
+    "#EF4444"
+   ]
+  },
+  {
+   "piece": "dashboards/posting-activity-heatmap__weekday-by-week-grid",
+   "name": "Posting activity heatmap",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981",
+    "#60A5FA"
+   ]
+  },
+  {
+   "piece": "dashboards/price-compare-strip__strikethrough-retail-pick",
+   "name": "Price compare strip",
+   "tags": [
+    "stat-tile",
+    "form",
+    "light"
+   ],
+   "colors": [
+    "#EEF2EF",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F6F9F7",
+    "#101C18",
+    "#5B6B64",
+    "#8A9A93",
+    "#0F6E4F"
+   ]
+  },
+  {
+   "piece": "dashboards/progress-ring__gradient-dash-offset-glow",
+   "name": "Progress rings",
+   "tags": [
+    "chart",
+    "counter",
+    "dark",
+    "loader"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981",
+    "#050509"
+   ]
+  },
+  {
+   "piece": "dashboards/ranked-leaderboard-table__amber-top-three-you-row",
+   "name": "Ranked leaderboard table",
+   "tags": [
+    "table",
+    "card",
+    "dark"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#6B7280",
+    "#A78BFA",
+    "#34D399",
+    "#F59E0B",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/site-overview-dashboard__range-chips-stat-tiles",
+   "name": "Site overview dashboard",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "nav",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#5B5CE6",
+    "#0F111A",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77"
+   ]
+  },
+  {
+   "piece": "dashboards/spend-vs-views-bars__dual-axis-grouped",
+   "name": "Spend vs views grouped bars",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#3B82F6",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#10B981",
+    "#9CA3AF"
+   ]
+  },
+  {
+   "piece": "dashboards/stat-card-icon-tile__fade-up-stagger",
+   "name": "Stat cards",
+   "tags": [
+    "stat-tile",
+    "card",
+    "dark"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981",
+    "#050509"
+   ]
+  },
+  {
+   "piece": "dashboards/stat-tile-shine-border__conic-beam-count-up",
+   "name": "Stat tile with shine border",
+   "tags": [
+    "stat-tile",
+    "card",
+    "counter",
+    "dark"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#34D399",
+    "#1A1A2E",
+    "#A78BFA",
+    "#10B981",
+    "#3B82F6",
+    "#EF4444"
+   ]
+  },
+  {
+   "piece": "dashboards/stepper-timeline__done-active-pulse",
+   "name": "Stepper timeline",
+   "tags": [
+    "nav",
+    "card",
+    "dark",
+    "loader"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#1A1A2E",
+    "#A78BFA",
+    "#34D399",
+    "#F59E0B",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/tier-coloured-bars__per-bar-cell-fill",
+   "name": "Tier-coloured bar chart",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#60A5FA",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/top-creators-horizontal-bars__vertical-layout-grow",
+   "name": "Top creators horizontal bars",
+   "tags": [
+    "chart",
+    "dark",
+    "card"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#9CA3AF",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981"
+   ]
+  },
+  {
+   "piece": "dashboards/views-area-chart__monotone-gradient-clip-reveal",
+   "name": "Views area chart",
+   "tags": [
+    "chart",
+    "dark",
+    "card",
+    "loader"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#6B7280",
+    "#0D0D1A",
+    "#A78BFA",
+    "#34D399",
+    "#1A1A2E",
+    "#3B82F6",
+    "#10B981",
+    "#60A5FA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/3d-book-open-push-in__css-3d-cover-hinge",
+   "name": "3D book open and push-in",
+   "tags": [
+    "3d",
+    "kinetic-type",
+    "transition",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#FFC766",
+    "#07080B",
+    "#17120E",
+    "#2A1D0C",
+    "#E8B43A",
+    "#1C1712",
+    "#2A241A",
+    "#FBF7EE"
+   ]
+  },
+  {
+   "piece": "motion-graphics/address-bar-domain-typewriter__substring-slice-chip",
+   "name": "Address bar domain typewriter",
+   "tags": [
+    "browser-window",
+    "cursor",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#000000",
+    "#141028",
+    "#181034",
+    "#5B5CE6",
+    "#F4F4F6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A"
+   ]
+  },
+  {
+   "piece": "motion-graphics/ai-brain-scan-verdict-card__frame-sequence-camera",
+   "name": "AI brain scan with verdict card",
+   "tags": [
+    "browser-window",
+    "dark",
+    "kinetic-type",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#34D399",
+    "#000000",
+    "#0B0B10",
+    "#6D3CFF",
+    "#141028",
+    "#F2F2F4",
+    "#9B6BFF",
+    "#4F7BFF",
+    "#0B0A12"
+   ]
+  },
+  {
+   "piece": "motion-graphics/ai-scan-verdict-panel__frame-swap-spring",
+   "name": "AI scan and verdict panel",
+   "tags": [
+    "card",
+    "stat-tile",
+    "light",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#34D399",
+    "#7C3AED",
+    "#0B0B10",
+    "#F2F2F4",
+    "#111111",
+    "#0B0A12",
+    "#3D5A80",
+    "#E0A97D"
+   ]
+  },
+  {
+   "piece": "motion-graphics/approval-stamp-pills__scale-slam-stagger",
+   "name": "Approval stamp pills",
+   "tags": [
+    "card",
+    "dark",
+    "glow",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#34D399",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16"
+   ]
+  },
+  {
+   "piece": "motion-graphics/avatar-stack-glass-pill__back-ease-pop",
+   "name": "Avatar stack glass pill",
+   "tags": [
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#141028",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F4F6",
+    "#6B6B7B",
+    "#181034",
+    "#8B5CF6",
+    "#60A5FA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/big-number-brand-counter__count-up-snap-short-form",
+   "name": "Big brand number counter",
+   "tags": [
+    "counter",
+    "stat-tile",
+    "light",
+    "logo"
+   ],
+   "colors": [
+    "#0B0B10",
+    "#FFFFFF",
+    "#141028",
+    "#000000",
+    "#F2F2F4",
+    "#F4F4F6",
+    "#2A1B5E",
+    "#0B0A12",
+    "#55556A",
+    "#6D3CFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/blueprint-grid-glow-background__drifting-grid-blob-vignette",
+   "name": "Dark blueprint grid with drifting purple glow",
+   "tags": [
+    "background",
+    "dark",
+    "glow"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111",
+    "#A78BFA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/blurred-feed-strip-speed-scroll__modulo-wrapped-rows",
+   "name": "Blurred feed strip speed scroll",
+   "tags": [
+    "scroll",
+    "card",
+    "light",
+    "transition",
+    "marquee"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#111111",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44",
+    "#7B2D5B",
+    "#F0C7A0"
+   ]
+  },
+  {
+   "piece": "motion-graphics/book-title-buy-button-end-card__slam-pop-cursor-click",
+   "name": "Book, title and buy-button end card",
+   "tags": [
+    "end-card",
+    "cta",
+    "3d",
+    "cursor",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#E8B43A",
+    "#FFC766",
+    "#2A1D0C",
+    "#07080B",
+    "#F3F1EA",
+    "#2A241A",
+    "#FBF7EE",
+    "#D9D1BF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/bouncing-badge-and-done-word__damped-sine-bounce",
+   "name": "Bouncing badge and done word",
+   "tags": [
+    "logo",
+    "kinetic-type",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF",
+    "#38BDF8",
+    "#F4F6FA",
+    "#8A93A3"
+   ]
+  },
+  {
+   "piece": "motion-graphics/bracket-caption-tag__fade-in",
+   "name": "Bracket caption tag",
+   "tags": [
+    "card",
+    "nav",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#111111",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44",
+    "#7B2D5B",
+    "#F0C7A0"
+   ]
+  },
+  {
+   "piece": "motion-graphics/browser-window-3d-fly-in__perspective-rotate-blur-out",
+   "name": "Browser window 3D fly-in",
+   "tags": [
+    "browser-window",
+    "3d",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#000000",
+    "#141028",
+    "#5B5CE6",
+    "#F4F4F6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#6B6B7B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/browser-window-focal-camera-zoom__focal-point-transform",
+   "name": "Browser window with focal camera zoom",
+   "tags": [
+    "browser-window",
+    "hero",
+    "dark",
+    "scroll",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#A78BFA",
+    "#34D399",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16"
+   ]
+  },
+  {
+   "piece": "motion-graphics/browser-window-slide-up__eo5-rise",
+   "name": "Browser window slide-up",
+   "tags": [
+    "browser-window",
+    "hero",
+    "light",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#A78BFA",
+    "#0B0A12",
+    "#7C3AED",
+    "#F2F2F4",
+    "#0B0B10",
+    "#100F18",
+    "#FF5F57",
+    "#FEBC2E"
+   ]
+  },
+  {
+   "piece": "motion-graphics/campaign-popup-slider-launch__spring-in-fill",
+   "name": "Project popup with slider and launch",
+   "tags": [
+    "modal",
+    "form",
+    "cursor",
+    "light",
+    "hero"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#E4E4EA",
+    "#2563EB",
+    "#2F6BFF",
+    "#F2F2F4",
+    "#D8D8DE",
+    "#34C759",
+    "#8A8A96"
+   ]
+  },
+  {
+   "piece": "motion-graphics/caption-word-reveal-highlight__ceil-word-count",
+   "name": "Bottom caption with word-by-word reveal and one highlighted word",
+   "tags": [
+    "kinetic-type",
+    "voice",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#07070D",
+    "#E8E8F0",
+    "#0A0A12",
+    "#0C0C15"
+   ]
+  },
+  {
+   "piece": "motion-graphics/case-cards-stagger-count-up__rise-tilt-eased-number",
+   "name": "Three case cards with count-up numbers",
+   "tags": [
+    "card",
+    "counter",
+    "stat-tile",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#14121F",
+    "#0C0B14",
+    "#111111",
+    "#3B5BDB"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cast-chip-pills__staggered-back-pop",
+   "name": "Cast chip pills",
+   "tags": [
+    "card",
+    "dark",
+    "sfx",
+    "logo"
+   ],
+   "colors": [
+    "#07080B",
+    "#000000",
+    "#FFC766",
+    "#FFFFFF",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14",
+    "#E8EADC",
+    "#120804"
+   ]
+  },
+  {
+   "piece": "motion-graphics/chapter-rail-progress-line__active-label-swap",
+   "name": "Chapter rail with progress line",
+   "tags": [
+    "nav",
+    "dark",
+    "logo"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#A5B4FC",
+    "#5B5CE6",
+    "#9B9BB3",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#F4F6FA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/chart-card-wipe-draw-big-total__clip-path-inset-count",
+   "name": "Chart card wipes in with a big counting total",
+   "tags": [
+    "chart",
+    "counter",
+    "card",
+    "dark",
+    "glow",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16",
+    "#07070D"
+   ]
+  },
+  {
+   "piece": "motion-graphics/check-chip-trio-settle__spring-scale-row",
+   "name": "Check chip trio settling in a row",
+   "tags": [
+    "card",
+    "dark",
+    "stat-tile"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#050409",
+    "#181034",
+    "#141028",
+    "#F2F2F4",
+    "#4338CA",
+    "#8B5CF6"
+   ]
+  },
+  {
+   "piece": "motion-graphics/checklist-steps-tick-in__spring-dot-blur-slide",
+   "name": "Checklist steps tick-in",
+   "tags": [
+    "kinetic-type",
+    "light",
+    "hero"
+   ],
+   "colors": [
+    "#6D3CFF",
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#9B6BFF",
+    "#4F7BFF",
+    "#F4F4F6",
+    "#1B1B26"
+   ]
+  },
+  {
+   "piece": "motion-graphics/chrome-logo-spin-rise-shock-rings__rotatey-ring-expand",
+   "name": "Chrome logo spin, rise and rings",
+   "tags": [
+    "logo",
+    "hero",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#141028",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#FBFBFD",
+    "#6B7280",
+    "#F3F4F6",
+    "#2A2F3A",
+    "#AEB4C0"
+   ]
+  },
+  {
+   "piece": "motion-graphics/chrome-wordmark-end-card__blur-resolve-cta",
+   "name": "Chrome wordmark end card",
+   "tags": [
+    "end-card",
+    "logo",
+    "cta",
+    "cursor",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#2563EB",
+    "#2F6BFF",
+    "#38BDF8",
+    "#F2F2F4",
+    "#3B82F6",
+    "#FF7A3D",
+    "#FF2E97"
+   ]
+  },
+  {
+   "piece": "motion-graphics/click-ripple-fill-match-cut__expanding-circle",
+   "name": "Click ripple fills the screen",
+   "tags": [
+    "transition",
+    "cursor",
+    "cta",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16",
+    "#C4B5FD",
+    "#07070D"
+   ]
+  },
+  {
+   "piece": "motion-graphics/confetti-burst__radial-gravity-fade",
+   "name": "Confetti burst",
+   "tags": [
+    "sfx",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#1F8F3E",
+    "#000000",
+    "#F2F2F4",
+    "#2F6BFF",
+    "#FFD23D",
+    "#FF2E97",
+    "#38BDF8"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cover-orbit-ring-title-pop__polar-orbit-radius-ease",
+   "name": "Cover orbit ring around a title",
+   "tags": [
+    "kinetic-type",
+    "hero",
+    "dark",
+    "carousel"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#111111",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#C4B5FD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cover-wall-glass-counter__grid-zoom-out-count",
+   "name": "Cover wall with glass counter",
+   "tags": [
+    "counter",
+    "chart",
+    "3d",
+    "light",
+    "stat-tile"
+   ],
+   "colors": [
+    "#F4F4F6",
+    "#FFFFFF",
+    "#000000",
+    "#8B5CF6",
+    "#0B0B10",
+    "#6D3CFF",
+    "#141028",
+    "#F2F2F4",
+    "#111111",
+    "#55556A"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cover-wall-tight-crop-pull-back__scale-rotatex-pull",
+   "name": "Cover wall pull-back from a tight crop",
+   "tags": [
+    "browser-window",
+    "transition",
+    "dark",
+    "3d",
+    "kinetic-type",
+    "scroll"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#34D399",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cover-wedged-kinetic-line-zoom-through__scale-origin-zoom",
+   "name": "Kinetic line with covers between the words, then zoom-through",
+   "tags": [
+    "kinetic-type",
+    "hero",
+    "transition",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#000000",
+    "#111111",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#C4B5FD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/coverflow-poster-ring__preserve-3d-rotatey",
+   "name": "Coverflow poster ring",
+   "tags": [
+    "carousel",
+    "3d",
+    "transition",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#141028",
+    "#8B5CF6",
+    "#181034",
+    "#F2F2F4",
+    "#6D3CFF",
+    "#9B6BFF",
+    "#4F7BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/creator-tile-grid-scatter__staggered-spring-fly",
+   "name": "Profile tile grid scatter",
+   "tags": [
+    "carousel",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF",
+    "#38BDF8",
+    "#222222",
+    "#3D5A80"
+   ]
+  },
+  {
+   "piece": "motion-graphics/crossed-out-document-drop__spring-float-cross",
+   "name": "Crossed-out document drop",
+   "tags": [
+    "card",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#5B5CE6",
+    "#FFFFFF",
+    "#141028",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#4338CA",
+    "#8B5CF6",
+    "#A5B4FC",
+    "#C4B5FD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cta-button-press-click__scale-brightness-type",
+   "name": "CTA button click with typed address",
+   "tags": [
+    "cta",
+    "cursor",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#5B5CE6",
+    "#000000",
+    "#0B0B10",
+    "#141028",
+    "#6B6B7B",
+    "#181034",
+    "#F2F2F4",
+    "#4338CA",
+    "#8B5CF6"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cta-pill-button-click-through__back-overshoot-press-ripple",
+   "name": "Call-to-action pill with cursor click-through",
+   "tags": [
+    "cta",
+    "cursor",
+    "light",
+    "sfx",
+    "end-card"
+   ],
+   "colors": [
+    "#0B0C10",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F5F7",
+    "#5B5CE6",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cursor-click-ring__glide-press-ring",
+   "name": "Cursor click with ring",
+   "tags": [
+    "cursor",
+    "cta",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#2563EB",
+    "#F2F2F4",
+    "#3B82F6",
+    "#2F6BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/cursor-click-ripple__eased-keyframe-path",
+   "name": "Cursor click with gold ripple",
+   "tags": [
+    "cursor",
+    "cta",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#000000",
+    "#07080B",
+    "#F3F1EA",
+    "#FFD814",
+    "#0B0C10",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#E8B43A",
+    "#0F1111"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dark-ember-title-beat__word-reveal-inline-card",
+   "name": "Dark ember title beat",
+   "tags": [
+    "kinetic-type",
+    "background",
+    "dark",
+    "cursor"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#FF6A3D",
+    "#FF2E97",
+    "#F2F2F4",
+    "#111111",
+    "#2F6BFF",
+    "#3D5A80",
+    "#E0A97D"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dark-grid-moving-beam-background__conic-gradient-drift",
+   "name": "Dark grid with moving light",
+   "tags": [
+    "background",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dark-stage-circle-reveal__clip-path-circle-wipe",
+   "name": "Dark stage circle reveal",
+   "tags": [
+    "transition",
+    "background",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#000000",
+    "#F2F2F4",
+    "#6D3CFF",
+    "#9B6BFF",
+    "#4F7BFF",
+    "#F4F4F6",
+    "#1A1030",
+    "#0A0812"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dashboard-card-lift-out-spring__lift-dim-settle",
+   "name": "Dashboard cards lifting out of the page",
+   "tags": [
+    "card",
+    "browser-window",
+    "stat-tile",
+    "chart",
+    "dark",
+    "glow",
+    "3d"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#A78BFA",
+    "#34D399",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dashboard-window-3d-fly-in__perspective-cam-pan",
+   "name": "Dashboard window fly-in with camera pan",
+   "tags": [
+    "browser-window",
+    "3d",
+    "cursor",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#0B0B10",
+    "#141223",
+    "#A78BFA",
+    "#141028",
+    "#F2F2F4",
+    "#0B0A12",
+    "#100F18"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax",
+   "name": "Dino runner, Arizona sunset",
+   "tags": [
+    "kinetic-type",
+    "transition",
+    "end-card",
+    "logo",
+    "voice",
+    "sfx",
+    "game",
+    "reel",
+    "background",
+    "pixel-art",
+    "brand"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0A0412",
+    "#08030E",
+    "#161619",
+    "#A1A1AA",
+    "#D4D4D8",
+    "#0B0C10",
+    "#1A0A38",
+    "#35104F"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dino-runner-game-over-then-endless-run__pixel-canvas-scripted-jumps",
+   "name": "Dino runner: game over, then the endless run",
+   "tags": [
+    "kinetic-type",
+    "transition",
+    "end-card",
+    "logo",
+    "voice",
+    "sfx",
+    "game",
+    "reel",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#A1A1AA",
+    "#26262A",
+    "#4A4A50",
+    "#0E0E10",
+    "#8B8B93",
+    "#161619",
+    "#D4D4D8",
+    "#0B0C10"
+   ]
+  },
+  {
+   "piece": "motion-graphics/drifting-glow-blobs__blurred-orbs-mood-weights",
+   "name": "Drifting glow blobs",
+   "tags": [
+    "background",
+    "dark"
+   ],
+   "colors": [
+    "#000000",
+    "#07080B",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F3F1EA",
+    "#3A2A08",
+    "#0F1F3A",
+    "#4A1410"
+   ]
+  },
+  {
+   "piece": "motion-graphics/dual-panel-slide-money-counter__eased-int-count",
+   "name": "Two dashboard panels with a money counter",
+   "tags": [
+    "counter",
+    "card",
+    "dark",
+    "glow",
+    "browser-window"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#07070D",
+    "#E8E8F0",
+    "#0A0A12"
+   ]
+  },
+  {
+   "piece": "motion-graphics/email-link-strikethrough__scalex-red-bar",
+   "name": "Email with struck-out link",
+   "tags": [
+    "card",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#6B6B80",
+    "#9B9BB3",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A"
+   ]
+  },
+  {
+   "piece": "motion-graphics/end-card-g-flip-wordmark-blur__rotatey-spring-blur",
+   "name": "End card with flipping mark",
+   "tags": [
+    "end-card",
+    "logo",
+    "light"
+   ],
+   "colors": [
+    "#141028",
+    "#0B0B10",
+    "#F4F6FA",
+    "#8A93A3",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#2A2F3A",
+    "#CFD6E2",
+    "#A8B0C2"
+   ]
+  },
+  {
+   "piece": "motion-graphics/end-card-typed-url-wordmark-slam__typewriter-shake",
+   "name": "End card with wordmark slam and typed URL",
+   "tags": [
+    "end-card",
+    "cta",
+    "logo",
+    "kinetic-type",
+    "sfx",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111",
+    "#7C3AED",
+    "#3B1D8F",
+    "#12082E"
+   ]
+  },
+  {
+   "piece": "motion-graphics/feed-refresh-blur-scroll__ease-in-column-blur",
+   "name": "Feed refresh blur scroll",
+   "tags": [
+    "scroll",
+    "card",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#111111",
+    "#2F6BFF",
+    "#1A46C9",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44"
+   ]
+  },
+  {
+   "piece": "motion-graphics/floating-photo-plate__back-ease-rise-tilt",
+   "name": "Floating photo plate",
+   "tags": [
+    "card",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#000000",
+    "#FFC766",
+    "#07080B",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14",
+    "#E8EADC",
+    "#120804",
+    "#E6D7BD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/form-walkthrough-focus-camera__field-click-type-continue",
+   "name": "Form walkthrough with a camera that follows the action",
+   "tags": [
+    "browser-window",
+    "cursor",
+    "form",
+    "light",
+    "sfx"
+   ],
+   "colors": [
+    "#0B0C10",
+    "#FFFFFF",
+    "#F4F5F7",
+    "#0F111A",
+    "#000000",
+    "#5B5CE6",
+    "#DFE3FF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#FAFAFB"
+   ]
+  },
+  {
+   "piece": "motion-graphics/giant-black-slam-word__spring-scale-shake",
+   "name": "Giant black slam word",
+   "tags": [
+    "kinetic-type",
+    "hero",
+    "light",
+    "scroll"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#111111",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF",
+    "#38BDF8"
+   ]
+  },
+  {
+   "piece": "motion-graphics/giant-cropped-number-beat-cuts__punch-scale-count",
+   "name": "Giant cropped number beat cuts",
+   "tags": [
+    "counter",
+    "kinetic-type",
+    "stat-tile",
+    "transition",
+    "sfx"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#8B5CF6",
+    "#F2F2F4",
+    "#050509",
+    "#111111",
+    "#3B5BDB",
+    "#1D2A6B",
+    "#070A1F"
+   ]
+  },
+  {
+   "piece": "motion-graphics/giant-number-count-up-accent__eo5-colour-flip",
+   "name": "Giant count-up number",
+   "tags": [
+    "counter",
+    "stat-tile",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#A5B4FC",
+    "#5B5CE6",
+    "#9B9BB3",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E"
+   ]
+  },
+  {
+   "piece": "motion-graphics/glass-popup-card__back-ease-blur-card",
+   "name": "Glass pop-up card",
+   "tags": [
+    "card",
+    "dark",
+    "sfx",
+    "stat-tile"
+   ],
+   "colors": [
+    "#07080B",
+    "#000000",
+    "#FFC766",
+    "#E8B43A",
+    "#FFFFFF",
+    "#D8463A",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14"
+   ]
+  },
+  {
+   "piece": "motion-graphics/glass-stat-card-count-up__eo5-tabular-million",
+   "name": "Glass stat card counting up",
+   "tags": [
+    "counter",
+    "stat-tile",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#141028",
+    "#5B5CE6",
+    "#181034",
+    "#F2F2F4",
+    "#F4F4F6",
+    "#6B6B7B",
+    "#0E0C16"
+   ]
+  },
+  {
+   "piece": "motion-graphics/gold-silver-metallic-title-lockup__rye-gradient-clip-text",
+   "name": "Gold and silver metallic title lockup",
+   "tags": [
+    "kinetic-type",
+    "logo",
+    "hero",
+    "dark"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#FFC766",
+    "#07080B",
+    "#17120E",
+    "#E8C25A",
+    "#060504",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F3F1EA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/gold-timeline-rail__progress-fill-year-ticks",
+   "name": "Gold timeline rail",
+   "tags": [
+    "chart",
+    "card",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#E8B43A",
+    "#000000",
+    "#D8463A",
+    "#FFFFFF",
+    "#FFC766",
+    "#07080B",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14"
+   ]
+  },
+  {
+   "piece": "motion-graphics/graded-photo-backdrop-slow-zoom__sepia-grade-cover-fit",
+   "name": "Graded photo backdrop with slow zoom",
+   "tags": [
+    "background",
+    "dark"
+   ],
+   "colors": [
+    "#07080B",
+    "#FFC766",
+    "#000000",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14",
+    "#E8EADC",
+    "#120804",
+    "#E6D7BD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/gradient-count-up-number__eo5-count-with-proof-cards",
+   "name": "Gradient count-up number",
+   "tags": [
+    "counter",
+    "stat-tile",
+    "kinetic-type",
+    "light",
+    "hero"
+   ],
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF",
+    "#38BDF8",
+    "#5F5F6B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/gradient-word-sweep__eio-slide-blur",
+   "name": "Gradient word sweep",
+   "tags": [
+    "kinetic-type",
+    "transition",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF",
+    "#38BDF8"
+   ]
+  },
+  {
+   "piece": "motion-graphics/grain-vignette-fade-to-black__svg-noise-overlay",
+   "name": "Grain, vignette and fade to black",
+   "tags": [
+    "background",
+    "dark",
+    "end-card"
+   ],
+   "colors": [
+    "#07080B",
+    "#000000",
+    "#FFC766",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14",
+    "#E8EADC",
+    "#120804",
+    "#E6D7BD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/handwritten-annotation__clip-wipe-arrow-draw",
+   "name": "Handwritten annotation with arrow",
+   "tags": [
+    "kinetic-type",
+    "light",
+    "hero"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#2563EB",
+    "#E5262B",
+    "#F2F2F4",
+    "#111111",
+    "#3B82F6",
+    "#3D5A80",
+    "#E0A97D"
+   ]
+  },
+  {
+   "piece": "motion-graphics/hanging-polaroid-line-sway__sine-swing-scroll",
+   "name": "Hanging polaroid line",
+   "tags": [
+    "card",
+    "carousel",
+    "dark",
+    "kinetic-type",
+    "marquee"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#F5F2EA",
+    "#222222",
+    "#111111",
+    "#A78BFA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/hard-cut-white-flash__beat-flash-decay",
+   "name": "White flash on a hard cut",
+   "tags": [
+    "transition",
+    "sfx",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#8B5CF6",
+    "#F2F2F4",
+    "#050509",
+    "#111111",
+    "#0D0A1F",
+    "#F4F2EE",
+    "#4C1D95"
+   ]
+  },
+  {
+   "piece": "motion-graphics/headless-screen-capture-pipeline__playwright-frame-sequence",
+   "name": "Headless screen capture pipeline",
+   "tags": [
+    "browser-window",
+    "loader"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#141028",
+    "#181034",
+    "#0B0B10",
+    "#000000",
+    "#F2F2F4",
+    "#F4F4F6",
+    "#6B6B7B",
+    "#0B0A12"
+   ]
+  },
+  {
+   "piece": "motion-graphics/hook-ab-variants__query-param-hook-table",
+   "name": "Hook A/B variants",
+   "tags": [
+    "kinetic-type",
+    "card",
+    "dark",
+    "voice"
+   ],
+   "colors": [
+    "#07080B",
+    "#E8B43A",
+    "#FFFFFF",
+    "#FFC766",
+    "#000000",
+    "#D8463A",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14"
+   ]
+  },
+  {
+   "piece": "motion-graphics/inquiry-chip-fly-to-inbox__lerp-path-badge-pop",
+   "name": "Inquiry chip flying to inbox",
+   "tags": [
+    "browser-window",
+    "card",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#5B5CE6",
+    "#141028",
+    "#0B0B10",
+    "#FAFAFD",
+    "#181034",
+    "#F4F4F6",
+    "#F1C8A4",
+    "#9A7352"
+   ]
+  },
+  {
+   "piece": "motion-graphics/laptop-mockup-camera-pan__clamped-zoom-scroll",
+   "name": "Laptop mockup with camera pan",
+   "tags": [
+    "browser-window",
+    "phone",
+    "dark",
+    "scroll"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#E6FAF0",
+    "#6B6B7B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/layout-flash-cut-pill-tabs__beat-cut-punch-zoom",
+   "name": "Layout flash-cut with pill tabs",
+   "tags": [
+    "browser-window",
+    "nav",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#000000",
+    "#141028",
+    "#5B5CE6",
+    "#181034",
+    "#F4F4F6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A"
+   ]
+  },
+  {
+   "piece": "motion-graphics/layout-name-filmstrip-push__strip-translate-blur",
+   "name": "Layout name filmstrip push",
+   "tags": [
+    "transition",
+    "dark",
+    "carousel"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#A5B4FC",
+    "#5B5CE6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/led-dot-rainbow-word__conic-gradient-dot-mask",
+   "name": "LED dot rainbow word",
+   "tags": [
+    "kinetic-type",
+    "background",
+    "transition",
+    "dark",
+    "logo"
+   ],
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#FF2E97",
+    "#38BDF8",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#2A2A2E",
+    "#FF7A3D",
+    "#FFD23D",
+    "#7C3AED"
+   ]
+  },
+  {
+   "piece": "motion-graphics/light-orb-dot-background__blurred-orbs-drift",
+   "name": "Light orb dot background",
+   "tags": [
+    "background",
+    "light"
+   ],
+   "colors": [
+    "#F4F4F6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#141028",
+    "#5B5CE6",
+    "#60A5FA",
+    "#EC4899",
+    "#94A3B8",
+    "#0A0814"
+   ]
+  },
+  {
+   "piece": "motion-graphics/line-chart-grow__point-slice-path",
+   "name": "Growing line chart",
+   "tags": [
+    "chart",
+    "dashboard",
+    "light"
+   ],
+   "colors": [
+    "#2F6BFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "motion-graphics/logo-domain-end-card__per-character-rise-back-pop",
+   "name": "Logo and domain end card",
+   "tags": [
+    "end-card",
+    "logo",
+    "kinetic-type",
+    "light"
+   ],
+   "colors": [
+    "#0B0C10",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F5F7",
+    "#FFFFFF",
+    "#5C606B",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/logo-glitch-slice-blur-reveal__clip-path-inset-slices",
+   "name": "Logo glitch-slice blur reveal",
+   "tags": [
+    "logo",
+    "kinetic-type",
+    "dark",
+    "glow",
+    "hero"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#000000",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111"
+   ]
+  },
+  {
+   "piece": "motion-graphics/logo-marquee-counterscroll-big-number__opposing-translatex",
+   "name": "Big number between two counter-scrolling logo rows",
+   "tags": [
+    "marquee",
+    "counter",
+    "stat-tile",
+    "dark",
+    "glow"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111",
+    "#A78BFA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/logo-shine-sweep__masked-gradient-position",
+   "name": "Logo shine sweep",
+   "tags": [
+    "logo",
+    "light",
+    "end-card"
+   ],
+   "colors": [
+    "#141028",
+    "#0B0B10",
+    "#F4F6FA",
+    "#8A93A3",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#2A2F3A",
+    "#CFD6E2",
+    "#A8B0C2"
+   ]
+  },
+  {
+   "piece": "motion-graphics/logo-slam-shake-spark-burst__scale-shake-radial-sparks",
+   "name": "Logo slam with shake and spark burst",
+   "tags": [
+    "logo",
+    "transition",
+    "dark",
+    "glow",
+    "sfx"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111",
+    "#E9D5FF",
+    "#C4B5FD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/long-page-section-scroll__eased-scroll-velocity-blur",
+   "name": "Long page jump-scroll with motion blur",
+   "tags": [
+    "browser-window",
+    "scroll",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#0B0C10",
+    "#F4F5F7",
+    "#FFFFFF",
+    "#5B5CE6",
+    "#0F111A",
+    "#000000",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/masked-line-rise-headline__overflow-clip-translate",
+   "name": "Masked line rise headline",
+   "tags": [
+    "kinetic-type",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/niche-flash-cuts-outline-word__eighth-note-index",
+   "name": "Eighth-note flash cuts with outlined giant word",
+   "tags": [
+    "kinetic-type",
+    "transition",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#000000",
+    "#34D399",
+    "#111111",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#100C1E",
+    "#A78BFA"
+   ]
+  },
+  {
+   "piece": "motion-graphics/node-pipeline-sequenced-lightup__wire-scale-sparks",
+   "name": "Node pipeline light-up",
+   "tags": [
+    "card",
+    "dark",
+    "glow",
+    "hero",
+    "kinetic-type"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#C4B5FD",
+    "#A78BFA",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111",
+    "#0D0B18"
+   ]
+  },
+  {
+   "piece": "motion-graphics/notification-card-stack__staggered-spring-rise",
+   "name": "Notification card stack",
+   "tags": [
+    "card",
+    "stat-tile",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#5F5F6B",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44",
+    "#7B2D5B",
+    "#F0C7A0"
+   ]
+  },
+  {
+   "piece": "motion-graphics/one-composition-four-aspect-ratios__scale-and-tall-factor",
+   "name": "One composition, four aspect ratios",
+   "tags": [
+    "hero",
+    "dark"
+   ],
+   "colors": [
+    "#07080B",
+    "#E8B43A",
+    "#FFFFFF",
+    "#000000",
+    "#FFC766",
+    "#D8463A",
+    "#A9ADB8",
+    "#FFB347",
+    "#17120E",
+    "#1C1712"
+   ]
+  },
+  {
+   "piece": "motion-graphics/pastel-drifting-blobs-background__sine-drift-blur-110",
+   "name": "Pastel drifting blob background",
+   "tags": [
+    "background",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F5F7",
+    "#0B0C10",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/payment-card-check__spring-check-pop",
+   "name": "Payment confirmation card",
+   "tags": [
+    "card",
+    "stat-tile",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5F5F6B",
+    "#1F8F3E",
+    "#F2F2F4",
+    "#D8D8DE",
+    "#34C759",
+    "#E4E4EA",
+    "#8A8A96"
+   ]
+  },
+  {
+   "piece": "motion-graphics/perspective-tilt-window-entrance__rotate-perspective-settle",
+   "name": "Perspective-tilted window entrance",
+   "tags": [
+    "browser-window",
+    "hero",
+    "dark",
+    "3d",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#34D399",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-beside-browser-synced-screens__rise-in-crossfade-rise",
+   "name": "Phone beside browser with synced screens",
+   "tags": [
+    "phone",
+    "browser-window",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#0B0C10",
+    "#FFFFFF",
+    "#F4F5F7",
+    "#5B5CE6",
+    "#D9DCE4",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF",
+    "#0F111A",
+    "#000000"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-drop-in__spring-fall",
+   "name": "Phone drop-in",
+   "tags": [
+    "phone",
+    "hero",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#0C0C10",
+    "#35353F",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-fan-spring-spread__rotate-translate-stagger",
+   "name": "Phone fan spring spread",
+   "tags": [
+    "phone",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-grid-tilted-row__preserve-3d-stagger-spring",
+   "name": "Phone grid tilted row",
+   "tags": [
+    "phone",
+    "3d",
+    "kinetic-type",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#22C55E",
+    "#8B5CF6",
+    "#141028",
+    "#181034",
+    "#F2F2F4",
+    "#6D3CFF",
+    "#9B6BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-mockup-spring-rise-tilt__rotate-translate-spring",
+   "name": "Phone mockup spring rise with tilt",
+   "tags": [
+    "phone",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#A5B4FC",
+    "#5B5CE6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-row-platform-pills__staggered-rise-pop",
+   "name": "Phone row with platform pills",
+   "tags": [
+    "phone",
+    "carousel",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#0C0C10",
+    "#35353F",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44",
+    "#7B2D5B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/phone-trio-view-counters__spring-flank-count-up",
+   "name": "Phone trio with view counters",
+   "tags": [
+    "phone",
+    "counter",
+    "stat-tile",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#6D3CFF",
+    "#8B5CF6",
+    "#6B6B7B",
+    "#141028",
+    "#181034",
+    "#F2F2F4",
+    "#9B6BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/platform-badge-tiles-fly-tick__spring-rise-tick-pop",
+   "name": "Platform badge tiles with ticks",
+   "tags": [
+    "card",
+    "logo",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#EC4899",
+    "#16A34A",
+    "#141028",
+    "#181034",
+    "#F2F2F4",
+    "#6D3CFF",
+    "#9B6BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/prompt-box-typed-send-zoom-out__eased-char-slice",
+   "name": "Typed prompt box with send click",
+   "tags": [
+    "kinetic-type",
+    "cursor",
+    "hero",
+    "dark",
+    "glow",
+    "transition"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#A78BFA",
+    "#000000",
+    "#C4B5FD",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#111111",
+    "#100E1C"
+   ]
+  },
+  {
+   "piece": "motion-graphics/reel-post-card__heart-comment-rail",
+   "name": "Reel-style post card",
+   "tags": [
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#FF3056",
+    "#F2F2F4",
+    "#111111",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44",
+    "#7B2D5B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/screen-deck-curtain-split__staggered-fan-rotate",
+   "name": "Screen deck curtain split",
+   "tags": [
+    "card",
+    "hero",
+    "transition",
+    "dark",
+    "browser-window",
+    "kinetic-type"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#A78BFA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#07070D",
+    "#E8E8F0",
+    "#0A0A12"
+   ]
+  },
+  {
+   "piece": "motion-graphics/section-title-sidebar-list__active-dash-stretch",
+   "name": "Section title with progress list",
+   "tags": [
+    "nav",
+    "light",
+    "kinetic-type"
+   ],
+   "colors": [
+    "#5B5CE6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F5F7",
+    "#0B0C10",
+    "#3A3D46",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/serif-word-slam-headline__staggered-word-scale-fade",
+   "name": "Serif word slam headline",
+   "tags": [
+    "kinetic-type",
+    "hero",
+    "dark",
+    "voice"
+   ],
+   "colors": [
+    "#000000",
+    "#07080B",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F3F1EA",
+    "#E8B43A",
+    "#D8463A",
+    "#3A2A08",
+    "#0F1F3A",
+    "#4A1410"
+   ]
+  },
+  {
+   "piece": "motion-graphics/setup-step-progress-pill__eio-fill-counter",
+   "name": "Setup step progress pill",
+   "tags": [
+    "browser-window",
+    "nav",
+    "cursor",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#141028",
+    "#000000",
+    "#5B5CE6",
+    "#181034",
+    "#F4F4F6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A"
+   ]
+  },
+  {
+   "piece": "motion-graphics/shaking-serif-quote-slam__scale-down-sine-shake",
+   "name": "Shaking quote slam",
+   "tags": [
+    "kinetic-type",
+    "sfx",
+    "dark"
+   ],
+   "colors": [
+    "#07080B",
+    "#FFC766",
+    "#000000",
+    "#FFB347",
+    "#17120E",
+    "#1C1712",
+    "#2B1D14",
+    "#E8EADC",
+    "#120804",
+    "#E6D7BD"
+   ]
+  },
+  {
+   "piece": "motion-graphics/skewed-bar-chapter-wipe__staggered-eio5",
+   "name": "Skewed bar chapter wipe",
+   "tags": [
+    "transition",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "motion-graphics/solid-curtain-sweep-wipe__translatex-percent",
+   "name": "Solid colour curtain sweep",
+   "tags": [
+    "transition",
+    "dark",
+    "browser-window"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16",
+    "#07070D",
+    "#E8E8F0"
+   ]
+  },
+  {
+   "piece": "motion-graphics/spotlight-vignette-joke__radial-gradient-mask",
+   "name": "Spotlight vignette joke beat",
+   "tags": [
+    "kinetic-type",
+    "dark",
+    "hero",
+    "card"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0B0B10",
+    "#FFE600",
+    "#F2F2F4",
+    "#D8D8DE",
+    "#34C759",
+    "#E4E4EA",
+    "#8A8A96",
+    "#FF7A3D"
+   ]
+  },
+  {
+   "piece": "motion-graphics/stamped-word-card-burst__spring-from-huge",
+   "name": "Stamped word card burst",
+   "tags": [
+    "kinetic-type",
+    "card",
+    "light",
+    "hero"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#111111",
+    "#2F6BFF",
+    "#1A46C9",
+    "#3D5A80",
+    "#E0A97D",
+    "#1D2D44"
+   ]
+  },
+  {
+   "piece": "motion-graphics/stat-card-row-count-up__staggered-rise-plus-accent",
+   "name": "Stat card row with count-up numbers",
+   "tags": [
+    "stat-tile",
+    "counter",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F5F7",
+    "#0B0C10",
+    "#5C606B",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/stat-cards-lift-from-window__spring-translatez",
+   "name": "Stat cards lifting out of a window",
+   "tags": [
+    "card",
+    "stat-tile",
+    "3d"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#141223",
+    "#8B5CF6",
+    "#A78BFA",
+    "#000000",
+    "#0B0B10",
+    "#141028",
+    "#181034",
+    "#F2F2F4",
+    "#0B0A12"
+   ]
+  },
+  {
+   "piece": "motion-graphics/tilted-3d-poster-wall__preserve3d-translatez-drift",
+   "name": "Tilted 3D poster wall",
+   "tags": [
+    "3d",
+    "background",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#111111",
+    "#F4F4F6",
+    "#141028",
+    "#5B5CE6",
+    "#60A5FA",
+    "#EC4899"
+   ]
+  },
+  {
+   "piece": "motion-graphics/ui-callout-leader-line__lerp-line-draw-label",
+   "name": "UI callout with leader line",
+   "tags": [
+    "card",
+    "dark",
+    "cursor",
+    "stat-tile"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#5B5CE6",
+    "#A5B4FC",
+    "#9B9BB3",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#12121E"
+   ]
+  },
+  {
+   "piece": "motion-graphics/url-pill-typewriter-caret__substring-blink",
+   "name": "URL pill typewriter with caret",
+   "tags": [
+    "cta",
+    "dark",
+    "cursor"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#050409",
+    "#181034",
+    "#141028",
+    "#F2F2F4",
+    "#16133A",
+    "#0A0916",
+    "#6B6B7B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/verdict-chip-pop__spring-scale-rise",
+   "name": "Verdict chip pop",
+   "tags": [
+    "card",
+    "dark",
+    "stat-tile"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#34D399",
+    "#000000",
+    "#0B0B10",
+    "#16A34A",
+    "#141028",
+    "#F2F2F4",
+    "#0C0B16",
+    "#A8A6C0",
+    "#6A4A9C"
+   ]
+  },
+  {
+   "piece": "motion-graphics/violet-ai-dashboard-score-ring-push-in__counting-ring-glow-brain",
+   "name": "Violet AI review dashboard with counting score ring",
+   "tags": [
+    "chart",
+    "stat-tile",
+    "dark",
+    "counter",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#A7A6BD",
+    "#FF9A4D",
+    "#8A5CFF",
+    "#E9E8F5",
+    "#000000",
+    "#0B0B17",
+    "#B0AFC6",
+    "#1D1D33",
+    "#B8B7CC"
+   ]
+  },
+  {
+   "piece": "motion-graphics/voiceover-driven-scene-schedule__max-min-vo-duration",
+   "name": "Voiceover-driven scene schedule",
+   "tags": [
+    "voice"
+   ],
+   "colors": [
+    "#E8B43A",
+    "#07080B",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F3F1EA",
+    "#A9ADB8",
+    "#F7D873",
+    "#B9BCC6"
+   ]
+  },
+  {
+   "piece": "motion-graphics/weekly-schedule-glass-panel__back-pop-dots",
+   "name": "Weekly schedule glass panel",
+   "tags": [
+    "card",
+    "light",
+    "table"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#141028",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F4F6",
+    "#8A8A99",
+    "#55556A",
+    "#4F7BFF"
+   ]
+  },
+  {
+   "piece": "motion-graphics/whip-pan-directional-blur__svg-gaussian-axis",
+   "name": "Whip pan with directional motion blur",
+   "tags": [
+    "transition",
+    "browser-window",
+    "dark",
+    "sfx"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#050509",
+    "#0B0B12",
+    "#0E0E16",
+    "#07070D",
+    "#E8E8F0"
+   ]
+  },
+  {
+   "piece": "motion-graphics/word-by-word-sentence-reveal__blur-rise-stagger",
+   "name": "Word-by-word sentence reveal",
+   "tags": [
+    "kinetic-type",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#0B0B10",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#FF7A3D",
+    "#FF2E97",
+    "#7C3AED",
+    "#2F6BFF",
+    "#38BDF8",
+    "#5F5F6B"
+   ]
+  },
+  {
+   "piece": "motion-graphics/wordmark-clip-path-reveal__inset-wipe-shrink-away",
+   "name": "Wordmark wipe reveal",
+   "tags": [
+    "logo",
+    "dark",
+    "transition"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#A5B4FC",
+    "#5B5CE6",
+    "#F1C8A4",
+    "#9A7352",
+    "#2E231A",
+    "#F4F6FA",
+    "#8A93A3"
+   ]
+  },
+  {
+   "piece": "motion-graphics/wordmark-slam-shock-ring__spring-scale-shake",
+   "name": "Wordmark slam with shock ring",
+   "tags": [
+    "logo",
+    "kinetic-type",
+    "light",
+    "transition"
+   ],
+   "colors": [
+    "#5B5CE6",
+    "#0B0B10",
+    "#FFFFFF",
+    "#141028",
+    "#A5B4FC",
+    "#F4F6FA",
+    "#8A93A3",
+    "#000000",
+    "#F2F2F4",
+    "#4338CA"
+   ]
+  },
+  {
+   "piece": "ui-components/accordion-listing-row-copy-fields__caret-rotate-copy-flash",
+   "name": "Accordion listing row with copy fields",
+   "tags": [
+    "card",
+    "form",
+    "light"
+   ],
+   "colors": [
+    "#101C18",
+    "#FFFFFF",
+    "#0F6E4F",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#EEF2EF",
+    "#F6F9F7",
+    "#5B6B64",
+    "#8A9A93"
+   ]
+  },
+  {
+   "piece": "ui-components/addon-toggle-pricing-card__rolling-digit-total",
+   "name": "Add-on toggle pricing card",
+   "tags": [
+    "card",
+    "cta",
+    "counter",
+    "light",
+    "form"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0C10",
+    "#5B5CE6",
+    "#0F111A",
+    "#F4F5F7",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B"
+   ]
+  },
+  {
+   "piece": "ui-components/agent-creature-lineup__float-aura-blink-status",
+   "name": "Agent creature lineup",
+   "tags": [
+    "card",
+    "dark",
+    "hero",
+    "loader"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0A0A12",
+    "#93C5FD",
+    "#F2F2F4",
+    "#0B0B10",
+    "#0D0D1A",
+    "#8B5CF6"
+   ]
+  },
+  {
+   "piece": "ui-components/agent-dock-composer__spring-height-expand-status-swap",
+   "name": "Agent dock composer",
+   "tags": [
+    "card",
+    "hover",
+    "dark",
+    "form",
+    "cursor"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0C0C10",
+    "#0B0B0F",
+    "#8B5CF6",
+    "#A3A3A3",
+    "#0B0B10",
+    "#17171F",
+    "#0A0A0A",
+    "#38BDF8"
+   ]
+  },
+  {
+   "piece": "ui-components/audience-toggle-hero__presence-swap",
+   "name": "Audience toggle hero",
+   "tags": [
+    "hero",
+    "nav",
+    "cta",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#0F111A",
+    "#5B5CE6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77"
+   ]
+  },
+  {
+   "piece": "ui-components/before-after-results-card__bar-grow-compare-sweep",
+   "name": "Before and after results card",
+   "tags": [
+    "card",
+    "chart",
+    "stat-tile",
+    "light",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#0F111A",
+    "#166534",
+    "#5C606B",
+    "#ECEEF2",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46"
+   ]
+  },
+  {
+   "piece": "ui-components/black-chrome-glass-cards__travelling-edge-beam",
+   "name": "Black chrome glass cards",
+   "tags": [
+    "card",
+    "dark",
+    "background",
+    "hover"
+   ],
+   "colors": [
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F4F4F5",
+    "#FFFFFF"
+   ]
+  },
+  {
+   "piece": "ui-components/bottom-icon-dock__spring-distance-magnify",
+   "name": "Bottom icon dock",
+   "tags": [
+    "nav",
+    "hover",
+    "dark",
+    "cursor"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#93C5FD",
+    "#F2F2F4",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/brain-scan-3d-cortex__fresnel-shader-scan-plane-zaps",
+   "name": "Brain scan 3D cortex",
+   "tags": [
+    "3d",
+    "dark",
+    "loader",
+    "hero"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#2C2C2E",
+    "#050509",
+    "#F2F2F4",
+    "#0B0B10",
+    "#8B5CF6",
+    "#7C3AED"
+   ]
+  },
+  {
+   "piece": "ui-components/brand-logo-strip__two-opposed-rows-duplicated-track",
+   "name": "Brand logo strip",
+   "tags": [
+    "marquee",
+    "light",
+    "logo",
+    "scroll"
+   ],
+   "colors": [
+    "#F5F6F8",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#FFFFFF",
+    "#E6E8EC",
+    "#FB7185",
+    "#F59E0B",
+    "#38BDF8",
+    "#6366F1"
+   ]
+  },
+  {
+   "piece": "ui-components/command-palette__icon-swap-staggered-rows",
+   "name": "Command palette",
+   "tags": [
+    "modal",
+    "dark",
+    "form",
+    "cursor"
+   ],
+   "colors": [
+    "#1A1A2E",
+    "#6B7280",
+    "#FFFFFF",
+    "#000000",
+    "#050509",
+    "#0D0D1A",
+    "#13131F",
+    "#F2F2F4",
+    "#0B0B10",
+    "#A78BFA"
+   ]
+  },
+  {
+   "piece": "ui-components/countdown-readout__digit-slide-crossfade-pulse",
+   "name": "Countdown readout",
+   "tags": [
+    "counter",
+    "dark"
+   ],
+   "colors": [
+    "#050509",
+    "#FFFFFF",
+    "#A78BFA",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#6B7280",
+    "#8B5CF6",
+    "#34D399"
+   ]
+  },
+  {
+   "piece": "ui-components/day-night-island-diorama__three-sun-moon-cycle",
+   "name": "Day-night island diorama",
+   "tags": [
+    "3d",
+    "background",
+    "hero",
+    "dark",
+    "light"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0B0B10",
+    "#111111",
+    "#22C55E",
+    "#E5E5EA",
+    "#007AFF",
+    "#E2E8F0",
+    "#FFF0C8",
+    "#FFC864"
+   ]
+  },
+  {
+   "piece": "ui-components/extruded-logo-slab__stacked-slices-translatez",
+   "name": "Extruded logo slab",
+   "tags": [
+    "logo",
+    "3d",
+    "dark",
+    "hero",
+    "loader"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#D9D9E0",
+    "#7F7F89",
+    "#F3F3F7",
+    "#A9A9B3",
+    "#E2E2EA"
+   ]
+  },
+  {
+   "piece": "ui-components/faq-accordion-glass__height-auto-fade",
+   "name": "Glass FAQ accordion",
+   "tags": [
+    "card",
+    "light",
+    "hover",
+    "nav"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#0F111A",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77",
+    "#F4F5F7"
+   ]
+  },
+  {
+   "piece": "ui-components/floating-phone-hero-with-credential-marquee__float-rotate-translate",
+   "name": "Floating phone hero with credential marquee",
+   "tags": [
+    "hero",
+    "phone",
+    "marquee",
+    "light",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0A3A52",
+    "#DDF2F3",
+    "#F6EDDA",
+    "#1290CB",
+    "#0B1216",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#68CCD1"
+   ]
+  },
+  {
+   "piece": "ui-components/floating-proof-screenshot-wall__bobbing-counter-marquee",
+   "name": "Floating proof screenshot wall",
+   "tags": [
+    "marquee",
+    "card",
+    "carousel",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0C10",
+    "#0F111A",
+    "#5B5CE6",
+    "#8B8CF0",
+    "#166534",
+    "#8A8F99",
+    "#E5E7EB",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "ui-components/frosted-stat-tiles-over-photo__tilted-glass-float",
+   "name": "Frosted stat tiles over photo",
+   "tags": [
+    "hero",
+    "card",
+    "stat-tile",
+    "counter",
+    "3d",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#000000",
+    "#0F111A",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77",
+    "#F4F5F7"
+   ]
+  },
+  {
+   "piece": "ui-components/glass-folder-fan-out-icons__path-clip-pocket",
+   "name": "Glass folder fan-out icons",
+   "tags": [
+    "card",
+    "hover",
+    "dark",
+    "cursor"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#282828",
+    "#9F9F9F",
+    "#F2F2F4",
+    "#0B0B10",
+    "#F97316",
+    "#BE123C",
+    "#1E40AF",
+    "#0B1A4A"
+   ]
+  },
+  {
+   "piece": "ui-components/glass-pill-nav__scroll-glass-morph",
+   "name": "Glass pill nav",
+   "tags": [
+    "nav",
+    "light",
+    "hover",
+    "scroll"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0F111A",
+    "#0B0C10",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77",
+    "#F4F5F7"
+   ]
+  },
+  {
+   "piece": "ui-components/hero-stack-fade-up__expo-out-staggered-delays",
+   "name": "Hero stack fade-up",
+   "tags": [
+    "hero",
+    "light",
+    "kinetic-type",
+    "cta"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#2563EB",
+    "#0B0C10",
+    "#F2F2F4",
+    "#F5F6F8",
+    "#1D4ED8",
+    "#0EA5E9",
+    "#0B0B10",
+    "#E6E8EC"
+   ]
+  },
+  {
+   "piece": "ui-components/imessage-typing-bubbles__spring-pop-in-dots",
+   "name": "iMessage typing bubbles",
+   "tags": [
+    "card",
+    "dark",
+    "loader"
+   ],
+   "colors": [
+    "#050509",
+    "#FFFFFF",
+    "#2C2C2E",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#1A1A2E",
+    "#6B7280",
+    "#3B82F6",
+    "#34D399"
+   ]
+  },
+  {
+   "piece": "ui-components/link-in-bio-stack__staggered-glass-rows",
+   "name": "Link-in-bio stack",
+   "tags": [
+    "card",
+    "phone",
+    "light",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0F111A",
+    "#0B0C10",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77",
+    "#F4F5F7"
+   ]
+  },
+  {
+   "piece": "ui-components/liquid-metal-cta-button__registered-angle-conic-rim",
+   "name": "Liquid metal CTA button",
+   "tags": [
+    "cta",
+    "hover",
+    "light",
+    "hero"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#2563EB",
+    "#F2F2F4",
+    "#F5F6F8",
+    "#0B0B10",
+    "#E6E8EC",
+    "#D4D4D8",
+    "#1C1C1F",
+    "#C6C6CB"
+   ]
+  },
+  {
+   "piece": "ui-components/logo-wall-marquee__bobbing-linear-loop",
+   "name": "Logo wall marquee",
+   "tags": [
+    "logo",
+    "marquee",
+    "carousel",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#111111",
+    "#0B0C10",
+    "#0F111A",
+    "#7C3AED",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B"
+   ]
+  },
+  {
+   "piece": "ui-components/logo-y-spin-and-swing__css-preserve-3d-keyframes",
+   "name": "Logo Y spin and swing",
+   "tags": [
+    "3d",
+    "logo",
+    "hero",
+    "dark"
+   ],
+   "colors": [
+    "#07070A",
+    "#0B0B10",
+    "#FFFFFF",
+    "#000000",
+    "#16161D",
+    "#F4F6FA",
+    "#8A93A3",
+    "#E8ECF2",
+    "#F5F5F8",
+    "#A5A5F0"
+   ]
+  },
+  {
+   "piece": "ui-components/multiplier-stat-chain-and-rule-cards__staggered-reveal",
+   "name": "Multiplier stat chain and rule cards",
+   "tags": [
+    "stat-tile",
+    "counter",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#166534",
+    "#0F111A",
+    "#5B5CE6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B"
+   ]
+  },
+  {
+   "piece": "ui-components/night-city-tower-street-diorama__three-canvas-window-grids",
+   "name": "Night city tower street diorama",
+   "tags": [
+    "3d",
+    "background",
+    "hero",
+    "dark"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0A0A2A",
+    "#0B0B10",
+    "#0B1220",
+    "#FFE9A8",
+    "#BFE0FF",
+    "#16233A",
+    "#1A2A4A",
+    "#3B82F6"
+   ]
+  },
+  {
+   "piece": "ui-components/numbered-card-grid-and-dark-steps__stagger-in-view-reveal",
+   "name": "Numbered card grid and dark steps panel",
+   "tags": [
+    "card",
+    "scroll",
+    "hero",
+    "light",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0F111A",
+    "#0B0C10",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77",
+    "#F4F5F7"
+   ]
+  },
+  {
+   "piece": "ui-components/odometer-number-roll__digit-column-translate",
+   "name": "Odometer number roll",
+   "tags": [
+    "counter",
+    "stat-tile",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#0F111A",
+    "#166534",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77"
+   ]
+  },
+  {
+   "piece": "ui-components/orbit-video-ring__3d-carousel-spin",
+   "name": "Orbit video ring",
+   "tags": [
+    "hero",
+    "3d",
+    "carousel",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0C10",
+    "#0F111A",
+    "#5B5CE6",
+    "#0A0A10",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B"
+   ]
+  },
+  {
+   "piece": "ui-components/pendulum-flip-chrome-wordmark__two-faced-rotatey",
+   "name": "Pendulum-flip chrome wordmark",
+   "tags": [
+    "hero",
+    "logo",
+    "3d",
+    "dark",
+    "background"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#A0A0AA",
+    "#F2F2F4",
+    "#0B0B10",
+    "#E8E8EE",
+    "#8E8E98",
+    "#F4F4F8",
+    "#B9B9C2",
+    "#DEDEE6"
+   ]
+  },
+  {
+   "piece": "ui-components/pendulum-flip-wordmark__three-plane-sine-swing",
+   "name": "Pendulum flip wordmark",
+   "tags": [
+    "3d",
+    "logo",
+    "hero",
+    "dark",
+    "kinetic-type"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/plinko-discount-drop__fixed-step-peg-physics",
+   "name": "Plinko discount drop",
+   "tags": [
+    "modal",
+    "card",
+    "cta",
+    "form",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#5B5CE6",
+    "#FFD25A",
+    "#0B0C10",
+    "#0F111A",
+    "#C9B8FF",
+    "#3D3F45",
+    "#F2F2F4",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/portrait-video-reel__opposed-rows-tall-cards",
+   "name": "Portrait video reel",
+   "tags": [
+    "marquee",
+    "carousel",
+    "card",
+    "dark",
+    "scroll"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#6D28D9",
+    "#1E1B4B",
+    "#F0ABFC",
+    "#0E7490",
+    "#082F49",
+    "#FDE68A"
+   ]
+  },
+  {
+   "piece": "ui-components/receipt-printer-paper-feed__clip-path-teeth",
+   "name": "Receipt printer paper feed",
+   "tags": [
+    "card",
+    "cta",
+    "form",
+    "dark",
+    "loader"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#0B0C10",
+    "#17171C",
+    "#F4F6FA",
+    "#8A93A3",
+    "#E8ECF2",
+    "#0F111A",
+    "#5B5CE6"
+   ]
+  },
+  {
+   "piece": "ui-components/setup-wizard-chip-stepper__live-preview-theme",
+   "name": "Setup wizard with chip stepper",
+   "tags": [
+    "form",
+    "nav",
+    "card",
+    "light",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#5B5CE6",
+    "#0F111A",
+    "#000000",
+    "#F4F5F7",
+    "#DFE3FF",
+    "#FFE1EC",
+    "#DFF6FF",
+    "#F2F2F4"
+   ]
+  },
+  {
+   "piece": "ui-components/shimmer-page-title__background-clip-sweep",
+   "name": "Shimmer page title",
+   "tags": [
+    "kinetic-type",
+    "dark",
+    "hero"
+   ],
+   "colors": [
+    "#A78BFA",
+    "#FFFFFF",
+    "#050509",
+    "#8B5CF6",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#6B7280"
+   ]
+  },
+  {
+   "piece": "ui-components/snow-cabin-ski-lift-diorama__three-points-snowfall",
+   "name": "Snow cabin ski lift diorama",
+   "tags": [
+    "3d",
+    "background",
+    "hero",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#8FA3BF",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/spotlight-product-tour__svg-mask-spring-hole",
+   "name": "Spotlight product tour",
+   "tags": [
+    "modal",
+    "dark",
+    "cursor",
+    "nav"
+   ],
+   "colors": [
+    "#8B5CF6",
+    "#FFFFFF",
+    "#0D0D1A",
+    "#050509",
+    "#1A1A2E",
+    "#A78BFA",
+    "#6B7280",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/stat-tile-band__stagger-count-up",
+   "name": "Stat tile band",
+   "tags": [
+    "stat-tile",
+    "counter",
+    "card",
+    "light"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#0F111A",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77",
+    "#F4F5F7"
+   ]
+  },
+  {
+   "piece": "ui-components/sticky-command-bar-stats__flex-wrap-progress-rail",
+   "name": "Sticky command bar with live stats",
+   "tags": [
+    "nav",
+    "stat-tile",
+    "light"
+   ],
+   "colors": [
+    "#101C18",
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#EEF2EF",
+    "#F6F9F7",
+    "#5B6B64",
+    "#8A9A93",
+    "#0F6E4F"
+   ]
+  },
+  {
+   "piece": "ui-components/tap-for-sound-video-player__pulse-ring-overlay",
+   "name": "Tap for sound video player",
+   "tags": [
+    "browser-window",
+    "cta",
+    "loader",
+    "light",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#0F111A",
+    "#000000",
+    "#5B5CE6",
+    "#08090E",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B"
+   ]
+  },
+  {
+   "piece": "ui-components/timeline-accordion-glass-cards__dot-rail-height-auto",
+   "name": "Timeline accordion of glass cards",
+   "tags": [
+    "card",
+    "light",
+    "scroll",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0C10",
+    "#2563EB",
+    "#F5F6F8",
+    "#000000",
+    "#5C606B",
+    "#0F111A",
+    "#F2F2F4",
+    "#0B0B10",
+    "#E6E8EC"
+   ]
+  },
+  {
+   "piece": "ui-components/video-card-marquee__counter-scrolling-rows",
+   "name": "Video card marquee",
+   "tags": [
+    "carousel",
+    "marquee",
+    "card",
+    "modal",
+    "light",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0C10",
+    "#0F111A",
+    "#0A0A10",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3A3D46",
+    "#5C606B",
+    "#686C77"
+   ]
+  },
+  {
+   "piece": "ui-components/video-review-scan-overlay__sweeping-band-detection-boxes",
+   "name": "Video review scan overlay",
+   "tags": [
+    "phone",
+    "card",
+    "dark",
+    "loader"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#8B5CF6",
+    "#A78BFA",
+    "#F472B6",
+    "#050509",
+    "#FCD34D",
+    "#F2F2F4",
+    "#0B0B10",
+    "#1A1A2E"
+   ]
+  }
+ ]
+}

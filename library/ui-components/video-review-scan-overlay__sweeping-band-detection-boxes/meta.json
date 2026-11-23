@@ -1,0 +1,22 @@
+{
+  "slug": "video-review-scan-overlay__sweeping-band-detection-boxes",
+  "visual_name": "Video review scan overlay",
+  "code_name": "Sweeping band and detection boxes",
+  "category": "ui-components",
+  "summary": "A phone-shaped video frame being read by an AI: a violet band sweeps top to bottom and back, a pink face box and an amber text box snap in with glows and labels, and a dark readout bar shows the current stage and playhead.",
+  "tags": [
+    "phone",
+    "card",
+    "dark",
+    "loader"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Drifting glow blobs</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+:root{--sf:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+html,body{background:#07080b}
+#stage{background:#07080b;color:#f3f1ea;font-family:var(--sf)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+#grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/></filter><rect width='260' height='260' filter='url(%23n)'/></svg>")}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.6) 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 9
+window.DUR = DUR
+const V = H >= W                                   // vertical-ish layouts (9:16, 4:5, 1:1)
+const SC = V ? W / 1080 : Math.min(W / 1920, H / 1080)   // design scale (the source calls it S; the template's S is the style helper)
+const TR = V ? H / W : 0                         // 1.78 for 9:16, 1.25 for 4:5, 1 for 1:1 (the source calls it TALL)
+const $ = (id) => document.getElementById(id)
+const p = (t, a, b) => (b - a > 0 && isFinite(b - a) ? clamp((t - a) / (b - a)) : t >= a ? 1 : 0)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const backS = (x, c1 = 2.4) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const SOUNDS = []   // {t,type}: cues can be dumped to build a soundtrack
+const snd = (t, type) => { if (!SOUNDS.some((s) => s.t === t && s.type === type)) SOUNDS.push({ t, type }) }
+// pre-load the fonts so offsetWidth measurements are right on the first frame drawn
+const loadFonts = (...f) => f.forEach((x) => document.fonts.load(x))
+const HF = (V ? 100 : 128) * SC    // headline font
+const M = (V ? 72 : 110) * SC      // margin
+function tf(el, o) {
+  const { x = 0, y = 0, s = 1, sx, sy, r = 0, rx = 0, ry = 0, a = 1, z = 0, ox, oy } = o
+  if (a <= 0.001) { el.style.display = 'none'; return }
+  el.style.display = ''
+  el.style.opacity = a
+  if (ox !== undefined) el.style.transformOrigin = `${ox} ${oy}`
+  el.style.transform = `translate3d(${x}px,${y}px,${z}px) rotate(${r}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${sx ?? s},${sy ?? s})`
+}
+const hide = (...els) => els.forEach((e) => (e.style.display = 'none'))
+function setText(el, html) { if (el.dataset.k !== html) { el.innerHTML = html; el.dataset.k = html } }
+// word-by-word slam: each word scales down from 1.35 and fades in, staggered
+// ---------- blobs ----------
+function blobs(t, mood) {
+  // mood: 0 dark/cold, 1 gold warm, 2 red danger
+  const b1 = $('b1'), b2 = $('b2'), b3 = $('b3'), R = Math.max(W, H)
+  const amp = (m) => (mood === m ? 1 : 0.35)
+  ;[[b1, 0.9 * amp(1), 0.25, 0.3, 0.07], [b2, 0.8 * amp(0), 0.78, 0.7, 0.05], [b3, 0.9 * amp(2), 0.5, 0.95, 0.06]].forEach(([el, a, fx, fy, sp], i) => {
+    const sz = R * (0.55 + 0.1 * i)
+    el.style.width = el.style.height = px(sz)
+    el.style.opacity = a * 0.9
+    el.style.transform = `translate(${fx * W - sz / 2 + Math.sin(t * sp * 6 + i) * 0.08 * W}px,${fy * H - sz / 2 + Math.cos(t * sp * 5 + i) * 0.08 * H}px)`
+  })
+}
+
+stage.insertAdjacentHTML('afterbegin', '<div class="blob" id="b1" style="background:#3a2a08"></div><div class="blob" id="b2" style="background:#0f1f3a"></div><div class="blob" id="b3" style="background:#4a1410"></div>')
+
+stage.insertAdjacentHTML('beforeend', '<div id="grain"></div><div id="vig"></div>')
+// mood: 0 dark/cold, 1 gold warm, 2 red danger. Switch mood on scene boundaries; the weights jump, the drift never stops.
+function render(t) {
+  blobs(t, t < 3 ? 2 : t < 6 ? 1 : 0)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

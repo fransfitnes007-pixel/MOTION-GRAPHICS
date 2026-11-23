@@ -1,0 +1,21 @@
+{
+  "slug": "dark-ember-title-beat__word-reveal-inline-card",
+  "visual_name": "Dark ember title beat",
+  "code_name": "Word reveal with inline card",
+  "category": "motion-graphics",
+  "summary": "A near-black frame with an orange and pink glow at the bottom, a white sentence arriving word by word with a cursor drifting under it, then a larger line ending in a tiny card that falls out.",
+  "tags": [
+    "kinetic-type",
+    "background",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-gradient"
+  ],
+  "duration_sec": 2.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

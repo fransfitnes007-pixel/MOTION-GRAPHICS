@@ -1,0 +1,347 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ranked leaderboard table</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+/* ---- shared dashboard kit: YourBrand rv tokens (CSS variables + tailwind config) ---- */
+:root{--bg:#050509;--card:#0D0D1A;--card2:#13131F;--border:#1A1A2E;--muted:#6B7280;--purple:#8B5CF6;--purpled:#6D28D9;--purplel:#A78BFA;--blue:#3B82F6;--bluel:#60A5FA;--green:#10B981;--greenl:#34D399;--amber:#F59E0B;--red:#EF4444;--rose:#EC4899}
+#stage{background:var(--bg);color:#fff;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+#root{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:var(--bg)}
+.tab{font-variant-numeric:tabular-nums}
+.fl{display:flex}.fc{display:flex;flex-direction:column}.ai{align-items:center}.as{align-items:flex-start}.jb{justify-content:space-between}.jc{justify-content:center}.g1{gap:4px}.g2{gap:8px}.g3{gap:12px}.g4{gap:16px}.g5{gap:20px}.g6{gap:24px}.f1{flex:1 1 0;min-width:0}.nw{white-space:nowrap}.tr{text-align:right}.tc{text-align:center}.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.muted{color:var(--muted)}.pl{color:var(--purplel)}.bl{color:var(--bluel)}.gr{color:#34D399}.am{color:#FBBF24}.rd{color:#F87171}.w{color:#fff}.w8{color:rgba(255,255,255,.8)}.w7{color:rgba(255,255,255,.7)}
+.xs{font-size:12px;line-height:16px}.sm{font-size:14px;line-height:20px}.t11{font-size:11px;line-height:16px}.t10{font-size:10px;line-height:14px}.lg{font-size:18px;line-height:28px}.x2{font-size:24px;line-height:32px}.x3{font-size:30px;line-height:36px}
+.b{font-weight:700}.sb{font-weight:600}.md{font-weight:500}
+.upper{text-transform:uppercase}.trk{letter-spacing:.1em}.trkw{letter-spacing:.05em}.trkt{letter-spacing:-.025em}
+/* Card = bg-rv-card border border-rv-border rounded-2xl p-5 */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative}
+.card60{background:rgba(13,13,26,.6);border:1px solid var(--border);border-radius:16px}
+/* GlowCard (.ui-card): translucent card with a violet hairline and a bottom glow line */
+.glow{background:rgba(13,13,26,.8);border:1px solid rgba(139,92,246,.12);border-radius:16px;position:relative;overflow:hidden}
+.glow::after{content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:75%;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.4),transparent);pointer-events:none}
+.pad5{padding:20px}
+.cardt{font-size:14px;line-height:20px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.ico{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.tile{display:grid;place-items:center;flex:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:9999px;font-size:12px;line-height:16px;font-weight:500;border:1px solid}
+.b-ok{background:rgba(16,185,129,.1);color:#34D399;border-color:rgba(16,185,129,.2)}.b-warn{background:rgba(245,158,11,.1);color:#FBBF24;border-color:rgba(245,158,11,.2)}.b-bad{background:rgba(239,68,68,.1);color:#F87171;border-color:rgba(239,68,68,.2)}.b-info{background:rgba(59,130,246,.1);color:#60A5FA;border-color:rgba(59,130,246,.2)}.b-pur{background:rgba(139,92,246,.1);color:var(--purplel);border-color:rgba(139,92,246,.2)}.b-def{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.1)}
+.badge i{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+.avatar{border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));display:grid;place-items:center;font-weight:700;color:#fff;flex:none}
+.rbar{height:8px;border-radius:9999px;background:rgba(255,255,255,.05);overflow:hidden}
+.rbar>i{display:block;height:100%;border-radius:9999px}
+table{border-collapse:collapse;width:100%}
+th{font-weight:600;text-transform:uppercase;color:var(--muted)}
+.sidebar{z-index:7;position:absolute;left:0;top:0;bottom:0;width:224px;background:rgba(8,8,14,.95);border-right:1px solid var(--border);padding:16px 12px}
+.navi{display:flex;align-items:center;gap:12px;height:36px;padding:0 12px;border-radius:12px;font-size:14px;color:rgba(255,255,255,.6)}
+.navi.on{background:rgba(139,92,246,.15);color:#fff;border:1px solid rgba(139,92,246,.3)}
+.navi.on .ico{color:var(--purplel)}
+.navg{font-size:10px;line-height:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 12px 6px;font-weight:600}
+.topbar{position:absolute;left:224px;right:0;top:0;height:52px;border-bottom:1px solid var(--border);background:#07070d;z-index:6}
+.btnp{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--purple);color:#fff;font-weight:600;border-radius:12px;box-shadow:0 10px 15px -3px rgba(139,92,246,.25)}
+
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ===== shared dashboard kit (inlined into every dashboards/ demo) =====
+const NS = 'http://www.w3.org/2000/svg'
+const sv = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const rng = (seed) => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
+// CSS cubic-bezier. Recharts animates with 'ease' (.25,.1,.25,1) for 1500ms; every framer card uses [.16,1,.3,1].
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  const X = (s) => ((ax * s + bx) * s + cx) * s, Y = (s) => ((ay * s + by) * s + cy) * s
+  return (x) => { if (x <= 0) return 0; if (x >= 1) return 1; let lo = 0, hi = 1, s = x; for (let i = 0; i < 40; i++) { s = (lo + hi) / 2; if (X(s) < x) lo = s; else hi = s } return Y(s) }
+}
+const EASE = bezier(.25, .1, .25, 1), FRAMER = bezier(.16, 1, .3, 1), EASEOUT = bezier(0, 0, .58, 1), EASEINOUT = bezier(.42, 0, .58, 1)
+// framer-motion spring (stiffness, damping, mass) as a 0..1 curve over t seconds
+const springK = (t, k = 300, c = 30, m = 1) => { if (t <= 0) return 0; const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m)); if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) } return 1 - Math.exp(-w0 * t) * (1 + w0 * t) }
+const pad2 = (n) => String(n).padStart(2, '0')
+const compact = (n) => n >= 1e6 ? (n / 1e6 >= 10 ? Math.round(n / 1e6) : (n / 1e6).toFixed(1)) + 'M' : n >= 1e3 ? (n / 1e3 >= 10 ? Math.round(n / 1e3) : (n / 1e3).toFixed(1)) + 'K' : String(Math.round(n))
+const num = (n) => Math.round(n).toLocaleString('en-US')
+const usd = (n, d = 0) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })
+
+// lucide icons (24px grid, 2px stroke)
+const IC = {
+  eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  up: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  down: '<polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  dollar: '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  briefcase: '<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18M3 7.5h4M3 12h18M3 16.5h4M17 3v18M17 7.5h4M17 16.5h4"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>',
+  bookmark: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  check: '<polyline points="20 6 9 17 4 12"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  click: '<path d="m9 9 5 12 1.774-5.226L21 14 9 9z"/><path d="m16.071 16.071 4.243 4.243"/><path d="m7.188 2.239.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656-2.12 2.122"/>',
+  store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  bot: '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  sparkles: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
+  loader: '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  userplus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>',
+  building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/>',
+  calclock: '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4M12 16h.01"/>',
+  scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" x2="8.12" y1="4" y2="15.88"/><line x1="14.47" x2="20" y1="14.48" y2="20"/><line x1="8.12" x2="12" y1="8.12" y2="12"/>',
+  wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  video: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+  chevd: '<path d="m6 9 6 6 6-6"/>',
+  chevr: '<path d="m9 18 6-6-6-6"/>',
+  chevl: '<path d="m15 18-6-6 6-6"/>',
+  gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  arrowr: '<path d="M5 12h14M12 5l7 7-7 7"/>',
+  eyeoff: '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>',
+  banknote: '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+  piggy: '<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/>',
+  repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  timer: '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>',
+  hourglass: '<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  xcircle: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>',
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>',
+  bars: '<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
+  receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 17.5v-11"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  grip: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>',
+  circle: '<circle cx="12" cy="12" r="10"/>',
+  phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3" fill="currentColor"/>',
+}
+const icon = (n, s = 16, extra = '') => `<svg class="ico" viewBox="0 0 24 24" style="width:${s}px;height:${s}px;${extra}">${IC[n] || ''}</svg>`
+const tone = (t) => ({ purple: ['139,92,246', '#A78BFA'], blue: ['59,130,246', '#60A5FA'], green: ['16,185,129', '#34D399'], amber: ['245,158,11', '#FBBF24'], red: ['239,68,68', '#F87171'], muted: ['107,114,128', '#6B7280'], pink: ['236,72,153', '#F472B6'], sky: ['14,165,233', '#38BDF8'] })[t]
+
+// fixed-size design canvas, scaled to fit ?w ?h (works wide and tall)
+let ROOT, DWID, DHEI
+function mkRoot(dw, dh) {
+  DWID = dw; DHEI = dh
+  ROOT = el('div', '', stage); ROOT.id = 'root'; S(ROOT, { width: dw + 'px', height: dh + 'px' })
+  const sc = Math.min(W / dw, H / dh); S(ROOT, sc === 1 && W === dw && H === dh ? { left: '0px', top: '0px' } : { transform: `translate(${(W - dw * sc) / 2}px,${(H - dh * sc) / 2}px) scale(${sc})` })
+  return ROOT
+}
+const div = (cls, parent, html = '', style) => { const e = el('div', cls, parent, html); if (style) S(e, style); return e }
+
+// sidebar + top bar of the portal frame (224px rail)
+function shell(parent, groups, active, who = 'Northwind Co', sub = 'Business', cta = 'New campaign') {
+  const sb = div('sidebar', parent)
+  div('fl ai g3', sb, `<div class="avatar" style="width:28px;height:28px;border-radius:8px;font-size:11px">N</div><span class="b" style="font-size:15px;letter-spacing:-.01em">Northwind</span>`, { padding: '4px 8px 8px' })
+  groups.forEach(([g, items]) => {
+    div('navg', sb, g)
+    items.forEach(([ic, label, badge]) => {
+      const n = div('navi' + (label === active ? ' on' : ''), sb, `${icon(ic, 16)}<span class="f1">${label}</span>` + (badge != null ? `<span class="t10 sb pl" style="background:rgba(139,92,246,.18);border-radius:9999px;padding:1px 7px">${badge}</span>` : ''))
+    })
+  })
+  const foot = div('', sb, '', { position: 'absolute', left: '12px', right: '12px', bottom: '12px' })
+  div('btnp sm', foot, icon('sparkles', 16) + cta, { height: '40px', width: '100%' })
+  div('fl ai g3', foot, `<div class="avatar t10" style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#8B5CF6,#3B82F6)">NW</div><div><div class="xs sb">${who}</div><div class="t10 muted">${sub}</div></div>`, { marginTop: '14px', padding: '0 4px' })
+  const tb = div('topbar', parent); div('', tb, icon('bell', 16), { position: 'absolute', right: '24px', top: '18px', color: '#9CA3AF' })
+}
+const NAV_PORTAL = [['Main', [['grid', 'Dashboard'], ['rocket', 'Get started']]], ['Campaigns', [['briefcase', 'Campaign'], ['users', 'Creators']]], ['Performance', [['film', 'Posts', 60], ['scan', 'Reviews', 1], ['bars', 'Analytics']]], ['Money', [['receipt', 'Billing']]], ['Community', [['chat', 'Group chat']]]]
+
+// ---- Recharts geometry ----
+// plot box = chart box minus margin, minus YAxis width on the left and XAxis height (30) at the bottom
+function plotBox(w, h, m, yw, xh = 30) { return { x0: m.l + yw, x1: w - m.r, y0: m.t, y1: h - m.b - xh, w, h } }
+const lin = (d0, d1, r0, r1) => (v) => r0 + (v - d0) / ((d1 - d0) || 1) * (r1 - r0)
+// recharts "nice" domain: 0..niceMax with `n` ticks
+function niceMax(max, n = 5) { const rough = max / (n - 1); const dc = Math.floor(Math.log10(rough)) + 1, dv = Math.pow(10, dc), sc = dc !== 1 ? .05 : .1; const step = Math.ceil(rough / dv / sc) * sc * dv; const cnt = Math.max(2, Math.ceil(max / step - 1e-9) + 1); return { step, max: step * (cnt - 1), ticks: Array.from({ length: cnt }, (_, i) => step * i) } }
+function gridAxes(g, box, o) { // o: {yTicks,yScale,yFmt,xLabels:[{x,text}],grid,tickFs,yDx}
+  const fs = o.tickFs || 11, col = o.tickColor || '#6B7280'
+  let s = ''
+  if (o.grid !== false) o.yTicks.forEach((v) => { const y = o.yScale(v); s += `<line x1="${box.x0}" x2="${box.x1}" y1="${y}" y2="${y}" stroke="${o.gridColor || 'rgba(255,255,255,0.05)'}"/>` })
+  o.yTicks.forEach((v) => { const y = o.yScale(v); s += `<text x="${box.x0 - (o.yDx || 8)}" y="${y + 4}" text-anchor="end" font-size="${fs}" fill="${col}">${o.yFmt(v)}</text>` })
+  ;(o.xLabels || []).forEach((l) => { s += `<text x="${l.x}" y="${box.y1 + 16}" text-anchor="${l.anchor || 'middle'}" font-size="${fs}" fill="${col}">${l.text}</text>` })
+  g.innerHTML = s
+}
+// default Recharts tooltip, with the app's contentStyle
+function tipHTML(label, rows, opt = {}) {
+  return `<div style="background:#0D0D1A;border:1px solid #1A1A2E;border-radius:12px;padding:10px;font-size:12px;line-height:16px;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4)"><p style="color:#9CA3AF;margin:0">${label}</p>${rows.map(([n, v, c]) => `<p style="margin:0;padding-top:4px;color:${c || '#A78BFA'}">${n} : ${v}</p>`).join('')}</div>`
+}
+// the pill SegmentedControl used by cards (kit/SegmentedControl, sm): lamp slides by spring(300, 30)
+function segmented(parent, labels, size = 'sm') {
+  const h = size === 'sm' ? 28 : 36, px = size === 'sm' ? 12 : 16
+  const wrap = div('fl ai', parent, '', { gap: '4px', padding: '4px', borderRadius: '9999px', border: '1px solid #1A1A2E', background: '#0D0D1A', position: 'relative' })
+  const lamp = div('', wrap, '<span style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:32px;height:4px;border-radius:4px 4px 0 0;background:#8B5CF6;box-shadow:0 -2px 12px 2px rgba(139,92,246,.45)"></span>', { position: 'absolute', top: '4px', height: h + 'px', borderRadius: '9999px', background: 'rgba(139,92,246,.15)' })
+  const items = labels.map((l) => div('fl ai jc sb', wrap, l, { height: h + 'px', padding: `0 ${px}px`, fontSize: size === 'sm' ? '12px' : '14px', position: 'relative', borderRadius: '9999px', color: '#6B7280' }))
+  let geo = null
+  return {
+    wrap,
+    set(idx, prev, k) { // idx active, prev previous, k spring progress 0..1
+      if (!geo) geo = items.map((i) => [i.offsetLeft, i.offsetWidth])
+      const a = geo[prev], b = geo[idx]
+      S(lamp, { left: (a[0] + (b[0] - a[0]) * k) + 'px', width: (a[1] + (b[1] - a[1]) * k) + 'px' })
+      items.forEach((it, i) => S(it, { color: i === idx ? '#fff' : '#6B7280' }))
+    },
+  }
+}
+const eyebrow = (t) => `<p class="xs sb pl upper" style="letter-spacing:.1em">${t}</p>`
+function pageHeader(parent, eb, title, sub, extra = '') {
+  const h = div('fl jb ai', parent, `<div>${eyebrow(eb)}<h1 class="x3 b trkt" style="margin-top:4px">${title}</h1><p class="sm muted" style="margin-top:4px">${sub}</p></div>${extra}`)
+  return h
+}
+
+// d3 curveMonotoneX, which Recharts uses for type="monotone"
+function monoPath(P) {
+  const n = P.length; if (n < 2) return ''
+  if (n === 2) return `M${P[0][0]},${P[0][1]}L${P[1][0]},${P[1][1]}`
+  const sg = (x) => x < 0 ? -1 : 1
+  const s3 = (x0, y0, x1, y1, x2, y2) => { const h0 = x1 - x0, h1 = x2 - x1, s0 = (y1 - y0) / (h0 || 1e-9), s1 = (y2 - y1) / (h1 || 1e-9), p = (s0 * h1 + s1 * h0) / (h0 + h1); return (sg(s0) + sg(s1)) * Math.min(Math.abs(s0), Math.abs(s1), .5 * Math.abs(p)) || 0 }
+  const s2 = (x0, y0, x1, y1, t) => { const h = x1 - x0; return h ? (3 * (y1 - y0) / h - t) / 2 : t }
+  const T = new Array(n)
+  for (let i = 1; i < n - 1; i++) T[i] = s3(P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], P[i + 1][0], P[i + 1][1])
+  T[0] = s2(P[0][0], P[0][1], P[1][0], P[1][1], T[1]); T[n - 1] = s2(P[n - 2][0], P[n - 2][1], P[n - 1][0], P[n - 1][1], T[n - 2])
+  let d = `M${P[0][0]},${P[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const [x0, y0] = P[i], [x1, y1] = P[i + 1], dx = (x1 - x0) / 3; d += `C${x0 + dx},${y0 + dx * T[i]},${x1 - dx},${y1 - dx * T[i + 1]},${x1},${y1}` }
+  return d
+}
+
+const NAV_DEALS = [['Deals', [['target', 'Pipeline'], ['down', 'Funnel'], ['dollar', 'Money'], ['store', 'Brands'], ['mail', 'Inbox'], ['send', 'Queue']]], ['Manage', [['users', 'Creators'], ['briefcase', 'Campaigns'], ['wallet', 'Billing']]]]
+const NAV_ADMIN = [['Main', [['grid', 'Overview'], ['users', 'Creators'], ['building', 'Accounts'], ['users', 'Members'], ['briefcase', 'Campaigns'], ['scan', 'Review queue'], ['bars', 'Analytics'], ['wallet', 'Billing'], ['dollar', 'Finance']]]]
+// StatCard: icon tile left, value 24px bold, label 12px; fades up 16px (.5s, [.16,1,.3,1], delay .05 per card on the pages)
+function statCardUI(parent, label, value, ic, tn, change) {
+  const [rgb, ink] = tone(tn)
+  return div('card', parent, `<div class="fl as jb"><span class="tile" style="padding:10px;border-radius:12px;background:rgba(${rgb},.15);color:${ink}">${icon(ic, 18)}</span>${change != null ? `<span class="fl ai g1 xs md ${change >= 0 ? 'gr' : 'rd'}">${icon(change >= 0 ? 'up' : 'down', 12)}${Math.abs(change)}%</span>` : ''}</div><div style="margin-top:16px"><p class="x2 b trkt">${value}</p><p class="xs muted" style="margin-top:4px">${label}</p></div>`, { boxShadow: `0 10px 15px -3px rgba(${rgb},.2)` })
+}
+// first time (s) a block whose resting top is `top` px (inside a scrolling column) enters a viewport of `vh` px, given scrollAt(t)
+function inViewAt(top, vh, scrollAt, dur = 12) { for (let t = 0; t < dur; t += .02) if (top - scrollAt(t) < vh - 40) return t; return dur }
+
+let _uid = 0
+// Recharts <AreaChart> as used by ViewsChart / EarningsChart: monotone line, 2px stroke, gradient fill, horizontal grid at .05 white,
+// 11px #6B7280 ticks, no axis lines. `anim` 0..1 is the 1500ms 'ease' clip reveal Recharts runs on mount.
+function areaChart(parent, o) {
+  const id = 'ac' + (++_uid), w = o.w, h = o.h, m = o.margin || { t: 8, r: 8, b: 0, l: 0 }, yw = o.yw || 52
+  const wrap = div('', parent, '', { position: 'relative', width: w + 'px', height: h + 'px' })
+  const svg = sv('svg', { width: w, height: h, viewBox: `0 0 ${w} ${h}`, style: 'overflow:visible' }, wrap)
+  const col = o.color || '#8B5CF6', stroke = o.stroke || col
+  sv('defs', {}, svg).innerHTML = `<linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity="${o.topOp ?? .45}"/><stop offset="100%" stop-color="${o.bot || col}" stop-opacity="${o.botOp ?? 0}"/></linearGradient><clipPath id="${id}c"><rect id="${id}r" x="0" y="0" width="0" height="${h}"/></clipPath>`
+  const gA = sv('g', {}, svg), gD = sv('g', {}, svg), gH = sv('g', {}, svg)
+  const tip = div('', wrap, '', { position: 'absolute', left: 0, top: 0, pointerEvents: 'none', opacity: 0, zIndex: 3 })
+  const box = plotBox(w, h, m, yw, o.xh ?? 30)
+  return {
+    wrap, box,
+    draw(vals, anim, hov) {
+      const n = vals.length, nm = niceMax(Math.max(...vals), o.ticks || 5), yS = lin(0, nm.max, box.y1, box.y0), xS = (i) => box.x0 + i / (n - 1) * (box.x1 - box.x0)
+      const li = o.labelIdx || [0, n - 1]
+      gridAxes(gA, box, { yTicks: nm.ticks, yScale: yS, yFmt: o.fmtY || compact, xLabels: li.map((i) => ({ x: xS(i), text: o.labels[i] })), tickFs: o.fs || 11 })
+      const P = vals.map((v, i) => [xS(i), yS(v)]), d = monoPath(P)
+      document.getElementById(id + 'r').setAttribute('width', box.x0 + (box.x1 - box.x0) * anim + (anim >= 1 ? 30 : 0))
+      gD.innerHTML = `<g clip-path="url(#${id}c)"><path d="${d}L${P[n - 1][0]},${box.y1}L${P[0][0]},${box.y1}Z" fill="url(#${id}g)"/><path d="${d}" fill="none" stroke="${stroke}" stroke-width="2"/>${o.dots ? P.map((p) => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${o.dotFill || '#A78BFA'}"/>`).join('') : ''}</g>`
+      if (hov != null) {
+        const f = clamp(hov, 0, n - 1), i0 = Math.floor(f), i1 = Math.min(n - 1, i0 + 1), x = P[i0][0] + (P[i1][0] - P[i0][0]) * (f - i0), idx = Math.round(f)
+        gH.innerHTML = `<line x1="${x}" x2="${x}" y1="${box.y0}" y2="${box.y1}" stroke="#ccc"/><circle cx="${P[idx][0]}" cy="${P[idx][1]}" r="${o.dots ? 5 : 4}" fill="#A78BFA" stroke="#fff" stroke-width="2"/>`
+        tip.innerHTML = tipHTML(o.labels[idx], [[o.tipName || 'views', (o.fmtTip || num)(vals[idx]), o.tipColor]]); S(tip, { opacity: 1, left: (P[idx][0] + 12) + 'px', top: (Math.max(4, P[idx][1] - 58)) + 'px' })
+      } else { gH.innerHTML = ''; S(tip, { opacity: 0 }) }
+    },
+  }
+}
+// Recharts <Pie>: 3 o'clock start, counter-clockwise, paddingAngle between sectors, sweeps in over 1500ms 'ease'
+function donutPaths(cx, cy, ri, ro, data, pad, k, hl = -1) {
+  const tot = data.reduce((a, d) => a + d.value, 0), avail = 360 - pad * data.length
+  let a0 = 0, out = ''
+  data.forEach((d, i) => {
+    const span = d.value / tot * avail * k, a1 = a0 + span, P = (r, a) => [cx + r * Math.cos(a * Math.PI / 180), cy - r * Math.sin(a * Math.PI / 180)], R = i === hl ? ro + 4 : ro
+    if (span > .05) { const [x0, y0] = P(R, a0), [x1, y1] = P(R, a1), [x2, y2] = P(ri, a1), [x3, y3] = P(ri, a0), big = span > 180 ? 1 : 0; out += `<path d="M${x0},${y0}A${R},${R} 0 ${big} 0 ${x1},${y1}L${x2},${y2}A${ri},${ri} 0 ${big} 1 ${x3},${y3}Z" fill="${d.color}"/>` }
+    a0 = a1 + pad * k
+  })
+  return out
+}
+// Recharts <Legend iconType="circle"> under a chart
+const legendHTML = (items, fs = 12, r = 5) => `<div class="fl jc" style="gap:10px;font-size:${fs}px;color:#9CA3AF">${items.map(([n, c]) => `<span class="fl ai" style="gap:4px"><span style="color:${c};font-size:${r * 3.2}px;line-height:1;width:14px;text-align:center">&#9679;</span>${n}</span>`).join('')}</div>`
+const avatarEl = (name, s = 28) => `<div class="avatar" style="width:${s}px;height:${s}px;font-size:${Math.max(10, s * .32)}px">${name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase()}</div>`
+
+// single centred card on a faint violet haze: for the one-chart skills. Design canvas 960x540 (app pixel sizes), scaled up by the renderer.
+function cardFrame(cw, ch, o = {}) {
+  const r = mkRoot(960, 540); S(r, { background: 'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,.10),transparent 62%),#050509' })
+  const c = div(o.cls || 'glow', r, '', { position: 'absolute', left: ((960 - cw) / 2) + 'px', top: ((540 - ch) / 2) + 'px', width: cw + 'px', height: (o.free ? 'auto' : ch + 'px'), padding: (o.pad ?? 20) + 'px' })
+  return c
+}
+const cardHead = (parent, title, sub, extra = '') => div('fl ai jb', parent, `<div><p class="sm b">${title}</p>${sub ? `<p class="xs muted">${sub}</p>` : ''}</div>${extra}`, { marginBottom: '12px' })
+// the loading state every chart slot has: a .shimmer block (2s, background-position -200% to 200%, CSS 'ease')
+const shimmer = (e, t) => S(e, { background: 'linear-gradient(90deg,transparent 25%,rgba(139,92,246,.1) 50%,transparent 75%) ' + lerp(-200, 200, EASE((t % 2) / 2)) * 1 + '% 0 / 200% 100% #13131F' })
+
+// kit/StatTile (no shine): label, icon square, 30px value, optional trend pill + sub line
+function kitTile(parent, o) {
+  const [rgb, ink] = tone(o.tn || 'purple')
+  const e = div('', parent, `<div class="fl as jb g3"><p class="xs md upper" style="letter-spacing:.08em;color:#6B7280">${o.label}</p>${o.ic ? `<span class="tile" style="width:32px;height:32px;border-radius:8px;background:rgba(${rgb},.15);color:${ink}">${icon(o.ic, 16)}</span>` : ''}</div><div class="fl ai jb g3" style="margin-top:12px"><p class="b tab" style="font-size:30px;line-height:1;letter-spacing:-.025em" data-v>${o.value ?? ''}</p>${o.trend != null ? `<span class="fl ai g1 xs sb tab" style="border-radius:9999px;padding:4px 8px;background:rgba(16,185,129,.1);color:#34D399">${icon('up', 12)}+${o.trend}%</span>` : ''}</div>${o.sub ? `<p class="xs muted" style="margin-top:12px">${o.sub}</p>` : ''}`, { borderRadius: '16px', border: '1px solid #1A1A2E', background: '#0D0D1A', padding: '20px' })
+  return { e, v: e.querySelector('[data-v]') }
+}
+// deals/Bits Panel: rounded-2xl border bg-rv-card/60, header px-5 pt-4 pb-2, body px-5 pb-5
+function panelEl(parent, title, action = '') {
+  const p = div('card60', parent, `<header class="fl ai jb" style="padding:16px 20px 8px"><h3 class="sm sb">${title}</h3>${action}</header>`)
+  return div('', p, '', { padding: '0 20px 20px' })
+}
+
+// ===== end shared kit =====
+
+const DUR = 7
+window.DUR = DUR
+const card = cardFrame(760, 400, { cls: 'card', pad: 0, free: true })
+S(card, { background: 'transparent', border: 'none', top: '70px' })
+const hd = div('fl ai jb', card, `<h2 class="sm sb upper fl ai g2" style="letter-spacing:.05em"><span class="am">${icon('trophy', 14)}</span> Leaderboard</h2><span class="xs muted">Ranked by counted views</span>`, { marginBottom: '12px' })
+const ROWS = [['Alex Rivera', 842310, 61, 3120], ['Jordan Miles', 704118, 48, 2610], ['Sam Torres', 598902, 44, 2205], ['You (Riley Kim)', 514550, 39, 1890, true], ['Casey Lane', 396310, 31, 1440], ['Morgan Ellis', 242880, 22, 910]]
+const tb = div('', card, '', { borderRadius: '16px', border: '1px solid #1A1A2E', background: '#0D0D1A', overflow: 'hidden' })
+tb.innerHTML = `<table class="sm"><thead><tr class="t11 upper muted" style="letter-spacing:.05em;border-bottom:1px solid #1A1A2E"><th style="text-align:left;padding:12px 16px;width:56px">Rank</th><th style="text-align:left;padding:12px">Creator</th><th style="text-align:right;padding:12px">Views</th><th style="text-align:right;padding:12px">Posts</th><th style="text-align:right;padding:12px 16px">Earned</th></tr></thead><tbody id="lbb"></tbody></table>`
+const body = document.getElementById('lbb')
+function render(t) {
+  // rows arrive one by one (the demo's stand-in for the shimmer-to-data swap); views tick up as new posts are counted
+  body.innerHTML = ROWS.map((r, i) => {
+    const on = FRAMER(seg(t, .3 + i * .12, .3 + i * .12 + .5)); const grow = t > 3 ? Math.round((r[1] * .004) * EASEOUT(seg(t, 3, 6)) * (i === 3 ? 6 : 1)) : 0
+    const me = r[4], top = i < 3
+    return `<tr style="opacity:${on};transform:translateY(${(1 - on) * 8}px);border-bottom:1px solid rgba(26,26,46,.6);${me ? 'background:rgba(139,92,246,.1)' : ''}"><td style="padding:10px 16px"><span class="fl ai jc b xs" style="width:28px;height:28px;border-radius:8px;${top ? 'background:rgba(245,158,11,.15);color:#FCD34D;border:1px solid rgba(245,158,11,.3)' : 'background:rgba(255,255,255,.05);color:rgba(255,255,255,.7)'}">${i + 1}</span></td><td style="padding:10px 12px"><div class="fl ai g3">${avatarEl(r[0].replace('You (', ''))}<span class="w md">${r[0].replace('You (', '').replace(')', '')}${me ? '<span class="pl sb" style="margin-left:8px;font-size:10px">YOU</span>' : ''}</span></div></td><td class="tr tab w sb" style="padding:10px 12px">${num(r[1] + grow)}</td><td class="tr tab w8" style="padding:10px 12px">${r[2]}</td><td class="tr tab sb" style="padding:10px 16px;color:#6EE7B7">${usd(r[3])}</td></tr>`
+  }).join('')
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

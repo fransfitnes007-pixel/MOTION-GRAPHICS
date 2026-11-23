@@ -1,0 +1,23 @@
+{
+  "slug": "ai-scan-verdict-panel__frame-swap-spring",
+  "visual_name": "AI scan and verdict panel",
+  "code_name": "Frame sequence swap with spring verdict",
+  "category": "motion-graphics",
+  "summary": "A post card sits beside a dark panel that plays a scan animation and then springs into a green 'good to go' verdict with three scores, with a purple sticker tilting in on the corner.",
+  "tags": [
+    "card",
+    "stat-tile",
+    "light",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring",
+    "frame-sequence"
+  ],
+  "duration_sec": 1.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

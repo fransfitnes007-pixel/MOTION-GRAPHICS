@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Voiceover-driven scene schedule</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay[wght].ttf);font-weight:400 900}
+:root{--sf:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+html,body{background:#07080b}
+#stage{background:#07080b;color:#f3f1ea;font-family:var(--sf)}
+.seg{position:absolute;border-radius:10px;background:rgba(18,20,26,.82);border:1.5px solid rgba(255,255,255,.13);overflow:hidden}
+.seg.a{background:rgba(58,42,8,.7)}
+.seg .nm{position:absolute;left:12px;top:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#e8b43a;white-space:nowrap}
+.seg .sc{position:absolute;right:12px;top:10px;color:#a9adb8;font-weight:500;white-space:nowrap}
+.vo{position:absolute;border-radius:6px;background:linear-gradient(90deg,#e8b43a,#f7d873);box-shadow:0 0 18px rgba(232,180,58,.45)}
+.tot{position:absolute;font-family:PF;font-weight:700;color:#fff;white-space:nowrap}
+.tot span{color:#e8b43a}
+.cap2{position:absolute;color:#b9bcc6;font-weight:500;white-space:nowrap}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 7.2
+window.DUR = DUR
+const V = H >= W                                   // vertical-ish layouts (9:16, 4:5, 1:1)
+const SC = V ? W / 1080 : Math.min(W / 1920, H / 1080)   // design scale (the template's S is the style helper)
+const TR = V ? H / W : 0                         // 1.78 for 9:16, 1.25 for 4:5, 1 for 1:1 
+const $ = (id) => document.getElementById(id)
+const p = (t, a, b) => (b - a > 0 && isFinite(b - a) ? clamp((t - a) / (b - a)) : t >= a ? 1 : 0)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const backS = (x, c1 = 2.4) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const SOUNDS = []   // {t,type}: a renderer can dump these cues to build a soundtrack
+const snd = (t, type) => { if (!SOUNDS.some((s) => s.t === t && s.type === type)) SOUNDS.push({ t, type }) }
+// pre-load the fonts so offsetWidth measurements are right on the first frame drawn
+const loadFonts = (...f) => f.forEach((x) => document.fonts.load(x))
+const HF = (V ? 100 : 128) * SC    // headline font
+const M = (V ? 72 : 110) * SC      // margin
+
+loadFonts('700 20px PF')
+// Narration lengths in seconds for the long cut (from a table of measured line lengths), three voices.
+const VOD = {"andrew_01_hook.mp3": 2.83, "andrew_02_true.mp3": 3.34, "andrew_03_title.mp3": 2.16, "andrew_04_setup.mp3": 13.08, "andrew_05_timeline.mp3": 18.05, "andrew_06_events.mp3": 20.83, "andrew_07_value.mp3": 8.45, "andrew_08_cta.mp3": 7.34, "christopher_01_hook.mp3": 3.5, "christopher_02_true.mp3": 4.51, "christopher_03_title.mp3": 3.02, "christopher_04_setup.mp3": 13.13, "christopher_05_timeline.mp3": 19.99, "christopher_06_events.mp3": 23.33, "christopher_07_value.mp3": 9.55, "christopher_08_cta.mp3": 9.53, "vincent_01_hook.mp3": 3.43, "vincent_02_true.mp3": 4.85, "vincent_03_title.mp3": 3.02, "vincent_04_setup.mp3": 14.69, "vincent_05_timeline.mp3": 20.52, "vincent_06_events.mp3": 24.12, "vincent_07_value.mp3": 9.77, "vincent_08_cta.mp3": 9.98}
+const HOOK = 'A', CUT = 'long'
+// The schedule, made a function of the voice so the demo can swap it.
+function schedule(VOICE) {
+  const vd = (k) => VOD[`${VOICE}_${k}.mp3`] || 0
+  const hk = '01_hook' + (HOOK === 'A' ? '' : HOOK)
+  const o = { hook: 0 }
+  o.truth = Math.max(4.6, 0.35 + vd(hk) + 0.6)
+  o.book = o.truth + Math.max(4.2, vd('02_true') + 0.9)
+  o.setup = o.book + 7.8
+  o.timeline = o.setup + Math.max(13, vd('04_setup') + 1.0)
+  o.events = o.timeline + Math.max(19, vd('05_timeline') + 1.0)
+  o.value = o.events + Math.max(22, vd('06_events') + 1.2)
+  o.cta = o.value + Math.max(9.4, vd('07_value') + 1.0)
+  o.end = o.cta + Math.max(8.6, vd('08_cta') + 1.4)
+  o.vo = { '01_hook': 0.35, '02_true': o.truth + 0.3, '03_title': o.book + 0.7, '04_setup': o.setup + 0.4, '05_timeline': o.timeline + 0.4, '06_events': o.events + 0.3, '07_value': o.value + 0.3, '08_cta': o.cta + 0.6 }
+  return { o, vd, hk }
+}
+const SCENES = [['hook', 'truth', 'Hook', '01_hook'], ['truth', 'book', 'Intro', '02_true'], ['book', 'setup', 'Title', '03_title'], ['setup', 'timeline', 'Setup', '04_setup'], ['timeline', 'events', 'Timeline', '05_timeline'], ['events', 'value', 'Events', '06_events'], ['value', 'cta', 'Value', '07_value'], ['cta', 'end', 'End card', '08_cta']]
+const VOICES = ['andrew', 'christopher', 'vincent']
+// per voice: scene starts, scene ends, voice-line starts and lengths
+const TAB = VOICES.map((v) => {
+  const { o, vd } = schedule(v)
+  return { v, total: o.end, s: SCENES.map(([a, b]) => [o[a], o[b]]), vo: SCENES.map(([a, b, n, k]) => { const key = k === '01_hook' ? '01_hook' : k; return [o.vo[key], vd(key === '01_hook' ? schedule(v).hk : key)] }) }
+})
+const rows = SCENES.map(([a, b, n]) => {
+  const seg = el('div', 'seg', stage), nm = el('div', 'nm', seg, n), sc = el('div', 'sc', seg), vo = el('div', 'vo', stage)
+  return { seg, nm, sc, vo }
+})
+const tot = el('div', 'tot', stage), cap = el('div', 'cap2', stage, 'scene length = max(minimum, voice line + pad)')
+function render(t) {
+  // 2.4s per voice: hold 1.6s, ease 0.8s to the next
+  const n = VOICES.length, ph = (t / 2.4) % n, i = Math.floor(ph), j = (i + 1) % n, k = eio(clamp((ph - i - 2 / 3) / (1 / 3)))
+  const A = TAB[i], B = TAB[j]
+  const L = (a, b) => lerp(a, b, k)
+  const total = L(A.total, B.total), maxT = 112
+  const mx = 60 * SC2(), bw = W - 2 * mx, y0 = H * (V ? 0.4 : 0.42), bh = (V ? 240 : 230) * SC2()
+  rows.forEach((r, q) => {
+    const a = L(A.s[q][0], B.s[q][0]), b = L(A.s[q][1], B.s[q][1])
+    const x = mx + a / maxT * bw, w = (b - a) / maxT * bw
+    S(r.seg, { left: px(x + 2), top: px(y0), width: px(Math.max(2, w - 4)), height: px(bh), opacity: 1 })
+    r.seg.className = 'seg' + (q % 2 ? ' a' : '')
+    r.nm.style.fontSize = px(Math.min(17 * SC2(), Math.max(0, w / 8))); r.nm.style.display = w > 70 * SC2() ? '' : 'none'
+    r.sc.style.display = 'none'
+    const vs = L(A.vo[q][0], B.vo[q][0]), vl = L(A.vo[q][1], B.vo[q][1])
+    S(r.vo, { left: px(mx + vs / maxT * bw), top: px(y0 + bh + 16 * SC2() + (q % 2) * 16 * SC2()), width: px(vl / maxT * bw), height: px(10 * SC2()) })
+  })
+  S(tot, { left: px(mx), top: px(y0 - 150 * SC2()), fontSize: px(80 * SC2()) }); tot.innerHTML = `${total.toFixed(1)}<span> s</span> &nbsp;<span style="font-size:.4em;letter-spacing:.2em;text-transform:uppercase">${VOICES[k > 0.5 ? j : i]} narration</span>`
+  S(cap, { left: px(mx), top: px(y0 + bh + 70 * SC2()), fontSize: px(26 * SC2()) })
+}
+function SC2() { return V ? W / 1080 : Math.min(W / 1920, H / 1080) }
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

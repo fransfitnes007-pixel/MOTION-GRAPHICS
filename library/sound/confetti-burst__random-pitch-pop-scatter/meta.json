@@ -1,0 +1,20 @@
+{
+  "slug": "confetti-burst__random-pitch-pop-scatter",
+  "visual_name": "Confetti burst",
+  "code_name": "Random-pitch pop scatter",
+  "category": "sound",
+  "summary": "A bright pop followed by sixteen quiet pops at random pitches and random left-right positions, like paper flying out.",
+  "tags": [
+    "sfx",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

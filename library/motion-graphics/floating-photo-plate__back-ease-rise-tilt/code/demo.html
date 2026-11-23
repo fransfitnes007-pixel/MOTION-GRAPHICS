@@ -1,0 +1,157 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Floating photo plate</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay[wght].ttf);font-weight:400 900}
+:root{--sf:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+html,body{background:#07080b}
+#stage{background:#07080b;color:#f3f1ea;font-family:var(--sf)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+.plate{position:absolute;left:0;top:0;transform-origin:50% 50%;border-radius:28px;overflow:hidden;box-shadow:0 80px 160px -50px rgba(0,0,0,.9),0 0 0 1.5px rgba(255,255,255,.1) inset;background:#111}
+.plate .im{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block}
+.cap{position:absolute;left:0;top:0;font-family:var(--sf);font-weight:500;color:#cfd2da;letter-spacing:.01em;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.cap b{color:#e8b43a;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-right:.7em}
+.plate .edge{position:absolute;inset:0;border-radius:28px;box-shadow:0 0 0 1.5px rgba(255,255,255,.12) inset,0 30px 60px rgba(0,0,0,.4) inset}
+/* placeholder photographs, pure CSS gradients (use real photos in practice) */
+.im{position:absolute;left:0;top:0;display:block;transform-origin:50% 50%}
+.im.house{background:
+ linear-gradient(#ffc766,#ffc766) 31% 64%/3.4% 7% no-repeat,linear-gradient(#ffc766,#ffc766) 44% 64%/3.4% 7% no-repeat,linear-gradient(#ffb347,#ffb347) 57% 64%/3.4% 7% no-repeat,
+ linear-gradient(#17120e,#17120e) 24% 70%/46% 3% no-repeat,linear-gradient(#3a2d22,#2a2018) 22% 58%/50% 24% no-repeat,
+ linear-gradient(#1c1712,#1c1712) 0 80%/100% 20% no-repeat,
+ linear-gradient(180deg,#27354d 0%,#4b5a75 46%,#8c7b69 62%,#3b2f26 62%)}
+.im.room{background:
+ linear-gradient(#fff3d6,#e8d3a8) 62% 18%/16% 40% no-repeat,linear-gradient(#2b1d14,#2b1d14) 12% 20%/14% 34% no-repeat,
+ linear-gradient(#3b2a1e,#241810) 0 70%/100% 30% no-repeat,linear-gradient(90deg,#8e7c66,#a69580 60%,#7c6a55)}
+.im.yard{background:linear-gradient(#e8eadc,#e8eadc) 62% 40%/10% 30% no-repeat,radial-gradient(ellipse at 45% 30%,#35502a 0 28%,transparent 29%),linear-gradient(180deg,#7fa3c6 0%,#b7c7cf 50%,#4f6b3a 50%,#2f4a24)}
+.im.wall{background:radial-gradient(ellipse 7% 15% at 66% 88%,#120804 0 92%,transparent 94%),radial-gradient(circle at 66% 66%,#120804 0 2.4%,transparent 2.8%),linear-gradient(90deg,transparent 46%,rgba(30,14,4,.8) 46% 48%,transparent 48% 70%,rgba(30,14,4,.8) 70% 72%,transparent 72%),linear-gradient(135deg,#d98b3a,#a8591c 55%,#5a2d0e)}
+.im.sepia{background:radial-gradient(ellipse 9% 30% at 30% 72%,#201710 0 90%,transparent 92%),radial-gradient(ellipse 9% 30% at 52% 72%,#2d2216 0 90%,transparent 92%),radial-gradient(circle at 30% 38%,#e6d7bd 0 4%,transparent 5%),radial-gradient(circle at 52% 38%,#e6d7bd 0 4%,transparent 5%),linear-gradient(180deg,#8f7f68,#5c4e3b)}
+.im.portrait{background:radial-gradient(circle at 50% 36%,#d8cbb4 0 15%,transparent 16%),radial-gradient(ellipse 30% 28% at 50% 82%,#3a3128 0 90%,transparent 92%),linear-gradient(180deg,#6f6757,#4a4338)}
+.im.plaque{background:linear-gradient(#5a5f66,#5a5f66) 14% 22%/72% 56% no-repeat,linear-gradient(135deg,#aab1ba,#7d848d)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+#grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/></filter><rect width='260' height='260' filter='url(%23n)'/></svg>")}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.6) 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5.5
+window.DUR = DUR
+const V = H >= W                                   // vertical-ish layouts (9:16, 4:5, 1:1)
+const SC = V ? W / 1080 : Math.min(W / 1920, H / 1080)   // design scale (the source calls it S; the template's S is the style helper)
+const TR = V ? H / W : 0                         // 1.78 for 9:16, 1.25 for 4:5, 1 for 1:1 (the source calls it TALL)
+const $ = (id) => document.getElementById(id)
+const p = (t, a, b) => (b - a > 0 && isFinite(b - a) ? clamp((t - a) / (b - a)) : t >= a ? 1 : 0)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const backS = (x, c1 = 2.4) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const SOUNDS = []   // {t,type}: cues can be dumped to build a soundtrack
+const snd = (t, type) => { if (!SOUNDS.some((s) => s.t === t && s.type === type)) SOUNDS.push({ t, type }) }
+// pre-load the fonts so offsetWidth measurements are right on the first frame drawn
+const loadFonts = (...f) => f.forEach((x) => document.fonts.load(x))
+const HF = (V ? 100 : 128) * SC    // headline font
+const M = (V ? 72 : 110) * SC      // margin
+function tf(el, o) {
+  const { x = 0, y = 0, s = 1, sx, sy, r = 0, rx = 0, ry = 0, a = 1, z = 0, ox, oy } = o
+  if (a <= 0.001) { el.style.display = 'none'; return }
+  el.style.display = ''
+  el.style.opacity = a
+  if (ox !== undefined) el.style.transformOrigin = `${ox} ${oy}`
+  el.style.transform = `translate3d(${x}px,${y}px,${z}px) rotate(${r}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${sx ?? s},${sy ?? s})`
+}
+const hide = (...els) => els.forEach((e) => (e.style.display = 'none'))
+function setText(el, html) { if (el.dataset.k !== html) { el.innerHTML = html; el.dataset.k = html } }
+// word-by-word slam: each word scales down from 1.35 and fades in, staggered
+function plate(el, t, { x, y, w, h, t0, out = Infinity, rx = 0, ry = 0, s = 1, zoom = 1, dir = 1, a = 1 }) {
+  if (t < t0 || t > out + 0.5) { hide(el); return }
+  const im = el.querySelector('.im')
+  el.style.width = px(w); el.style.height = px(h); el.style.borderRadius = px(28 * SC)
+  const ki = backS(p(t, t0, t0 + 0.75), 1.4), ko = p(t, out, out + 0.5)
+  im.style.transform = `scale(${zoom + (t - t0) * 0.006})`
+  tf(el, { x, y: y + (1 - ki) * 90 * SC * dir, s: lerp(0.86, 1, ki) * s * lerp(1, 0.94, ko), rx, ry, a: a * p(t, t0, t0 + 0.3) * (1 - ko), ox: '50%', oy: '50%' })
+  if (t0 !== undefined) snd(t0, 'whoosh')
+}
+function caption(t, html, { x, y, t0, out = Infinity, fs = 24, align = 'left' }) {
+  const el = $('cap1')
+  if (t < t0 || t > out + 0.3) { hide(el); return }
+  el.style.display = ''; setText(el, html); el.style.fontSize = px(fs * SC)
+  const k = eo(p(t, t0, t0 + 0.5)), ko = p(t, out, out + 0.3)
+  const left = align === 'center' ? x - el.offsetWidth / 2 : align === 'right' ? x - el.offsetWidth : x
+  tf(el, { x: left, y: y + (1 - k) * 14 * SC, a: k * (1 - ko) })
+}
+// ---------- blobs ----------
+function blobs(t, mood) {
+  // mood: 0 dark/cold, 1 gold warm, 2 red danger
+  const b1 = $('b1'), b2 = $('b2'), b3 = $('b3'), R = Math.max(W, H)
+  const amp = (m) => (mood === m ? 1 : 0.35)
+  ;[[b1, 0.9 * amp(1), 0.25, 0.3, 0.07], [b2, 0.8 * amp(0), 0.78, 0.7, 0.05], [b3, 0.9 * amp(2), 0.5, 0.95, 0.06]].forEach(([el, a, fx, fy, sp], i) => {
+    const sz = R * (0.55 + 0.1 * i)
+    el.style.width = el.style.height = px(sz)
+    el.style.opacity = a * 0.9
+    el.style.transform = `translate(${fx * W - sz / 2 + Math.sin(t * sp * 6 + i) * 0.08 * W}px,${fy * H - sz / 2 + Math.cos(t * sp * 5 + i) * 0.08 * H}px)`
+  })
+}
+
+stage.insertAdjacentHTML('afterbegin', '<div class="blob" id="b1" style="background:#3a2a08"></div><div class="blob" id="b2" style="background:#0f1f3a"></div><div class="blob" id="b3" style="background:#4a1410"></div>')
+
+stage.insertAdjacentHTML('beforeend', '<div class="plate" id="p1"><div class="im room"></div><div class="edge"></div></div><div class="plate" id="p2"><div class="im portrait"></div><div class="edge"></div></div><div class="plate" id="p3"><div class="im portrait"></div><div class="edge"></div></div>')
+
+stage.insertAdjacentHTML("beforeend", '<div class="cap" id="cap1"></div>')
+stage.insertAdjacentHTML('beforeend', '<div id="grain"></div><div id="vig"></div>')
+
+// Photo plates rise 90px from below on a back-ease, with a slight 3D tilt. Layout is the timeline scene's.
+function render(t) {
+  blobs(t, 1)
+  const horiz = !V
+  const M_ = M, ry0 = horiz ? H * 0.4 : H * 0.14
+  const pw = 150 * SC, ph = pw * 1.34
+  const out = DUR - 0.4
+  if (horiz) {
+    plate($('p2'), t, { x: M_ + 150 * SC, y: ry0 + 40 * SC, w: pw, h: ph, t0: 0.4, out, rx: 0, ry: 0, dir: -1 })
+    plate($('p3'), t, { x: W * 0.38 + 150 * SC, y: ry0 + 40 * SC, w: pw, h: ph, t0: 1.2, out, rx: 0, ry: 0, dir: -1 })
+  } else {
+    plate($('p2'), t, { x: W - M_ * 0.8 - pw, y: ry0 - ph * 0.3, w: pw, h: ph, t0: 0.4, out, rx: 0, ry: 0, dir: -1 })
+    plate($('p3'), t, { x: W - M_ * 0.8 - pw, y: ry0 + H * 0.2 - ph * 0.3, w: pw, h: ph, t0: 1.2, out, rx: 0, ry: 0, dir: -1 })
+  }
+  const bAt = 2.2
+  if (horiz) plate($('p1'), t, { x: W * 0.57, y: H * 0.5, w: W * 0.38, h: W * 0.38 * 0.5625, t0: bAt, out, ry: -8, rx: 4, dir: 1 })
+  else plate($('p1'), t, { x: W * 0.08, y: H * 0.74, w: W * 0.84, h: W * 0.84 * 0.5625, t0: bAt, out, ry: 0, rx: 6, dir: 1 })
+  caption(t, '<b>Photo</b>Placeholder photo caption', { x: horiz ? W * 0.57 + W * 0.19 : W / 2, y: horiz ? H * 0.5 + W * 0.38 * 0.5625 + 18 * SC : H * 0.74 + W * 0.84 * 0.5625 + 16 * SC, t0: bAt + 0.6, out, fs: V ? 20 : 22, align: 'center' })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

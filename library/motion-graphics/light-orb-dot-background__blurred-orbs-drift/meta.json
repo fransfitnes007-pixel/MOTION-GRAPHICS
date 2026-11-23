@@ -1,0 +1,20 @@
+{
+  "slug": "light-orb-dot-background__blurred-orbs-drift",
+  "visual_name": "Light orb dot background",
+  "code_name": "Blurred radial orbs drifting on a dot grid",
+  "category": "motion-graphics",
+  "summary": "A pale grey stage with a faint dot grid and four soft blurred colour blobs (indigo, blue, pink, slate) that drift slowly, under a very light dark vignette.",
+  "tags": [
+    "background",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-blur",
+    "radial-gradient"
+  ],
+  "duration_sec": 20,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "email-link-strikethrough__scalex-red-bar",
+  "visual_name": "Email with struck-out link",
+  "code_name": "ScaleX red bar and tinted link chip",
+  "category": "motion-graphics",
+  "summary": "A dark email composer tilts in from the right; its link is struck through by a red bar drawing left to right while its background goes red, then it swells and blurs away.",
+  "tags": [
+    "card",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 3.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

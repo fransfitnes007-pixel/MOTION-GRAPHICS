@@ -1,0 +1,215 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Outreach today dashboard</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--bg:#0A0A0F;--surface:#111118;--s2:#16161F;--s3:#1C1C27;--border:#1F1F2A;--bs:#2A2A38;--text:#F4F4F6;--t2:#A1A1AE;--t3:#8B8B9C;--accent:#8B5CF6;--at:#B79CFF;--afill:#7C4DEB;--green:#22C55E;--gt:#4ADE80;--amber:#F59E0B;--amt:#FBBF24}
+#stage{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
+.ui{background:var(--bg)}
+.tbar{position:absolute;left:0;right:0;top:0;height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 32px;gap:12px}
+.tbar h1{font-size:15px;font-weight:600;margin-right:auto}
+.seg{display:inline-flex;gap:2px;border-radius:12px;border:1px solid var(--border);background:var(--surface);padding:3px}
+.seg span{height:28px;display:inline-flex;align-items:center;padding:0 12px;border-radius:9px;font-size:13px;font-weight:500;color:var(--t2)}
+.seg span.on{background:var(--s3);color:var(--text)}.seg.pri span.on{background:var(--afill);color:#fff;box-shadow:0 6px 18px -8px rgba(139,92,246,.8)}
+.body{position:absolute;left:32px;right:32px;top:72px;display:flex;flex-direction:column;gap:16px}
+.hero{background:linear-gradient(120deg,#1B1838 0%,#14132A 40%,#111118 100%);border:1px solid #2A2747;border-radius:20px;padding:28px;display:flex;align-items:center;gap:24px;height:120px}
+.htile{width:60px;height:60px;border-radius:16px;background:var(--afill);display:grid;place-items:center;box-shadow:0 6px 20px -8px rgba(139,92,246,.9);flex-shrink:0}
+.htile svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.hero .d{font-size:13px;color:var(--t2)}.hero .g{font-size:26px;line-height:32px;font-weight:700;letter-spacing:-.01em;margin-top:2px}.hero .s{margin-top:4px;color:var(--t2);max-width:700px}
+.btn{height:40px;display:inline-flex;align-items:center;gap:8px;padding:0 16px;border-radius:12px;font-weight:600;font-size:14px}
+.btn.a{background:var(--afill);color:#fff;box-shadow:0 6px 20px -8px rgba(139,92,246,.9)}.btn.i{background:#F4F4F6;color:#0A0A0F}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{position:relative;min-height:116px;border-radius:16px;border:1px solid var(--border);background:var(--surface);padding:20px}
+.stat .tile{position:absolute;right:18px;top:18px;width:36px;height:36px;border-radius:10px;border:1px solid;display:grid;place-items:center}
+.stat .tile svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.stat .l{font-size:13px;color:var(--t2);padding-right:48px}.stat .v{margin-top:8px;font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.stat .c{margin-top:6px;font-size:12px;line-height:16px;color:var(--t3)}
+.row2{display:grid;grid-template-columns:1fr 360px;gap:16px}
+.card{border-radius:16px;border:1px solid var(--border);background:var(--surface);padding:20px;position:relative}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.ov{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.meta{font-size:12px;color:var(--t3)}
+.cap li{list-style:none;display:grid;grid-template-columns:110px 1fr 70px;gap:12px;align-items:center;font-size:13px;margin-bottom:12px}
+.bar{height:6px;border-radius:99px;background:var(--s3);overflow:hidden}.bar i{display:block;height:100%;border-radius:99px}
+.sk{background:linear-gradient(90deg,#16161F,#1C1C27,#16161F);background-size:200% 100%;border-radius:8px}
+.tip{position:absolute;border-radius:6px;border:1px solid var(--border);background:#14141C;padding:6px 10px;font-size:12px;white-space:nowrap;box-shadow:0 24px 48px -12px rgba(0,0,0,.7)}
+.fade{position:absolute;inset:0;background:var(--bg);pointer-events:none}
+.tall .row2{grid-template-columns:1fr}.tall .stats{grid-template-columns:1fr 1fr}.tall .hero{flex-wrap:wrap;height:auto}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers shared by the dashboard demos ----
+// CSS cubic-bezier(x1,y1,x2,y2) as a function of progress 0..1 (Newton solve for x)
+const bez = (x1, y1, x2, y2) => (x) => {
+  if (x <= 0) return 0; if (x >= 1) return 1
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  let u = x
+  for (let i = 0; i < 8; i++) { const f = ((ax * u + bx) * u + cx) * u - x, d = (3 * ax * u + 2 * bx) * u + cx; if (Math.abs(f) < 1e-5 || Math.abs(d) < 1e-6) break; u -= f / d }
+  return ((ay * u + by) * u + cy) * u
+}
+const easeOutCss = bez(0, 0, .58, 1)          // CSS ease-out
+const easeCss = bez(.25, .1, .25, 1)             // CSS ease, Recharts default animationEasing
+const easeInOutCss = bez(.42, 0, .58, 1)       // CSS ease-in-out
+const outExpo22 = bez(.22, 1, .36, 1)          // cubic-bezier(0.22,1,0.36,1), used all over the sources
+// framer-motion physics spring, 0 -> 1, t in seconds (stiffness, damping, mass)
+const fmSpring = (t, k = 100, c = 10, m = 1) => {
+  if (t <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t)) }
+  return 1 - Math.exp(-w0 * t) * (1 + w0 * t)
+}
+const rng = (seed) => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }   // fixed-seed random
+const svgEl = (tag, attrs = {}, parent) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+const fmtInt = (n) => Math.round(n).toLocaleString('en-US')
+// d3 curveMonotoneX, which is what Recharts type="monotone" draws
+const monotonePath = (pts) => {
+  const n = pts.length; if (n < 2) return ''
+  const dx = [], dy = [], m = [], tg = []
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; dy[i] = pts[i + 1][1] - pts[i][1]; m[i] = dy[i] / dx[i] }
+  tg[0] = m[0]; tg[n - 1] = m[n - 2]
+  for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0 } else { const a = tg[i] / m[i], b = tg[i + 1] / m[i], s = a * a + b * b; if (s > 9) { const k = 3 / Math.sqrt(s); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i] } } }
+  let d = `M${pts[0][0]},${pts[0][1]}`
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${pts[i][0] + h},${pts[i][1] + tg[i] * h},${pts[i + 1][0] - h},${pts[i + 1][1] - tg[i + 1] * h},${pts[i + 1][0]},${pts[i + 1][1]}` }
+  return d
+}
+// A fixed design-size UI fitted into the stage: 1440x900 wide, 900x1440 tall. CSS under .tall reflows the grids.
+const DW = TALL ? 900 : 1440, DH = TALL ? 1440 : 900
+const UI_SC = Math.min(W / DW, H / DH)
+const ui = el('div', 'ui' + (TALL ? ' tall' : ''))
+S(ui, { position: 'absolute', width: DW + 'px', height: DH + 'px', left: ((W - DW * UI_SC) / 2) + 'px', top: ((H - DH * UI_SC) / 2) + 'px', transform: `scale(${UI_SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+
+const DUR = 9
+window.DUR = DUR
+const R = rng(21)
+const ic = (p) => `<svg viewBox="0 0 24 24">${p}</svg>`
+const SP = '<path d="M9.9 3.5 11.3 7l3.5 1.4-3.5 1.4-1.4 3.5-1.4-3.5L5 8.4 8.5 7l1.4-3.5Z"/><path d="M18 3v3M19.5 4.5h-3M17.5 14v3M19 15.5h-3"/>'
+el('div', 'tbar', ui, '<h1>Today</h1><div class="seg pri"><span class="on">Today</span><span>Yesterday</span><span>7d</span><span>All</span></div><div class="seg"><span class="on">Team</span><span>Ana</span><span>Ben</span></div>')
+const body = el('div', 'body', ui)
+// ---- hero ----
+const hero = el('div', 'hero', body)
+const heroReal = el('div', null, hero); S(heroReal, { display: 'flex', alignItems: 'center', gap: '24px', width: '100%' })
+el('div', 'htile', heroReal, ic(SP))
+el('div', null, heroReal, '<div class="d">Tuesday, March 11</div><div class="g">Good morning, Sam</div><div class="s">428 touches went out and 19 people replied. 6 warm replies are waiting on you, the oldest for 2 hours.</div>'); S(heroReal.lastChild, { flex: 1 })
+el('div', null, heroReal, '<span class="btn a">Copy summary</span> <span class="btn i">Open waiting list ↗</span>'); S(heroReal.lastChild, { display: 'flex', gap: '10px' })
+const heroSk = el('div', null, hero); S(heroSk, { position: 'absolute', display: 'none' })
+const skHero = el('div', null, hero); S(skHero, { display: 'flex', alignItems: 'center', gap: '24px', width: '100%' })
+const skAll = []
+const sk = (parent, w, h, extra = {}) => { const e = el('div', 'sk', parent); S(e, { width: w, height: h, ...extra }); skAll.push(e); return e }
+sk(skHero, '60px', '60px', { borderRadius: '16px' }); const skc = el('div', null, skHero); S(skc, { flex: 1 }); sk(skc, '190px', '14px'); sk(skc, '290px', '28px', { marginTop: '8px' }); sk(skc, '520px', '14px', { marginTop: '8px' })
+// ---- stat row ----
+const TONE = { accent: ['rgba(139,92,246,.14)', '#B79CFF', 'rgba(139,92,246,.22)'], success: ['rgba(34,197,94,.12)', '#4ADE80', 'rgba(34,197,94,.25)'], warning: ['rgba(245,158,11,.12)', '#FBBF24', 'rgba(245,158,11,.25)'] }
+const stats = el('div', 'stats', body)
+const STAT = [['Touches sent', '428', '<span style="color:#4ADE80">+62</span> vs yesterday', 'accent', '<line x1="22" x2="11" y1="2" y2="13"/><path d="M22 2 15 22 11 13 2 9l20-7z"/>'], ['Human replies', '19', '11 positive · 5 questions', 'accent', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'], ['Speed to warm reply', '14 min', '<span style="color:#FBBF24">Target 10 min</span>', 'warning', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'], ['Pipeline', '$38.4K', '7 deals open', 'success', '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>']]
+const statReal = [], statSk = []
+STAT.forEach(([l, v, c, tone, icon]) => {
+  const card = el('div', 'stat', stats); const real = el('div', null, card)
+  const [bg, fg, bd] = TONE[tone]
+  el('div', 'tile', real, ic(icon)); S(real.lastChild, { background: bg, color: fg, borderColor: bd })
+  el('p', 'l', real, l); el('p', 'v', real, v); el('p', 'c', real, c)
+  const s = el('div', null, card); S(s, { position: 'absolute', left: '20px', top: '20px' }); sk(s, '96px', '12px'); sk(s, '130px', '30px', { marginTop: '12px' }); sk(s, '110px', '12px', { marginTop: '10px' })
+  statReal.push(real); statSk.push(s)
+})
+// ---- chart + capacity ----
+const row2 = el('div', 'row2', body)
+const cc = el('div', 'card', row2); S(cc, { height: '332px' })
+el('div', 'ch', cc, '<h2 class="ov">Touches sent</h2><span class="meta">Today · by hour</span>')
+const CW = 958, CHh = 252
+const csv = svgEl('svg', { width: CW, height: CHh }, cc); csv.style.display = 'block'
+const defs = svgEl('defs', {}, csv); const g = svgEl('linearGradient', { id: 'touchFill', x1: 0, y1: 0, x2: 0, y2: 1 }, defs)
+svgEl('stop', { offset: '0%', 'stop-color': '#8B5CF6', 'stop-opacity': .38 }, g); svgEl('stop', { offset: '100%', 'stop-color': '#8B5CF6', 'stop-opacity': 0 }, g)
+const cclip = svgEl('clipPath', { id: 'tClip' }, defs); const cclipR = svgEl('rect', { x: 0, y: 0, width: 0, height: CHh }, cclip)
+const HOURS = ['8a', '9a', '10a', '11a', '12p', '1p', '2p', '3p', '4p', '5p'], cnt = [12, 38, 64, 71, 52, 48, 61, 44, 28, 10]
+const PL = 44, PR = CW - 14, PT = 12, PB = CHh - 30, YM = 80
+;[0, 20, 40, 60, 80].forEach((v) => { const y = PB - v / YM * (PB - PT); svgEl('line', { x1: PL, x2: PR, y1: y, y2: y, stroke: '#1F1F2A' }, csv); svgEl('text', { x: PL - 10, y: y + 4, 'text-anchor': 'end', fill: '#8B8B9C', 'font-size': 11 }, csv).textContent = v })
+const pts = cnt.map((v, i) => [PL + i * (PR - PL) / 9, PB - v / YM * (PB - PT)])
+HOURS.forEach((h, i) => svgEl('text', { x: pts[i][0], y: CHh - 8, 'text-anchor': 'middle', fill: '#8B8B9C', 'font-size': 11 }, csv).textContent = h)
+const gA = svgEl('g', { 'clip-path': 'url(#tClip)' }, csv)
+const lp = monotonePath(pts)
+svgEl('path', { d: `${lp}L${pts[9][0]},${PB}L${pts[0][0]},${PB}Z`, fill: 'url(#touchFill)' }, gA)
+svgEl('path', { d: lp, fill: 'none', stroke: '#A78BFA', 'stroke-width': 2.25, 'stroke-linecap': 'round' }, gA)
+const lastDot = svgEl('circle', { cx: pts[9][0], cy: pts[9][1], r: 4.5, fill: '#111118', stroke: '#A78BFA', 'stroke-width': 2 }, csv)
+const cursorL = svgEl('line', { y1: PT, y2: PB, stroke: '#2A2A38' }, csv), hdot = svgEl('circle', { r: 4.5, fill: '#111118', stroke: '#A78BFA', 'stroke-width': 2 }, csv)
+const tip = el('div', 'tip', cc)
+const chSk = sk(cc, '100%', '252px', { position: 'absolute', left: '20px', right: '20px', top: '58px', width: 'auto' })
+const cap = el('div', 'card cap', row2); S(cap, { height: '332px' })
+el('div', 'ch', cap, '<h2 class="ov">Capacity used</h2><span class="meta">Resets 9:00 PT</span>')
+const RS = 150, RST = 12, rr = (RS - RST) / 2, rc = 2 * Math.PI * rr, used = 312, totalCap = 420
+const rw = el('div', null, cap); S(rw, { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '22px' })
+const ringBox = el('div', null, rw); S(ringBox, { position: 'relative', width: RS + 'px', height: RS + 'px', flexShrink: 0 })
+const rsv = svgEl('svg', { width: RS, height: RS, viewBox: `0 0 ${RS} ${RS}` }, ringBox); rsv.style.transform = 'rotate(-90deg)'; rsv.style.filter = 'drop-shadow(0 0 6px #8B5CF666)'
+svgEl('circle', { cx: RS / 2, cy: RS / 2, r: rr, fill: 'none', stroke: '#1F1F2A', 'stroke-width': RST }, rsv)
+const rarc = svgEl('circle', { cx: RS / 2, cy: RS / 2, r: rr, fill: 'none', stroke: '#8B5CF6', 'stroke-width': RST, 'stroke-linecap': 'round', 'stroke-dasharray': rc }, rsv)
+el('div', null, ringBox, `<span style="font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.02em">${used}</span><span class="ov" style="color:var(--t3)">of ${totalCap}</span>`); S(ringBox.lastChild, { position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' })
+el('div', null, rw, '<div style="font-size:15px;line-height:22px;font-weight:600">Capped sends used</div><div style="margin-top:6px;font-size:13px;line-height:18px;color:var(--t2)">Social, connects and email across 5 accounts. 74% of the day\'s cap.</div>')
+const ul = el('ul', null, cap)
+const CH = [['Social DMs', 118, 150, '#8B5CF6'], ['Connects', 96, 100, '#F59E0B'], ['Email', 98, 170, '#8B5CF6']]
+const capBars = CH.map(([l, u, m, c]) => { const li = el('li', null, ul, `<span style="color:var(--t2)">${l}</span><div class="bar"><i style="background:${c};width:0%"></i></div><span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${u} / ${m}</span>`); return { i: li.querySelector('i'), w: u / m * 100 } })
+const ringSk = sk(cap, '150px', '150px', { position: 'absolute', left: '20px', top: '58px', borderRadius: '50%' })
+const rrc = el('div', 'card', body)
+el('div', 'ch', rrc, '<h2 class="ov">Reply rate by channel</h2><span class="meta">7 days · human replies ÷ sent</span>')
+const RRB = [['Social DMs', 6.8, '41 / 604'], ['Connects', 4.1, '29 / 710'], ['Email', 2.3, '18 / 782']]
+const rrBars = RRB.map(([l, r, c]) => { const row = el('div', null, rrc, `<span>${l}</span><div class="bar"><i style="background:#8B5CF6;width:0%"></i></div><span style="text-align:right"><b>${r.toFixed(1)}%</b> <span style="font-size:12px;color:var(--t3)">${c}</span></span>`); S(row, { display: 'grid', gridTemplateColumns: '150px 1fr 130px', gap: '12px', alignItems: 'center', fontSize: '13px', marginBottom: '12px' }); return { i: row.querySelector('i'), w: r / 10 * 100 } })
+const fadeEl = el('div', 'fade', ui)
+const T_DATA = 1.3
+const kf = (t, a, b, ease = easeOutCss, t0, t1) => a + (b - a) * ease(seg(t, t0, t1))
+function render(t) {
+  // .skeleton: gradient sweep, 1.4s linear infinite, background-size 200%
+  skAll.forEach((e) => S(e, { backgroundPosition: (200 - ((t % 1.4) / 1.4) * 400) + '% 0' }))
+  const loaded = t >= T_DATA
+  S(skHero, { display: loaded ? 'none' : 'flex' }); S(heroReal, { display: loaded ? 'flex' : 'none' })
+  statReal.forEach((r, i) => { S(r, { display: loaded ? '' : 'none' }); S(statSk[i], { display: loaded ? 'none' : '' }) })
+  S(chSk, { display: loaded ? 'none' : '' }); S(ringSk, { display: loaded ? 'none' : '' }); S(ringBox.lastChild, { display: loaded ? 'flex' : 'none' }); S(rsv, { display: loaded ? '' : 'none' }); S(rw.lastChild, { display: loaded ? '' : 'none' }); S(ul, { display: loaded ? '' : 'none' })
+  S(cc.querySelector('svg'), { display: loaded ? '' : 'none' })
+  const a = t - T_DATA
+  cclipR.setAttribute('width', ((PL - 6) + (PR - PL + 14 + 6) * easeOutCss(seg(a, 0, .4))).toFixed(1))        // Recharts Area: animationDuration 400, ease-out
+  S(lastDot, { opacity: seg(a, .4, .45) })
+  const rq = easeOutCss(seg(a, 0, .4)); rarc.setAttribute('stroke-dashoffset', (rc - (rc - rc * (1 - used / totalCap)) * rq).toFixed(2))   // .animate-ring-fill 400ms ease-out
+  capBars.forEach((b) => S(b.i, { width: b.w + '%' })); rrBars.forEach((b) => S(b.i, { width: b.w + '%' }))
+  // hover crosshair across the chart
+  const hv = seg(t, 3.2, 6.6), idx = hv > 0 && hv < 1 ? hv * 9 : -1
+  if (idx >= 0) { const i0 = Math.floor(idx), f = idx - i0, i1 = Math.min(9, i0 + 1), x = pts[i0][0] + (pts[i1][0] - pts[i0][0]) * f, y = pts[i0][1] + (pts[i1][1] - pts[i0][1]) * f, near = Math.round(idx)
+    cursorL.setAttribute('x1', x); cursorL.setAttribute('x2', x); hdot.setAttribute('cx', x); hdot.setAttribute('cy', y); S(tip, { display: '', left: Math.min(x + 28, CW - 70) + 'px', top: '70px' }); tip.innerHTML = `<span style="color:#A1A1AE">${HOURS[near]}</span> <b>${cnt[near]}</b>`
+  } else { cursorL.setAttribute('x1', -10); cursorL.setAttribute('x2', -10); hdot.setAttribute('cx', -10); S(tip, { display: 'none' }) }
+  S(fadeEl, { opacity: seg(t, DUR - .4, DUR) })
+}
+
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

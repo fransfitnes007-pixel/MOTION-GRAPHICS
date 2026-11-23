@@ -1,0 +1,22 @@
+{
+  "slug": "giant-cropped-number-beat-cuts__punch-scale-count",
+  "visual_name": "Giant cropped number beat cuts",
+  "code_name": "Punch scale count",
+  "category": "motion-graphics",
+  "summary": "Hard cuts every 3 beats between full-frame colour fields, each with a 560px number that counts up, punches in from 118 percent and runs off the right edge, beside a small brand label that slides in.",
+  "tags": [
+    "counter",
+    "kinetic-type",
+    "stat-tile",
+    "transition",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

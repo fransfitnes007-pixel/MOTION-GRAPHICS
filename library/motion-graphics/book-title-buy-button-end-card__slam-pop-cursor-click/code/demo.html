@@ -1,0 +1,281 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Book, title and buy-button end card</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay[wght].ttf);font-weight:400 900}
+@font-face{font-family:PFI;src:url(fonts/PlayfairDisplay-Italic[wght].ttf);font-weight:400 900}
+@font-face{font-family:Rye;src:url(fonts/Rye-Regular.ttf)}
+@font-face{font-family:Vibes;src:url(fonts/GreatVibes-Regular.ttf)}
+:root{--sf:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+html,body{background:#07080b}
+#stage{background:#07080b;color:#f3f1ea;font-family:var(--sf)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+#bookWrap{position:absolute;left:0;top:0;transform-origin:50% 50%;perspective:2600px}
+#book{position:absolute;left:0;top:0;transform-style:preserve-3d;transform-origin:50% 50%}
+#book>div{position:absolute;left:0;top:0;transform-style:preserve-3d;backface-visibility:hidden}
+#book>#front{backface-visibility:visible}
+#spine{background:linear-gradient(90deg,#2a1d0c,#4a3414 30%,#2a1d0c);transform-origin:left center}
+#spine .st{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+#spine .st span{font-family:Rye;color:#e8b43a;white-space:nowrap;letter-spacing:.1em;transform:rotate(90deg)}
+#block{background:#efe9dc}
+#block .pg{position:absolute;inset:0;background:#f4efe3;overflow:hidden}
+#block .pg .ch{position:absolute;font-family:PF;font-weight:700;color:#2a241a;letter-spacing:.04em;white-space:nowrap}
+#block .pg .cn{position:absolute;font-family:var(--sf);font-weight:600;color:#8a7a56;letter-spacing:.3em;text-transform:uppercase;white-space:nowrap}
+#block .pg .tx{position:absolute;font-family:Elite;color:#3a3226;line-height:1.55;white-space:pre-wrap}
+#block .pg .tx::first-letter{font-family:PF;font-weight:700;font-size:3.1em;float:left;line-height:.82;padding:.08em .12em 0 0;color:#2a241a}
+#edgeR{background:repeating-linear-gradient(180deg,#fbf7ee 0 2px,#d9d1bf 2px 3px);transform-origin:right center;box-shadow:inset -3px 0 6px rgba(0,0,0,.25)}
+#edgeB{background:repeating-linear-gradient(90deg,#fbf7ee 0 2px,#d9d1bf 2px 3px);transform-origin:center bottom}
+#front{transform-origin:left center}
+#front .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:4px 14px 14px 4px;overflow:hidden}
+#front .out .gloss{position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.28) 50%,rgba(255,255,255,0) 62%);mix-blend-mode:screen}
+#front .out .rim{position:absolute;inset:0;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.15),inset 10px 0 24px rgba(0,0,0,.35);border-radius:4px 14px 14px 4px}
+#front .in{transform:rotateY(180deg);background:linear-gradient(90deg,#d9cfbb,#efe7d5 20%,#f1eadb)}
+#back{background:#2a1d0c;border-radius:4px 14px 14px 4px;box-shadow:0 100px 160px -40px rgba(0,0,0,.95)}
+#bookShadow{position:absolute;left:0;top:0;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.7),rgba(0,0,0,0));transform-origin:50% 50%}
+
+/* placeholder cover: gradients and type styling are cover.html's; the artwork is a CSS dusk scene */
+.cvr{container-type:inline-size;position:absolute;inset:0;overflow:hidden;background:
+ linear-gradient(#17120e,#17120e) 28% 66%/44% 9% no-repeat,linear-gradient(#ffc766,#ffc766) 36% 69%/4% 3% no-repeat,linear-gradient(#ffc766,#ffc766) 50% 69%/4% 3% no-repeat,
+ linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 22%,rgba(0,0,0,0) 52%,rgba(6,5,4,.78) 72%,rgba(6,5,4,.96) 100%),
+ linear-gradient(180deg,#27354d 0%,#4b5a75 40%,#8c7b69 60%,#1c1712 61%)}
+.cvr .au{position:absolute;left:0;right:0;top:5.3cqw;text-align:center;font-family:Vibes;font-size:9.3cqw;color:#fff;text-shadow:0 .2cqw 1cqw rgba(0,0,0,.65)}
+.cvr .rl{position:absolute;left:50%;top:16.4cqw;width:20cqw;height:.12cqw;margin-left:-10cqw;background:linear-gradient(90deg,transparent,#e8c25a 25%,#fff 50%,#e8c25a 75%,transparent)}
+.cvr .tr{position:absolute;left:0;right:0;top:17.7cqw;text-align:center;font-family:PF;font-weight:600;font-size:2.2cqw;letter-spacing:.42em;color:#f1d98a;text-transform:uppercase}
+.cvr .tt{position:absolute;left:0;right:0;top:63cqw;text-align:center;line-height:.82}
+.cvr .the,.cvr .on{display:block;font-family:Vibes;color:#fff;line-height:1;text-shadow:0 .3cqw 1.2cqw rgba(0,0,0,.7)}
+.cvr .the{font-size:9.4cqw;margin-bottom:-2cqw}
+.cvr .on{font-size:6.1cqw;margin:-.1cqw 0 -1.2cqw}
+.cvr .gd,.cvr .sv{display:block;font-family:Rye;font-size:12cqw;letter-spacing:.02em;-webkit-background-clip:text;background-clip:text;color:transparent}
+.cvr .gd{background-image:linear-gradient(180deg,#fff2b3 0%,#f6d35a 22%,#e4a92a 48%,#b67a12 62%,#f7d873 82%,#ffe9a3 100%);filter:drop-shadow(0 .33cqw 0 #4a2f06) drop-shadow(0 .8cqw 1.4cqw rgba(0,0,0,.75))}
+.cvr .sv{background-image:linear-gradient(180deg,#ffffff 0%,#dfe4ea 30%,#a9b1bb 52%,#f4f6f8 68%,#c3c9d2 100%);filter:drop-shadow(0 .33cqw 0 #1d2126) drop-shadow(0 .8cqw 1.4cqw rgba(0,0,0,.75))}
+.cvr .ft{position:absolute;left:0;right:0;bottom:1.7cqw;text-align:center;font-family:PF;font-weight:500;font-size:1.5cqw;letter-spacing:.34em;color:#cfd4dc;text-transform:uppercase;opacity:.85}
+
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+.h{position:absolute;left:0;top:0;font-family:PF;font-weight:700;line-height:1.02;letter-spacing:-0.01em;white-space:nowrap}
+.h .w{display:inline-block;white-space:pre}
+.h i{font-family:PFI;font-style:normal;color:#e8b43a;margin-right:.1em}
+.h .red{color:#d8463a}
+.eyebrow{position:absolute;left:0;top:0;font-family:var(--sf);font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#e8b43a;white-space:nowrap}
+.sub{position:absolute;left:0;top:0;font-family:var(--sf);font-weight:500;color:#b9bcc6;white-space:nowrap;letter-spacing:-0.01em}
+.cursor{position:absolute;left:0;top:0;width:44px;height:44px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));transform-origin:0 0}
+.ripple{position:absolute;left:0;top:0;border-radius:50%;border:4px solid #e8b43a;transform-origin:50% 50%}
+.btn{position:absolute;left:0;top:0;transform-origin:50% 50%;display:flex;align-items:center;justify-content:center;gap:.5em;background:#ffd814;color:#0f1111;font-family:var(--sf);font-weight:600;border-radius:999px;white-space:nowrap;box-shadow:0 24px 50px -16px rgba(255,216,20,.45),0 0 0 1px rgba(0,0,0,.25) inset}
+.btn.dark{background:#f3f1ea;color:#0b0c10;box-shadow:0 24px 50px -16px rgba(255,255,255,.3)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+#grain{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/></filter><rect width='260' height='260' filter='url(%23n)'/></svg>")}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.6) 100%)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across these demos
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 8.4
+window.DUR = DUR
+const V = H >= W                                   // vertical-ish layouts (9:16, 4:5, 1:1)
+const SC = V ? W / 1080 : Math.min(W / 1920, H / 1080)   // design scale (the source calls it S; the template's S is the style helper)
+const TR = V ? H / W : 0                         // 1.78 for 9:16, 1.25 for 4:5, 1 for 1:1 (the source calls it TALL)
+const $ = (id) => document.getElementById(id)
+const p = (t, a, b) => (b - a > 0 && isFinite(b - a) ? clamp((t - a) / (b - a)) : t >= a ? 1 : 0)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const backS = (x, c1 = 2.4) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const SOUNDS = []   // {t,type}: cues collected here to build a soundtrack
+const snd = (t, type) => { if (!SOUNDS.some((s) => s.t === t && s.type === type)) SOUNDS.push({ t, type }) }
+// pre-load the fonts so offsetWidth measurements are right on the first frame drawn
+const loadFonts = (...f) => f.forEach((x) => document.fonts.load(x))
+const HF = (V ? 100 : 128) * SC    // headline font
+const M = (V ? 72 : 110) * SC      // margin
+function tf(el, o) {
+  const { x = 0, y = 0, s = 1, sx, sy, r = 0, rx = 0, ry = 0, a = 1, z = 0, ox, oy } = o
+  if (a <= 0.001) { el.style.display = 'none'; return }
+  el.style.display = ''
+  el.style.opacity = a
+  if (ox !== undefined) el.style.transformOrigin = `${ox} ${oy}`
+  el.style.transform = `translate3d(${x}px,${y}px,${z}px) rotate(${r}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${sx ?? s},${sy ?? s})`
+}
+const hide = (...els) => els.forEach((e) => (e.style.display = 'none'))
+function setText(el, html) { if (el.dataset.k !== html) { el.innerHTML = html; el.dataset.k = html } }
+// word-by-word slam: each word scales down from 1.35 and fades in, staggered
+function tokenize(html) {
+  // split into words, re-wrapping each word in whatever inline tags were open around it
+  const parts = html.split(/(<\/?[a-z]+[^>]*>)/i).filter(Boolean), open = [], out = []
+  for (const part of parts) {
+    if (part.startsWith('</')) { open.pop(); continue }
+    if (part.startsWith('<')) { open.push(part); continue }
+    for (const w of part.split(/\s+/).filter(Boolean)) out.push(open.join('') + w + open.map((o) => '</' + o.match(/<([a-z]+)/i)[1] + '>').reverse().join(''))
+  }
+  return out
+}
+function slam(el, html, t, t0, { fs, x, y, w = 0.1, d = 0.45, out = Infinity, outD = 0.35, outDir = -1, align = 'left', color } = {}) {
+  if (t < t0 || t > out + outD) { hide(el); return }
+  el.style.display = ''; el.style.fontSize = px(fs); el.style.textAlign = align; if (color) el.style.color = color
+  const key = html + '|' + fs
+  if (el.dataset.k !== key) {
+    el.innerHTML = tokenize(html).map((wd) => `<span class="w">${wd} </span>`).join('')
+    el.dataset.k = key
+  }
+  const words = el.querySelectorAll('.w')
+  words.forEach((sp, i) => {
+    const k = eo(p(t, t0 + i * w, t0 + i * w + d))
+    sp.style.opacity = k
+    sp.style.transform = `translateY(${(1 - k) * 0.35 * fs}px) scale(${lerp(1.3, 1, k)})`
+  })
+  const ko = p(t, out, out + outD)
+  const left = align === 'center' ? x - el.offsetWidth / 2 : align === 'right' ? x - el.offsetWidth : x
+  tf(el, { x: left, y, a: 1 - ko, s: lerp(1, 0.96, ko), ox: '50%', oy: '50%' })
+  if (ko > 0) el.style.transform += ` translateY(${outDir * ko * 40 * SC}px)`
+}
+function cursor(t, pts, clickAt) {
+  // pts: [[t,x,y],...] keyframes; shows cursor between first and last
+  if (t < pts[0][0] - 0.01 || t > pts[pts.length - 1][0] + 0.6) { hide($('cur'), $('rip')); return }
+  let x = pts[0][1], y = pts[0][2]
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ta, xa, ya] = pts[i], [tb, xb, yb] = pts[i + 1]
+    if (t >= ta) { const k = eio(p(t, ta, tb)); x = lerp(xa, xb, k); y = lerp(ya, yb, k) }
+  }
+  const cs = 44 * SC
+  $('cur').style.width = $('cur').style.height = px(cs)
+  const press = clickAt !== undefined ? (t > clickAt && t < clickAt + 0.14 ? 0.82 : 1) : 1
+  tf($('cur'), { x, y, s: press, a: p(t, pts[0][0], pts[0][0] + 0.3) })
+  if (clickAt !== undefined && t > clickAt && t < clickAt + 0.5) {
+    const k = p(t, clickAt, clickAt + 0.5), rs = lerp(10, 120, eo(k)) * SC
+    $('rip').style.width = $('rip').style.height = px(rs); $('rip').style.borderWidth = px(4 * SC)
+    tf($('rip'), { x: x - rs / 2 + 4 * SC, y: y - rs / 2 + 4 * SC, a: 1 - k })
+    snd(clickAt, 'click')
+  } else hide($('rip'))
+}
+// ---------- blobs ----------
+function blobs(t, mood) {
+  // mood: 0 dark/cold, 1 gold warm, 2 red danger
+  const b1 = $('b1'), b2 = $('b2'), b3 = $('b3'), R = Math.max(W, H)
+  const amp = (m) => (mood === m ? 1 : 0.35)
+  ;[[b1, 0.9 * amp(1), 0.25, 0.3, 0.07], [b2, 0.8 * amp(0), 0.78, 0.7, 0.05], [b3, 0.9 * amp(2), 0.5, 0.95, 0.06]].forEach(([el, a, fx, fy, sp], i) => {
+    const sz = R * (0.55 + 0.1 * i)
+    el.style.width = el.style.height = px(sz)
+    el.style.opacity = a * 0.9
+    el.style.transform = `translate(${fx * W - sz / 2 + Math.sin(t * sp * 6 + i) * 0.08 * W}px,${fy * H - sz / 2 + Math.cos(t * sp * 5 + i) * 0.08 * H}px)`
+  })
+}
+
+stage.insertAdjacentHTML('afterbegin', '<div class="blob" id="b1" style="background:#3a2a08"></div><div class="blob" id="b2" style="background:#0f1f3a"></div><div class="blob" id="b3" style="background:#4a1410"></div>')
+
+stage.insertAdjacentHTML('beforeend', '<div id="bookShadow"></div><div id="bookWrap"><div id="book"><div id="back"></div><div id="edgeB"></div><div id="edgeR"></div><div id="block"><div class="pg"><div class="cn">Chapter 1</div><div class="ch">A New Beginning</div><div class="tx"></div></div></div><div id="spine"><div class="st"><span>THE GOLDEN TITLE ON SILVER LANE</span></div></div><div id="front"><div class="face out"><div class="cvr"><div class="au">Author Name</div><div class="rl"></div><div class="tr">A True Story</div><div class="tt"><span class="the">The</span><span class="gd">GOLDEN</span><span class="gd">TITLE</span><span class="on">on</span><span class="sv">SILVER</span><span class="sv">LANE</span></div><div class="ft">Place · Region · 1987</div></div><div class="rim"></div><div class="gloss"></div></div><div class="face in"></div></div></div></div>')
+stage.insertAdjacentHTML('beforeend', '<div class="h" id="h1"></div><div class="h" id="h2"></div><div class="h" id="h3"></div><div class="eyebrow" id="e1"></div><div class="sub" id="s1"></div><div style="position:absolute;left:0;top:0;border-radius:50%;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 0 2px rgba(232,180,58,.6);background:linear-gradient(135deg,#e8b43a,#8a5a10)" id="ava"></div>')
+stage.insertAdjacentHTML('beforeend', '<div class="btn" id="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><span>Get it now</span></div><div class="ripple" id="rip"></div><svg id="cur" class="cursor" viewBox="0 0 24 24"><path d="M5 3l14 8.2-6.1 1.5 3.6 6.6-2.6 1.4-3.6-6.6L5.8 18.6z" fill="#fff" stroke="#0b0c10" stroke-width="1.4" stroke-linejoin="round"/></svg>')
+stage.insertAdjacentHTML('beforeend', '<div id="grain"></div><div id="vig"></div>')
+// ---------- the book ----------
+const BW = (V ? 560 : 540) * SC, BH = BW * 1.5, BD = 46 * SC   // cover size, thickness
+const bookEls = ['back', 'edgeB', 'edgeR', 'block', 'spine', 'front'].map($)
+;(function buildBook() {
+  $('bookWrap').style.width = px(BW); $('bookWrap').style.height = px(BH)
+  $('book').style.width = px(BW); $('book').style.height = px(BH)
+  const pad = 8 * SC
+  $('back').style.width = px(BW); $('back').style.height = px(BH); $('back').style.transform = `translateZ(${-BD}px)`
+  $('block').style.width = px(BW - pad * 1.6); $('block').style.height = px(BH - pad * 2); $('block').style.left = px(pad * 0.5); $('block').style.top = px(pad)
+  $('block').style.transform = `translateZ(${-2 * SC}px)`
+  $('edgeR').style.width = px(BD - 4 * SC); $('edgeR').style.height = px(BH - pad * 2); $('edgeR').style.left = px(BW - pad * 1.1 - (BD - 4 * SC)); $('edgeR').style.top = px(pad)
+  $('edgeR').style.transform = `rotateY(90deg) translateZ(${0}px)`
+  $('edgeB').style.width = px(BW - pad * 1.6); $('edgeB').style.height = px(BD - 4 * SC); $('edgeB').style.left = px(pad * 0.5); $('edgeB').style.top = px(BH - pad - (BD - 4 * SC))
+  $('edgeB').style.transform = `rotateX(-90deg)`
+  $('spine').style.width = px(BD); $('spine').style.height = px(BH); $('spine').style.transform = `rotateY(-90deg)`
+  $('spine').querySelector('span').style.fontSize = px(BD * 0.42)
+  $('front').style.width = px(BW); $('front').style.height = px(BH)
+  // inside page text
+  const pg = $('block').querySelector('.pg')
+  pg.querySelector('.cn').style.cssText += `left:${BW * 0.1}px;top:${BH * 0.1}px;font-size:${BW * 0.028}px`
+  pg.querySelector('.ch').style.cssText += `left:${BW * 0.1}px;top:${BH * 0.135}px;font-size:${BW * 0.062}px`
+  const tx = pg.querySelector('.tx'); tx.style.cssText += `left:${BW * 0.1}px;top:${BH * 0.22}px;width:${BW * 0.78}px;font-size:${BW * 0.03}px`
+  tx.textContent = 'The first paragraph of the book goes here, set in a typewriter face with a drop cap in the serif headline face.\n\nA second paragraph follows. The page is only there to be pushed into: the camera zooms until this page fills the frame.\n\nA third paragraph, so the page does not look empty.'
+})()
+function book(t, { x, y, s = 1, ry = -28, rx = 6, open = 0, a = 1, bob = 0 }) {
+  if (a <= 0) { hide($('bookWrap'), $('bookShadow')); return }
+  $('bookWrap').style.display = ''; $('bookShadow').style.display = ''
+  $('bookWrap').style.opacity = a
+  $('bookWrap').style.transform = `translate3d(${x - BW / 2}px,${y - BH / 2 + bob}px,0) scale(${s})`
+  $('book').style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`
+  $('front').style.transform = `rotateY(${-open * 168}deg)`
+  const gl = $('front').querySelector('.gloss'); gl.style.transform = `translateX(${lerp(-BW, BW, (Math.sin(t * 0.9) + 1) / 2)}px)`
+  const sw = BW * 1.6 * s, sh = BW * 0.5 * s
+  $('bookShadow').style.width = px(sw); $('bookShadow').style.height = px(sh)
+  $('bookShadow').style.transform = `translate(${x - sw / 2}px,${y + BH * 0.46 * s - sh / 2 + bob * 0.3}px)`
+  $('bookShadow').style.opacity = a * 0.85
+}
+
+loadFonts('700 20px PF', '700 20px PFI', '20px Rye', '20px Vibes', '600 20px PF')
+const SCH = { cta: 0.1, end: DUR }   // the full end card is 11.4s; this is the first 8s, which holds every beat
+function sceneCta(t) {
+  const t0 = SCH.cta, tEnd = SCH.end
+  if (t < t0 - 0.1) return
+  const kin = eo(p(t, t0, t0 + 0.9))
+  const bs = V ? (TR > 1.4 ? 0.78 : 0.56) : 0.82
+  const bx = V ? W / 2 : W * 0.3, by = V ? H * (TR > 1.4 ? 0.33 : 0.36) : H * 0.5
+  book(t, { x: bx, y: by + (1 - kin) * 120 * SC, s: bs, ry: -24 + Math.sin(t * 0.8) * 3, rx: 6, open: 0, a: p(t, t0, t0 + 0.5), bob: Math.sin(t * 1.4) * 6 * SC })
+  snd(t0, 'whoosh')
+  const tx = V ? W / 2 : W * 0.56, al = V ? 'center' : 'left'
+  const ty = V ? by + BH * bs * 0.5 + 40 * SC : H * 0.3
+  $('e1').style.display = ''; setText($('e1'), 'Author Name · a true story'); $('e1').style.fontSize = px((V ? 24 : 26) * SC)
+  const avs = (V ? 64 : 72) * SC; $('ava').style.width = $('ava').style.height = px(avs)
+  const ew = $('e1').offsetWidth, ex = V ? W / 2 - (ew + avs + 16 * SC) / 2 : tx
+  if (t > t0 + 0.6) { tf($('ava'), { x: ex, y: ty - avs / 2 + 14 * SC, a: p(t, t0 + 0.6, t0 + 1.0), s: lerp(0.6, 1, backS(p(t, t0 + 0.6, t0 + 1.1), 1.6)), ox: '50%', oy: '50%' }); tf($('e1'), { x: ex + avs + 16 * SC, y: ty, a: p(t, t0 + 0.6, t0 + 1.0) }) } else hide($('e1'), $('ava'))
+  slam($('h1'), 'The <i>Golden Title</i>', t, t0 + 0.8, { fs: (V ? 84 : 92) * SC, x: tx, y: ty + 52 * SC, align: al })
+  slam($('h2'), 'on Silver Lane.', t, t0 + 1.3, { fs: (V ? 84 : 92) * SC, x: tx, y: ty + 52 * SC + (V ? 92 : 100) * SC, align: al })
+  snd(t0 + 0.8, 'thud')
+  // Amazon button
+  const bt = $('btn'), bAt = t0 + 2.4, click = t0 + 4.7
+  const bw = (V ? 440 : 420) * SC, bh = (V ? 96 : 92) * SC
+  bt.style.width = px(bw); bt.style.height = px(bh); bt.style.fontSize = px((V ? 32 : 30) * SC); bt.querySelector('svg').style.width = px(30 * SC); bt.querySelector('svg').style.height = px(30 * SC)
+  const bkx = V ? W / 2 - bw / 2 : tx, bky = ty + 52 * SC + (V ? 92 : 100) * SC * 2 + 30 * SC
+  const kb = backS(p(t, bAt, bAt + 0.5), 1.8), pressed = t > click && t < click + 0.18 ? 0.95 : 1
+  if (t > bAt) tf(bt, { x: bkx, y: bky, s: lerp(0.7, 1, kb) * pressed, a: p(t, bAt, bAt + 0.2), ox: '50%', oy: '50%' }); else hide(bt)
+  snd(bAt, 'whoosh')
+  cursor(t, [[click - 1.5, bkx + bw * 1.1, bky + bh * 2.2], [click - 0.3, bkx + bw * 0.62, bky + bh * 0.55], [click + 0.9, bkx + bw * 0.62, bky + bh * 0.55]], click)
+  slam($('h3'), 'Start your <i>next chapter.</i>', t, click + 0.9, { fs: (V ? 44 : 44) * SC, x: V ? W / 2 : tx, y: bky + bh + 44 * SC, align: al })
+  snd(click + 0.9, 'thud')
+  $('s1').style.display = ''; setText($('s1'), 'example.com · paperback & ebook'); $('s1').style.fontSize = px((V ? 24 : 24) * SC)
+  if (t > click + 1.6) tf($('s1'), { x: V ? W / 2 - $('s1').offsetWidth / 2 : tx, y: bky + bh + 44 * SC + 64 * SC, a: p(t, click + 1.6, click + 2.0) * 0.8 }); else hide($('s1'))
+  // fade to black at the very end
+  $('vig').style.background = `radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,${p(t, tEnd - 0.6, tEnd) * 0.9}) 0%,rgba(0,0,0,${0.6 + 0.4 * p(t, tEnd - 0.6, tEnd)}) 100%)`
+}
+function render(t) {
+  ;['h1', 'h2', 'h3', 'e1', 's1', 'ava', 'bookWrap', 'bookShadow', 'btn', 'cur', 'rip'].forEach((id) => ($(id).style.display = 'none'))
+  $('vig').style.background = ''
+  blobs(t, 1)
+  sceneCta(t)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

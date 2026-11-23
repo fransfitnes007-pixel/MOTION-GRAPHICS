@@ -1,0 +1,19 @@
+{
+  "name": "motion-reel-kit",
+  "description": "Make motion-graphics videos with Claude Code: short-form reels, TikToks, Shorts, X videos and long-form brand films. Ships a 229-piece animation library, a code-drawn reel renderer, local voiceover, synthesised sound design, viral-format recreation and one-command white-labeling.",
+  "version": "1.0.0",
+  "author": {
+    "name": "motion-reel-kit contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "reels",
+    "tiktok",
+    "motion-graphics",
+    "animation",
+    "voiceover",
+    "sound-design",
+    "white-label"
+  ]
+}

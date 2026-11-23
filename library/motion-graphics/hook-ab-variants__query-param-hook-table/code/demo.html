@@ -1,0 +1,244 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Hook A/B variants</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay[wght].ttf);font-weight:400 900}
+@font-face{font-family:PFI;src:url(fonts/PlayfairDisplay-Italic[wght].ttf);font-weight:400 900}
+:root{--sf:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+html,body{background:#07080b}
+#stage{background:#07080b;color:#f3f1ea;font-family:var(--sf)}
+.blob{position:absolute;left:0;top:0;border-radius:50%;filter:blur(120px);will-change:transform}
+.bg{position:absolute;left:0;top:0;overflow:hidden}
+.bg .im{position:absolute;left:0;top:0;display:block;transform-origin:50% 50%}
+.bg .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,8,11,.25),rgba(7,8,11,0) 35%,rgba(7,8,11,.2) 60%,rgba(7,8,11,.92) 100%)}
+.h{position:absolute;left:0;top:0;font-family:PF;font-weight:700;line-height:1.02;letter-spacing:-0.01em;white-space:nowrap}
+.h .w{display:inline-block;white-space:pre}
+.h i{font-family:PFI;font-style:normal;color:#e8b43a;margin-right:.1em}
+.h .red{color:#d8463a}
+.card{position:absolute;left:0;top:0;transform-origin:50% 50%;border-radius:22px;background:rgba(18,20,26,.82);border:1.5px solid rgba(255,255,255,.13);box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.08) inset;backdrop-filter:blur(18px);white-space:nowrap;display:flex;flex-direction:column;justify-content:center}
+.card .k{font-family:var(--sf);font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#e8b43a;display:flex;align-items:center;gap:.6em}
+.card .k b{display:inline-block;border-radius:50%;background:#e8b43a;box-shadow:0 0 14px #e8b43a}
+.card .k b.red{background:#d8463a;box-shadow:0 0 14px #d8463a}
+.card .t{font-family:PF;font-weight:700;color:#fff;line-height:1.05;letter-spacing:-0.01em}
+.card .d{font-family:var(--sf);font-weight:500;color:#a9adb8;letter-spacing:-0.005em}
+/* placeholder photographs, pure CSS gradients (use real photos in practice) */
+.im{position:absolute;left:0;top:0;display:block;transform-origin:50% 50%}
+.im.house{background:
+ linear-gradient(#ffc766,#ffc766) 31% 64%/3.4% 7% no-repeat,linear-gradient(#ffc766,#ffc766) 44% 64%/3.4% 7% no-repeat,linear-gradient(#ffb347,#ffb347) 57% 64%/3.4% 7% no-repeat,
+ linear-gradient(#17120e,#17120e) 24% 70%/46% 3% no-repeat,linear-gradient(#3a2d22,#2a2018) 22% 58%/50% 24% no-repeat,
+ linear-gradient(#1c1712,#1c1712) 0 80%/100% 20% no-repeat,
+ linear-gradient(180deg,#27354d 0%,#4b5a75 46%,#8c7b69 62%,#3b2f26 62%)}
+.im.room{background:
+ linear-gradient(#fff3d6,#e8d3a8) 62% 18%/16% 40% no-repeat,linear-gradient(#2b1d14,#2b1d14) 12% 20%/14% 34% no-repeat,
+ linear-gradient(#3b2a1e,#241810) 0 70%/100% 30% no-repeat,linear-gradient(90deg,#8e7c66,#a69580 60%,#7c6a55)}
+.im.yard{background:linear-gradient(#e8eadc,#e8eadc) 62% 40%/10% 30% no-repeat,radial-gradient(ellipse at 45% 30%,#35502a 0 28%,transparent 29%),linear-gradient(180deg,#7fa3c6 0%,#b7c7cf 50%,#4f6b3a 50%,#2f4a24)}
+.im.wall{background:radial-gradient(ellipse 7% 15% at 66% 88%,#120804 0 92%,transparent 94%),radial-gradient(circle at 66% 66%,#120804 0 2.4%,transparent 2.8%),linear-gradient(90deg,transparent 46%,rgba(30,14,4,.8) 46% 48%,transparent 48% 70%,rgba(30,14,4,.8) 70% 72%,transparent 72%),linear-gradient(135deg,#d98b3a,#a8591c 55%,#5a2d0e)}
+.im.sepia{background:radial-gradient(ellipse 9% 30% at 30% 72%,#201710 0 90%,transparent 92%),radial-gradient(ellipse 9% 30% at 52% 72%,#2d2216 0 90%,transparent 92%),radial-gradient(circle at 30% 38%,#e6d7bd 0 4%,transparent 5%),radial-gradient(circle at 52% 38%,#e6d7bd 0 4%,transparent 5%),linear-gradient(180deg,#8f7f68,#5c4e3b)}
+.im.portrait{background:radial-gradient(circle at 50% 36%,#d8cbb4 0 15%,transparent 16%),radial-gradient(ellipse 30% 28% at 50% 82%,#3a3128 0 90%,transparent 92%),linear-gradient(180deg,#6f6757,#4a4338)}
+.im.plaque{background:linear-gradient(#5a5f66,#5a5f66) 14% 22%/72% 56% no-repeat,linear-gradient(135deg,#aab1ba,#7d848d)}
+.fr{position:absolute;overflow:hidden;border-radius:10px;box-shadow:0 0 0 1.5px rgba(255,255,255,.16),0 30px 80px -30px rgba(0,0,0,.9)}
+.fi{position:absolute;left:0;top:0;transform-origin:0 0;background:#07080b;overflow:hidden}
+.lab{position:absolute;text-align:center;font-weight:600;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#e8b43a;white-space:nowrap}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 7.0
+window.DUR = DUR
+const V = H >= W                                   // vertical-ish layouts (9:16, 4:5, 1:1)
+const SC = V ? W / 1080 : Math.min(W / 1920, H / 1080)   // design scale (the source calls it S; the template's S is the style helper)
+const TR = V ? H / W : 0                         // 1.78 for 9:16, 1.25 for 4:5, 1 for 1:1 (the source calls it TALL)
+const $ = (id) => document.getElementById(id)
+const p = (t, a, b) => (b - a > 0 && isFinite(b - a) ? clamp((t - a) / (b - a)) : t >= a ? 1 : 0)
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const backS = (x, c1 = 2.4) => { const c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
+const SOUNDS = []   // {t,type}: cues can be dumped to build a soundtrack
+const snd = (t, type) => { if (!SOUNDS.some((s) => s.t === t && s.type === type)) SOUNDS.push({ t, type }) }
+// pre-load the fonts so offsetWidth measurements are right on the first frame drawn
+const loadFonts = (...f) => f.forEach((x) => document.fonts.load(x))
+const HF = (V ? 100 : 128) * SC    // headline font
+const M = (V ? 72 : 110) * SC      // margin
+const VOD = { hookA: 3.43, hookB: 3.7, hookC: 5.16 }   // seconds of narration for each hook line (narration lengths)
+VOD.hook = 0
+function makeFrame(root, W, H, HOOK) {
+const V = H >= W, SC = V ? W / 1080 : Math.min(W / 1920, H / 1080), TR = V ? H / W : 0
+const $ = (id) => root.querySelector('#' + id)
+const HF = (V ? 100 : 128) * SC, M = (V ? 72 : 110) * SC
+function tf(el, o) {
+  const { x = 0, y = 0, s = 1, sx, sy, r = 0, rx = 0, ry = 0, a = 1, z = 0, ox, oy } = o
+  if (a <= 0.001) { el.style.display = 'none'; return }
+  el.style.display = ''
+  el.style.opacity = a
+  if (ox !== undefined) el.style.transformOrigin = `${ox} ${oy}`
+  el.style.transform = `translate3d(${x}px,${y}px,${z}px) rotate(${r}deg) rotateX(${rx}deg) rotateY(${ry}deg) scale(${sx ?? s},${sy ?? s})`
+}
+const hide = (...els) => els.forEach((e) => (e.style.display = 'none'))
+function setText(el, html) { if (el.dataset.k !== html) { el.innerHTML = html; el.dataset.k = html } }
+// word-by-word slam: each word scales down from 1.35 and fades in, staggered
+function tokenize(html) {
+  // split into words, re-wrapping each word in whatever inline tags were open around it
+  const parts = html.split(/(<\/?[a-z]+[^>]*>)/i).filter(Boolean), open = [], out = []
+  for (const part of parts) {
+    if (part.startsWith('</')) { open.pop(); continue }
+    if (part.startsWith('<')) { open.push(part); continue }
+    for (const w of part.split(/\s+/).filter(Boolean)) out.push(open.join('') + w + open.map((o) => '</' + o.match(/<([a-z]+)/i)[1] + '>').reverse().join(''))
+  }
+  return out
+}
+function slam(el, html, t, t0, { fs, x, y, w = 0.1, d = 0.45, out = Infinity, outD = 0.35, outDir = -1, align = 'left', color } = {}) {
+  if (t < t0 || t > out + outD) { hide(el); return }
+  el.style.display = ''; el.style.fontSize = px(fs); el.style.textAlign = align; if (color) el.style.color = color
+  const key = html + '|' + fs
+  if (el.dataset.k !== key) {
+    el.innerHTML = tokenize(html).map((wd) => `<span class="w">${wd} </span>`).join('')
+    el.dataset.k = key
+  }
+  const words = el.querySelectorAll('.w')
+  words.forEach((sp, i) => {
+    const k = eo(p(t, t0 + i * w, t0 + i * w + d))
+    sp.style.opacity = k
+    sp.style.transform = `translateY(${(1 - k) * 0.35 * fs}px) scale(${lerp(1.3, 1, k)})`
+  })
+  const ko = p(t, out, out + outD)
+  const left = align === 'center' ? x - el.offsetWidth / 2 : align === 'right' ? x - el.offsetWidth : x
+  tf(el, { x: left, y, a: 1 - ko, s: lerp(1, 0.96, ko), ox: '50%', oy: '50%' })
+  if (ko > 0) el.style.transform += ` translateY(${outDir * ko * 40 * SC}px)`
+}
+function card(el, t, t0, { x, y, w, k, title, desc, red = false, fs = 1, out = Infinity, align = 'left', s0 = 0.78, dir = 1 }) {
+  if (t < t0 || t > out + 0.3) { hide(el); return }
+  el.style.display = ''
+  const b = el.querySelector('.k b'), ks = el.querySelector('.k span'), tt = el.querySelector('.t'), dd = el.querySelector('.d')
+  b.className = red ? 'red' : ''
+  setText(ks, k); setText(tt, title); setText(dd, desc || '')
+  dd.style.display = desc ? '' : 'none'
+  const base = 30 * SC * fs
+  el.style.padding = `${base * 0.9}px ${base * 1.15}px`
+  el.style.gap = px(base * 0.35)
+  ks.style.fontSize = px(base * 0.52); b.style.width = b.style.height = px(base * 0.36)
+  tt.style.fontSize = px(base * 1.5); dd.style.fontSize = px(base * 0.78)
+  if (w) el.style.minWidth = px(w)
+  const ki = backS(p(t, t0, t0 + 0.5), 1.9), ko = p(t, out, out + 0.3)
+  const ox = align === 'right' ? x - el.offsetWidth : align === 'center' ? x - el.offsetWidth / 2 : x
+  tf(el, { x: ox, y: y - (1 - ki) * 30 * SC * dir, s: lerp(s0, 1, ki) * lerp(1, 0.9, ko), a: p(t, t0, t0 + 0.18) * (1 - ko), ox: '50%', oy: '50%' })
+  snd(t0, 'click')
+}
+function bg(name, t, { t0, out = Infinity, zoomFrom = 1.1, zoomTo = 1.0, dur = 12, a = 1, shade = 1, y = 0, grade = true }) {
+  const el = $('bg_' + name)
+  if (t < t0 || t > out + 0.6) { hide(el); return }
+  const im = el.querySelector('.im')
+  el.style.width = px(W); el.style.height = px(H)
+  // cover-fit a 16:9 image into W×H
+  const iw = 2048, ih = 1152, sc = Math.max(W / iw, H / ih) * (grade ? 1.02 : 1)
+  im.style.filter = grade ? 'contrast(1.08) saturate(.82) brightness(.9) sepia(.12)' : ''
+  im.style.width = px(iw * sc); im.style.height = px(ih * sc); im.style.left = px((W - iw * sc) / 2); im.style.top = px((H - ih * sc) / 2 + y)
+  im.style.transform = `scale(${lerp(zoomFrom, zoomTo, p(t, t0, t0 + dur))})`
+  el.querySelector('.shade').style.opacity = shade
+  tf(el, { a: a * p(t, t0, t0 + 0.6) * (1 - p(t, out, out + 0.6)) })
+}
+function chips(t, items, { x, y, t0, gap = 0.22, out = Infinity, fs = 30, dir = 'row', align = 'left' }) {
+  const host = $('chips')
+  if (t < t0 || t > out + 0.3) { hide(host); return }
+  host.style.display = ''
+  const key = items.map((i) => i.n).join('|') + fs
+  if (host.dataset.k !== key) {
+    host.innerHTML = items.map((i) => `<div class="chip" style="font-size:${fs * SC}px;padding:${fs * 0.35 * SC}px ${fs * 0.75 * SC}px ${fs * 0.35 * SC}px ${fs * 0.35 * SC}px;gap:${fs * 0.45 * SC}px"><i style="width:${fs * 1.5 * SC}px;height:${fs * 1.5 * SC}px;font-size:${fs * 0.8 * SC}px;${i.img ? `background:url(${i.img}) center/cover` : ''}">${i.img ? '' : i.n[0]}</i>${i.n}&nbsp;<span>${i.r}</span></div>`).join('')
+    host.dataset.k = key
+  }
+  let cx = x, cy = y
+  const els = host.querySelectorAll('.chip')
+  els.forEach((e) => (e.style.display = ''))
+  const widths = [...els].map((e) => e.offsetWidth)
+  if (dir === 'row' && align === 'right') cx = x - widths.reduce((a, b) => a + b, 0) - (els.length - 1) * fs * 0.5 * SC
+  els.forEach((e, i) => {
+    const ti = t0 + i * gap, ki = backS(p(t, ti, ti + 0.5), 1.9), ko = p(t, out, out + 0.3)
+    tf(e, { x: cx, y: cy + (1 - ki) * 24 * SC, s: lerp(0.8, 1, ki) * lerp(1, 0.9, ko), a: p(t, ti, ti + 0.15) * (1 - ko), ox: '50%', oy: '50%' })
+    snd(ti, 'tick')
+    if (dir === 'row') cx += widths[i] + fs * 0.5 * SC; else cy += e.offsetHeight + fs * 0.5 * SC
+  })
+}
+
+
+const SCH = { hook: 0, truth: Math.max(4.6, 0.35 + VOD['hook' + HOOK] + 0.6) }   // the hook's voice line sets when the next scene starts
+function sceneHook(t, HOOK) {
+  const t0 = SCH.hook
+  const cy = V ? H * 0.42 : H * 0.44
+  const HK = {
+    A: { l1: 'Every winter,', l2: 'the <span class="red">silence</span> came back.', k: 'Report · every winter', title: 'Same time, same room', desc: 'Confirmed by a local source', t2: 1.25, tc: 2.85 },
+    B: { l1: 'Would you sleep', l2: 'in <span class="red">that</span> room?', k: '1981 · the attic', title: 'One sealed door', desc: 'County records', t2: 1.05, tc: 2.6 },
+    C: { l1: 'A National Landmark.', l2: 'And it hid a <span class="red">secret.</span>', k: 'Place · Region', title: 'The Old Hall', desc: 'Listed · 1990', t2: 1.9, tc: 3.1 },
+  }[HOOK]
+  const hf = HOOK === 'C' ? HF * (V ? 0.64 : 0.78) : HF
+  slam($('h1'), HK.l1, t, t0 + 0.25, { fs: hf, x: W / 2, y: cy - hf * 1.15, align: 'center', out: SCH.truth - 0.45 })
+  slam($('h2'), HK.l2, t, t0 + HK.t2, { fs: hf, x: W / 2, y: cy, align: 'center', out: SCH.truth - 0.4 })
+  snd(t0 + 0.25, 'thud'); snd(t0 + HK.t2, 'thud')
+  card($('c1'), t, t0 + HK.tc, { x: W / 2, y: cy + hf * 1.5, align: 'center', k: HK.k, title: HK.title, desc: HK.desc, red: true, fs: V ? 1 : 1.05, out: SCH.truth - 0.35 })
+}
+function sceneTruth(t) {
+  const t0 = SCH.truth
+  const cy = V ? H * 0.46 : H * 0.47
+  slam($('h1'), 'This is <span class="red">not</span> fiction.', t, t0 + 0.2, { fs: HF, x: W / 2, y: cy - HF * 0.55, align: 'center', out: t0 + 2.05, outD: 0.3 })
+  slam($('h2'), 'Here is the <i>full story.</i>', t, t0 + 2.15, { fs: HF, x: W / 2, y: cy - HF * 0.55, align: 'center', out: SCH.book - 0.3 })
+  snd(t0 + 0.2, 'thud'); snd(t0 + 2.15, 'thud')
+}
+return (t) => {
+  ;['h1', 'h2', 'c1'].forEach((id) => ($(id).style.display = 'none'))
+  if (t < SCH.truth + 0.3) sceneHook(t, HOOK)
+  if (t >= SCH.truth - 0.3) sceneTruth(t)
+}
+}
+
+loadFonts('700 20px PF', '700 20px PFI', '600 20px PF')
+// Three hooks, one video. Everything except the HK table (and the voice line that goes with it) is shared.
+const HOOKS = ['A', 'B', 'C']
+const frames = HOOKS.map((h) => {
+  const fr = el('div', 'fr', stage), fi = el('div', 'fi', fr, '<div class="h" id="h1"></div><div class="h" id="h2"></div><div class="card" id="c1"><div class="k"><b></b><span></span></div><div class="t"></div><div class="d"></div></div>'); fi.style.width = '1080px'; fi.style.height = '1920px'
+  const lb = el('div', 'lab', stage, 'Hook ' + h + ' · ?hook=' + h)
+  return { fr, fi, lb, r: makeFrame(fi, 1080, 1920, h) }
+})
+const fh = Math.min(H - 150, (W - 4 * 36) / 3 * 16 / 9), fw = fh * 9 / 16, gx = (W - 3 * fw - 2 * 36) / 2
+frames.forEach((f, i) => {
+  const x = gx + i * (fw + 36), y = (H - fh) / 2 - 20
+  S(f.fr, { left: px(x), top: px(y), width: px(fw), height: px(fh) }); S(f.fi, { transform: `scale(${fh / 1920})` })
+  S(f.lb, { left: px(x - 20), top: px(y + fh + 18), width: px(fw + 40), fontSize: px(Math.max(14, fw * 0.058)) })
+})
+function render(t) { frames.forEach((f) => f.r(t)) }
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

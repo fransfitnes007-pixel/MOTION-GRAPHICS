@@ -1,0 +1,22 @@
+{
+  "slug": "click-ripple-fill-match-cut__expanding-circle",
+  "visual_name": "Click ripple fills the screen",
+  "code_name": "Expanding circle, ease-in radius",
+  "category": "motion-graphics",
+  "summary": "After a button click a purple circle grows from the button, slowly then fast on a cubic ease-in, until it floods the whole frame, and the next scene opens on the same colour.",
+  "tags": [
+    "transition",
+    "cursor",
+    "cta",
+    "dark",
+    "sfx"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 2.7,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

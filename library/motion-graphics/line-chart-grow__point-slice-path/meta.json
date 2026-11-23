@@ -1,0 +1,20 @@
+{
+  "slug": "line-chart-grow__point-slice-path",
+  "visual_name": "Growing line chart",
+  "code_name": "Point-slice path with gradient fill",
+  "category": "motion-graphics",
+  "summary": "A thick blue line with a fading blue fill under it grows from the left edge across the frame, curving up to the right.",
+  "tags": [
+    "chart",
+    "dashboard",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg"
+  ],
+  "duration_sec": 2.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

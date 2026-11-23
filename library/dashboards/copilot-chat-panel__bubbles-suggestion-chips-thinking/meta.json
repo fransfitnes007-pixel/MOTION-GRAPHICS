@@ -1,0 +1,19 @@
+{
+  "slug": "copilot-chat-panel__bubbles-suggestion-chips-thinking",
+  "visual_name": "Copilot chat panel",
+  "code_name": "Chat bubbles, suggestion chips and thinking state",
+  "category": "dashboards",
+  "summary": "Chip is chosen, user bubble appears, a Thinking bubble spins, the answer streams in; then a second question is typed and answered.",
+  "tags": [
+    "card",
+    "dark",
+    "form"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

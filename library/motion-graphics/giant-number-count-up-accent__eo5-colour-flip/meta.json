@@ -1,0 +1,20 @@
+{
+  "slug": "giant-number-count-up-accent__eo5-colour-flip",
+  "visual_name": "Giant count-up number",
+  "code_name": "Eo5 count with accent colour flip beside a phone",
+  "category": "motion-graphics",
+  "summary": "A 210px white number runs from 0 to 1,000,000 under a two-line headline, slowing hard at the end and turning lavender, with a small caption fading in and a phone leaning in on the right.",
+  "tags": [
+    "counter",
+    "stat-tile",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "tabular-nums"
+  ],
+  "duration_sec": 2.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

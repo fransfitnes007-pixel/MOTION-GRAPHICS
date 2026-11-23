@@ -1,0 +1,283 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dino runner, Arizona sunset</title>
+<!-- A short video in two shapes (1080x1920 and 1920x1080). The product is the dino, a bad launch is the cactus, the desert is a sunset.
+     Every frame is a pure function of time: window.render(t). URL params: ?w=1080&h=1920&render=1. Everything you would change is in CONFIG. -->
+<style>
+@font-face{font-family:'SFD';font-weight:700;src:local('SF Pro Display Bold'),local('SFProDisplay-Bold'),local('Inter Bold'),local('Helvetica Neue Bold'),local('Arial Bold'),url('fonts/Display-Bold.ttf')}
+@font-face{font-family:'SFD';font-weight:600;src:local('SF Pro Display Semibold'),local('SFProDisplay-Semibold'),local('Inter SemiBold'),local('Helvetica Neue Medium'),local('Arial Bold'),url('fonts/Display-Semibold.ttf')}
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="c"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script>
+(async () => {
+'use strict'
+const CONFIG = {
+  brandTag: 'YOUR PRODUCT',               // label over the dino
+  cactusTag: 'BAD LAUNCH',             // label over the first cactus
+  fails: ['SIGNUPS STALL', 'BUDGET BURNS', 'SHELVED'], // the three that end the run
+  restartWord: 'NEW IDEA',             // counts up through the restart montage
+  wins: ['DAY 1', 'DAY 2', 'DAY 3', 'LAUNCHED', 'GROWING'], // ticks in the endless run
+  // Big pill in the sky during the endless run: [second it lands, words]. Times come from the voiceover.
+  steps: [[22.26, '1 CLICK'], [24.1, 'PROJECT BUILT'], [25.3, 'TESTED'], [26.2, 'RUNS ON ITS OWN'], [28.44, '3 DAYS FLAT'], [30.0, 'CLEAR CHECKLIST'], [32.94, '0 BAD LAUNCHES'], [34.2, '0 RESTARTS']],
+  throughLine: 'RUNNING THROUGH YOURBRAND',
+  endLines: ['Keep going.', 'Never stop.'],
+  site: 'yourbrand.com',
+  // Type, pills and logo stay in the brand's dark theme. Only the backdrop is the sunset.
+  bright: '#ffffff', card: '#161619', muted: '#a1a1aa', silver: '#d4d4d8', dark: '#0b0c10',
+  // The Arizona sunset, top of the sky to the horizon, then the same sky at dusk for the YourBrand half.
+  sunset: ['#1a0a38', '#35104f', '#641a63', '#a3285f', '#d9414a', '#f46a33', '#ff9a35', '#ffc65a'],
+  dusk: ['#0a0520', '#170838', '#33104f', '#641a66', '#a52a62', '#dd4d48', '#f47a36', '#ffab45'],
+  floor: ['#3a1638', '#241028', '#150a1c', '#0a0510'],   // desert floor, horizon to the bottom of the frame
+  sun: ['#fff3b0', '#ffd670', '#ff9d4a'],
+  mesaFar: ['#8e3566', '#5a2262'], mesaNear: ['#4a1a4f', '#2c1038'], // [sunset, dusk]
+  shade: '#170b20', rim: '#ffb057',       // silhouettes and the light on their edge
+  speck: '#7a3d6e', cloud: ['#ff8f7a', '#d9486b', '#8c2a73'],
+  speed1: 125, speed2: 270,               // game pixels per second, before and with YourBrand
+  // Short-video apps cover the right edge (buttons) and the bottom (caption, profile): keep type inside this box.
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+const WORDS = [[0.0, 0.28, "Every"], [0.28, 0.54, "maker"], [0.54, 0.9, "launching"], [0.9, 1.08, "new"], [1.08, 1.4, "projects"], [1.4, 1.62, "is"], [1.62, 1.88, "playing"], [1.88, 2.14, "this"], [2.14, 2.38, "game."], [2.94, 3.1, "You're"], [3.1, 3.24, "the"], [3.24, 3.5, "dino."], [4.1, 4.26, "The"], [4.26, 4.58, "cactus"], [4.58, 4.9, "is"], [4.9, 5.12, "a"], [5.12, 5.32, "bad"], [5.32, 5.74, "launch."], [6.12, 6.24, "You"], [6.24, 6.36, "get"], [6.36, 6.52, "lucky"], [6.52, 6.9, "once."], [7.32, 7.42, "You"], [7.42, 7.54, "get"], [7.54, 7.76, "lucky"], [7.76, 8.12, "twice."], [8.7, 8.98, "Then"], [8.98, 9.1, "the"], [9.1, 9.28, "signups"], [9.28, 9.64, "stall,"], [10.0, 10.1, "the"], [10.1, 10.24, "budget"], [10.24, 10.6, "burns,"], [10.92, 11.06, "and"], [11.06, 11.16, "the"], [11.16, 11.44, "project"], [11.44, 11.7, "gets"], [11.7, 12.22, "shelved."], [12.76, 12.88, "Game"], [12.88, 13.28, "over."], [13.78, 14.06, "So"], [14.06, 14.36, "you"], [14.36, 14.68, "restart."], [15.3, 15.4, "New"], [15.4, 15.7, "idea."], [16.26, 16.48, "Same"], [16.48, 16.78, "bad"], [16.78, 17.26, "launch."], [17.54, 17.92, "Every"], [17.92, 18.34, "single"], [18.34, 18.78, "time."], [19.34, 19.54, "Now"], [19.54, 19.74, "watch"], [19.74, 19.98, "the"], [19.98, 20.22, "same"], [20.22, 20.56, "game,"], [20.82, 20.98, "running"], [20.98, 21.3, "through"], [21.3, 21.74, "YourBrand."], [22.26, 22.5, "One"], [22.5, 22.74, "click,"], [22.74, 23.06, "done"], [23.06, 23.24, "inside"], [23.24, 23.4, "the"], [23.4, 23.68, "app."], [24.02, 24.18, "It"], [24.18, 24.48, "builds"], [24.48, 24.68, "the"], [24.68, 25.04, "project,"], [25.3, 25.58, "checks"], [25.58, 25.7, "it"], [25.7, 25.9, "over,"], [26.08, 26.26, "and"], [26.26, 26.42, "runs"], [26.42, 26.62, "the"], [26.62, 27.02, "entire"], [27.02, 27.46, "process"], [27.46, 27.7, "on"], [27.7, 27.84, "its"], [27.84, 28.1, "own."], [28.44, 28.78, "Three"], [28.78, 29.06, "days"], [29.06, 29.56, "flat."], [29.98, 30.48, "Following"], [30.48, 30.74, "a"], [30.74, 31.12, "clear"], [31.12, 31.62, "checklist,"], [31.86, 32.02, "step"], [32.02, 32.24, "by"], [32.24, 32.54, "step."], [32.94, 33.18, "No"], [33.18, 33.42, "bad"], [33.42, 33.8, "launches."], [34.2, 34.32, "Not"], [34.32, 34.74, "one"], [34.74, 35.28, "restart."], [35.96, 36.26, "YourBrand."], [36.82, 36.98, "Keep"], [36.98, 37.68, "going."], [38.06, 38.18, "Never"], [38.18, 38.52, "stop."]]
+const Q = new URLSearchParams(location.search), W = +(Q.get('w') || 1080), H = +(Q.get('h') || 1920)
+const stage = document.getElementById('stage'); stage.style.width = W + 'px'; stage.style.height = H + 'px'
+const cv = document.getElementById('c'); cv.width = W; cv.height = H
+const X = cv.getContext('2d')
+// Two layouts: tall 1080x1920 for vertical feeds, wide 1920x1080 for landscape players.
+const WIDE = W > H, DW = WIDE ? 1920 : 1080, DH = WIDE ? 1080 : 1920
+if (WIDE) CONFIG.safe = { left: 70, right: 1850, top: 40, bottom: 1040 }
+const CXM = (CONFIG.safe.left + CONFIG.safe.right) / 2, CAPY = WIDE ? 968 : 1400, TITLEY = WIDE ? 56 : 330
+const K = Math.min(W / DW, H / DH), OX = (W - DW * K) / 2, OY = (H - DH * K) / 2
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3), back = (x) => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2)
+const rng = (s) => () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+const mix = (a, b, k) => { const A = hex(a), B2 = hex(b); return `rgb(${A.map((v, i) => Math.round(v + (B2[i] - v) * k)).join(',')})` }
+const img = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src })
+const [gDark, gLight, wordLight] = await Promise.all([BRAND_ASSETS.MARK_DARK, BRAND_ASSETS.MARK_LIGHT, BRAND_ASSETS.WORD_LIGHT].map(img))
+try { await Promise.all([document.fonts.load("700 40px SFD"), document.fonts.load("600 40px SFD")]) } catch (e) {}
+
+// ---------- the game, drawn small and scaled up 5x with hard pixels
+const GW = WIDE ? 384 : 216, GH = 150, S = 5, BY = WIDE ? 150 : 560, GROUND = 118, DX = WIDE ? 70 : 26
+const g = document.createElement('canvas'); g.width = GW; g.height = GH
+const G = g.getContext('2d'); G.imageSmoothingEnabled = false
+const DINO = ['............########..','...........##########.','...........##.#######.','...........##########.','...........##########.','...........#####......','...........########...','#.........#####.......','#........######.......','##.....#########......','###...##########.#....','################......','################......','.##############.......','..############........','...##########.........','....########..........','.....###.###..........','.....##...##..........','.....#....#...........','.....##...##..........']
+function dinoFill(x, y, color, frame) {
+  G.fillStyle = color
+  DINO.forEach((row, r) => { for (let c = 0; c < row.length; c++) if (row[c] === '#') { if (r >= 18 && frame === 1 && c < 8) continue; if (r >= 18 && frame === 2 && c >= 8) continue; G.fillRect(x + c, y + r, 1, 1) } })
+}
+// A one-pixel edge in another colour keeps the dino readable on any part of the sky.
+function dino(x, y, color, frame, dead, edge) {
+  if (edge) for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) dinoFill(x + ox, y + oy, edge, frame)
+  dinoFill(x, y, color, frame)
+  if (dead) { G.fillStyle = edge || color; G.fillRect(x + 12, y + 1, 4, 4); G.fillStyle = color; G.fillRect(x + 12, y + 1, 1, 1); G.fillRect(x + 15, y + 1, 1, 1); G.fillRect(x + 13, y + 2, 2, 2); G.fillRect(x + 12, y + 4, 1, 1); G.fillRect(x + 15, y + 4, 1, 1) }
+}
+function cactusFill(x, h, color) {
+  G.fillStyle = color
+  G.fillRect(x, GROUND - h, 5, h); G.fillRect(x + 1, GROUND - h - 1, 3, 1)
+  const a = Math.round(h * 0.45)
+  G.fillRect(x - 4, GROUND - a - 6, 2, 7); G.fillRect(x - 4, GROUND - a, 4, 2)
+  G.fillRect(x + 7, GROUND - a - 10, 2, 8); G.fillRect(x + 5, GROUND - a - 3, 4, 2)
+}
+function cactus(x, h, color, edge) {
+  x = Math.round(x)
+  if (edge) for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1]]) { G.save(); G.translate(ox, oy); cactusFill(x, h, edge); G.restore() }
+  cactusFill(x, h, color)
+}
+const R0 = rng(11), SPECK = Array.from({ length: 90 }, () => [R0() * 2000, 3 + R0() * 8, 1 + Math.floor(R0() * 3)])
+function ground(scroll, line, speck) {
+  G.fillStyle = speck
+  for (const [x, y, w] of SPECK) { const px = ((x - scroll) % 2000 + 2000) % 2000; if (px < GW) G.fillRect(Math.round(px), GROUND + y, w, 1) }
+  G.fillStyle = line; G.fillRect(0, GROUND, GW, 1)
+}
+const JUMP = 0.56, jumpY = (t, at) => { const p = (t - at) / JUMP + 0.5; return p > 0 && p < 1 ? 46 * 4 * p * (1 - p) : 0 }
+
+// ---------- timeline, from the voiceover's word times
+const T = { tagDino: 2.95, tagCactus: 4.1, j1: 6.7, j2: 7.92, fail: [9.1, 10.1, 11.7], hit: 12.76, restart: 13.78, part2: 19.32, slam: [17.54, 17.92, 18.34, 19.25], wall: 35.5, end: 35.75, dur: 40 }
+const s1 = CONFIG.speed1, s2 = CONFIG.speed2
+const C1 = [[T.j1, 30], [T.j2, 34]].map(([t, h]) => ({ x: s1 * t + DX + 8, h }))
+const TRIPLE = [0, 12, 24].map((o, i) => ({ x: s1 * T.hit + DX + 20 + o, h: 30 + (i === 1 ? 8 : 0) }))
+// The restart montage: a run that ends in the same cactus, faster each time. The last three crashes land on EVERY, SINGLE, TIME.
+const RUNS = [[13.85, 14.95], [15.2, 16.15], [16.4, 17.2], [17.3, 17.54], [17.62, 17.92], [18.0, 18.34]]
+// The endless run: a jump every beat until the G.
+const J2 = []; for (let t = T.part2 + 0.75, i = 0; t < T.wall - 0.5; t += 0.74 - 0.012 * Math.min(i, 8), i++) J2.push(t)
+const C2 = J2.map((t, i) => ({ x: s2 * (t - T.part2) + DX + 8, h: 26 + (i * 7) % 14, double: i % 3 === 2 }))
+
+// ---------- the desert: a dithered sky, a setting sun, two rows of mesas, all on one small canvas scaled 5x
+const BW = DW / S, BH = DH / S, HY = BY / S + GROUND, SUNX = WIDE ? 262 : 150, SUNR = 30
+const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+function skyCanvas(stops) {
+  const c = document.createElement('canvas'); c.width = BW; c.height = BH; const x = c.getContext('2d'), d = x.createImageData(BW, BH)
+  const sky = stops.map(hex), fl = CONFIG.floor.map(hex)
+  for (let y = 0; y < BH; y++) {
+    const up = y < HY, list = up ? sky : fl
+    const f = (up ? Math.pow(y / HY, WIDE ? 1.05 : 1.3) : Math.pow((y - HY) / (BH - HY), 0.55)) * (list.length - 1), i = Math.min(list.length - 2, Math.floor(f)), fr = f - i
+    for (let px = 0; px < BW; px++) { const c2 = fr > (BAYER[y % 4][px % 4] + 0.5) / 16 ? list[i + 1] : list[i], o = (y * BW + px) * 4; d.data[o] = c2[0]; d.data[o + 1] = c2[1]; d.data[o + 2] = c2[2]; d.data[o + 3] = 255 }
+  }
+  x.putImageData(d, 0, 0); return c
+}
+const SKY1 = skyCanvas(CONFIG.sunset), SKY2 = skyCanvas(CONFIG.dusk)
+const bgc = document.createElement('canvas'); bgc.width = BW; bgc.height = BH
+const B = bgc.getContext('2d'); B.imageSmoothingEnabled = false
+const R1 = rng(23), PER = 760
+const STARS = Array.from({ length: 46 }, () => [Math.floor(R1() * BW), Math.floor(R1() * HY * 0.5), R1() * 6.3])
+const STREAKS = Array.from({ length: 9 }, (_, i) => [R1() * PER, Math.round(HY - 34 - R1() * (WIDE ? 78 : 150)), 26 + Math.floor(R1() * 44), i % 3])
+const mk = (n, wide) => Array.from({ length: n }, (_, i) => { const spire = R1() < 0.3; return [i * (PER / n) + R1() * 40, spire ? 3 : Math.round((wide ? 22 : 14) + R1() * 34), Math.round((spire ? 16 : 10) + R1() * (spire ? 14 : 16)), spire] })
+const MESA_FAR = mk(5, true), MESA_NEAR = mk(4, false)
+const SAGUARO = Array.from({ length: 7 }, () => R1() * PER)
+const FSPECK = Array.from({ length: 70 }, () => [R1() * 2400, R1(), 2 + Math.floor(R1() * 5)])
+const ridgeH = (wx, base) => base + Math.round(2 * Math.sin(wx * 0.045) + 1.5 * Math.sin(wx * 0.11 + 1))
+function mesas(items, off, color, base) {
+  off = Math.floor(off); B.fillStyle = color
+  for (let x = 0; x < BW; x += 2) { const h = ridgeH(x + off, base); B.fillRect(x, HY - h, 2, h) }
+  for (const [x0, w, h, spire] of items) {
+    const px = Math.round(((x0 - off) % PER + PER) % PER - 100); if (px > BW + 12) continue
+    const m = Math.round(h * 0.55), l = Math.round(h * 0.24)
+    if (spire) { B.fillRect(px, HY - h, w, h); B.fillRect(px - 1, HY - m, w + 2, m); B.fillRect(px - 4, HY - l, w + 8, l) }
+    else { B.fillRect(px, HY - h, w, h); B.fillRect(px + 2, HY - h - 1, w - 5, 1); B.fillRect(px - 2, HY - m, w + 4, m); B.fillRect(px - 6, HY - l, w + 12, l) }
+  }
+}
+function backdrop(t, scroll, dusk) {
+  B.globalAlpha = 1; B.drawImage(SKY1, 0, 0); if (dusk > 0) { B.globalAlpha = dusk; B.drawImage(SKY2, 0, 0) }
+  if (dusk > 0) { B.fillStyle = '#fff'; for (const [x, y, ph] of STARS) { B.globalAlpha = dusk * (0.4 + 0.4 * Math.sin(t * 3 + ph)); B.fillRect(x, y, 1, 1) } }
+  B.globalAlpha = 1
+  const sy = Math.round(HY - 26 + 22 * clamp(t / T.wall))
+  for (let dy = -SUNR; dy <= SUNR; dy++) { const y = sy + dy; if (y >= HY) break; const w = Math.floor(Math.sqrt(SUNR * SUNR - dy * dy)); B.fillStyle = CONFIG.sun[dy < -SUNR * 0.4 ? 0 : dy < SUNR * 0.2 ? 1 : 2]; B.fillRect(SUNX - w, y, w * 2, 1) }
+  B.globalAlpha = 0.75
+  for (const [x0, y, w, c] of STREAKS) { const px = Math.round(((x0 - scroll * 0.03 - t * 1.2) % PER + PER) % PER - 80); B.fillStyle = CONFIG.cloud[c]; B.fillRect(px, y, w, 1); B.fillRect(px + 5, y + 1, w - 12, 1); B.fillRect(px + 10, y - 1, Math.round(w * 0.45), 1) }
+  B.globalAlpha = 1
+  mesas(MESA_FAR, scroll * 0.05, mix(CONFIG.mesaFar[0], CONFIG.mesaFar[1], dusk), 5)
+  const near = mix(CONFIG.mesaNear[0], CONFIG.mesaNear[1], dusk), off = Math.floor(scroll * 0.12 + 300)
+  mesas(MESA_NEAR, off, near, 3)
+  B.fillStyle = near
+  for (const x0 of SAGUARO) { const px = Math.round(((x0 - off) % PER + PER) % PER - 40), y = HY - ridgeH(px + off, 3); B.fillRect(px, y - 7, 1, 7); B.fillRect(px - 2, y - 5, 1, 3); B.fillRect(px - 2, y - 3, 2, 1); B.fillRect(px + 2, y - 6, 1, 3); B.fillRect(px + 1, y - 4, 2, 1) }
+  // Stones on the desert floor below the game strip; the deeper ones are longer and pass faster.
+  B.fillStyle = '#4a2350'
+  for (const [x, dp, w] of FSPECK) { const y = Math.round(HY + 34 + dp * (BH - HY - 38)), px = ((x - scroll * (1 + dp * 0.9)) % 2400 + 2400) % 2400; if (px < BW) { B.globalAlpha = 0.35 + 0.5 * dp; B.fillRect(Math.round(px), y, w + Math.round(dp * 5), 1) } }
+  B.globalAlpha = 1
+  return sy
+}
+
+function pill(text, cx, cy, size, bg, fg, a = 1, scale = 1) {
+  if (a <= 0) return
+  X.save(); X.globalAlpha = a; X.translate(cx, cy); X.scale(scale, scale)
+  X.font = `${size < 34 ? 600 : 700} ${size}px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif`; const w = X.measureText(text).width + size * 1.1, h = size * 1.75
+  X.shadowColor = 'rgba(10,4,18,.45)'; X.shadowBlur = 24; X.shadowOffsetY = 6
+  X.fillStyle = bg; X.beginPath(); X.roundRect(-w / 2, -h / 2, w, h, h / 2); X.fill(); X.shadowColor = 'transparent'
+  if (bg !== CONFIG.bright) { X.strokeStyle = 'rgba(255,255,255,.16)'; X.lineWidth = 2; X.stroke() }
+  X.fillStyle = fg; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText(text, 0, size * 0.06); X.restore()
+}
+// Captions: three words at a time, the current one lit, hot words in pure white with a glow.
+const CH = []; for (let i = 0; i < WORDS.length;) { let j = i; while (j < WORDS.length && j - i < 3 && !/[.,?!]$/.test(WORDS[j - 1 < i ? i : j - 1][2]) || j === i) j++; CH.push([i, j]); i = j }
+const HOT = { bad: 1, yourbrand: 1, over: 1, restart: 1, shelved: 1 }
+function captions(t) {
+  const c = CH.find(([a, b]) => t >= WORDS[a][0] - 0.08 && t < WORDS[b - 1][1] + 0.28); if (!c || (t > T.slam[0] - 0.1 && t < T.slam[3])) return
+  const ws = WORDS.slice(c[0], c[1]); X.font = '700 84px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.textBaseline = 'middle'
+  const sp = 20, widths = ws.map((w) => X.measureText(w[2]).width), total = widths.reduce((a, b) => a + b, 0) + sp * (ws.length - 1)
+  const cxm = CXM; let x = cxm - total / 2
+  const pop = back(seg(t, WORDS[c[0]][0] - 0.08, WORDS[c[0]][0] + 0.1))
+  X.save(); X.translate(cxm, CAPY); X.scale(0.9 + 0.1 * pop, 0.9 + 0.1 * pop); X.translate(-cxm, -CAPY)
+  ws.forEach((w, i) => { const on = t >= w[0] - 0.03, key = w[2].toLowerCase().replace(/[^a-z]/g, ''); X.textAlign = 'left'; X.fillStyle = on ? (HOT[key] ? CONFIG.bright : CONFIG.silver) : 'rgba(190,170,200,.42)'; X.shadowColor = on && HOT[key] ? 'rgba(255,255,255,.55)' : 'rgba(8,3,14,.9)'; X.shadowBlur = on && HOT[key] ? 26 : 14; X.fillText(w[2], x, CAPY); X.shadowBlur = 0; x += widths[i] + sp })
+  X.restore()
+}
+
+function render(t) {
+  t = ((t % T.dur) + T.dur) % T.dur
+  X.setTransform(1, 0, 0, 1, 0, 0); X.fillStyle = '#000'; X.fillRect(0, 0, W, H)
+  X.setTransform(K, 0, 0, K, OX, OY)
+  const p2 = t >= T.part2, dusk = seg(t, T.part2 - 0.05, T.part2 + 0.6)
+  // Before YourBrand everything is a silhouette with the sun on its edge. With it, the dino is white.
+  const body = p2 ? CONFIG.bright : CONFIG.shade, edge = p2 ? CONFIG.shade : CONFIG.rim, line = p2 ? CONFIG.bright : CONFIG.rim
+  G.clearRect(0, 0, GW, GH)
+  let scroll, dy = 0, dead = false, over = false, restarts = 0, frame = 0
+  const overlays = []
+  if (t < T.restart) {
+    const tt = Math.min(t, T.hit); scroll = s1 * tt; dead = t >= T.hit; over = dead
+    dy = jumpY(tt, T.j1) + jumpY(tt, T.j2)
+    ground(scroll, line, CONFIG.speck)
+    C1.forEach((c) => cactus(c.x - scroll, c.h, CONFIG.shade, CONFIG.rim)); TRIPLE.forEach((c) => cactus(c.x - scroll, c.h, CONFIG.shade, CONFIG.rim))
+    const cx1 = (C1[0].x - scroll) * S
+    overlays.push(() => {
+      pill(CONFIG.brandTag, DX * S + 34 + (WIDE ? 0 : 40), BY + (GROUND - 46 - dy) * S, 34, CONFIG.bright, CONFIG.dark, seg(t, T.tagDino, T.tagDino + 0.15) * (1 - seg(t, 8.4, 8.7)), back(seg(t, T.tagDino, T.tagDino + 0.25)))
+      if (cx1 > -200) pill(CONFIG.cactusTag, clamp(cx1 + 8, DW * 0.24, DW * 0.72), BY + (GROUND - 56) * S, 34, CONFIG.card, CONFIG.bright, seg(t, T.tagCactus, T.tagCactus + 0.15) * (1 - seg(t, T.j1 - 0.5, T.j1 - 0.2)), back(seg(t, T.tagCactus, T.tagCactus + 0.25)))
+      CONFIG.fails.forEach((f, i) => { const tx = (TRIPLE[i].x - scroll) * S; pill('✕  ' + f, clamp(tx + 8, DW * 0.26, DW * 0.68), BY + (GROUND - 62) * S - 150 - i * 76, 34, CONFIG.card, CONFIG.bright, seg(t, T.fail[i], T.fail[i] + 0.12) * (1 - seg(t, T.restart - 0.15, T.restart)), back(seg(t, T.fail[i], T.fail[i] + 0.25))) })
+    })
+  } else if (!p2) {
+    const k = RUNS.findIndex(([a, b], i) => t >= a && t < (RUNS[i + 1] ? RUNS[i + 1][0] : T.part2)); const [a, b] = RUNS[Math.max(0, k)]
+    restarts = Math.max(0, k) + 1; const tt = clamp(t, a, b), sp = s1 * (1 + 0.25 * k); scroll = 5000 * (k + 1) + sp * (tt - a); dead = t >= b; over = dead
+    ground(scroll, line, CONFIG.speck); cactus(5000 * (k + 1) + sp * (b - a) + DX + 20 - scroll, 32 + (k % 3) * 4, CONFIG.shade, CONFIG.rim); if (k % 2) cactus(5000 * (k + 1) + sp * (b - a) + DX + 32 - scroll, 26, CONFIG.shade, CONFIG.rim)
+    overlays.push(() => pill(`${CONFIG.restartWord} ${restarts}`, CXM, BY - 40, 44, CONFIG.card, CONFIG.silver, 1, back(seg(t, a, a + 0.2))))
+  } else {
+    const tt = Math.min(t, T.wall); scroll = s2 * (tt - T.part2)
+    J2.forEach((j) => { dy += jumpY(tt, j) })
+    // Speed lines.
+    G.fillStyle = 'rgba(255,255,255,.26)'; const R = rng(5); for (let i = 0; i < 14; i++) { const y = 14 + R() * 95, x = ((R() * 700 - scroll * 1.8) % 500 + 500) % 500 - 60; G.fillRect(Math.round(x), Math.round(y), 24 + Math.round(R() * 30), 1) }
+    ground(scroll, line, CONFIG.speck)
+    C2.forEach((c) => { const x = c.x - scroll; if (x > -30 && x < GW + 10) { cactus(x, c.h, CONFIG.shade); if (c.double) cactus(x + 11, c.h - 6, CONFIG.shade) } })
+    const gx = s2 * (T.wall - T.part2) + DX + 26 - scroll; if (gx < GW + 60) overlays.push(() => { X.save(); X.shadowColor = 'rgba(255,255,255,.45)'; X.shadowBlur = 40; X.drawImage(gLight, gx * S - 30, BY + GROUND * S - 330, 330, 330 * gLight.height / gLight.width); X.restore() })
+    overlays.push(() => {
+      const inA = seg(t, T.part2 + 0.1, T.part2 + 0.4)
+      pill(CONFIG.throughLine, CXM, BY - 40, 36, CONFIG.bright, CONFIG.dark, inA, back(inA))
+      pill('2X SPEED', CONFIG.safe.right - 140, BY + 190, 34, CONFIG.card, CONFIG.bright, inA, back(seg(t, T.part2 + 0.3, T.part2 + 0.6)))
+      const si = CONFIG.steps.findLastIndex(([at]) => t >= at); if (si >= 0) { const [at, label] = CONFIG.steps[si]; pill(label, CXM, BY + 85, WIDE ? 46 : 42, CONFIG.card, CONFIG.bright, 1, back(seg(t, at, at + 0.22))) }
+      J2.forEach((j, i) => { const a = seg(t, j + 0.05, j + 0.15) * (1 - seg(t, j + 0.55, j + 0.8)); if (a > 0) pill('✓ ' + CONFIG.wins[i % CONFIG.wins.length], DX * S + 305, BY + (GROUND - 40) * S - 60 - 70 * seg(t, j, j + 0.8), 34, CONFIG.card, CONFIG.bright, a, 1) })
+    })
+  }
+  const sy = backdrop(t, scroll, dusk)
+  X.imageSmoothingEnabled = false; X.drawImage(bgc, 0, 0, DW, DH); X.imageSmoothingEnabled = true
+  // The sun's glow, added on top of the pixels.
+  { X.save(); X.globalCompositeOperation = 'lighter'; const gl = X.createRadialGradient(SUNX * S, sy * S, 60, SUNX * S, sy * S, 760); gl.addColorStop(0, `rgba(255,170,90,${0.34 - 0.1 * dusk})`); gl.addColorStop(0.45, 'rgba(255,90,70,.09)'); gl.addColorStop(1, 'rgba(255,60,90,0)'); X.fillStyle = gl; X.fillRect(0, 0, DW, HY * S); X.restore() }
+  frame = dead || dy > 0 ? 0 : 1 + (Math.floor(t * (p2 ? 20 : 11)) % 2)
+  dino(DX, GROUND - 21 - Math.round(dy), body, frame, dead, edge)
+  X.imageSmoothingEnabled = false; X.drawImage(g, 0, BY, GW * S, GH * S); X.imageSmoothingEnabled = true
+  // A hit flashes the frame white for a moment.
+  const hits = t < T.restart ? [T.hit] : RUNS.map((r) => r[1]); const hk = hits.map((h) => (t >= h ? Math.exp(-(t - h) * 9) : 0)).reduce((a, b) => Math.max(a, b), 0)
+  if (hk > 0.02 && !p2) { X.fillStyle = `rgba(255,255,255,${hk * 0.2})`; X.fillRect(0, 0, DW, DH) }
+  overlays.forEach((f) => f())
+  const slamOn = t >= T.slam[0] && t < T.slam[3]
+  // EVERY. SINGLE. TIME. Each word slams in on its syllable.
+  if (slamOn) {
+    const out = 1 - seg(t, T.slam[3] - 0.12, T.slam[3]); X.save(); X.fillStyle = `rgba(6,2,12,${0.86 * out})`; X.fillRect(0, 0, DW, DH)
+    const big = WIDE ? 168 : 190, cy = WIDE ? DH * 0.47 : BY + 240; X.font = `700 ${big}px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.globalAlpha = out
+    const ws = ['EVERY', 'SINGLE', 'TIME.']
+    const draw = (word, i, x, y) => { if (t < T.slam[i]) return; const a = back(seg(t, T.slam[i], T.slam[i] + 0.14)); X.save(); X.translate(x, y); X.scale(1.5 - 0.5 * a, 1.5 - 0.5 * a); X.fillStyle = i === 1 ? CONFIG.bright : CONFIG.silver; if (i === 1) { X.shadowColor = 'rgba(255,255,255,.6)'; X.shadowBlur = 40 } X.fillText(word, 0, 0); X.restore() }
+    if (WIDE) { const gap = 46, wd = ws.map((x) => X.measureText(x).width), tot = wd.reduce((a, b) => a + b, 0) + gap * 2; let x = CXM - tot / 2; ws.forEach((word, i) => { draw(word, i, x + wd[i] / 2, cy); x += wd[i] + gap }) }
+    else ws.forEach((word, i) => draw(word, i, CXM, cy + (i - 1) * big * 1.02))
+    X.restore()
+  }
+  if (t < T.wall) {
+    // The chrome G turns like a coin, top right, for the whole game.
+    const gs = WIDE ? 96 : 110, gx = CONFIG.safe.right - gs / 2 - (WIDE ? 0 : 10), gy = TITLEY + (WIDE ? 14 : 0), sp = Math.cos(t * 2.4)
+    X.save(); X.translate(gx, gy); X.scale(sp, 1); X.shadowColor = 'rgba(255,255,255,.35)'; X.shadowBlur = 22; X.drawImage(gLight, -gs * gLight.width / gLight.height / 2, -gs / 2, gs * gLight.width / gLight.height, gs); X.restore()
+  }
+  if (over && !slamOn) { const hh = t < T.restart ? T.hit : RUNS.find((r) => t >= r[1] && t < r[1] + 2)?.[1] ?? t; const a = back(seg(t, hh, hh + 0.18)); X.save(); X.translate(CXM, BY + 250); X.scale(0.8 + 0.2 * a, 0.8 + 0.2 * a); X.font = '700 78px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.textAlign = 'center'; X.fillStyle = CONFIG.bright; X.shadowColor = 'rgba(10,4,18,.85)'; X.shadowBlur = 26; if ('letterSpacing' in X) X.letterSpacing = '14px'; X.fillText('GAME OVER', 7, 0); if ('letterSpacing' in X) X.letterSpacing = '0px'; X.restore() }
+  // Top left: the site.
+  if (t < T.wall) { X.save(); X.font = '600 38px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.textAlign = 'left'; X.textBaseline = 'middle'; X.fillStyle = CONFIG.bright; X.shadowColor = 'rgba(8,3,14,.8)'; X.shadowBlur = 14; X.fillText(CONFIG.site, CONFIG.safe.left + 10, TITLEY + (WIDE ? 14 : 0)); X.restore() }
+  if (t < T.end) captions(t)
+  // ---------- the G, the flash, the end card (the same black card as the sibling dino piece)
+  if (t >= T.wall) {
+    const e = seg(t, T.wall, T.wall + 0.5)
+    const gr = X.createRadialGradient(CXM, DH * 0.36, 40, CXM, DH * 0.36, 1100); gr.addColorStop(0, '#1a1a1d'); gr.addColorStop(0.5, '#08080a'); gr.addColorStop(1, '#000')
+    X.save(); X.beginPath(); X.arc(DX * S + 200, BY + (GROUND - 30) * S, eo(e) * 2400, 0, 6.3); X.clip(); X.fillStyle = gr; X.fillRect(0, 0, DW, DH)
+    X.save(); if (WIDE) { X.translate(CXM - 505 * 0.6, -190); X.scale(0.6, 0.6) }
+    const a1 = eo(seg(t, T.wall + 0.25, T.wall + 0.8)), gh = 360
+    X.globalAlpha = a1; X.shadowColor = 'rgba(255,255,255,.3)'; X.shadowBlur = 60; X.drawImage(gLight, 505 - gh * gLight.width / gLight.height / 2, 420 + 30 * (1 - a1), gh * gLight.width / gLight.height, gh)
+    const ww = 560; X.drawImage(wordLight, 505 - ww / 2, 800 + 30 * (1 - a1), ww, ww * wordLight.height / wordLight.width); X.shadowBlur = 0
+    X.fillStyle = '#fff'; X.textAlign = 'center'; X.font = '700 84px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'
+    CONFIG.endLines.forEach((l, i) => { const w0 = WORDS.find((w) => w[2].toLowerCase().startsWith(l.split(' ')[0].toLowerCase()) && w[0] > T.wall); const a = eo(seg(t, (w0 ? w0[0] : T.end + i) - 0.05, (w0 ? w0[0] : T.end + i) + 0.3)); X.globalAlpha = a; X.fillText(l, 505, 1150 + i * 104 + 24 * (1 - a)) })
+    const a3 = eo(seg(t, T.dur - 1.3, T.dur - 0.8)); X.globalAlpha = a3; X.font = '600 40px SFD, -apple-system, system-ui, Helvetica Neue, Arial, sans-serif'; X.fillStyle = CONFIG.muted; X.fillText(CONFIG.site, 505, 1420)
+    X.restore()
+    // The dino never stops: it runs along the bottom of the card, in white.
+    X.globalAlpha = a1; G.clearRect(0, 0, GW, GH); const sc = s2 * (t - T.part2); G.fillStyle = '#fff'; G.fillRect(0, GROUND, GW, 1); for (const [x, y, w] of SPECK) { const px = ((x - sc) % 2000 + 2000) % 2000; if (px < GW) G.fillRect(px, GROUND + y, w, 1) }
+    dino(DX, GROUND - 21, '#fff', 1 + (Math.floor(t * 20) % 2), false)
+    X.imageSmoothingEnabled = false; X.drawImage(g, 0, GROUND - 40, GW, 56, 0, WIDE ? 790 : 1260, GW * S, 56 * S); X.imageSmoothingEnabled = true
+    X.restore()
+    const fl = Math.exp(-(t - T.wall) * 8); if (fl > 0.02) { X.fillStyle = `rgba(255,255,255,${fl})`; X.fillRect(0, 0, DW, DH) }
+  }
+}
+window.DUR = T.dur; window.render = render; window.TIMES = { j1: T.j1, j2: T.j2, hit: T.hit, runs: RUNS, j2s: J2, wall: T.wall, part2: T.part2 }
+render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const tick = (n) => { render((n - t0) / 1000); requestAnimationFrame(tick) }; requestAnimationFrame(tick) }
+})()
+</script></body></html>

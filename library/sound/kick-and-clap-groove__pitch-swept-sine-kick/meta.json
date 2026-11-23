@@ -1,0 +1,21 @@
+{
+  "slug": "kick-and-clap-groove__pitch-swept-sine-kick",
+  "visual_name": "Kick and clap groove",
+  "code_name": "Pitch-swept sine kick",
+  "category": "sound",
+  "summary": "A four-on-the-floor drum loop with a thumping sine kick, noisy claps on 2 and 4, and open and closed hi-hats, all synthesised.",
+  "tags": [
+    "music",
+    "sfx",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 8.5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

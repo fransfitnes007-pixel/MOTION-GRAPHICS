@@ -1,0 +1,21 @@
+{
+  "slug": "full-film-soundtrack__122bpm-am-f-c-g",
+  "visual_name": "Full film soundtrack",
+  "code_name": "122 BPM Am F C G",
+  "category": "sound",
+  "summary": "A complete 29 s synthesised soundtrack in A minor: intro plucks and a riser, a bright groove, a drop-out joke beat, an end-card pad, and effects timed to the picture.",
+  "tags": [
+    "music",
+    "sfx",
+    "sound"
+  ],
+  "tech": [
+    "python",
+    "numpy",
+    "soundfile"
+  ],
+  "duration_sec": 29.0,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

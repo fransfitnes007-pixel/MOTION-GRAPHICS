@@ -1,0 +1,20 @@
+{
+  "slug": "phone-trio-view-counters__spring-flank-count-up",
+  "visual_name": "Phone trio with view counters",
+  "code_name": "Spring flank, count up",
+  "category": "motion-graphics",
+  "summary": "An analytics phone flanked by two video phones with view pills counting up to 1M and 4M, a Big win tag and a highlight frame.",
+  "tags": [
+    "phone",
+    "counter",
+    "stat-tile",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 2.8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

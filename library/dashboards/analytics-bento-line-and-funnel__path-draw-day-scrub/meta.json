@@ -1,0 +1,25 @@
+{
+  "slug": "analytics-bento-line-and-funnel__path-draw-day-scrub",
+  "visual_name": "Analytics bento: line and funnel",
+  "code_name": "Path draw with day scrub",
+  "category": "dashboards",
+  "summary": "A bento of a self-drawing weekly line chart with day scrubbing, a black funnel tile with filling bars, and an inbox card.",
+  "tags": [
+    "chart",
+    "card",
+    "stat-tile",
+    "light",
+    "dark",
+    "hover"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 9.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

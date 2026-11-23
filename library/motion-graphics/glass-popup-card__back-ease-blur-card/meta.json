@@ -1,0 +1,22 @@
+{
+  "slug": "glass-popup-card__back-ease-blur-card",
+  "visual_name": "Glass pop-up card",
+  "code_name": "Back-ease blur card",
+  "category": "motion-graphics",
+  "summary": "A dark frosted-glass card with a gold kicker, bold serif title and grey detail line scales up from 78% with an overshoot over a photo, then shrinks away.",
+  "tags": [
+    "card",
+    "dark",
+    "sfx",
+    "stat-tile"
+  ],
+  "tech": [
+    "vanilla-js",
+    "backdrop-filter",
+    "playfair-display"
+  ],
+  "duration_sec": 9.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

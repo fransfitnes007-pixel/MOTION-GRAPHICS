@@ -1,0 +1,22 @@
+{
+  "slug": "browser-window-3d-fly-in__perspective-rotate-blur-out",
+  "visual_name": "Browser window 3D fly-in",
+  "code_name": "Perspective rotate with slow camera zoom",
+  "category": "motion-graphics",
+  "summary": "A browser window with an address bar flies in from the right, rotated in 3D, flattens to face the viewer and then slowly zooms into its page before blurring away.",
+  "tags": [
+    "browser-window",
+    "3d",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "css-filter-blur"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

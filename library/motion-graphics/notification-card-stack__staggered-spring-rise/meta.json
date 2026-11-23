@@ -1,0 +1,21 @@
+{
+  "slug": "notification-card-stack__staggered-spring-rise",
+  "visual_name": "Notification card stack",
+  "code_name": "Staggered spring rise with tilt",
+  "category": "motion-graphics",
+  "summary": "Two white notification cards with a dark app icon, a title, a line of text and a row of overlapping avatars rise into a loose stack with opposite tilts.",
+  "tags": [
+    "card",
+    "stat-tile",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "spring"
+  ],
+  "duration_sec": 3,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

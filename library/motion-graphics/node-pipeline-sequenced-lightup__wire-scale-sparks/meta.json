@@ -1,0 +1,22 @@
+{
+  "slug": "node-pipeline-sequenced-lightup__wire-scale-sparks",
+  "visual_name": "Node pipeline light-up",
+  "code_name": "Wire scale with travelling sparks",
+  "category": "motion-graphics",
+  "summary": "Five dark step boxes in a row light up one by one under a headline, a glowing wire grows between each pair and a white spark runs along it.",
+  "tags": [
+    "card",
+    "dark",
+    "glow",
+    "hero",
+    "kinetic-type"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 5.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

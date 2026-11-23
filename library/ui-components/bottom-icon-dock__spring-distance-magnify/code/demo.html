@@ -1,0 +1,161 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Bottom icon dock</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.dock{position:absolute;display:flex;align-items:flex-end;gap:6px;height:66px;padding:0 10px 9px;border-radius:24px;
+  --glass-edge:255 255 255/.12;
+  --glass-sheen:linear-gradient(158deg,rgb(255 255 255/.11) 0%,rgb(255 255 255/.035) 22%,rgb(255 255 255/0) 48%,rgb(255 255 255/.015) 72%,rgb(255 255 255/.06) 100%);
+  --glass-shadow:inset 0 1px 0 rgb(255 255 255/.32),inset 0 -1px 0 rgb(255 255 255/.09),inset 1px 0 0 rgb(255 255 255/.07),inset -1px 0 0 rgb(255 255 255/.05),0 30px 60px -24px rgb(0 0 0/1),0 2px 6px rgb(0 0 0/.8);
+  background:var(--glass-sheen),rgb(10 10 14/.70);border:1px solid rgb(var(--glass-edge));box-shadow:var(--glass-shadow)}
+.wrap{position:relative;flex-shrink:0}
+.btn{position:relative;width:100%;height:100%;border-radius:15px;display:flex;align-items:center;justify-content:center;color:rgb(255 255 255/.72);background:linear-gradient(180deg,rgb(255 255 255/.11),rgb(255 255 255/.04));border:1px solid rgb(255 255 255/.11);box-shadow:inset 0 1px 0 rgb(255 255 255/.20),0 8px 18px -10px rgb(0 0 0/.95)}
+.btn.act{color:#fff;background:linear-gradient(180deg,rgb(255 255 255/.24),rgb(255 255 255/.08));border-color:rgb(255 255 255/.30);box-shadow:inset 0 1px 0 rgb(255 255 255/.38),0 10px 24px -12px rgb(0 0 0/1)}
+.btn.acc{color:#fff;background:linear-gradient(180deg,rgb(96 165 250/.96),rgb(37 99 235/.96));border-color:rgb(147 197 253/.55);box-shadow:inset 0 1px 0 rgb(255 255 255/.42),0 12px 28px -12px rgb(59 130 246/.8)}
+.btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn.act svg{color:#93c5fd}
+.ico{display:flex;align-items:center;justify-content:center}
+.dot{position:absolute;bottom:-6px;left:50%;margin-left:-2px;width:4px;height:4px;border-radius:9999px;background:#93c5fd;box-shadow:0 0 8px rgb(147 197 253/.9)}
+.tip{position:absolute;bottom:calc(100% + 10px);left:50%;white-space:nowrap;padding:6px 10px;border-radius:10px;font:600 12px -apple-system,system-ui,sans-serif;color:#fff;background:rgb(14 14 18/.94);border:1px solid rgb(255 255 255/.12);box-shadow:0 12px 30px -12px #000,inset 0 1px 0 rgb(255 255 255/.12);opacity:0}
+.cursor{position:absolute;width:20px;height:20px;margin:-3px 0 0 -3px}
+.title{position:absolute;left:0;right:0;top:140px;text-align:center;font:600 15px -apple-system,system-ui,sans-serif;color:rgb(255 255 255/.45);letter-spacing:.06em}
+.title b{display:block;color:#fff;font-size:30px;letter-spacing:-.02em;margin-bottom:10px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// ---- helpers (framer-motion style easing and springs, evaluated from t) ----
+const bez = (x1, y1, x2, y2) => {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by
+  const X = (s) => ((ax * s + bx) * s + cx) * s, Y = (s) => ((ay * s + by) * s + cy) * s
+  return (x) => { if (x <= 0) return 0; if (x >= 1) return 1; let s = x; for (let i = 0; i < 8; i++) { const e = X(s) - x; if (Math.abs(e) < 1e-6) break; const d = (3 * ax * s + 2 * bx) * s + cx; if (Math.abs(d) < 1e-6) break; s -= e / d } return Y(s) }
+}
+const EASE = { linear: (x) => x, easeInOut: bez(.42, 0, .58, 1), easeOut: bez(0, 0, .58, 1), easeIn: bez(.42, 0, 1, 1), expo: bez(.16, 1, .3, 1), out: bez(0, 0, .58, 1) }
+// keyframes that loop forever, like animate={{ x: [a, b, c] }} transition={{ duration, repeat: Infinity, ease, times, repeatDelay }}
+const kf = (t, vals, o = {}) => {
+  const { dur = 1, delay = 0, times, ease = EASE.easeInOut, repeatDelay = 0, repeat = true } = o
+  let l = t - delay; if (l < 0) return vals[0]
+  const per = dur + repeatDelay
+  if (repeat) l = l % per; else l = Math.min(l, dur)
+  if (l >= dur) return vals[vals.length - 1]
+  const p = l / dur, n = vals.length - 1, tm = times || vals.map((_, i) => i / n)
+  let i = 0; while (i < n - 1 && p > tm[i + 1]) i++
+  const q = (p - tm[i]) / (tm[i + 1] - tm[i])
+  return vals[i] + (vals[i + 1] - vals[i]) * ease(q)
+}
+// framer spring from 0 to 1 (stiffness, damping, mass), starting at t0
+const sp = (t, k = 100, c = 10, m = 1, t0 = 0) => {
+  const x = t - t0; if (x <= 0) return 0
+  const w0 = Math.sqrt(k / m), z = c / (2 * Math.sqrt(k * m))
+  if (z < 1) { const wd = w0 * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w0 * x) * (Math.cos(wd * x) + (z * w0 / wd) * Math.sin(wd * x)) }
+  if (z === 1) return 1 - Math.exp(-w0 * x) * (1 + w0 * x)
+  const s = w0 * Math.sqrt(z * z - 1), r1 = -z * w0 + s, r2 = -z * w0 - s
+  return 1 - (r2 * Math.exp(r1 * x) - r1 * Math.exp(r2 * x)) / (r2 - r1)
+}
+const mix = (a, b, p) => a + (b - a) * p
+// design box: build at DW x DH and scale to fit whatever W x H the renderer asks for
+const fitBox = (DW, DH, bg) => {
+  const box = el('div', 'abs', stage); const FS = Math.min(W / DW, H / DH)
+  S(box, { left: '0px', top: '0px', width: DW + 'px', height: DH + 'px', transformOrigin: '0 0', transform: `translate(${(W - DW * FS) / 2}px,${(H - DH * FS) / 2}px) scale(${FS})`, overflow: 'hidden' })
+  if (bg) S(stage, { background: bg })
+  return box
+}
+const $ = (e, q) => e.querySelector(q)
+
+const DUR = 6
+window.DUR = DUR
+const box = fitBox(800, 500, '#000')
+const glow = el('div', 'abs', box); S(glow, { left: '0px', top: '0px', width: '800px', height: '500px', background: 'radial-gradient(60% 50% at 50% 100%, rgb(255 255 255 / 0.07), transparent 70%)' })
+el('div', 'title', box, '<b>One icon per section</b>DOCK_SIZE 46, DOCK_MAG 68, DOCK_DIST 150')
+const SIZE = 46, MAG = 68, DIST = 150
+const ICONS = [
+  ['Overview', '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/>', 'act'],
+  ['Creators', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>', ''],
+  ['Campaigns', '<path d="M4 15l16-9v12z"/><path d="M8 13v6"/>', ''],
+  ['Reviews', '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l2 2 4-4"/>', ''],
+  ['Billing', '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M16 13h2M3 10h18"/>', ''],
+  ['Messages', '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>', ''],
+  ['New campaign', '<path d="M12 5v14M5 12h14"/>', 'acc'],
+]
+const dock = el('div', 'dock', box)
+const items = ICONS.map(([label, svg, kind]) => {
+  const w = el('div', 'wrap', dock)
+  const b = el('div', 'btn ' + kind, w); const ic = el('span', 'ico', b, `<svg viewBox="0 0 24 24">${svg}</svg>`); const sv = ic.firstChild
+  const tip = el('div', 'tip', w, label)
+  if (kind === 'act') el('span', 'dot', w)
+  return { w, ic, tip, svg: sv }
+})
+const cur = el('div', 'cursor', box, '<svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 2l12 6-5 1.5L8 15z" fill="#fff" stroke="#000" stroke-width="1"/></svg>')
+const DOCK_BOTTOM = 40
+S(dock, { left: '50%', bottom: DOCK_BOTTOM + 'px', transform: 'translateX(-50%)' })
+// pointer path: enters from the left at 0.7s, sweeps across, leaves at 4.7s (mouseLeave sets the motion value back to Infinity)
+const IN = .7, OUT = 4.7, X0 = 235, X1 = 565
+const mouseX = (t) => (t < IN || t >= OUT) ? Infinity : mix(X0 - 60, X1 + 40, EASE.easeInOut(clamp((t - IN) / (OUT - IN - .3))))
+// distance -> [46, 68, 46] over [-150, 0, 150], then a spring { mass: .1, stiffness: 170, damping: 13 } chases it. Integrated from 0 each call so a frame depends only on t.
+const target = (d) => { const a = Math.abs(d); return a >= DIST ? SIZE : SIZE + (MAG - SIZE) * (1 - a / DIST) }
+function sizesAt(t) {
+  const n = items.length, size = Array(n).fill(SIZE), vel = Array(n).fill(0), dt = 1 / 600
+  for (let s = 0; s < t / dt; s++) {
+    const ts = s * dt, mx = mouseX(ts)
+    const total = 20 + (n - 1) * 6 + size.reduce((a, b) => a + b, 0)
+    let x = 400 - total / 2 + 10
+    for (let i = 0; i < n; i++) {
+      const c = x + size[i] / 2; x += size[i] + 6
+      const tg = isFinite(mx) ? target(mx - c) : SIZE
+      vel[i] += (-170 * (size[i] - tg) - 13 * vel[i]) / .1 * dt; size[i] += vel[i] * dt
+    }
+  }
+  return size
+}
+function render(t) {
+  const size = sizesAt(t), mx = mouseX(t)
+  const total = 20 + (items.length - 1) * 6 + size.reduce((a, b) => a + b, 0)
+  let x = 400 - total / 2 + 10
+  items.forEach((it, i) => {
+    S(it.w, { width: size[i] + 'px', height: size[i] + 'px' }); { const g = (22 * size[i] / SIZE).toFixed(2) + 'px'; S(it.svg, { width: g, height: g }) }  // framer scales the icon; the demo resizes the svg so it is rasterised at its final size
+    const c = x + size[i] / 2; x += size[i] + 6
+    const over = isFinite(mx) && Math.abs(mx - c) < size[i] / 2
+    const prev = it._o || 0; it._o = over ? Math.min(1, (it._o || 0) + 0) : 0
+    S(it.tip, { opacity: over ? '1' : '0', transform: `translateX(-50%) translateY(${over ? 0 : 4}px)` })
+  })
+  vis(cur, isFinite(mx)); S(cur, { left: (isFinite(mx) ? mx : 0) + 'px', top: (500 - DOCK_BOTTOM - 36) + 'px' })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

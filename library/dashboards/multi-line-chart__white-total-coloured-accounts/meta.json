@@ -1,0 +1,21 @@
+{
+  "slug": "multi-line-chart__white-total-coloured-accounts",
+  "visual_name": "Multi-line account chart",
+  "code_name": "White total line over thinner coloured series",
+  "category": "dashboards",
+  "summary": "White 2.2px total line over five 1.4px coloured account lines drawing in left to right, then a shared cursor with a tooltip listing every series.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

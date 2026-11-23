@@ -1,0 +1,21 @@
+{
+  "slug": "creator-tile-grid-scatter__staggered-spring-fly",
+  "visual_name": "Profile tile grid scatter",
+  "code_name": "Staggered spring fly-in",
+  "category": "motion-graphics",
+  "summary": "Forty-eight small portrait tiles spiral in from one spot above the centre and settle into a staggered grid, each landing at a slightly different moment.",
+  "tags": [
+    "carousel",
+    "card",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring",
+    "seeded-random"
+  ],
+  "duration_sec": 2.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

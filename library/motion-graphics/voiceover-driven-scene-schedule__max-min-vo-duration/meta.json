@@ -1,0 +1,17 @@
+{
+  "slug": "voiceover-driven-scene-schedule__max-min-vo-duration",
+  "visual_name": "Voiceover-driven scene schedule",
+  "code_name": "Max of minimum and voice length",
+  "category": "motion-graphics",
+  "summary": "Eight scene blocks and their voice lines stretch and shrink as the narrator changes, with the total length shown above.",
+  "tags": [
+    "voice"
+  ],
+  "tech": [
+    "vanilla-js"
+  ],
+  "duration_sec": 7.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

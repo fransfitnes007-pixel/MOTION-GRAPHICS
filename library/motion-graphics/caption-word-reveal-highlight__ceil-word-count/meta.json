@@ -1,0 +1,20 @@
+{
+  "slug": "caption-word-reveal-highlight__ceil-word-count",
+  "visual_name": "Bottom caption with word-by-word reveal and one highlighted word",
+  "code_name": "Ceil word count",
+  "category": "motion-graphics",
+  "summary": "A centred 40px caption at the bottom of the frame writes itself word by word across the length of the spoken line, with one chosen word bold and lilac, then fades out .4s after the line ends.",
+  "tags": [
+    "kinetic-type",
+    "voice",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-transform"
+  ],
+  "duration_sec": 8,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

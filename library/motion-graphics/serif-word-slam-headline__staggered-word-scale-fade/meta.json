@@ -1,0 +1,21 @@
+{
+  "slug": "serif-word-slam-headline__staggered-word-scale-fade",
+  "visual_name": "Serif word slam headline",
+  "code_name": "Staggered word scale-fade",
+  "category": "motion-graphics",
+  "summary": "A two-line bold serif headline appears word by word on a near-black stage, each word shrinking from 1.3x into place, with one word in red or gold italic.",
+  "tags": [
+    "kinetic-type",
+    "hero",
+    "dark",
+    "voice"
+  ],
+  "tech": [
+    "vanilla-js",
+    "playfair-display"
+  ],
+  "duration_sec": 8.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

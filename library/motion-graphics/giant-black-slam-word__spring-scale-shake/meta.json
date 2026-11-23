@@ -1,0 +1,22 @@
+{
+  "slug": "giant-black-slam-word__spring-scale-shake",
+  "visual_name": "Giant black slam word",
+  "code_name": "Spring scale with screen shake",
+  "category": "motion-graphics",
+  "summary": "Two lines of giant black type slam in from 135 percent with a 6px shake while two rows of blurred thumbnails drift under them.",
+  "tags": [
+    "kinetic-type",
+    "hero",
+    "light",
+    "scroll"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter",
+    "spring"
+  ],
+  "duration_sec": 2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "logo-domain-end-card__per-character-rise-back-pop",
+  "visual_name": "Logo and domain end card",
+  "code_name": "Per-character rise, back-ease pop",
+  "category": "motion-graphics",
+  "summary": "A logo mark pops in, the domain builds letter by letter, then a name and tagline fade up on a pastel ground.",
+  "tags": [
+    "end-card",
+    "logo",
+    "kinetic-type",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

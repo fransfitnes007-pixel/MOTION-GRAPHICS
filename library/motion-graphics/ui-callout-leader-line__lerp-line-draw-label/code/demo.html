@@ -1,0 +1,189 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>UI callout with leader line</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#07070c;color:#fff}
+.grid{position:absolute;inset:-200px;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:96px 96px}
+.hl{position:absolute;left:112px;font-weight:800;font-size:92px;line-height:1.04;letter-spacing:-.045em;white-space:nowrap}
+.hl .ln{display:block;overflow:hidden;padding:0 0 .08em}
+.hl .w{display:inline-block;will-change:transform}
+.acc{color:#a5b4fc}
+.sub{position:absolute;left:116px;font-weight:500;font-size:30px;line-height:1.4;color:#9b9bb3;letter-spacing:-.01em}
+
+.laptop{position:absolute}
+.laptop .scr{position:absolute;left:0;top:0;border-radius:18px;background:#0d0d14;padding:14px;box-shadow:0 0 0 1.5px #2b2b38,0 60px 140px -30px rgba(0,0,0,.9),0 0 120px -20px rgba(91,92,230,.35)}
+.laptop .view{position:absolute;inset:14px;border-radius:8px;overflow:hidden;background:#f4f4f6}
+.laptop .base{position:absolute;height:22px;border-radius:0 0 18px 18px;background:linear-gradient(180deg,#3a3a46,#1c1c24);box-shadow:0 20px 40px -10px rgba(0,0,0,.9)}
+.cap{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;overflow:hidden}
+.cap .ph{position:absolute;border-radius:28px;background:linear-gradient(160deg,#f1c8a4,#9a7352 55%,#2e231a);box-shadow:0 30px 60px -20px rgba(0,0,0,.35)}
+.cap .nav{position:absolute;left:0;right:0;top:0;height:78px;display:flex;align-items:center;gap:36px;padding:0 60px;font-weight:600;font-size:22px;opacity:.7}
+.cap .nav b{margin-right:auto;font-size:26px;opacity:1}
+.cap .nm{position:absolute;font-weight:800;letter-spacing:-.04em;line-height:1.04}
+.cap .sb{position:absolute;font-weight:500;font-size:34px;opacity:.6}
+.cap .pl{position:absolute;height:58px;border-radius:29px;background:#0b0b10;color:#fff;font-weight:700;font-size:22px;display:grid;place-items:center}
+.cap .tile{position:absolute;border-radius:18px;background:linear-gradient(160deg,#d9c1a8,#6e5a49)}
+.phone{position:absolute;border-radius:52px;background:#0c0c10;padding:10px;box-shadow:0 50px 110px -30px rgba(0,0,0,.95),inset 0 0 0 2px #33333f,0 0 0 1px rgba(255,255,255,.06)}
+.phone .scr{position:absolute;inset:10px;border-radius:42px;overflow:hidden;background:#000}
+.phone .isl{position:absolute;left:50%;top:20px;width:34%;height:28px;border-radius:20px;background:#000;transform:translateX(-50%);z-index:4}
+.phone .pc{position:absolute;border-radius:50%;background:linear-gradient(160deg,#f1c8a4,#9a7352 55%,#2e231a)}
+.phone .pb{position:absolute;border-radius:8px}
+.call{position:absolute;z-index:40;pointer-events:none}
+.call .dot{position:absolute;width:20px;height:20px;border-radius:50%;border:3px solid #a5b4fc;background:rgba(91,92,230,.35);box-shadow:0 0 0 8px rgba(165,180,252,.15);transform:translate(-50%,-50%)}
+.call svg{position:absolute;left:0;top:0;overflow:visible}
+.call .lab{position:absolute;white-space:nowrap;font-weight:700;font-size:24px;letter-spacing:-.01em;padding:11px 18px;border-radius:14px;background:rgba(18,18,30,.92);box-shadow:0 0 0 1px rgba(165,180,252,.35),0 20px 40px -10px rgba(0,0,0,.8)}
+.chip{position:absolute;display:flex;align-items:center;gap:12px;padding:13px 22px 13px 14px;border-radius:999px;font-weight:700;font-size:25px;white-space:nowrap;background:rgba(18,18,30,.92);box-shadow:0 0 0 1px rgba(255,255,255,.12),0 20px 40px -10px rgba(0,0,0,.8)}
+.ico{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set used across this library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 4.4
+window.DUR = DUR
+const eio5 = (x) => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2
+
+
+const Z = Math.min(W / 1920, H / 1080)
+const FR = el('div', 'abs'); S(FR, { left: px((W - 1920 * Z) / 2), top: px((H - 1080 * Z) / 2), width: '1920px', height: '1080px', transformOrigin: '0 0', zIndex: 10, transform: `scale(${Z})` })
+const HOST = FR
+
+
+// the stage: a fine grid, a slow conic light beam and a drifting glow. The original drift never repeats; here every motion is rounded to
+// whole cycles of DUR (amplitudes rescaled so the speed stays the same), so the loop is seamless.
+const bgGrid = el('div', 'grid')
+const beam = el('div', 'abs'); S(beam, { left: 0, top: 0, width: W + 'px', height: H + 'px', background: 'conic-gradient(from 200deg at 70% 30%, transparent 0deg, rgba(91,92,230,.20) 40deg, transparent 90deg, rgba(139,92,246,.10) 200deg, transparent 260deg)', filter: 'blur(40px)' })
+const glow = el('div', 'abs'); S(glow, { width: px(1400 * W / 1920), height: px(1000 * H / 1080), borderRadius: '50%', background: 'radial-gradient(closest-side, rgba(91,92,230,.22), transparent)', filter: 'blur(30px)' })
+function f2bg(t) {
+  const w = 2 * Math.PI / DUR, gx = Math.max(1, Math.round(14 * DUR / 96)), gy = Math.max(1, Math.round(8 * DUR / 96))
+  S(bgGrid, { transform: `translate(${(t / DUR * 96 * gx) % 96}px, ${(t / DUR * 96 * gy) % 96}px)` })
+  beam.style.transform = `rotate(${Math.sin(t * w) * 12 * .15 / w}deg) scale(1.2)`
+  S(glow, { left: px((900 + Math.sin(t * w) * 300 * .23 / w) * W / 1920), top: px((-100 + Math.cos(t * w) * 160 * .19 / w) * H / 1080) })
+}
+
+
+const SITES = [
+  { bg: 'linear-gradient(120deg,#e6faf0,#eef2ff)', fg: '#0b0b10', html: '<div class="nav"><b>Alex</b><span>Work</span><span>About</span></div><div class="nm" style="left:110px;top:330px;font-size:70px">Alex Rivera<br><span style="font-weight:500;color:#6b6b7b">Fitness Creator</span></div><div class="pl" style="left:110px;top:560px;width:210px">Work with me</div><div class="ph" style="left:860px;top:150px;width:420px;height:560px"></div>' },
+  { bg: '#f6f4ef', fg: '#0b0b10', html: '<div class="nav"><b>Alex</b><span>Work</span><span>About</span></div><div class="nm" style="left:0;width:1440px;text-align:center;top:150px;font-size:190px">Alex</div><div class="ph" style="left:560px;top:420px;width:320px;height:380px;border-radius:160px 160px 20px 20px"></div>' },
+  { bg: 'linear-gradient(180deg,#0f2438,#0a1522)', fg: '#fff', html: '<div class="tile" style="left:520px;top:120px;width:190px;height:300px"></div><div class="tile" style="left:730px;top:120px;width:190px;height:300px"></div><div class="nm" style="left:0;width:1440px;text-align:center;top:380px;font-size:120px;color:#fff">Alex</div><div class="pl" style="left:600px;top:560px;width:240px;background:#fff;color:#0b0b10">Work with me</div>' },
+  { bg: 'linear-gradient(180deg,#eef0ff,#f7f7fb)', fg: '#0b0b10', html: '<div class="ph" style="left:640px;top:70px;width:160px;height:160px;border-radius:50%"></div><div class="nm" style="left:0;width:1440px;text-align:center;top:260px;font-size:84px">Alex Rivera</div><div class="pl" style="left:560px;top:400px;width:320px">Work with me</div><div class="tile" style="left:420px;top:520px;width:180px;height:260px"></div><div class="tile" style="left:630px;top:520px;width:180px;height:260px"></div><div class="tile" style="left:840px;top:520px;width:180px;height:260px"></div>' },
+  { bg: '#fbfbfc', fg: '#0b0b10', html: '<div class="ph" style="left:70px;top:70px;width:480px;height:760px"></div><div class="nm" style="left:640px;top:260px;font-size:130px">Alex<br>Rivera</div><div class="nm" style="left:640px;top:600px;font-size:96px;color:#5b5ce6">1,000,000</div>' },
+  { bg: 'radial-gradient(ellipse at 50% 40%,#12433f,#071a1c 70%)', fg: '#fff', html: '<div class="tile" style="left:300px;top:300px;width:170px;height:260px;opacity:.5"></div><div class="tile" style="left:970px;top:300px;width:170px;height:260px;opacity:.5"></div><div class="tile" style="left:620px;top:140px;width:200px;height:300px"></div><div class="nm" style="left:0;width:1440px;text-align:center;top:420px;font-size:130px;color:#fff">Alex</div>' },
+]
+function siteIn(parent, i) { const c = el('div', 'cap', parent); c.style.background = SITES[i].bg; c.style.color = SITES[i].fg; if (SITES[i].h) c.style.height = SITES[i].h + 'px'; c.innerHTML = SITES[i].html; return c }
+
+function phone(parent, v, x, y, w) {
+  const h = w * 2.16
+  const p = el('div', 'phone', parent, '<div class="scr"></div><div class="isl"></div>')
+  S(p, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' })
+  p.scr = p.querySelector('.scr'); p.w = w; p.h = h
+  const dark = SITES[v].fg === '#fff'; p.scr.style.background = SITES[v].bg
+  p.scr.innerHTML = `<div class="pc" style="left:${w * .34}px;top:${w * .3}px;width:${w * .32}px;height:${w * .32}px"></div><div class="pb" style="left:${w * .26}px;top:${w * .72}px;width:${w * .48}px;height:${w * .06}px;background:${dark ? '#fff' : '#0b0b10'}"></div><div class="pb" style="left:${w * .32}px;top:${w * .83}px;width:${w * .36}px;height:${w * .035}px;background:${dark ? '#ffffff55' : '#0b0b1033'}"></div><div class="pb" style="left:${w * .22}px;top:${w * 1.0}px;width:${w * .56}px;height:${w * .11}px;border-radius:${w * .06}px;background:#5b5ce6"></div><div class="pb" style="left:${w * .1}px;top:${w * 1.3}px;width:${w * .8}px;height:${w * .5}px;background:${dark ? '#ffffff14' : '#0b0b100d'}"></div>`
+  return p
+}
+
+
+function hl(parent, lines, top, size = 92) {
+  const h = el('div', 'hl', parent); S(h, { top: top + 'px', fontSize: size + 'px' })
+  h.ws = []
+  lines.forEach((ln) => { const L = el('span', 'ln', h); ln.forEach((w, i) => { const s = el('span', 'w' + (w.a ? ' acc' : ''), L); s.textContent = w.t; if (i < ln.length - 1) s.style.marginRight = '.24em'; s.at = w.at; h.ws.push(s) }) })
+  return h
+}
+function hlIn(h, t, out = 1e9) {
+  for (const s of h.ws) { const p = eo5(seg(t, s.at - .06, s.at + .3)), q = eio(seg(t, out, out + .3)); s.style.transform = `translateY(${(1 - p) * 110 - q * 110}%)` }
+}
+function sub(parent, text, top, at) { const s = el('div', 'sub', parent); s.innerHTML = text; S(s, { top: top + 'px' }); s.at = at; return s }
+function subIn(s, t, out = 1e9) { const p = eo5(seg(t, s.at, s.at + .45)), q = ei(seg(t, out, out + .25)); S(s, { opacity: p * (1 - q), transform: `translateY(${(1 - p) * 16}px)` }) }
+function laptop(parent, srcs, x, y, w) {
+  const h = Math.round(w * 900 / 1440) + 28
+  const L = el('div', 'laptop', parent); S(L, { left: x + 'px', top: y + 'px', width: w + 'px', height: (h + 22) + 'px' })
+  const scr = el('div', 'scr', L); S(scr, { width: w + 'px', height: h + 'px' })
+  const v = el('div', 'view', scr)
+  const b = el('div', 'base', L); S(b, { left: '-50px', width: (w + 100) + 'px', top: h + 'px' })
+  L.imgs = srcs.map((s, i) => { const im = siteIn(v, s); if (i) im.style.display = 'none'; return im })
+  L.cur = 0; L.vw = w - 28; L.vh = h - 28; L.x0 = x; L.y0 = y
+  return L
+}
+function showL(L, i) { if (L.cur !== i) { vis(L.imgs[L.cur], false); vis(L.imgs[i], true); L.cur = i } }
+function cam(L, fx, fy, z, capH = 900) {
+  const k = L.vw / 1440 * z
+  const x = clamp(L.vw / 2 - fx * k, L.vw - 1440 * k, 0), y = clamp(L.vh / 2 - fy * k, Math.min(0, L.vh - capH * k), 0)
+  for (const im of L.imgs) im.style.transform = `translate(${x}px,${y}px) scale(${k})`
+  L.cx = x; L.cy = y; L.ck = k
+}
+const lpt = (L, px, py) => [L.x0 + 14 + L.cx + px * L.ck, L.y0 + 14 + L.cy + py * L.ck]
+function callout(parent, text) {
+  const c = el('div', 'call', parent, '<div class="dot"></div><svg width="1" height="1"><path stroke="#a5b4fc" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg><div class="lab"></div>')
+  c.dot = c.querySelector('.dot'); c.path = c.querySelector('path'); c.lab = c.querySelector('.lab'); c.lab.innerHTML = text
+  return c
+}
+function callAt(c, t, at, out, tx, ty, lx, ly) {
+  const p = eo5(seg(t, at, at + .4)), l = eo(seg(t, at + .08, at + .5)), q = ei(seg(t, out, out + .2))
+  vis(c, p > 0 && q < 1); if (!(p > 0 && q < 1)) return
+  S(c.dot, { left: tx + 'px', top: ty + 'px', opacity: p * (1 - q), transform: `translate(-50%,-50%) scale(${.5 + .5 * spring(seg(t, at, at + .5), 8, 12)})` })
+  const ex = lerp(tx, lx, l), ey = lerp(ty, ly, l)
+  c.path.setAttribute('d', `M${tx},${ty} L${ex},${ey}`); c.path.style.opacity = 1 - q
+  S(c.lab, { left: lx + 'px', top: ly + 'px', opacity: clamp(l * 1.5) * (1 - q), transform: `translate(${lx < tx ? '-100%' : '0'},-50%) scale(${.85 + .15 * l})` })
+}
+// strip: a panel group pushes in from the right and out to the left
+function strip(g, t, a, b, din = .45, dout = .4) {
+  const pi = eo5(seg(t, a, a + din)), po = eio(seg(t, b - dout, b))
+  S(g, { transform: `translateX(${(1 - pi) * 520 - po * 620}px) scale(${.96 + .04 * pi - po * .03})`, opacity: clamp(pi * 1.6) * (1 - po * .9), filter: (pi < 1 || po > 0) ? `blur(${(1 - pi) * 10 + po * 12}px)` : '' })
+}
+const grp = (parent) => { const g = el('div', 'abs', parent); S(g, { left: 0, top: 0, width: '1920px', height: '1080px' }); return g }
+
+// a placeholder dashboard capture, with three stat tiles at (330,330), (615,330), (775,330)
+const tile = (x, n) => '<div style="position:absolute;left:' + x + 'px;top:285px;width:150px;height:90px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(20,16,40,.08)"><div style="position:absolute;left:14px;top:14px;width:60px;height:10px;border-radius:5px;background:#e0e0e8"></div><div class="nm" style="left:14px;top:34px;font-size:38px">' + n + '</div></div>'
+SITES.push({ bg: '#f7f7fa', fg: '#0b0b10', html: '<div style="position:absolute;left:0;top:0;width:200px;height:900px;background:#fff"></div><div class="nm" style="left:255px;top:190px;font-size:40px">Overview</div>' + tile(255, '1,634') + tile(540, '619') + tile(700, '3') + '<div style="position:absolute;left:255px;top:440px;width:600px;height:300px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(20,16,40,.08)"></div><svg style="position:absolute;left:255px;top:440px" width="600" height="300" viewBox="0 0 600 300"><path d="M0 240 L80 200 L160 220 L240 140 L320 160 L400 80 L480 110 L600 40 L600 300 L0 300Z" fill="rgba(91,92,230,.18)" stroke="#5b5ce6" stroke-width="3"/></svg>' })
+const DASH = SITES.length - 1
+const g14 = grp(FR)
+const h14 = hl(g14, [[{ t: 'Your', at: .12 }, { t: 'dashboard', at: .28, a: 1 }, { t: 'shows', at: .72 }], [{ t: 'who', at: 1.04 }, { t: 'visited,', at: 1.32 }], [{ t: 'what', at: 2.0 }, { t: 'they', at: 2.22 }, { t: 'clicked,', at: 2.38 }], [{ t: 'who', at: 3.04 }, { t: 'reached', at: 3.26 }, { t: 'out.', at: 3.48, a: 1 }]], 240, 72)
+const lp14 = laptop(g14, [DASH], 980, 250, 840)
+const c14a = callout(g14, 'Page views'), c14b = callout(g14, 'Link clicks'), c14c = callout(g14, 'Inquiries')
+const tag14 = el('div', 'chip', g14, 'Sample data'); S(tag14, { fontSize: '18px', padding: '8px 16px', color: '#9b9bb3' })
+function render(t) {
+  f2bg(t)
+  strip(g14, t, 0, 4.25); hlIn(h14, t)
+  const z = eio(seg(t, .3, 1.0))
+  cam(lp14, lerp(720, 480, z), lerp(450, 330, z), lerp(1, 1.55, z))
+  let [tx, ty] = lpt(lp14, 330, 330); callAt(c14a, t, 1.32, 4.0, tx, ty, tx - 70, ty + 380)
+  ;[tx, ty] = lpt(lp14, 615, 330); callAt(c14b, t, 2.38, 4.0, tx, ty, tx + 40, ty + 300)
+  ;[tx, ty] = lpt(lp14, 775, 330); callAt(c14c, t, 3.48, 4.0, tx, ty, Math.min(tx + 180, 1500), ty + 200)
+  S(tag14, { left: '1700px', top: '206px', opacity: eo5(seg(t, .2, .6)) })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

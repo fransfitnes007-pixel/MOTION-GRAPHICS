@@ -1,0 +1,79 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Payment confirmation card</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+:root{--f:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif}
+.layer{position:absolute;inset:0}
+.layer{will-change:transform}
+.pop{position:absolute;border-radius:26px;background:#fff;box-shadow:0 50px 110px -30px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.06);transform-origin:50% 0;overflow:hidden}
+.pop .ttl{display:flex;align-items:center;justify-content:space-between;font:700 1em var(--f);letter-spacing:-.02em}
+.tog{width:2.3em;height:1.3em;border-radius:1em;background:#d8d8de;position:relative}
+.tog i{position:absolute;top:.12em;left:.12em;width:1.06em;height:1.06em;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tog.on{background:#34c759}.tog.on i{left:1.12em}
+.fld{border:1.5px solid #e4e4ea;border-radius:.6em;padding:.45em .6em;font:600 .72em var(--f);color:#0b0b10;display:flex;flex-direction:column;gap:.15em}
+.fld b{font:500 .78em var(--f);color:#8a8a96}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same helper set used across the library
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 1.7
+window.DUR = DUR
+const at = (e, x, y, extra = '') => S(e, { left: px(x), top: px(y), transform: `translate(-50%,-50%) ${extra}` })
+const wordIn = (e, t, t0, x, y, dur = .22) => { const q = spring(seg(t, t0, t0 + dur * 2.2), 8, 12); S(e, { opacity: clamp(q * 1.6), left: px(x), top: px(y), transform: `translate(-50%,-50%) translateY(${(1 - q) * 30}px) scale(${.7 + .3 * q})` }) }
+const rnd = (i, s = 1) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x) }
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+const CURSOR = '<svg viewBox="0 0 24 24" width="44" height="44"><path d="M4.5 2.5l15 8.6-6.6 1.9-2.9 6.5z" fill="#fff" stroke="#0b0b10" stroke-width="1.4" stroke-linejoin="round"/></svg>'
+const HEART = (f = '#fff') => `<svg viewBox="0 0 24 24" fill="${f}"><path d="M12 21s-7.5-4.6-9.5-9.3C1 7.9 3.6 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.4 0 6 3.4 4.5 7.2C19.5 16.4 12 21 12 21z"/></svg>`
+const COMMENT = `<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.8 2 11.5c0 2.3 1.1 4.4 2.9 5.9L4 21l4.6-2c1.1.3 2.2.5 3.4.5 5.5 0 10-3.8 10-8.5S17.5 3 12 3z"/></svg>`
+const SHARE = `<svg viewBox="0 0 24 24" fill="#fff"><path d="M13 4l8 7-8 7v-4.2C7.6 13.8 4.6 15.6 3 19c0-6.2 3.8-10.1 10-10.8V4z"/></svg>`
+const SAVE = (f = '#fff') => `<svg viewBox="0 0 24 24" fill="${f}"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>`
+const CHECK = (c = '#fff') => `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`
+const payCard = el('div', 'pop'); S(payCard, { width: px(700 * K), padding: px(32 * K), fontSize: px(42 * K), borderRadius: '30px' })
+payCard.innerHTML = `<div style="display:flex;align-items:center;gap:.6em"><div style="width:2.2em;height:2.2em;border-radius:50%;overflow:hidden;flex:none;background:radial-gradient(circle at 50% 38%,#e7b98f 0 26%,transparent 28%),linear-gradient(160deg,#7b2d5b,#2c1b3a)"></div><div style="flex:1"><b style="font:700 1em var(--f)">@creator.name</b><small style="display:block;font:500 .8em var(--f);color:#5f5f6b">12 approved items</small></div><div class="pc" style="width:1.9em;height:1.9em;border-radius:50%;background:#1f8f3e;display:grid;place-items:center;color:#fff;font-size:1em;transform:scale(0)">${CHECK()}</div></div>
+<div style="margin-top:.7em;display:flex;align-items:center;justify-content:space-between;border-top:1.5px solid #ececf1;padding-top:.6em"><span style="font:600 .82em var(--f);color:#5f5f6b">Payment</span><span class="ps" style="font:700 .9em var(--f);color:#1f8f3e">Sent by email</span></div>`
+const payCheck = payCard.querySelector('.pc'), payStatus = payCard.querySelector('.ps')
+const C_PAY = .15, T_RESULTS = .75           // cut, then the cue word
+function render(t) {
+  const q = spring(seg(t, C_PAY, C_PAY + .55), 7, 11); vis(payCard, true); S(payCard, { left: px(CX - 350 * K), top: px(CY - 170 * K), transform: `scale(${.75 + .25 * q})`, opacity: clamp(q * 2) })
+  const ck = spring(seg(t, T_RESULTS - .1, T_RESULTS + .4), 8, 12); payCheck.style.transform = `scale(${ck})`; payStatus.style.opacity = .3 + .7 * ck
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

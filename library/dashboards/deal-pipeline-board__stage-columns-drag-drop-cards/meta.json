@@ -1,0 +1,21 @@
+{
+  "slug": "deal-pipeline-board__stage-columns-drag-drop-cards",
+  "visual_name": "Deal pipeline board",
+  "code_name": "Stage columns with drag-and-drop deal cards",
+  "category": "dashboards",
+  "summary": "Stage columns (Sourced to Won) holding deal cards with brand tile, value, type badge, terms, next-action chip; two cards are dragged to the next stage with live column totals.",
+  "tags": [
+    "dashboard",
+    "card",
+    "dark",
+    "nav"
+  ],
+  "tech": [
+    "vanilla-js",
+    "dnd-rebuilt"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

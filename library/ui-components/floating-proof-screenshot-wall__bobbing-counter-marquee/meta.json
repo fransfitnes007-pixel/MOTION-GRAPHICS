@@ -1,0 +1,23 @@
+{
+  "slug": "floating-proof-screenshot-wall__bobbing-counter-marquee",
+  "visual_name": "Floating proof screenshot wall",
+  "code_name": "Bobbing counter marquee",
+  "category": "ui-components",
+  "summary": "Two counter-scrolling rows of floating glass cards holding payment and analytics screenshots of different sizes.",
+  "tags": [
+    "marquee",
+    "card",
+    "carousel",
+    "light"
+  ],
+  "tech": [
+    "vanilla-js",
+    "react-source",
+    "framer-motion",
+    "tailwind"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

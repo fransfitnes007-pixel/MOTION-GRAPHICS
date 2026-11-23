@@ -1,0 +1,23 @@
+{
+  "slug": "gradient-count-up-number__eo5-count-with-proof-cards",
+  "visual_name": "Gradient count-up number",
+  "code_name": "Quintic count with proof cards",
+  "category": "motion-graphics",
+  "summary": "A giant blue to cyan number counts from 0 up to 1,000,000,000+ in about a second, a small label fades under it, and two white cards with a logo and a view count tilt in on the left and right.",
+  "tags": [
+    "counter",
+    "stat-tile",
+    "kinetic-type",
+    "light",
+    "hero"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "tabular-nums"
+  ],
+  "duration_sec": 2.2,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "spend-vs-views-bars__dual-axis-grouped",
+  "visual_name": "Spend vs views grouped bars",
+  "code_name": "Two y-axes, grouped bars, circle legend",
+  "category": "dashboards",
+  "summary": "Grouped violet (spend) and blue (views) bars on two y-axes, growing from the baseline over 1.5s, with a hover tooltip stepping across categories.",
+  "tags": [
+    "chart",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

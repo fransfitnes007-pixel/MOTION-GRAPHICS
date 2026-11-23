@@ -1,0 +1,21 @@
+{
+  "slug": "grain-vignette-fade-to-black__svg-noise-overlay",
+  "visual_name": "Grain, vignette and fade to black",
+  "code_name": "SVG noise overlay",
+  "category": "motion-graphics",
+  "summary": "Fine SVG noise blended at 7% over a vignetted frame, which darkens to black over the last 0.6s.",
+  "tags": [
+    "background",
+    "dark",
+    "end-card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg-feturbulence",
+    "css-blend-mode"
+  ],
+  "duration_sec": 5,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

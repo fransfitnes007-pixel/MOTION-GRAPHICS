@@ -1,0 +1,10 @@
+# Voice designs that came out adult and fast. Make them with:
+#   .venv/bin/python design.py f_maya="<description>" m_cole="<description>"
+# design.py writes voices/<name>_ref.wav and adds a clone-mode entry to voices.json. Re-run a name to re-roll it.
+# Check the result with tools/f0.py: women 165-240 Hz, men 95-150 Hz. Re-roll anything above that range.
+f_maya=A confident American woman, 29 years old, with a mature, medium-low pitched voice. Energetic, punchy and excited like a top tech creator, speaking very fast and smoothly with crisp diction. Adult and self-assured, not girly, not high-pitched.
+f_jordan=An American woman in her early thirties with a warm, slightly husky, lower-pitched adult voice. Fast-talking, charismatic and upbeat, like a sharp podcast host hyping a discovery. Smooth, quick, confident delivery.
+f_alto=A woman in her thirties with a low alto voice, calm authority and fast, even pacing. Smooth and warm, never breathy, never high.
+m_cole=An American man in his early thirties with a deep, warm, relaxed voice. Fast, smooth and confident like a top narrator of short videos, no hype spikes.
+m_jake=A young American man, 26, with a medium-low voice, upbeat and quick, friendly and casual, smooth flow with clear consonants.
+m_bass=A man in his forties with a rich bass voice, steady and composed, speaking briskly with a documentary narrator's polish.

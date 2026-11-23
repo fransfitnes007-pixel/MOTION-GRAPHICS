@@ -1,0 +1,22 @@
+{
+  "slug": "brand-logo-strip__two-opposed-rows-duplicated-track",
+  "visual_name": "Brand logo strip",
+  "code_name": "Two opposed rows, duplicated track",
+  "category": "ui-components",
+  "summary": "Two rows of client logos drifting in opposite directions at slightly different speeds, with wordmarks and icon-plus-name logos mixed, faded out at both edges.",
+  "tags": [
+    "marquee",
+    "light",
+    "logo",
+    "scroll"
+  ],
+  "tech": [
+    "react",
+    "framer-motion",
+    "css"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

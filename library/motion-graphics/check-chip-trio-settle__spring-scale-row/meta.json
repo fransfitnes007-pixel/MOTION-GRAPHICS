@@ -1,0 +1,20 @@
+{
+  "slug": "check-chip-trio-settle__spring-scale-row",
+  "visual_name": "Check chip trio settling in a row",
+  "code_name": "Spring scale-in chips that settle from a stack into a row",
+  "category": "motion-graphics",
+  "summary": "Three dark pill chips with green ticks pop in one at a time on the spoken points; the first starts under a big word and then slides into the row with the other two.",
+  "tags": [
+    "card",
+    "dark",
+    "stat-tile"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 3.6,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

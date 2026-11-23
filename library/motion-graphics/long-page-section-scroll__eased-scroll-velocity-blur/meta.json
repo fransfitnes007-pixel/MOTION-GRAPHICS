@@ -1,0 +1,21 @@
+{
+  "slug": "long-page-section-scroll__eased-scroll-velocity-blur",
+  "visual_name": "Long page jump-scroll with motion blur",
+  "code_name": "Eased scroll with velocity blur",
+  "category": "motion-graphics",
+  "summary": "A tall page screenshot glides between section tops in short eased scrolls, blurred by speed, in a browser window.",
+  "tags": [
+    "browser-window",
+    "scroll",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter-blur"
+  ],
+  "duration_sec": 7,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

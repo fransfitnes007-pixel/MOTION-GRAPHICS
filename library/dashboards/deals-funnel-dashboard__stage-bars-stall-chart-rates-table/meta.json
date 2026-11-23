@@ -1,0 +1,23 @@
+{
+  "slug": "deals-funnel-dashboard__stage-bars-stall-chart-rates-table",
+  "visual_name": "Deals funnel dashboard",
+  "code_name": "Stage-width funnel bars, stall chart, rate table",
+  "category": "dashboards",
+  "summary": "Funnel steps as proportional coloured bars, an average-days-in-stage bar chart, red lost-reason bars and a reply/win rate table with progress bars.",
+  "tags": [
+    "chart",
+    "stat-tile",
+    "table",
+    "dark",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "recharts-rebuilt"
+  ],
+  "duration_sec": 11,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}

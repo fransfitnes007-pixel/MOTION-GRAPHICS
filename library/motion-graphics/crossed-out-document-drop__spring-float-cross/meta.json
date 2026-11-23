@@ -1,0 +1,21 @@
+{
+  "slug": "crossed-out-document-drop__spring-float-cross",
+  "visual_name": "Crossed-out document drop",
+  "code_name": "Spring float, red cross, blurred drop",
+  "category": "motion-graphics",
+  "summary": "A skewed paper document floats up, gets a red cross stamped on it as it turns grey, then falls away blurred behind a white flash.",
+  "tags": [
+    "card",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter",
+    "spring"
+  ],
+  "duration_sec": 3.4,
+  "has_sound": true,
+  "demo_kind": "exact-formula",
+  "aliases": []
+}

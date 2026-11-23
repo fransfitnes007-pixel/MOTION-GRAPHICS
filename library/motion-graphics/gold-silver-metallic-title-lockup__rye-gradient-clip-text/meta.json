@@ -1,0 +1,23 @@
+{
+  "slug": "gold-silver-metallic-title-lockup__rye-gradient-clip-text",
+  "visual_name": "Gold and silver metallic title lockup",
+  "code_name": "Rye gradient clip text",
+  "category": "motion-graphics",
+  "summary": "Gold GOLDEN TITLE over silver SILVER LANE in chrome slab letters with hard drop shadows, script author name above and kicker line, a gloss band sliding over it.",
+  "tags": [
+    "kinetic-type",
+    "logo",
+    "hero",
+    "dark"
+  ],
+  "tech": [
+    "css-background-clip-text",
+    "drop-shadow",
+    "rye",
+    "great-vibes"
+  ],
+  "duration_sec": 3.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "aliases": []
+}
