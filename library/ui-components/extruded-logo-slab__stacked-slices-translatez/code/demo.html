@@ -92,7 +92,7 @@ const spin = el('div', 'abs', tilt); S(spin, { left: '0', top: '0', width: '100%
 const faceFilter = 'drop-shadow(0 24px 40px rgba(0,0,0,0.75))', edgeFilter = 'brightness(0.42) contrast(1.15)'
 for (let i = 0; i < SLICES; i++) {
   const z = -i * GAP, face = i === 0 || i === SLICES - 1
-  const s = el('div', 'sl', spin, '<span>G</span>')
+  const s = el('div', 'sl', spin, '<span>'+'Y'/*brand-initial*/+'</span>')
   S(s, { transform: i === SLICES - 1 ? `translateZ(${z}px) rotateY(180deg)` : `translateZ(${z}px)`, backfaceVisibility: face ? 'hidden' : 'visible', filter: face ? faceFilter : edgeFilter })
 }
 el('div', 'cap', box, '18 slices, 1.6px apart, rotateY 0 to 360 in 5s linear, rotateX(12deg) tilt')

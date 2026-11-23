@@ -247,7 +247,7 @@ function render(t) {
     X.restore()
   }
   if (t < T.wall) {
-    // The chrome G turns like a coin, top right, for the whole game.
+    // The chrome monogram turns like a coin, top right, for the whole game.
     const gs = WIDE ? 96 : 110, gx = CONFIG.safe.right - gs / 2 - (WIDE ? 0 : 10), gy = TITLEY + (WIDE ? 14 : 0), sp = Math.cos(t * 2.4)
     X.save(); X.translate(gx, gy); X.scale(sp, 1); X.shadowColor = 'rgba(255,255,255,.35)'; X.shadowBlur = 22; X.drawImage(gLight, -gs * gLight.width / gLight.height / 2, -gs / 2, gs * gLight.width / gLight.height, gs); X.restore()
   }

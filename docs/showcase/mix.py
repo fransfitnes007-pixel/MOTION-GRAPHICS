@@ -58,6 +58,8 @@ for a in ("kinetic", "trans", "dash", "endc"): put(click(1700), T[a], .18, rng.u
 put(click(1500), T["every"], .16, buf=sfx); put(blip(2600), T["exact"], .12, .3, sfx)
 for i in range(4): put(click(1000 + i * 160, ), T["micro"] + i * .14, .16, -.45 + i * .3, sfx)
 put(click(1600), T["best"] - .1, .15, buf=sfx); put(click(1800), T["rebuilt"], .15, buf=sfx)
+put(swish(.5, 1400, 7000), T["rebuilt"] - .15, .14, buf=sfx)
+for i in range(8): put(click(1300 + i * 90), T["rebuilt"] + i * .06 + .05, .1, -.6 + i * .17, sfx)
 for k in range(9): put(tick(), T["brand"] + .2 + k * .05, .07, buf=sfx)          # deleting
 for k in range(4): put(tick(), T["file"] - .1 + k * .1, .08, buf=sfx)             # typing Acme
 for a, d in (("logo", 1), ("scene", -1), ("endcard", 1)): put(swish(.3, 2500, 7500, d), T[a] - .05, .1, buf=sfx)

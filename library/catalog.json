@@ -1389,8 +1389,8 @@
    "skill": "motion-graphics/email-link-strikethrough__scalex-red-bar/SKILL.md"
   },
   {
-   "slug": "end-card-g-flip-wordmark-blur__rotatey-spring-blur",
-   "path": "motion-graphics/end-card-g-flip-wordmark-blur__rotatey-spring-blur",
+   "slug": "end-card-monogram-flip-wordmark-blur__rotatey-spring-blur",
+   "path": "motion-graphics/end-card-monogram-flip-wordmark-blur__rotatey-spring-blur",
    "category": "motion-graphics",
    "visual_name": "End card with flipping mark",
    "code_name": "RotateY spring mark, blur-in wordmark, fading address",
@@ -1411,10 +1411,10 @@
    "projects": [],
    "clips": [],
    "clip": null,
-   "poster": "motion-graphics/end-card-g-flip-wordmark-blur__rotatey-spring-blur/media/poster.jpg",
+   "poster": "motion-graphics/end-card-monogram-flip-wordmark-blur__rotatey-spring-blur/media/poster.jpg",
    "sound": null,
-   "demo": "motion-graphics/end-card-g-flip-wordmark-blur__rotatey-spring-blur/code/demo.html",
-   "skill": "motion-graphics/end-card-g-flip-wordmark-blur__rotatey-spring-blur/SKILL.md"
+   "demo": "motion-graphics/end-card-monogram-flip-wordmark-blur__rotatey-spring-blur/code/demo.html",
+   "skill": "motion-graphics/end-card-monogram-flip-wordmark-blur__rotatey-spring-blur/SKILL.md"
   },
   {
    "slug": "end-card-typed-url-wordmark-slam__typewriter-shake",

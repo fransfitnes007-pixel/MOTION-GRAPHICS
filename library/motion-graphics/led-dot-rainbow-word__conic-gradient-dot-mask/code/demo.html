@@ -49,7 +49,7 @@ const bgLed = el('div', 'led'); el('div', 'dots', bgLed); const ledGlow = el('di
 const GS = Math.hypot(W, H) * 1.12; S(ledGlow, { inset: 'auto', width: px(GS), height: px(GS), left: px(CX - GS / 2), top: px(CY - GS / 2) })
 const but = el('div', 'word', stage, 'But,'); S(but, { fontSize: px(118 * K), color: '#fff', fontWeight: 700 })
 const whatif = el('div', 'word', stage, 'what if'); S(whatif, { fontSize: px(118 * K), color: '#fff', fontWeight: 400 })
-const mark = el('div', 'mark', stage, 'G'); S(mark, { width: px(150 * K), height: px(150 * K), fontSize: px(92 * K) })
+const mark = el('div', 'mark', stage, 'Y'/*brand-initial*/); S(mark, { width: px(150 * K), height: px(150 * K), fontSize: px(92 * K) })
 
 // Words land at: But at 0, what at +.02, if at +.22. Slowed here so it reads on a loop.
 const T_BUT = .3, T_WHAT = .55, T_IF = .85

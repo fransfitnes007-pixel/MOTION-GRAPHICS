@@ -46,4 +46,4 @@ Silent by itself. A noise riser can build under this scene toward the next cut.
 
 ## Files
 - `code/demo.html` runs on its own; the logo is a chrome-gradient text glyph.
-- Related: `end-card-g-flip-wordmark-blur__rotatey-spring-blur` (a matching closing spin) and `logo-shine-sweep__masked-gradient-position`.
+- Related: `end-card-monogram-flip-wordmark-blur__rotatey-spring-blur` (a matching closing spin) and `logo-shine-sweep__masked-gradient-position`.

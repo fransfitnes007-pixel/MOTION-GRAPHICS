@@ -194,7 +194,7 @@ const chip = el('span', 'abs', board, 'Your ball'); S(chip, { left: '50%', top: 
 const pegEls = pegs.map((p) => { const e = el('span', 'pk-peg', board); S(e, { left: p.x + 'px', top: p.y + 'px' }); return e })
 const pockets = el('div', 'abs', board); S(pockets, { left: 0, right: 0, bottom: 0, height: POCKET_H + 'px', display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', borderTop: '1px solid rgba(255,255,255,.1)', background: 'linear-gradient(to bottom,rgba(0,0,0,.2),rgba(0,0,0,.6))' })
 const pk = POCKETS.map((v) => { const e = el('div', 'pk-pocket', pockets, v + '%'); e.style.color = v >= 50 ? '#c9b8ff' : 'rgba(255,255,255,.75)'; return e }); pk[5].style.borderRight = '0'
-const ball = el('div', 'pk-ball', board); const logo = el('span', '', ball, 'G'); S(logo, { fontSize: '10px', fontWeight: 800, color: '#14101f', display: 'block', lineHeight: 1 })
+const ball = el('div', 'pk-ball', board); const logo = el('span', '', ball, 'Y'/*brand-initial*/); S(logo, { fontSize: '10px', fontWeight: 800, color: '#14101f', display: 'block', lineHeight: 1 })
 const burst = el('div', 'abs', board); S(burst, { bottom: POCKET_H + 'px', left: '0', width: '0', height: '0' })
 const bits = pieces.map((p) => { const e = el('i', '', burst); S(e, { position: 'absolute', left: '-3px', top: '-8px', width: '6px', height: '9px', borderRadius: '2px', background: p.c, transformOrigin: '50% 100%' }); return e })
 const act = el('div', '', modal); S(act, { marginTop: '16px' })

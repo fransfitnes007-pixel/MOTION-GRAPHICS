@@ -61,9 +61,9 @@ function wordmark(parent, text, size, cls = '') { const w = el('div', 'wm ' + cl
 
 const END = .1                        // the wordmark time, seconds after the card starts
 const s10 = el('div', 'abs'); S(s10, { left: 0, top: 0, width: W + 'px', height: H + 'px' })
-const g10 = el('div', 'gmark', s10); S(g10, { width: px(160 * K), height: px(160 * K), fontSize: px(100 * K), left: px(CX - 80 * K), top: px(CY - 370 * K) }); g10.textContent = 'B'
+const g10 = el('div', 'gmark', s10); S(g10, { width: px(160 * K), height: px(160 * K), fontSize: px(100 * K), left: px(CX - 80 * K), top: px(CY - 370 * K) }); g10.textContent = 'Y'/*brand-initial*/
 const wm10 = wordmark(s10, 'YourBrand', 215 * K); S(wm10, { width: px(920 * K), height: px(440 * K), left: px(CX - 460 * K), top: px(CY - 200 * K) })
-const url10 = el('div', 'url10', s10); S(url10, { width: W + 'px', top: px(CY + 290 * K), fontSize: px(46 * K) }); url10.textContent = 'brand.link'
+const url10 = el('div', 'url10', s10); S(url10, { width: W + 'px', top: px(CY + 290 * K), fontSize: px(46 * K) }); url10.textContent = 'yourbrand.com'
 const vignette = el('div', 'abs'); S(vignette, { left: 0, top: 0, width: W + 'px', height: H + 'px', zIndex: 90, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 50%, transparent 62%, rgba(10,8,20,.10))' })
 function render(t) {
   bgLight(t)

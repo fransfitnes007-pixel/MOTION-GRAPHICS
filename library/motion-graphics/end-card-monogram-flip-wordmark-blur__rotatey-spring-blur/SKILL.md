@@ -1,5 +1,5 @@
 ---
-name: end-card-g-flip-wordmark-blur-rotatey-spring-blur
+name: end-card-monogram-flip-wordmark-blur-rotatey-spring-blur
 description: "A closing logo lockup: mark flips in, wordmark blurs and settles, shine sweeps, address fades up, then a slow fade out. Use it as the last card of a promotional video."
 ---
 

@@ -6,7 +6,7 @@ Make motion-graphics videos with Claude Code: Instagram Reels, TikToks, YouTube 
 
 **▶ The 50-second showcase, with sound:**
 
-https://github.com/user-attachments/assets/116e8523-d3eb-4d4b-ad42-c2643bd54f8d
+https://github.com/user-attachments/assets/e9299e3f-c02a-4b7f-8a8f-da2687dde81b
 
 The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Full quality: [`docs/media/showcase.mp4`](docs/media/showcase.mp4). Source: [`docs/showcase/`](docs/showcase/).
 

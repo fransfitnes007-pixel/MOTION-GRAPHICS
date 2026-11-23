@@ -64,8 +64,8 @@ const orbs = [
 const driftOrbs = (t) => { for (const o of orbs) S(o.e, { left: (o.x + Math.sin(t * o.sp * 6 + o.s) * 120) + 'px', top: (o.y + Math.cos(t * o.sp * 5 + o.x) * 90) + 'px' }) }
 // The logo is a chrome-gradient placeholder glyph. Swap in your own mark.
 const g1 = el('div', 'abs', root); S(g1, { left: '780px', top: '120px', width: '360px', height: '450px' })
-const g1i = el('div', 'chrome', g1, 'G'); S(g1i, { inset: 0, fontSize: '470px' })
-const g1shine = el('div', 'chrome sh', g1, 'G'); S(g1shine, { inset: 0, fontSize: '470px' })
+const g1i = el('div', 'chrome', g1, 'Y'/*brand-initial*/); S(g1i, { inset: 0, fontSize: '470px' })
+const g1shine = el('div', 'chrome sh', g1, 'Y'/*brand-initial*/); S(g1shine, { inset: 0, fontSize: '470px' })
 const rings1 = [0, 1, 2].map(() => { const r = el('div', 'abs', root); S(r, { borderRadius: '50%', border: '2px solid rgba(124,58,237,.35)' }); return r })
 function render(t) {
   driftOrbs(t)

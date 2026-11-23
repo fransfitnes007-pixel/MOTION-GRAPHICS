@@ -1,197 +1,223 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>motion-reel-kit showcase</title>
 <!-- The showcase film. 1920x1080, every frame is render(t). Cuts are pinned to the voiceover's word times (T below).
-     Build: ./render_clips.sh <pack slugs>, then node ../../engine/tools/render_demo.cjs video showcase.html out.mp4 1920 1080,
-     then python3 mix.py out.mp4. See README.md in this folder. -->
+     Every clip is shown at its own shape: tall reels in 9:16 frames, wide films and interactions in 16:9 frames.
+     Build: see README.md in this folder (render_clips.sh, then render_demo.cjs, then mix.py). -->
 <style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head>
 <body><canvas id="c" width="1920" height="1080"></canvas>
 <script src="assets/data.js"></script>
 <script src="assets/frames.js"></script>
 <script>
 const W = 1920, H = 1080, cv = document.getElementById('c'), g = cv.getContext('2d')
-const FONT = 'system-ui,-apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif', MONO = 'ui-monospace,"SF Mono",Menlo,monospace'
+// San Francisco everywhere: SF Pro on Apple devices, the system UI font elsewhere.
+const FONT = '-apple-system,"SF Pro Display","SF Pro Text",BlinkMacSystemFont,system-ui,"Helvetica Neue",Arial,sans-serif'
 const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lerp = (a, b, t) => a + (b - a) * t
 const pr = (t, a, d) => cl((t - a) / d)
 const eo = (x) => 1 - Math.pow(1 - cl(x), 3), eo5 = (x) => 1 - Math.pow(1 - cl(x), 5)
 const eio = (x) => { x = cl(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 }
 const spring = (x, k = 7, f = 11) => x <= 0 ? 0 : x >= 1.6 ? 1 : 1 - Math.exp(-k * x) * Math.cos(f * x)
 const back = (x) => { x = cl(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2) }
-const hash = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x) }
-const ACC = '#6D7BFF', ACC2 = '#38BDF8', HOT = '#FF6A3D', INK = '#F4F4F8', MUTE = '#8E8E9A'
+const ACC = '#6D7BFF', ACC2 = '#38BDF8', HOT = '#FF6A3D', GOLD = '#FFD479', GREEN = '#7CE38B', INK = '#F5F5F7', MUTE = '#8E8E93'
 
-// Voiceover word times (seconds) for every cut. Regenerate from assets/voiceover.words.json if the voice changes.
+// Voiceover word times (seconds). Regenerate from assets/voiceover.words.json if the voice changes.
 const T = { prompt: .22, one: 1.04, video: 1.92, kit: 3.42, open: 4.72, claude: 5.78, inside: 6.72, n240: 7.62, pieces: 9.08,
   kinetic: 9.94, trans: 10.96, dash: 11.86, endc: 12.64, every: 13.54, code: 14.3, exact: 15.94, micro: 16.84, best: 18.02, rebuilt: 18.62,
   put: 20.16, brand: 20.44, file: 21.16, logo: 22.1, scene: 22.78, endcard: 23.24, follows: 23.7, writes: 24.6, records: 25.68, pins: 26.74,
   words: 27.88, then: 28.22, clicks: 29.58, swishes: 30.1, booms: 30.72, exactf: 31.44, show: 32.52, viral: 32.96, cuts: 34.4, pace: 35.06,
   sound: 35.76, rebuilds: 36.54, reels: 38.28, tiktoks: 39.02, shorts: 39.86, longform: 40.54, clone: 41.8, brandit: 42.5, ship: 43.34, end: 43.9 }
 const DUR = 49.5
-const SC = [0, 2.86, 6.72, 13.54, 16.84, 20.16, 24.6, 28.22, 32.52, 38.28, 41.8, 43.9, DUR]   // scene starts
+const SC = [0, 2.86, 6.72, 13.54, 16.84, 20.16, 24.6, 28.22, 32.52, 38.28, 41.8, 43.9, DUR]
+
+// Content shown, by shape. Wide pieces carry the category they light up in the wall scene.
+const WIDE = [['w_ember', 'type'], ['w_browser', 'trans'], ['w_bento', 'dash'], ['w_logo', 'end'], ['w_caption', 'type'], ['w_cover', 'trans'],
+  ['w_biz', 'dash'], ['w_domain', 'end'], ['w_number', 'type'], ['w_ripple', 'trans'], ['w_dashfly', 'dash'], ['w_typed', 'end']]
+const TALL = ['dino', 'pictogram', 't_dinogo', 't_stamp', 't_fan']
+const PACK12 = ['comma', 'border', 'burn', 'flip', 'i_subscribe_pill', 'i_plus_to', 'i_bottom_tab', 'i_graph_scrub', 'i_number_flip', 'i_otp_input', 'i_hold_to', 'i_delete_to']
 
 // ---------- assets
 const IMG = {}, SEQ = {}
 const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src })
-async function seq(name, from, n) { const a = []; for (let k = 0; k < n; k++) a.push(load(`frames/${name}/${String(from + k).padStart(4, '0')}.jpg`)); SEQ[name] = (await Promise.all(a)).filter(Boolean) }
-const PACK = (new URLSearchParams(location.search).get('pack') || 'comma,border,burn,flip').split(',')
-let POSTERS = [], WAVE = { peaks: [], dur: 1 }
-function frameOf(name, t, fps = 30) { const s = SEQ[name]; if (!s || !s.length) return null; return s[Math.floor(Math.max(0, t) * fps) % s.length] }
+async function seq(name, n) { const a = []; for (let k = 1; k <= n; k++) a.push(load(`frames/${name}/${String(k).padStart(4, '0')}.jpg`)); SEQ[name] = (await Promise.all(a)).filter(Boolean) }
+let WAVE = { peaks: [], dur: 1 }
+const frameOf = (name, t, fps = 30) => { const s = SEQ[name]; if (!s || !s.length) return null; return s[((Math.floor(Math.max(0, t) * fps) % s.length) + s.length) % s.length] }
 
 // ---------- drawing helpers
-function bg(tint = 0) {
-  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.filter = 'none'; g.fillStyle = '#06060A'; g.fillRect(0, 0, W, H)
-  const gr = g.createRadialGradient(W * .5, H * .42, 0, W * .5, H * .42, W * .7)
-  gr.addColorStop(0, `rgba(${lerp(70, 255, tint) | 0},${lerp(80, 106, tint) | 0},${lerp(255, 61, tint) | 0},0.13)`); gr.addColorStop(1, 'rgba(0,0,0,0)')
-  g.fillStyle = gr; g.fillRect(0, 0, W, H)
-  g.fillStyle = 'rgba(255,255,255,0.045)'; for (let y = 24; y < H; y += 40) for (let x = 20; x < W; x += 40) g.fillRect(x, y, 2, 2)
+function bg() {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.filter = 'none'; g.fillStyle = '#060609'; g.fillRect(0, 0, W, H)
+  const gr = g.createRadialGradient(W * .5, H * .42, 0, W * .5, H * .42, W * .72); gr.addColorStop(0, 'rgba(90,100,255,0.12)'); gr.addColorStop(1, 'rgba(0,0,0,0)')
+  g.fillStyle = gr; g.fillRect(0, 0, W, H); g.fillStyle = 'rgba(255,255,255,0.04)'; for (let y = 24; y < H; y += 40) for (let x = 20; x < W; x += 40) g.fillRect(x, y, 2, 2)
 }
 function al(a, fn) { if (a <= .003) return; g.save(); g.globalAlpha *= cl(a); fn(); g.restore() }
 function rr(x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r) }
-function txt(s, x, y, size, o = {}) { g.font = `${o.w || 700} ${size}px ${o.mono ? MONO : FONT}`; g.textAlign = o.a || 'center'; g.textBaseline = 'middle'; g.letterSpacing = (o.ls || 0) + 'px'; g.fillStyle = o.col || INK; g.fillText(s, x, y); g.letterSpacing = '0px' }
-function tw(s, size, o = {}) { g.font = `${o.w || 700} ${size}px ${o.mono ? MONO : FONT}`; g.letterSpacing = (o.ls || 0) + 'px'; const w = g.measureText(s).width; g.letterSpacing = '0px'; return w }
+function txt(s, x, y, size, o = {}) { g.font = `${o.w || 600} ${size}px ${FONT}`; g.textAlign = o.a || 'center'; g.textBaseline = 'middle'; g.letterSpacing = (o.ls ?? -size * .01) + 'px'; g.fillStyle = o.col || INK; g.fillText(s, x, y); g.letterSpacing = '0px' }
+function tw(s, size, o = {}) { g.font = `${o.w || 600} ${size}px ${FONT}`; g.letterSpacing = (o.ls ?? -size * .01) + 'px'; const w = g.measureText(s).width; g.letterSpacing = '0px'; return w }
 function glow(x, y, r, a, col = '255,255,255') { if (a <= 0) return; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${col},${a})`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r) }
-function pill(s, x, y, p, o = {}) { if (p <= 0) return; const size = o.size || 26, ls = size * .14, w = tw(s, size, { w: 750, ls }) + size * 1.6, h = size * 1.9, sc = lerp(.7, 1, back(p))
-  al(eo(p * 1.5), () => { g.save(); g.translate(x, y); g.scale(sc, sc); if (o.glow !== false) glow(0, 0, w * .7, .18, o.gcol || '120,130,255'); g.fillStyle = o.bg || '#fff'; rr(-w / 2, -h / 2, w, h, h / 2); g.fill(); txt(s, 0, 1, size, { w: 750, ls, col: o.col || '#0A0A10' }); g.restore() }) }
-function card(x, y, w, h, r = 28, fill = 'rgba(22,22,30,0.92)') { g.save(); g.shadowColor = 'rgba(0,0,0,.55)'; g.shadowBlur = 60; g.shadowOffsetY = 24; g.fillStyle = fill; rr(x, y, w, h, r); g.fill(); g.restore(); g.save(); g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = 2; rr(x, y, w, h, r); g.stroke(); g.restore() }
-function imgIn(im, x, y, w, h, r = 22) { if (!im) return; g.save(); rr(x, y, w, h, r); g.clip(); const s = Math.max(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * s) / 2, y + (h - im.height * s) / 2, im.width * s, im.height * s); g.restore() }
-function phone(x, y, w, im, label) { const h = w * 2.05; card(x - 10, y - 10, w + 20, h + 20, w * .17, '#0d0d12'); imgIn(im, x, y, w, h, w * .14); g.save(); g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 2; rr(x - 10, y - 10, w + 20, h + 20, w * .17); g.stroke(); g.restore()
-  g.fillStyle = '#000'; rr(x + w * .36, y + 12, w * .28, 22, 11); g.fill(); if (label) pill(label, x + w / 2, y + h + 58, 1, { size: 20 }) }
-function typed(s, p, t) { const n = Math.floor(cl(p) * s.length); return s.slice(0, n) + ((n < s.length || Math.floor(t * 2.5) % 2) ? '▍' : '') }
-function cam(t, a, b, zoom = .035) { const u = pr(t, a, b - a); g.translate(W / 2, H / 2); const z = 1 + zoom * u; g.scale(z, z); g.translate(-W / 2, -H / 2) }
+// a label: plain San Francisco, sentence case, on a soft pill
+function pill(s, x, y, p, o = {}) { if (p <= 0) return; const size = o.size || 26, w = tw(s, size, { w: 600 }) + size * 1.3, h = size * 1.85, sc = lerp(.8, 1, back(p))
+  al(eo(p * 1.5), () => { g.save(); g.translate(x, y); g.scale(sc, sc); g.fillStyle = o.bg || 'rgba(255,255,255,0.94)'; rr(-w / 2, -h / 2, w, h, h / 2); g.fill(); txt(s, 0, 1, size, { w: 600, col: o.col || '#0B0B10' }); g.restore() }) }
+function shadowCard(x, y, w, h, r = 22, fill = '#0E0E14') { g.save(); g.shadowColor = 'rgba(0,0,0,.55)'; g.shadowBlur = 50; g.shadowOffsetY = 20; g.fillStyle = fill; rr(x, y, w, h, r); g.fill(); g.restore(); g.save(); g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = 2; rr(x, y, w, h, r); g.stroke(); g.restore() }
+// draw an image filling a box made at the clip's own aspect ratio (so nothing is squashed or cropped to a different shape)
+function imgIn(im, x, y, w, h, r = 18) { if (!im) return; g.save(); rr(x, y, w, h, r); g.clip(); const s = Math.max(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * s) / 2, y + (h - im.height * s) / 2, im.width * s, im.height * s); g.restore() }
+// clip tiles at native shape: tall = 9:16 phone, wide = 16:9 window
+function tall(name, t, x, y, h, label, o = {}) { const w = h * 9 / 16, r = w * .11; shadowCard(x - 8, y - 8, w + 16, h + 16, r + 6, '#0C0C11'); imgIn(o.img || frameOf(name, t), x, y, w, h, r)
+  g.save(); g.strokeStyle = 'rgba(255,255,255,.2)'; g.lineWidth = 2; rr(x - 8, y - 8, w + 16, h + 16, r + 6); g.stroke(); g.restore(); if (label) pill(label, x + w / 2, y + h + 50, o.lp ?? 1, { size: 24 }); return w }
+function wide(name, t, x, y, w, label, o = {}) { const h = w * 9 / 16; shadowCard(x, y, w, h, 16, '#0C0C11'); imgIn(o.img || frameOf(name, t), x, y, w, h, 16)
+  g.save(); g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 2; rr(x, y, w, h, 16); g.stroke(); g.restore(); if (label) pill(label, x + w / 2, y + h + 44, o.lp ?? 1, { size: 24 }); return h }
+function typed(s, p, t) { const n = Math.floor(cl(p) * s.length); return s.slice(0, n) + ((n < s.length || Math.floor(t * 2.5) % 2) ? '|' : '') }
+function cam(t, a, b, zoom = .03) { const u = pr(t, a, b - a); g.translate(W / 2, H / 2); const z = 1 + zoom * u; g.scale(z, z); g.translate(-W / 2, -H / 2) }
 
 // ---------- scenes
 function s1(t) { // One prompt. One finished video.
-  const m = eio(pr(t, T.one, .45)), ex = eo5(pr(t, T.video - .35, .8))
-  const pw = lerp(980, 120, m), ph = 120, x = W / 2 - pw / 2, y = H / 2 - ph / 2
-  if (ex < 1) al(1 - ex, () => { card(x, y, pw, ph, 60, '#121218'); g.save(); g.strokeStyle = `rgba(109,123,255,${.5 + .3 * Math.sin(t * 6)})`; g.lineWidth = 3; rr(x, y, pw, ph, 60); g.stroke(); g.restore()
-    al(1 - m * 1.6, () => { txt('›', x + 56, H / 2, 44, { col: ACC, w: 800 }); txt(typed('/reel a 40-second launch reel for our app', pr(t, T.prompt, .7), t), x + 92, H / 2 + 2, 34, { a: 'left', w: 500, mono: true }) })
-    al(m, () => { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(W / 2 - 14, H / 2 - 22); g.lineTo(W / 2 + 22, H / 2); g.lineTo(W / 2 - 14, H / 2 + 22); g.closePath(); g.fill() }) })
-  if (ex > 0) { const fw = lerp(120, 1500, ex), fh = fw * 9 / 16; al(ex, () => { card(W / 2 - fw / 2, H / 2 - fh / 2, fw, fh, lerp(60, 26, ex), '#000'); imgIn(frameOf('ledword', t - T.video + .4), W / 2 - fw / 2, H / 2 - fh / 2, fw, fh, lerp(60, 26, ex)) }) }
-  pill('ONE PROMPT', W / 2, 260, pr(t, T.prompt + .1, .3)); al(pr(t, T.video - .1, .3), () => pill('ONE FINISHED VIDEO', W / 2, 260 + 0, 1, { bg: ACC, col: '#fff', gcol: '109,123,255' }))
+  const m = eio(pr(t, T.one, .45)), ex = eo5(pr(t, T.video - .4, .8)), pw = lerp(1000, 116, m), ph = 116, x = W / 2 - pw / 2, y = H / 2 - ph / 2
+  if (ex < 1) al(1 - ex, () => { shadowCard(x, y, pw, ph, 58, '#121218'); g.save(); g.strokeStyle = `rgba(109,123,255,${.45 + .3 * Math.sin(t * 6)})`; g.lineWidth = 3; rr(x, y, pw, ph, 58); g.stroke(); g.restore()
+    al(1 - m * 1.6, () => txt(typed('/reel  a 40-second launch reel for our app', pr(t, T.prompt, .7), t), x + 56, H / 2 + 1, 36, { a: 'left', w: 500 }))
+    al(m, () => { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(W / 2 - 13, H / 2 - 21); g.lineTo(W / 2 + 21, H / 2); g.lineTo(W / 2 - 13, H / 2 + 21); g.closePath(); g.fill() }) })
+  if (ex > 0) { const h = lerp(116, 820, ex); al(ex, () => { const w = h * 9 / 16; tall('pictogram', t - T.video + 2.4, W / 2 - w / 2, H / 2 - h / 2 + 40, h) }) }
+  pill('One prompt', W / 2, 110, pr(t, T.prompt + .1, .3), { size: 28 }); al(pr(t, T.video - .1, .3), () => pill('One finished video', W / 2, 110, 1, { size: 28, bg: ACC, col: '#fff' }))
 }
 function s2(t) { // This is Motion Reel Kit, an open source plugin for Claude Code.
-  const p = pr(t, T.kit - .15, .6), sp = spring(pr(t, T.kit - .15, 1.2)), wm = IMG.wordmark
-  if (p > 0) { const rp = pr(t, T.kit, .7); al(1 - rp, () => { g.save(); g.strokeStyle = `rgba(160,170,255,${.8 * (1 - rp)})`; g.lineWidth = 6; g.beginPath(); g.ellipse(W / 2, 430, 200 + 900 * eo(rp), 60 + 260 * eo(rp), 0, 0, 7); g.stroke(); g.restore() })
-    glow(W / 2, 430, 700, .22 * eo(p)); if (wm) al(eo(p), () => { const s = lerp(1.35, 1, sp) * 1.0, w = 1300 * s, h = wm.height * w / wm.width; g.drawImage(wm, W / 2 - w / 2, 430 - h / 2, w, h) }) }
-  al(pr(t, T.open - .1, .3), () => txt(typed('An open-source plugin for Claude Code', pr(t, T.open - .1, 1.25), t), W / 2, 610, 46, { w: 500, col: '#D6D6E0' }))
-  ;[['MIT', 0], ['LOCAL-FIRST', .14], ['WHITE-LABEL', .28], ['241 PIECES', .42]].forEach(([s, d], i) => pill(s, W / 2 + (i - 1.5) * 300, 760, pr(t, T.claude + d, .35), { size: 22, bg: i === 3 ? ACC : '#fff', col: i === 3 ? '#fff' : '#0A0A10' }))
+  const p = pr(t, T.kit - .15, .6), sp = spring(pr(t, T.kit - .15, 1.2))
+  const rp = pr(t, T.kit, .7); al(1 - rp, () => { if (rp <= 0) return; g.strokeStyle = `rgba(160,170,255,${.7 * (1 - rp)})`; g.lineWidth = 4; g.beginPath(); g.ellipse(W / 2, 440, 180 + 900 * eo(rp), 60 + 260 * eo(rp), 0, 0, 7); g.stroke() })
+  glow(W / 2, 440, 720, .2 * eo(p)); al(eo(p), () => { g.save(); g.translate(W / 2, 440); const s = lerp(1.25, 1, sp); g.scale(s, s); txt('motion-reel-kit', 0, 0, 168, { w: 700 }); g.restore() })
+  al(pr(t, T.open - .1, .3), () => txt(typed('An open-source plugin for Claude Code', pr(t, T.open - .1, 1.25), t), W / 2, 600, 48, { w: 400, col: '#D2D2DA' }))
+  ;[['MIT', 0], ['Local-first', .14], ['White-label', .28], ['241 pieces', .42]].forEach(([s, d], i) => pill(s, W / 2 + (i - 1.5) * 260, 740, pr(t, T.claude + d, .35), { size: 26, bg: i === 3 ? ACC : undefined, col: i === 3 ? '#fff' : undefined }))
 }
 function s3(t) { // Inside, over 240 motion pieces. Kinetic type, transitions, dashboards, end cards.
-  const wallIn = eio(pr(t, T.pieces - .3, 1.0)), n = Math.round(lerp(0, 241, eo5(pr(t, T.n240 - .3, 1.3))))
-  if (wallIn > 0) { g.save(); const tilt = lerp(0, 1, wallIn); g.translate(W / 2, H / 2 + 60); g.transform(1, 0, -.18 * tilt, 1, 0, 0); g.scale(lerp(1.4, 1, wallIn), lerp(1.4, 1, wallIn))
-    const tw_ = 300, th = 169, gap = 22, cols = 9, rows = 8, sx = (t - SC[2]) * 46
-    const hot = t >= T.endc ? 'end' : t >= T.dash ? 'dash' : t >= T.trans ? 'trans' : t >= T.kinetic ? 'type' : null
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols + 2; c++) { const i = (r * 11 + c) % POSTERS.length, P = POSTERS[i]; if (!P || !P.img) continue
-      const off = (r % 2 ? sx : -sx) % (tw_ + gap), x = (c - cols / 2 - 1) * (tw_ + gap) + off, y = (r - rows / 2) * (th + gap)
-      const lit = hot ? (P.k === hot ? 1 : .18) : .75, k = hash(i) * .4
-      al(wallIn * lit * eo(pr(t, T.pieces - .3 + k, .5)), () => { g.drawImage(P.img, x, y, tw_, th); if (hot && P.k === hot) { g.strokeStyle = 'rgba(160,170,255,.9)'; g.lineWidth = 3; g.strokeRect(x, y, tw_, th) } }) }
-    g.restore(); const vg = g.createLinearGradient(0, 0, 0, H); vg.addColorStop(0, 'rgba(6,6,10,.95)'); vg.addColorStop(.25, 'rgba(6,6,10,0)'); vg.addColorStop(.75, 'rgba(6,6,10,0)'); vg.addColorStop(1, 'rgba(6,6,10,.95)'); g.fillStyle = vg; g.fillRect(0, 0, W, H) }
-  const cy = lerp(H / 2, 150, wallIn), cs = lerp(1, .42, wallIn)
-  al(pr(t, T.inside, .3), () => { glow(W / 2, cy, 420 * cs, .25 * (1 - wallIn)); txt(String(n), W / 2, cy, 330 * cs, { w: 850 }); al(1 - wallIn, () => txt('MOTION PIECES', W / 2, cy + 210, 30, { w: 700, ls: 10, col: MUTE })) })
-  ;[['KINETIC TYPE', T.kinetic], ['TRANSITIONS', T.trans], ['DASHBOARDS', T.dash], ['END CARDS', T.endc]].forEach(([s, a], i, A) => { const nx = A[i + 1] ? A[i + 1][1] : SC[3]; if (t >= a - .05 && t < nx) pill(s, W / 2, H - 120, pr(t, a - .05, .3), { size: 34 }) })
+  const wallIn = eio(pr(t, T.pieces - .45, 1.0)), n = Math.round(lerp(0, 241, eo5(pr(t, T.n240 - .3, 1.3))))
+  const hot = t >= T.endc ? 'end' : t >= T.dash ? 'dash' : t >= T.trans ? 'trans' : t >= T.kinetic ? 'type' : null
+  if (wallIn > 0) {
+    // one long strip: two stacked wide films, then a tall reel, repeated; it pans left for the whole scene
+    const TH = 520, WH = (TH - 16) / 2, WW = WH * 16 / 9, TW = TH * 9 / 16, gap = 18, y0 = 400
+    const cols = []; let wi = 0, ti = 0; for (let k = 0; k < 11; k++) cols.push(k % 2 === 0 ? { kind: 'w', a: WIDE[wi++ % WIDE.length], b: WIDE[wi++ % WIDE.length] } : { kind: 't', n: TALL[ti++ % TALL.length] })
+    const total = cols.reduce((s, c) => s + (c.kind === 'w' ? WW : TW) + gap, 0), pan = lerp(80, -(total - W) - 80, pr(t, T.pieces - .45, SC[3] - T.pieces + .45))
+    g.save(); g.translate(pan, (1 - wallIn) * 260); let x = 0
+    cols.forEach((c, k) => { const ap = eo(pr(t, T.pieces - .4 + k * .05, .45))
+      if (c.kind === 'w') { [c.a, c.b].forEach(([name, cat], j) => { const lit = hot ? (cat === hot ? 1 : .22) : .9, y = y0 + j * (WH + 16)
+          al(ap * lit, () => { wide(name, t - T.pieces + j * .6 + k * .2, x, y, WW); if (hot && cat === hot) { g.strokeStyle = 'rgba(170,180,255,.95)'; g.lineWidth = 3; rr(x, y, WW, WH, 16); g.stroke() } }) }); x += WW + gap }
+      else { const lit = hot ? .22 : .95; al(ap * lit, () => tall(c.n, t - T.pieces + k * .4, x, y0, TH)); x += TW + gap } })
+    g.restore(); const vg = g.createLinearGradient(0, 0, W, 0); vg.addColorStop(0, 'rgba(6,6,9,.9)'); vg.addColorStop(.08, 'rgba(6,6,9,0)'); vg.addColorStop(.92, 'rgba(6,6,9,0)'); vg.addColorStop(1, 'rgba(6,6,9,.9)'); g.fillStyle = vg; g.fillRect(0, 0, W, H)
+  }
+  const cy = lerp(H / 2, 210, wallIn), cs = lerp(1, .46, wallIn)
+  al(pr(t, T.inside, .3), () => { glow(W / 2, cy, 420 * cs, .22 * (1 - wallIn)); txt(String(n), W / 2, cy, 320 * cs, { w: 700 }); al(1 - wallIn, () => txt('motion pieces', W / 2, cy + 200, 40, { w: 500, col: MUTE })) })
+  ;[['Kinetic type', T.kinetic], ['Transitions', T.trans], ['Dashboards', T.dash], ['End cards', T.endc]].forEach(([s, a], i, A) => { const nx = A[i + 1] ? A[i + 1][1] : SC[3]; if (t >= a - .05 && t < nx) pill(s, W / 2, 1010, pr(t, a - .05, .3), { size: 32 }) })
 }
 function s4(t) { // Every frame is code, so every render is exact.
-  const p = eo(pr(t, SC[3], .5)); card(150, 250, 720, 580, 28, '#0E0E15')
-  al(p, () => { const L = ['function render(t) {', '  sky.dither(t)', '  dino.jump(at(T.j1))', '  pills.pop(t, CONFIG)', '  return frame', '}', '', `t = ${(t * 1).toFixed(3)}`, `frame ${String(Math.floor(t * 30)).padStart(4, '0')}`]
-    L.forEach((l, i) => { const c = i >= 7 ? ACC2 : i === 0 || i === 5 ? '#C9B8FF' : '#E8E8F0'; al(pr(t, SC[3] + .1 + i * .06, .25), () => txt(l, 200, 320 + i * 56, 32, { a: 'left', w: 500, mono: true, col: c })) }) })
-  const strip = eo(pr(t, SC[3] + .2, .6)), fw = 170, fh = fw * 16 / 9
-  for (let k = -1; k < 5; k++) { const ft = 30 + k * .9 + (t - SC[3]) * .9, x = 960 + k * (fw + 26) - ((t - SC[3]) * 60) % (fw + 26), y = 360
-    al(strip * (k === 2 && t > T.exact ? 1 : .8), () => { imgIn(frameOf('dino', ft), x, y, fw, fh, 14); txt('f ' + String(Math.floor(ft * 30)).padStart(4, '0'), x + fw / 2, y + fh + 34, 20, { mono: true, w: 500, col: MUTE }) }) }
-  const xp = pr(t, T.exact - .1, .35); al(xp, () => { const x = 960 + 2 * (fw + 26) - ((t - SC[3]) * 60) % (fw + 26); g.strokeStyle = ACC2; g.lineWidth = 4; rr(x - 8, 352, fw + 16, fh + 16, 18); g.stroke(); pill('SAME PIXELS, EVERY RENDER', 1350, 950, xp, { size: 24, bg: ACC2 }) })
-  pill('EVERY FRAME IS CODE', 510, 170, pr(t, T.every, .3), { size: 26 })
+  const p = eo(pr(t, SC[3], .5)); shadowCard(150, 250, 700, 580, 26, '#0E0E15')
+  al(p, () => { const L = ['function render(t) {', '    sky.dither(t)', '    dino.jump(at(T.jump))', '    tags.pop(t, CONFIG)', '    return frame', '}', '', `t = ${t.toFixed(3)} s`, `frame ${String(Math.floor(t * 30)).padStart(4, '0')}`]
+    L.forEach((l, i) => { const c = i >= 7 ? ACC2 : i === 0 || i === 5 ? '#C9B8FF' : '#E8E8F0'; al(pr(t, SC[3] + .1 + i * .06, .25), () => txt(l, 200, 320 + i * 56, 34, { a: 'left', w: 500, col: c })) }) })
+  const strip = eo(pr(t, SC[3] + .2, .6)), fh = 330, fw = fh * 9 / 16, step = fw + 26
+  for (let k = -1; k < 6; k++) { const ft = 30 + k * .9 + (t - SC[3]) * .9, x = 960 + k * step - ((t - SC[3]) * 60) % step, y = 360
+    al(strip * (k === 2 && t > T.exact ? 1 : .82), () => { tall('dino', ft, x, y, fh); txt('frame ' + String(Math.floor(ft * 30)).padStart(4, '0'), x + fw / 2, y + fh + 40, 20, { w: 500, col: MUTE }) }) }
+  const xp = pr(t, T.exact - .1, .35); al(xp, () => { const x = 960 + 2 * step - ((t - SC[3]) * 60) % step; g.strokeStyle = ACC2; g.lineWidth = 4; rr(x - 14, 346, fw + 28, fh + 28, 22); g.stroke(); pill('Same pixels, every render', 1370, 960, xp, { size: 26, bg: ACC2 }) })
+  pill('Every frame is code', 500, 170, pr(t, T.every, .3), { size: 28 })
 }
-function s5(t) { // Micro-interactions from the best apps, rebuilt for video.
-  const cw = 760, ch = 428, gx = 40, gy = 34, x0 = W / 2 - cw - gx / 2, y0 = H / 2 - ch - gy / 2 + 30
-  PACK.slice(0, 4).forEach((name, i) => { const p = spring(pr(t, T.micro + i * .14, 1.1)), x = x0 + (i % 2) * (cw + gx), y = y0 + Math.floor(i / 2) * (ch + gy)
-    al(eo(pr(t, T.micro + i * .14, .35)), () => { g.save(); g.translate(x + cw / 2, y + ch / 2); g.scale(lerp(.82, 1, p), lerp(.82, 1, p)); g.translate(-cw / 2, -ch / 2); card(0, 0, cw, ch, 26, '#111'); imgIn(frameOf(name, t - T.micro), 0, 0, cw, ch, 26); g.restore() }) })
-  pill('THE BEST APP MICRO-INTERACTIONS', W / 2, 92, pr(t, T.best - .1, .3), { size: 26 }); pill('REBUILT FOR VIDEO', W / 2, H - 60, pr(t, T.rebuilt, .3), { size: 26, bg: ACC, col: '#fff' })
+function s5(t) { // Micro-interactions from the best apps, rebuilt for video. Four big, then all twelve.
+  const z = eio(pr(t, T.rebuilt - .1, .75))
+  PACK12.forEach((name, i) => { const big = i < 4
+    const bw = 760, bx = W / 2 - bw - 20 + (i % 2) * (bw + 40), by = 150 + Math.floor(i / 2) * (bw * 9 / 16 + 34)
+    const sw = 400, sx = W / 2 - 2 * sw - 54 + (i % 4) * (sw + 36), sy = 150 + Math.floor(i / 4) * (sw * 9 / 16 + 60)
+    let x, y, w, a
+    if (big) { x = lerp(bx, sx, z); y = lerp(by, sy, z); w = lerp(bw, sw, z); a = eo(pr(t, T.micro + i * .14, .35)) } else { x = sx; y = sy; w = sw; a = eo(pr(t, T.rebuilt + (i - 4) * .06, .4)) }
+    if (a <= 0) return; const sp = big ? spring(pr(t, T.micro + i * .14, 1.1)) : spring(pr(t, T.rebuilt + (i - 4) * .06, 1.0))
+    al(a, () => { g.save(); g.translate(x + w / 2, y + w * 9 / 32); g.scale(lerp(.85, 1, sp), lerp(.85, 1, sp)); g.translate(-w / 2, -w * 9 / 32); wide(name, t - T.micro + i * .3, 0, 0, w); g.restore() }) })
+  pill('The best app micro-interactions', W / 2, 80, pr(t, T.best - .1, .3), { size: 28 }); pill('Rebuilt for video', W / 2, 1010, pr(t, T.rebuilt, .3), { size: 28, bg: ACC, col: '#fff' })
 }
 function s6(t) { // Put your brand in one file, and every logo, scene and end card follows.
-  card(120, 210, 700, 560, 28, '#0E0E15'); txt('brand.config.json', 160, 260, 24, { a: 'left', w: 600, mono: true, col: MUTE })
-  const name = t < T.brand + .2 ? 'YourBrand' : t < T.file ? 'YourBrand'.slice(0, Math.max(0, 9 - Math.floor((t - T.brand - .2) / .05))) : typed('Acme', pr(t, T.file - .1, .4), t).replace('▍', '')
-  const L = ['{', `  "name": "${name}${t > T.brand && t < T.file + .4 && Math.floor(t * 3) % 2 ? '▍' : ''}",`, `  "domain": "${t > T.file + .3 ? 'acme.studio' : 'yourbrand.com'}",`, `  "handle": "${t > T.file + .4 ? '@acme' : '@yourbrand'}",`, '  "colors": { "accent": "#6D7BFF" },', '  "app_store": { ... }', '}']
-  L.forEach((l, i) => txt(l, 160, 330 + i * 58, 32, { a: 'left', w: 500, mono: true, col: i === 1 ? '#FFD479' : '#E8E8F0' }))
-  if (t > T.file + .1) al(pr(t, T.file + .1, .3), () => txt('$ python3 engine/tools/apply_brand.py   ✓ 64 files', 160, 720, 24, { a: 'left', w: 500, mono: true, col: '#7CE38B' }))
-  const cards = [['brand_before_dino', 'brand_after_dino', T.logo], ['store_before', 'store_after', T.scene], ['brand_before_dino', 'brand_after_dino', T.endcard]]
-  cards.forEach(([a, b, at], i) => { const x = 930 + i * 310, y = 200, w = 270, h = 480, f = pr(t, at, .5), sx = Math.abs(Math.cos(f * Math.PI)), after = f > .5
-    al(eo(pr(t, SC[5] + .1 + i * .12, .4)), () => { g.save(); g.translate(x + w / 2, y + h / 2); g.scale(Math.max(.02, sx), 1); g.translate(-w / 2, -h / 2); card(0, 0, w, h, 22, '#000'); imgIn(IMG[after ? b : a], 0, 0, w, h, 22); g.restore()
-      pill(['LOGO', 'APP STORE CARD', 'END CARD'][i], x + w / 2, y + h + 50, pr(t, at - .05, .3), { size: 18 }) }) })
-  pill('ONE FILE', 470, 150, pr(t, T.brand, .3), { size: 26 }); pill('EVERYTHING FOLLOWS', 1385, 150, pr(t, T.follows - .1, .3), { size: 26, bg: ACC, col: '#fff' })
+  shadowCard(110, 230, 640, 560, 26, '#0E0E15'); txt('brand.config.json', 150, 280, 24, { a: 'left', w: 500, col: MUTE })
+  const name = t < T.brand + .2 ? 'YourBrand' : t < T.file ? 'YourBrand'.slice(0, Math.max(0, 9 - Math.floor((t - T.brand - .2) / .05))) : typed('Acme', pr(t, T.file - .1, .4), t).replace('|', '')
+  const L = ['{', `   "name": "${name}${t > T.brand && t < T.file + .4 && Math.floor(t * 3) % 2 ? '|' : ''}",`, `   "domain": "${t > T.file + .3 ? 'acme.studio' : 'yourbrand.com'}",`, `   "handle": "${t > T.file + .4 ? '@acme' : '@yourbrand'}",`, '   "accent": "#6D7BFF",', '   "app_store": { … }', '}']
+  L.forEach((l, i) => txt(l, 150, 350 + i * 58, 32, { a: 'left', w: 500, col: i === 1 ? GOLD : '#E8E8F0' }))
+  if (t > T.file + .1) al(pr(t, T.file + .1, .3), () => txt('apply_brand.py   ✓ 64 files', 150, 740, 26, { a: 'left', w: 500, col: GREEN }))
+  // three outputs, each at its own shape: the logo end card is wide, the App Store card and the reel's end card are tall
+  const flipAt = (at) => { const f = pr(t, at, .5); return [Math.max(.02, Math.abs(Math.cos(f * Math.PI))), f > .5] }
+  const card = (cx, cy, at, k, fn) => al(eo(pr(t, SC[5] + .1 + k * .12, .4)), () => { const [sx, after] = flipAt(at); g.save(); g.translate(cx, cy); g.scale(sx, 1); g.translate(-cx, -cy); fn(after); g.restore() })
+  const lw = 540, lh = lw * 9 / 16, lx = 800, ly = 250
+  card(lx + lw / 2, ly + lh / 2, T.logo, 0, (after) => wide(null, 0, lx, ly, lw, null, { img: IMG[after ? 'logo_after' : 'logo_before'] }))
+  pill('Logo', lx + lw / 2, ly + lh + 44, pr(t, T.logo - .05, .3), { size: 24 })
+  const th = 560, tw_ = th * 9 / 16, ax = 1430, ay = 230
+  card(ax + tw_ / 2, ay + th / 2, T.scene, 1, (after) => tall(null, 0, ax, ay, th, null, { img: IMG[after ? 'store_after' : 'store_before'] }))
+  pill('App Store card', ax + tw_ / 2, ay + th + 50, pr(t, T.scene - .05, .3), { size: 24 })
+  const eh = 300, ew = eh * 9 / 16, ex = lx + lw / 2 - ew / 2, ey = 660
+  card(ex + ew / 2, ey + eh / 2, T.endcard, 2, (after) => tall(null, 0, ex, ey, eh, null, { img: IMG[after ? 'brand_after_dino' : 'brand_before_dino'] }))
+  pill('End card', ex + ew + 110, ey + eh / 2, pr(t, T.endcard - .05, .3), { size: 24 })
+  pill('One file', 430, 160, pr(t, T.brand, .3), { size: 28 }); pill('Everything follows', 1100, 160, pr(t, T.follows - .1, .3), { size: 28, bg: ACC, col: '#fff' })
 }
 function waveRow(t, y, h, t0, t1, col) { const pk = WAVE.peaks, n = pk.length; if (!n) return; const x0 = 140, x1 = W - 140
-  for (let x = x0; x < x1; x += 6) { const tt = lerp(t0, t1, (x - x0) / (x1 - x0)), i = Math.floor(tt / WAVE.dur * n); if (i < 0 || i >= n) continue; const a = pk[i] * h, past = tt < t
-    g.fillStyle = past ? col : 'rgba(255,255,255,.22)'; rr(x, y - a, 3.5, a * 2, 2); g.fill() } }
+  for (let x = x0; x < x1; x += 6) { const tt = lerp(t0, t1, (x - x0) / (x1 - x0)), i = Math.floor(tt / WAVE.dur * n); if (i < 0 || i >= n) continue; const a = pk[i] * h
+    g.fillStyle = tt < t ? col : 'rgba(255,255,255,.22)'; rr(x, y - a, 3.5, a * 2, 2); g.fill() } }
 function s7(t) { // It writes the script, records the voice, and pins every beat to the words.
-  const lines = ['One prompt. One finished video.', 'This is Motion Reel Kit…', 'Inside, over 240 motion pieces…']
-  al(pr(t, T.writes, .3), () => { card(140, 130, 1640, 230, 26, '#0E0E15'); lines.forEach((l, i) => txt(typed(l, pr(t, T.writes + i * .35, .5), t).replace('▍', ''), 190, 190 + i * 62, 34, { a: 'left', w: 500, col: i ? '#C8C8D2' : INK })); pill('SCRIPT', 1640, 130, pr(t, T.writes, .3), { size: 18 }) })
-  const wp = pr(t, T.records - .1, .4), t0 = 0, t1 = 9.2, vt = lerp(0, 9.2, pr(t, T.records, 3.4))
-  al(wp, () => { waveRow(vt, 610, 150, t0, t1, ACC2); pill('VOICE', 1640, 470, 1, { size: 18 }) })
+  const lines = ['One prompt. One finished video.', 'This is Motion Reel Kit, an open-source plugin…', 'Inside, over 240 motion pieces…']
+  al(pr(t, T.writes, .3), () => { shadowCard(140, 120, 1640, 250, 26, '#0E0E15'); lines.forEach((l, i) => txt(typed(l, pr(t, T.writes + i * .35, .5), t).replace('|', ''), 190, 185 + i * 64, 36, { a: 'left', w: i ? 400 : 600, col: i ? '#C8C8D2' : INK })); pill('Script', 1660, 120, pr(t, T.writes, .3), { size: 22 }) })
+  const wp = pr(t, T.records - .1, .4), vt = lerp(0, 9.2, pr(t, T.records, 3.4))
+  al(wp, () => { waveRow(vt, 610, 150, 0, 9.2, ACC2); pill('Voice', 1660, 470, 1, { size: 22 }) })
   const words = [['One', .0], ['prompt', .22], ['one', 1.04], ['finished', 1.38], ['video', 1.92], ['This', 2.86], ['Motion Reel Kit', 3.42], ['open source', 4.72], ['Claude Code', 5.78], ['Inside', 6.72], ['240', 7.62], ['pieces', 9.08]]
   words.forEach(([w, wt], i) => { const x = lerp(140, W - 140, wt / 9.2), d = pr(t, T.pins + i * .08, .35); if (d <= 0) return
-    al(d, () => { const y = lerp(440, 800, eo(d)); g.strokeStyle = 'rgba(255,212,121,.9)'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, 440); g.lineTo(x, y); g.stroke(); g.fillStyle = '#FFD479'; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill(); txt(w, x, y + 40, 22, { w: 600, col: '#FFD479' }) }) })
-  pill('EVERY BEAT PINNED TO A WORD', W / 2, 980, pr(t, T.words - .2, .3), { size: 26, bg: '#FFD479', gcol: '255,212,121' })
+    al(d, () => { const y = lerp(450, 800, eo(d)); g.strokeStyle = 'rgba(255,212,121,.9)'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, 450); g.lineTo(x, y); g.stroke(); g.fillStyle = GOLD; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill(); txt(w, x, y + (i % 2 ? 72 : 38), 24, { w: 500, col: GOLD }) }) })
+  pill('Every beat pinned to a word', W / 2, 980, pr(t, T.words - .2, .3), { size: 28, bg: GOLD })
 }
 function s8(t) { // Then it lays down the clicks, swishes and booms on the exact frame.
-  const ph = lerp(160, W - 160, pr(t, T.then, SC[8] - T.then)), rows = [['PICTURE', 300], ['VOICE', 520], ['SFX', 740]]
-  rows.forEach(([n, y], i) => al(pr(t, T.then + i * .1, .3), () => { card(140, y - 80, W - 280, 160, 22, '#0E0E15'); txt(n, 180, y - 52, 18, { a: 'left', w: 700, ls: 4, col: MUTE }) }))
-  for (let k = 0; k < 14; k++) { const x = 170 + k * 116; al(pr(t, T.then + .1, .3), () => imgIn(frameOf('pictogram', 12 + k * 2.3), x, 252, 100, 100 * .56 * 1.0, 8)) }
-  al(pr(t, T.then + .2, .3), () => waveRow(lerp(28, 32.5, pr(t, T.then, 4.3)), 540, 50, 26, 34, ACC2))
-  const ev = [['CLICK', T.clicks, '#FFD479'], ['SWISH', T.swishes, ACC2], ['BOOM', T.booms, HOT], ['CLICK', T.booms + .45, '#FFD479'], ['SWISH', T.exactf - .1, ACC2]]
+  const ph = lerp(160, W - 160, pr(t, T.then, SC[8] - T.then)), rows = [['Picture', 165, 340], ['Voice', 545, 150], ['Sound effects', 735, 170]]
+  rows.forEach(([n, y, h], i) => al(pr(t, T.then + i * .1, .3), () => { shadowCard(140, y, W - 280, h, 22, '#0E0E15'); txt(n, 170, y + 26, 22, { a: 'left', w: 600, col: MUTE }) }))
+  const th = 250, tw_ = th * 9 / 16   // the picture track shows the reel at its real shape: tall frames
+  for (let k = 0; k < 13; k++) { const x = 180 + k * (tw_ + 10); al(pr(t, T.then + .1 + k * .02, .3), () => imgIn(frameOf('pictogram', 12 + k * 2.3), x, 238, tw_, th, 10)) }
+  al(pr(t, T.then + .2, .3), () => waveRow(lerp(28, 32.5, pr(t, T.then, 4.3)), 640, 44, 26, 34, ACC2))
+  const ev = [['Click', T.clicks, GOLD], ['Swish', T.swishes, ACC2], ['Boom', T.booms, HOT], ['Click', T.booms + .45, GOLD], ['Swish', T.exactf - .1, ACC2]]
   ev.forEach(([n, at, c], i) => { const x = lerp(160, W - 160, (at - T.then) / (SC[8] - T.then)), p = pr(t, at - .02, .3); if (p <= 0) return
-    const br = pr(t, at, .5); al(1 - br, () => { g.strokeStyle = c; g.lineWidth = 4; g.beginPath(); g.arc(x, 740, 20 + 90 * eo(br), 0, 7); g.stroke() })
-    al(eo(p), () => { g.fillStyle = c; rr(x - 4, 690, 8, 100, 4); g.fill(); txt(n, x, 812 + (i % 2) * 30, 22, { w: 750, ls: 3, col: c }) }) })
-  g.save(); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(ph, 200); g.lineTo(ph, 840); g.stroke(); g.restore(); glow(ph, 200, 40, .6)
-  const fz = pr(t, T.exactf - .05, .4); al(fz, () => pill(`FRAME ${String(Math.floor(T.exactf * 30)).padStart(4, '0')}  ✓`, ph, 940, fz, { size: 26, bg: '#7CE38B' }))
+    const br = pr(t, at, .5); al(1 - br, () => { if (br <= 0) return; g.strokeStyle = c; g.lineWidth = 4; g.beginPath(); g.arc(x, 810, 20 + 90 * eo(br), 0, 7); g.stroke() })
+    al(eo(p), () => { g.fillStyle = c; rr(x - 4, 765, 8, 80, 4); g.fill(); txt(n, x, 870 + (i % 2) * 34, 24, { w: 600, col: c }) }) })
+  g.save(); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(ph, 155); g.lineTo(ph, 915); g.stroke(); g.restore(); glow(ph, 155, 40, .6)
+  const fz = pr(t, T.exactf - .05, .4); al(fz, () => pill(`Frame ${String(Math.floor(T.exactf * 30)).padStart(4, '0')}  ✓`, ph, 990, fz, { size: 28, bg: GREEN }))
 }
 function s9(t) { // Show it a viral reel, and it measures the cuts, the pace and the sound, then rebuilds the format for you.
-  const lp = eo(pr(t, T.show, .5)); g.save(); g.translate(lerp(-300, 0, lp), 0); phone(180, 150, 330, frameOf('pictogram', t - T.show + 3), 'REFERENCE'); g.restore()
-  const sc = pr(t, T.viral + .1, 1.4); al(sc > 0 && sc < 1 ? 1 : 0, () => { const y = lerp(150, 150 + 330 * 2.05, sc); g.fillStyle = 'rgba(56,189,248,.85)'; g.fillRect(170, y - 2, 350, 4); glow(345, y, 160, .35, '56,189,248') })
-  const chips = [['CUTS', '23 · 3.1 s shots', T.cuts], ['PACE', '4.9 syl/s · 218 wpm', T.pace], ['SOUND', 'bed 54 bpm · 277 sfx', T.sound]]
-  chips.forEach(([k, v, at], i) => { const p = pr(t, at - .05, .35); al(eo(p), () => { const y = 230 + i * 150, x = 640; card(x, y, 560, 110, 22, '#101018'); txt(k, x + 36, y + 36, 20, { a: 'left', w: 750, ls: 5, col: ACC2 }); txt(v, x + 36, y + 76, 34, { a: 'left', w: 700 }) }) })
-  const sp = pr(t, T.sound + .1, .5); al(sp, () => { imgIn(IMG.spectrum, 640, 700, 560, 170, 16); txt('side channel, voice removed', 920, 900, 18, { w: 500, col: MUTE }) })
-  const rb = pr(t, T.rebuilds - .1, .6); al(rb, () => { g.strokeStyle = '#fff'; g.lineWidth = 5; g.lineCap = 'round'; const x0 = 1240, x1 = lerp(1240, 1390, eo(rb)); g.beginPath(); g.moveTo(x0, 540); g.lineTo(x1, 540); g.lineTo(x1 - 22, 518); g.moveTo(x1, 540); g.lineTo(x1 - 22, 562); g.stroke()
-    g.save(); g.translate(0, (1 - eo(rb)) * 60); phone(1440, 150, 330, frameOf('dino', t - T.rebuilds + 6), 'YOURS'); g.restore() })
+  const lp = eo(pr(t, T.show, .5)), PH = 690; g.save(); g.translate(lerp(-300, 0, lp), 0); tall('pictogram', t - T.show + 3, 190, 150, PH, 'Reference'); g.restore()
+  const sc = pr(t, T.viral + .1, 1.4); al(sc > 0 && sc < 1 ? 1 : 0, () => { const y = lerp(150, 150 + PH, sc); g.fillStyle = 'rgba(56,189,248,.85)'; g.fillRect(180, y - 2, PH * 9 / 16 + 20, 4); glow(190 + PH * 9 / 32, y, 170, .35, '56,189,248') })
+  const chips = [['Cuts', '23 cuts · 3.1 s shots', T.cuts], ['Pace', '4.9 syllables/s · 218 wpm', T.pace], ['Sound', 'Bed 54 bpm · 277 effects', T.sound]]
+  chips.forEach(([k, v, at], i) => { const p = pr(t, at - .05, .35); al(eo(p), () => { const y = 220 + i * 150, x = 640; shadowCard(x, y, 580, 112, 22, '#101018'); txt(k, x + 34, y + 36, 22, { a: 'left', w: 600, col: ACC2 }); txt(v, x + 34, y + 76, 34, { a: 'left', w: 600 }) }) })
+  const sp = pr(t, T.sound + .1, .5); al(sp, () => { imgIn(IMG.spectrum, 640, 690, 580, 170, 16); txt('Side channel, voice removed', 930, 890, 20, { w: 400, col: MUTE }) })
+  const rb = pr(t, T.rebuilds - .1, .6); al(rb, () => { g.strokeStyle = '#fff'; g.lineWidth = 5; g.lineCap = 'round'; const x0 = 1260, x1 = lerp(1260, 1390, eo(rb)); g.beginPath(); g.moveTo(x0, 500); g.lineTo(x1, 500); g.lineTo(x1 - 22, 478); g.moveTo(x1, 500); g.lineTo(x1 - 22, 522); g.stroke()
+    g.save(); g.translate(0, (1 - eo(rb)) * 60); tall('dino', t - T.rebuilds + 6, 1430, 150, PH, 'Yours'); g.restore() })
 }
-function s10(t) { // Reels. TikToks. Shorts. Long-form films.
-  const items = [['REELS', T.reels, 'dino', 9 / 16, 0], ['TIKTOK', T.tiktoks, 'pictogram', 9 / 16, 20], ['SHORTS', T.shorts, 'dino', 9 / 16, 14], ['LONG-FORM', T.longform, 'wordmark', 16 / 9, 0]]
-  const hgt = 480, gap = 34, ws = items.map(([, , , a]) => hgt * a), tot = ws.reduce((a, b) => a + b, 0) + gap * 3; let x = W / 2 - tot / 2
-  items.forEach(([n, at, seqn, a, off], i) => { const w = ws[i], p = spring(pr(t, at - .05, 1.1)), y = H / 2 - hgt / 2 - 20
-    al(eo(pr(t, at - .05, .3)), () => { g.save(); g.translate(x + w / 2, y + hgt / 2 + (1 - p) * 200); g.rotate((1 - p) * (i % 2 ? .12 : -.12)); card(-w / 2, -hgt / 2, w, hgt, 22, '#000'); imgIn(frameOf(seqn, t - at + off), -w / 2, -hgt / 2, w, hgt, 22); g.restore(); pill(n, x + w / 2, y + hgt + 70, pr(t, at, .3), { size: 22 }) })
+function s10(t) { // Reels. TikToks. Shorts. Long-form films. Each at its own shape.
+  const items = [['Reels', T.reels, 'dino', 't', 0], ['TikTok', T.tiktoks, 'pictogram', 't', 20], ['Shorts', T.shorts, 't_dinogo', 't', 6], ['Long-form', T.longform, 'w_dashfly', 'w', 0]]
+  const hgt = 520, gap = 40, ws = items.map(([, , , k]) => k === 't' ? hgt * 9 / 16 : 760), tot = ws.reduce((a, b) => a + b, 0) + gap * 3; let x = W / 2 - tot / 2
+  items.forEach(([n, at, name, k, off], i) => { const w = ws[i], h = k === 't' ? hgt : w * 9 / 16, p = spring(pr(t, at - .05, 1.1)), y = H / 2 - h / 2 - 30
+    al(eo(pr(t, at - .05, .3)), () => { g.save(); g.translate(x + w / 2, y + h / 2 + (1 - p) * 200); g.rotate((1 - p) * (i % 2 ? .1 : -.1)); g.translate(-(x + w / 2), -(y + h / 2))
+      if (k === 't') tall(name, t - at + off, x, y, hgt); else wide(name, t - at + off, x, y, w); g.restore(); pill(n, x + w / 2, H / 2 + hgt / 2 + 30, pr(t, at, .3), { size: 26 }) })
     x += w + gap })
 }
 function s11(t) { // Clone it. Brand it. Ship it.
-  const W3 = [['CLONE IT.', T.clone], ['BRAND IT.', T.brandit], ['SHIP IT.', T.ship]], cur = W3.filter(([, a]) => t >= a - .04).length - 1; if (cur < 0) return
-  const [w, a] = W3[cur], p = pr(t, a - .04, .32), sh = (1 - pr(t, a, .25)) * 14
-  g.save(); g.translate(Math.sin(t * 90) * sh, Math.cos(t * 70) * sh); glow(W / 2, H / 2, 700, .25 * (1 - p * .5), cur === 2 ? '109,123,255' : '255,255,255'); txt(w, W / 2, H / 2, lerp(360, 250, eo5(p)), { w: 900, ls: 4, col: cur === 2 ? '#fff' : INK }); g.restore()
-  W3.forEach(([s], i) => i < cur && txt(s, W / 2 + (i - 1) * 480, H - 140, 40, { w: 800, col: 'rgba(255,255,255,.35)' }))
+  const W3 = [['Clone it.', T.clone], ['Brand it.', T.brandit], ['Ship it.', T.ship]], cur = W3.filter(([, a]) => t >= a - .04).length - 1; if (cur < 0) return
+  const [w, a] = W3[cur], p = pr(t, a - .04, .32), sh = (1 - pr(t, a, .25)) * 12
+  g.save(); g.translate(Math.sin(t * 90) * sh, Math.cos(t * 70) * sh); glow(W / 2, H / 2, 700, .22 * (1 - p * .5), cur === 2 ? '109,123,255' : '255,255,255'); txt(w, W / 2, H / 2, lerp(330, 240, eo5(p)), { w: 700 }); g.restore()
+  W3.forEach(([s], i) => i < cur && txt(s, W / 2 + (i - 1) * 420, H - 150, 44, { w: 600, col: 'rgba(255,255,255,.35)' }))
 }
 function s12(t) { // end card
-  const p = eo5(pr(t, T.end, .9)), wm = IMG.wordmark; glow(W / 2, 430, 760, .25 * p)
-  if (wm) al(p, () => { const w = 1200 * lerp(.9, 1, p), h = wm.height * w / wm.width; g.drawImage(wm, W / 2 - w / 2, 430 - h / 2 + (1 - p) * 40, w, h) })
-  al(pr(t, T.end + .5, .5), () => txt('Make Reels, TikToks, Shorts and films with Claude Code.', W / 2, 590, 40, { w: 500, col: '#D6D6E0' }))
-  const cp = pr(t, T.end + .9, .5); al(cp, () => { const s = '/plugin install motion-reel-kit', w = tw(s, 34, { mono: true, w: 500 }) + 120; card(W / 2 - w / 2, 690, w, 96, 48, '#101018'); g.save(); g.strokeStyle = 'rgba(109,123,255,.7)'; g.lineWidth = 2.5; rr(W / 2 - w / 2, 690, w, 96, 48); g.stroke(); g.restore(); txt(typed(s, pr(t, T.end + 1.0, .9), t), W / 2 - w / 2 + 60, 740, 34, { a: 'left', w: 500, mono: true }) })
-  ;[['OPEN SOURCE', 0], ['MIT', .12], ['WHITE-LABEL', .24]].forEach(([s, d], i) => pill(s, W / 2 + (i - 1) * 290, 880, pr(t, T.end + 1.6 + d, .35), { size: 22 }))
+  const p = eo5(pr(t, T.end, .9)); glow(W / 2, 420, 760, .22 * p)
+  al(p, () => { g.save(); g.translate(W / 2, 420 + (1 - p) * 40); const s = lerp(.92, 1, p); g.scale(s, s); txt('motion-reel-kit', 0, 0, 150, { w: 700 }); g.restore() })
+  al(pr(t, T.end + .5, .5), () => txt('Make Reels, TikToks, Shorts and films with Claude Code.', W / 2, 570, 44, { w: 400, col: '#D2D2DA' }))
+  const cp = pr(t, T.end + .9, .5); al(cp, () => { const s = '/plugin install motion-reel-kit', w = tw(s, 36, { w: 500 }) + 120; shadowCard(W / 2 - w / 2, 670, w, 96, 48, '#101018'); g.save(); g.strokeStyle = 'rgba(109,123,255,.7)'; g.lineWidth = 2.5; rr(W / 2 - w / 2, 670, w, 96, 48); g.stroke(); g.restore(); txt(typed(s, pr(t, T.end + 1.0, .9), t), W / 2 - w / 2 + 60, 719, 36, { a: 'left', w: 500 }) })
+  ;[['Open source', 0], ['MIT', .12], ['White-label', .24]].forEach(([s, d], i) => pill(s, W / 2 + (i - 1) * 260, 870, pr(t, T.end + 1.6 + d, .35), { size: 26 }))
 }
 const SCENES = [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12]
 
 function render(t) {
-  bg(t > SC[10] && t < SC[11] ? .6 : 0)
+  bg()
   SCENES.forEach((fn, i) => { const a = SC[i], b = SC[i + 1]; if (t < a - .001 || t >= b + .2) return
     const inn = i ? eo(pr(t, a, .22)) : 1, out = i < SCENES.length - 1 ? 1 - pr(t, b, .2) : 1, dir = i % 2 ? 1 : -1
     g.save(); g.globalAlpha = inn * out; cam(t, a, b); g.translate((1 - inn) * 120 * dir - (1 - out) * 120 * dir, 0)
     const blur = (1 - inn) * 14 + (1 - out) * 14; if (blur > .5) g.filter = `blur(${blur.toFixed(1)}px)`
     fn(t); g.restore() })
-  // whip flash on each cut
-  SC.slice(1, -1).forEach((a) => { const f = 1 - pr(t, a, .16); if (t >= a && f > 0) { g.fillStyle = `rgba(255,255,255,${.10 * f})`; g.fillRect(0, 0, W, H) } })
+  SC.slice(1, -1).forEach((a) => { const f = 1 - pr(t, a, .16); if (t >= a && f > 0) { g.fillStyle = `rgba(255,255,255,${.08 * f})`; g.fillRect(0, 0, W, H) } })
   const fo = pr(t, DUR - .5, .5); if (fo > 0) { g.fillStyle = `rgba(0,0,0,${fo})`; g.fillRect(0, 0, W, H) }
 }
 window.DUR = DUR
 window.READY = (async () => {
-  const [wm, sp, bb, ba, sb, sa] = await Promise.all(['assets/wordmark.png', 'assets/spectrum.jpg', 'assets/brand_before_dino.jpg', 'assets/brand_after_dino.jpg', 'assets/store_before.jpg', 'assets/store_after.jpg'].map(load))
-  Object.assign(IMG, { wordmark: wm, spectrum: sp, brand_before_dino: bb, brand_after_dino: ba, store_before: sb, store_after: sa })
+  const names = ['spectrum', 'brand_before_dino', 'brand_after_dino', 'store_before', 'store_after', 'logo_before', 'logo_after']
+  const ims = await Promise.all(names.map((n) => load(`assets/${n}.jpg`))); names.forEach((n, i) => IMG[n] = ims[i])
   WAVE = window.WAVE_DATA || WAVE
-  const P = window.POSTERS_DATA || []; POSTERS = await Promise.all(P.map(async (p) => ({ ...p, img: await load(p.p) })))
-  const FR = window.FRAMES || {}, lim = { pictogram: 900 }
-  await Promise.all(['dino', 'pictogram', 'ledword', 'wordmark', ...PACK].map((n) => seq(n, 1, Math.min(FR[n] || 0, lim[n] || 1e9))))
+  const FR = window.FRAMES || {}, lim = { pictogram: 900, dino: 1200, t_dinogo: 600 }
+  const all = new Set(['dino', 'pictogram', ...TALL, ...WIDE.map(([n]) => n), ...PACK12])
+  await Promise.all([...all].map((n) => seq(n, Math.min(FR[n] || 0, lim[n] || 360))))
   await document.fonts.ready; render(0); return true
 })()
 window.render = render

@@ -31,7 +31,14 @@ if pairs:
             if u != t:
                 changed += 1
                 if not DRY: open(f, "w", encoding="utf-8").write(u)
-print(("would change" if DRY else "changed"), changed, "files", pairs)
+# brand initial used by monogram pieces, marked in code as 'Y'/*brand-initial*/
+ini = new["name"][0].upper(); ichanged = 0
+for f in glob.glob(os.path.join(ROOT, "library", "*", "*", "code", "demo.html")):
+    s = open(f, encoding="utf-8").read(); u = re.sub(r"'[^']'/\*brand-initial\*/", "'" + ini + "'/*brand-initial*/", s)
+    if u != s:
+        ichanged += 1
+        if not DRY: open(f, "w", encoding="utf-8").write(u)
+print(("would change" if DRY else "changed"), changed, "files", pairs, "| monogram pieces:", ichanged)
 if DRY: sys.exit()
 # 2. fonts and logo images
 def find_font():
