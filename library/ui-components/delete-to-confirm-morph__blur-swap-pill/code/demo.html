@@ -1,0 +1,116 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Delete to confirm</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+.sheet{position:absolute;background:#fff;border-radius:44px;box-shadow:0 -30px 100px rgba(0,0,0,.5),0 40px 100px rgba(0,0,0,.4)}
+.row{position:absolute;left:48px;width:724px;height:100px;border-top:2px solid #efeff3;display:flex;align-items:center;justify-content:space-between;font-size:32px}
+.row .k{color:#8a8a96}.row .v{font-weight:600;color:#14141a}
+.btn{position:absolute;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:600;overflow:visible}
+.lbl{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:14px}
+.finger{position:absolute;border-radius:50%;background:rgba(110,112,125,.35);border:3px solid rgba(255,255,255,.85);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.rip{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.85)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5.4
+window.DUR = DUR
+
+const SW = 820, SH = 800, sc = TALL ? 1.15 : 1.1
+const D = H - (CY - SH * sc / 2) + 80
+const BX = 48, BY = 640, BH = 104, GP = 20, BT = 724
+const glow = el('div', 'abs'); S(glow, { left: px(CX - 700), top: px(CY - 600), width: '1400px', height: '1200px', background: 'radial-gradient(ellipse at 50% 50%,rgba(110,120,255,.12),rgba(0,0,0,0) 62%)' })
+const sheet = el('div', 'sheet'); S(sheet, { left: px(CX - SW / 2), top: px(CY - SH / 2), width: px(SW), height: px(SH), transform: `scale(${sc})` })
+const grab = el('div', 'abs', sheet); S(grab, { left: px(SW / 2 - 40), top: '20px', width: '80px', height: '8px', borderRadius: '4px', background: '#dcdce2' })
+const ttl = el('div', 'abs', sheet, 'Transaction'); S(ttl, { left: '48px', top: '58px', fontSize: '48px', fontWeight: 700, letterSpacing: '-.02em' })
+const ROWS = [['Amount', '$25.00'], ['Date', '14 Mar 2026'], ['Category', '<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background:#f59e0b;margin-right:12px"></span>Groceries'], ['Note', 'Weekly shop']]
+ROWS.forEach((r, i) => { const d = el('div', 'row', sheet); d.style.top = (168 + i * 100) + 'px'; d.innerHTML = `<span class="k">${r[0]}</span><span class="v">${r[1]}</span>` })
+const bDel = el('div', 'btn', sheet), bEdit = el('div', 'btn', sheet, 'Edit')
+S(bDel, { top: px(BY), height: px(BH), left: px(BX), borderRadius: px(BH / 2) })
+S(bEdit, { top: px(BY), height: px(BH), borderRadius: px(BH / 2), background: '#e7efff', color: '#2f6df6' })
+const bgG = el('div', 'abs', bDel), bgP = el('div', 'abs', bDel)
+for (const b of [bgG, bgP]) S(b, { left: 0, top: 0, width: '100%', height: '100%', borderRadius: px(BH / 2) })
+S(bgG, { background: '#e9e9ee' }); S(bgP, { background: '#ffdde3' })
+const lA = el('div', 'lbl', bDel, 'Delete'); S(lA, { color: '#1c1c22' })
+const lB = el('div', 'lbl', bDel); S(lB, { color: '#e5233f' })
+lB.innerHTML = '<svg viewBox="0 0 40 40" width="38" height="38"><path id="ck" d="M7 21 L16 30 L33 10" pathLength="1" fill="none" stroke="#e5233f" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1"/></svg><span>Confirm</span>'
+const ck = lB.querySelector('#ck')
+const rip = el('div', 'rip'), rip2 = el('div', 'rip'), finger = el('div', 'finger')
+const fd = TALL ? 104 : 116
+const st = (x, y) => [CX + (x - SW / 2) * sc, CY + (y - SH / 2) * sc]
+const env = (t, a, b) => eo(seg(t, a, a + .08)) * (1 - eo(seg(t, b, b + .2)))
+const P1 = st(BX + 352 - 62, BY + BH / 2), P2 = st(BX + 424 - 62, BY + BH / 2), OFF = st(BX + 352 / 2 + 300, BY + BH / 2 + 280), OUT = st(BX + 424 / 2 + 140, BY + BH / 2 + 160)
+
+function render(t) {
+  // sheet: rises from below the frame, drops back after the confirm tap
+  const y = t < 3.3 ? D * (1 - spring(seg(t, .15, .95), 6, 9)) : D * ei(seg(t, 3.3, 4.0))
+  S(sheet, { transform: `translateY(${y.toFixed(2)}px) scale(${sc})` })
+  S(glow, { opacity: (1 - y / D).toFixed(3) })
+  // blur swap
+  const p1 = seg(t, 1.68, 2.2)
+  const e = spring(seg(t, 1.7, 2.4), 7, 10)
+  const w1 = lerp(352, 424, e)
+  S(bDel, { width: px(w1) }); S(bEdit, { left: px(BX + w1 + GP), width: px(BT - GP - w1) })
+  const press = env(t, 1.6, 1.72) + env(t, 3.1, 3.22)
+  const blur = 7 * Math.sin(Math.PI * p1)
+  S(bDel, { filter: blur > .05 ? `blur(${blur.toFixed(2)}px)` : 'none', transform: `scale(${(1 - .05 * press).toFixed(4)})` })
+  S(bEdit, { transform: `scale(${(1 - .03 * press * (t < 2.6 ? 1 : 0)).toFixed(4)})` })
+  S(bgP, { opacity: eo(seg(p1, .3, .7)).toFixed(3) })
+  S(lA, { opacity: (1 - seg(p1, .2, .5)).toFixed(3) })
+  const bo = seg(p1, .5, .8)
+  S(lB, { opacity: bo.toFixed(3) })
+  ck.setAttribute('stroke-dashoffset', (1 - eo(seg(t, 1.98, 2.3))).toFixed(3))
+  // finger
+  let f
+  if (t < 1.55) { const k = eo(seg(t, 1.0, 1.55)); f = [lerp(OFF[0], P1[0], k), lerp(OFF[1], P1[1], k)] }
+  else if (t < 3.3) { const k = eio(seg(t, 2.3, 2.75)); f = [lerp(P1[0], P2[0], k), lerp(P1[1], P2[1], k)] }
+  else { const k = eio(seg(t, 3.3, 3.7)); f = [lerp(P2[0], OUT[0], k), lerp(P2[1], OUT[1], k)] }
+  const fa = seg(t, 1.0, 1.35) * (1 - seg(t, 3.35, 3.65))
+  const fz = fd * (1 - .17 * press)
+  S(finger, { left: px(f[0] - fz / 2), top: px(f[1] - fz / 2), width: px(fz), height: px(fz), opacity: fa.toFixed(3) })
+  ;[[rip, 1.6, P1], [rip2, 3.1, P2]].forEach(([r, t0, P]) => {
+    const rp = seg(t, t0, t0 + .55), d = fd * (1 + 1.2 * eo(rp))
+    S(r, { left: px(P[0] - d / 2), top: px(P[1] - d / 2), width: px(d), height: px(d), opacity: (rp > 0 && rp < 1 ? (1 - rp) * .7 : 0).toFixed(3) })
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

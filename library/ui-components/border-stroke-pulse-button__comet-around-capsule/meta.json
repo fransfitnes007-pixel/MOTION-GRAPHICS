@@ -1,0 +1,28 @@
+{
+  "slug": "border-stroke-pulse-button__comet-around-capsule",
+  "visual_name": "Border stroke pulse button",
+  "code_name": "Comet around capsule",
+  "category": "ui-components",
+  "summary": "A dark capsule button on a dark screen: the background dims, the button grows, and a bright streak with a soft glow runs once around its border, lengthening as it goes, before everything settles.",
+  "aliases": [
+    "glowing border",
+    "comet button",
+    "border beam",
+    "light trail button",
+    "pay button"
+  ],
+  "tags": [
+    "cta",
+    "dark",
+    "hover"
+  ],
+  "tech": [
+    "svg",
+    "stroke-dasharray",
+    "blur"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

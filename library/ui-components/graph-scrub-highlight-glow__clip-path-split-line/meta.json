@@ -1,0 +1,30 @@
+{
+  "slug": "graph-scrub-highlight-glow__clip-path-split-line",
+  "visual_name": "Graph scrub highlight glow",
+  "code_name": "Clip path split line",
+  "category": "ui-components",
+  "summary": "A dark finance card with a rolling-digit balance and a jagged line chart; a finger scrubs across and the line stays bright with a glow left of a guide line and dims right of it, a glowing dot rides the line, and the number rolls to the value under the finger.",
+  "aliases": [
+    "chart scrub",
+    "graph scrub",
+    "line chart glow",
+    "scrub the graph",
+    "rolling balance"
+  ],
+  "tags": [
+    "chart",
+    "counter",
+    "dark",
+    "cursor",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "css-clip-path"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

@@ -26,3 +26,7 @@ out/
 # per-user state
 library/my-aliases.json
 engine/.brand-applied.json
+
+# showcase film build intermediates
+docs/showcase/clips/
+docs/showcase/frames/

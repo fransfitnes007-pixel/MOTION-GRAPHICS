@@ -1,0 +1,29 @@
+{
+  "slug": "card-flip-overshoot__rotatey-spring-back-face",
+  "visual_name": "Card flip with overshoot",
+  "code_name": "RotateY spring back face",
+  "category": "ui-components",
+  "summary": "A tall dark green card with a date, a feeling line and a flower turns over in 3D on a tap, swinging a little past flat before settling, to show a pale back face; page dots follow; it flips back.",
+  "aliases": [
+    "card flip",
+    "flip card",
+    "turn card over",
+    "3d flip",
+    "flip to back"
+  ],
+  "tags": [
+    "card",
+    "3d",
+    "light",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d",
+    "spring"
+  ],
+  "duration_sec": 5.6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

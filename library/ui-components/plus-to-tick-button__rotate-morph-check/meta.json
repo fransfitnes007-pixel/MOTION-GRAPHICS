@@ -1,0 +1,28 @@
+{
+  "slug": "plus-to-tick-button__rotate-morph-check",
+  "visual_name": "Plus to tick button",
+  "code_name": "Rotate and morph to check",
+  "category": "ui-components",
+  "summary": "A dark Buy pill with a round plus icon: a tap rotates the plus 45 degrees into a check mark, the label crossfades to Added, and the pill flashes green with a small bounce before returning.",
+  "aliases": [
+    "add to cart",
+    "plus to check",
+    "buy button",
+    "added confirmation",
+    "tick morph"
+  ],
+  "tags": [
+    "cta",
+    "dark",
+    "form"
+  ],
+  "tech": [
+    "svg",
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

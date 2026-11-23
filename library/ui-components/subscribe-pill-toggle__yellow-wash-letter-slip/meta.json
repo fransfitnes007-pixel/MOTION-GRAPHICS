@@ -1,0 +1,27 @@
+{
+  "slug": "subscribe-pill-toggle__yellow-wash-letter-slip",
+  "visual_name": "Subscribe pill toggle",
+  "code_name": "Yellow wash and letter slip",
+  "category": "ui-components",
+  "summary": "A white Subscribed pill beside a round share button: a tap washes it yellow, narrows it and slips the trailing d down so it reads Subscribe, then a second tap restores it.",
+  "aliases": [
+    "subscribe button",
+    "follow button",
+    "toggle pill",
+    "letter slip",
+    "subscribed pill"
+  ],
+  "tags": [
+    "cta",
+    "hover",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

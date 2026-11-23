@@ -1,0 +1,127 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Hold to commit</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.pill{position:absolute;background:#0b0b10;overflow:hidden}
+.pfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#3d3d47,#6b6b79);overflow:hidden}
+.band{position:absolute;top:-20%;bottom:-20%;width:140px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));transform:skewX(-20deg)}
+.lab{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:18px;color:#fff;font-weight:600;letter-spacing:-.01em}
+.finger{position:absolute;border-radius:50%;background:rgba(120,122,135,.38);border:3px solid rgba(255,255,255,.75);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.ring{position:absolute;border-radius:50%;border:4px solid rgba(255,255,255,.85)}
+.rip{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.8)}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6
+window.DUR = DUR
+
+const pw = TALL ? 900 : 960, ph = TALL ? 190 : 210, px0 = CX - pw / 2, py0 = CY - ph / 2
+const fd = (TALL ? 108 : 124)
+const TX = CX - pw * .33, TY = CY + 4, AX = CX + 280, AY = CY + 330, SX = CX + 380, SY = CY + 400
+const pill = el('div', 'pill'); S(pill, { left: px(px0), top: px(py0), width: px(pw), height: px(ph), borderRadius: px(ph / 2), boxShadow: '0 40px 70px rgba(10,10,20,.28),0 8px 20px rgba(10,10,20,.18)' })
+const pfill = el('div', 'pfill', pill), band = el('div', 'band', pfill)
+const flash = el('div', 'abs', pill); S(flash, { left: 0, top: 0, width: '100%', height: '100%', background: '#fff', opacity: 0 })
+const gloss = el('div', 'abs', pill); S(gloss, { left: 0, top: 0, width: '100%', height: '50%', background: 'linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0))' })
+const fs = ph * .3
+const labA = el('div', 'lab', pill, 'Hold to send'); S(labA, { fontSize: px(fs) })
+const labB = el('div', 'lab', pill); S(labB, { fontSize: px(fs) })
+labB.innerHTML = `<svg viewBox="0 0 56 56" width="${fs * 1.15}" height="${fs * 1.15}"><path id="ck" d="M10 30 L23 43 L47 14" pathLength="1" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1"/></svg><span>Sent</span>`
+const ck = labB.querySelector('#ck')
+const rings = [0, 1].map(() => el('div', 'rip')), ring = el('div', 'ring'), finger = el('div', 'finger')
+S(finger, { width: px(fd), height: px(fd) })
+
+const env = (t, a, b) => eo(seg(t, a, a + .09)) * (1 - eo(seg(t, b, b + .12)))
+// press with spring rebound on release (negative values = slight expand)
+const pr = (t, a, b) => t < a ? 0 : t < b ? eo(seg(t, a, a + .1)) : (1 - spring(seg(t, b, b + .55), 6, 10))
+const ABORT_FILL = .4 / 1.5
+
+function fillAt(t) {
+  if (t < .7) return 0
+  if (t < 1.1) return (t - .7) / 1.5
+  if (t < 2.05) return Math.max(0, ABORT_FILL * (1 - spring(seg(t, 1.1, 1.7), 6, 9)))
+  if (t < 3.55) return (t - 2.05) / 1.5
+  return t < 5.5 ? 1 : 0
+}
+function fingerPos(t) {
+  const T = [TX, TY], A = [AX, AY], St = [SX, SY]
+  let p
+  if (t < .6) p = [lerp(St[0], T[0], eo(seg(t, 0, .6))), lerp(St[1], T[1], eo(seg(t, 0, .6)))]
+  else if (t < 1.15) p = T
+  else if (t < 1.6) { const e = eio(seg(t, 1.15, 1.6)); p = [lerp(T[0], A[0], e), lerp(T[1], A[1], e)] }
+  else if (t < 2.0) { const e = eo(seg(t, 1.6, 2.0)); p = [lerp(A[0], T[0], e), lerp(A[1], T[1], e)] }
+  else if (t < 3.7) p = T
+  else { const e = eio(seg(t, 3.7, 4.2)); p = [lerp(T[0], A[0], e), lerp(T[1], A[1], e)] }
+  return p
+}
+
+function render(t) {
+  const f = fillAt(t)
+  const fa = 1 - seg(t, 5.0, 5.5)
+  const c = .035 * (pr(t, .7, 1.1) + pr(t, 2.05, 3.55))
+  const pp = t - 3.55
+  const pop = pp > 0 ? .085 * Math.exp(-6.5 * pp) * Math.sin(pp * 19) : 0
+  S(pill, { transform: `scale(${(1 - c + pop).toFixed(4)})` })
+  const fw = pw * f
+  S(pfill, { width: px(fw), opacity: fa.toFixed(3) })
+  S(band, { left: px(((t * 520) % (pw + 300)) - 200 - 0) })
+  S(flash, { opacity: pp > 0 ? (.22 * Math.exp(-9 * pp)).toFixed(3) : 0 })
+  // label swap
+  const sw = eo(seg(t, 3.55, 3.85)) * (1 - eo(seg(t, 5.0, 5.5)))
+  S(labA, { opacity: (1 - sw).toFixed(3), transform: `translateY(${-sw * 18}px)` })
+  S(labB, { opacity: sw.toFixed(3), transform: `translateY(${(1 - sw) * 18}px)` })
+  ck.setAttribute('stroke-dashoffset', (1 - eo(seg(t, 3.7, 4.1)) * (1 - eo(seg(t, 5.0, 5.5)))).toFixed(4))
+  // finger
+  const [fx, fy] = fingerPos(t)
+  const a = t < 1.6 ? seg(t, 0, .35) * (1 - seg(t, 1.2, 1.6)) : t < 3.7 ? seg(t, 1.6, 2.0) : 1 - seg(t, 3.8, 4.2)
+  const pf = env(t, .7, 1.1) + env(t, 2.05, 3.65 - .1)
+  const fsz = fd * (1 - .16 * Math.min(1, pf))
+  S(finger, { left: px(fx - fsz / 2), top: px(fy - fsz / 2), width: px(fsz), height: px(fsz), opacity: a.toFixed(3) })
+  const fprog = Math.min(1, f)
+  const rd = fd * (2.35 - .85 * fprog)
+  S(ring, { left: px(fx - rd / 2), top: px(fy - rd / 2), width: px(rd), height: px(rd), opacity: (Math.min(1, pf) * .85 * a).toFixed(3), borderWidth: px(2 + 3 * fprog) })
+  rings.forEach((r, i) => {
+    const t0 = i ? 2.05 : .7, rp = seg(t, t0, t0 + .55), d = fd * (1 + 1.1 * eo(rp))
+    S(r, { left: px(TX - d / 2), top: px(TY - d / 2), width: px(d), height: px(d), opacity: (rp > 0 && rp < 1 ? (1 - rp) * .6 : 0).toFixed(3) })
+  })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

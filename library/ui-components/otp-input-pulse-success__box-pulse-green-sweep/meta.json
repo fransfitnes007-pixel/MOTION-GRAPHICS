@@ -1,0 +1,27 @@
+{
+  "slug": "otp-input-pulse-success__box-pulse-green-sweep",
+  "visual_name": "OTP input pulse and success fill",
+  "code_name": "Box pulse and green sweep",
+  "category": "ui-components",
+  "summary": "Six rounded code boxes fill with digits one by one under a blinking caret and a pulsing border; after the sixth, a green fill sweeps through all boxes and a check mark draws.",
+  "aliases": [
+    "code input",
+    "otp boxes",
+    "verification code",
+    "pin entry",
+    "six digit code"
+  ],
+  "tags": [
+    "form",
+    "light",
+    "cta"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

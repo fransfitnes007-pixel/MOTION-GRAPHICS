@@ -1,0 +1,27 @@
+{
+  "slug": "number-flip-reflection__split-flap-mirror-fade",
+  "visual_name": "Number flip with reflection",
+  "code_name": "Split-flap flip with mirror fade",
+  "category": "ui-components",
+  "summary": "A large three-digit streak counter on a glossy dark floor: digits flip like split-flap cards, 128 up to 132, with a faded mirror image flipping in sync below.",
+  "aliases": [
+    "flip counter",
+    "split flap",
+    "streak counter",
+    "flip clock digits",
+    "mirror counter"
+  ],
+  "tags": [
+    "counter",
+    "dark",
+    "3d"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-3d"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

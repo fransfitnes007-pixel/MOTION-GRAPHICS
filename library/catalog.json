@@ -1,5 +1,5 @@
 {
- "count": 229,
+ "count": 241,
  "skills": [
   {
    "slug": "3d-book-open-push-in__css-3d-cover-hinge",
@@ -3664,6 +3664,40 @@
    "skill": "ui-components/black-chrome-glass-cards__travelling-edge-beam/SKILL.md"
   },
   {
+   "slug": "border-stroke-pulse-button__comet-around-capsule",
+   "path": "ui-components/border-stroke-pulse-button__comet-around-capsule",
+   "category": "ui-components",
+   "visual_name": "Border stroke pulse button",
+   "code_name": "Comet around capsule",
+   "summary": "A dark capsule button on a dark screen: the background dims, the button grows, and a bright streak with a soft glow runs once around its border, lengthening as it goes, before everything settles.",
+   "aliases": [
+    "glowing border",
+    "comet button",
+    "border beam",
+    "light trail button",
+    "pay button"
+   ],
+   "tags": [
+    "cta",
+    "dark",
+    "hover"
+   ],
+   "tech": [
+    "svg",
+    "stroke-dasharray",
+    "blur"
+   ],
+   "duration_sec": 5,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/border-stroke-pulse-button__comet-around-capsule/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/border-stroke-pulse-button__comet-around-capsule/code/demo.html",
+   "skill": "ui-components/border-stroke-pulse-button__comet-around-capsule/SKILL.md"
+  },
+  {
    "slug": "bottom-icon-dock__spring-distance-magnify",
    "path": "ui-components/bottom-icon-dock__spring-distance-magnify",
    "category": "ui-components",
@@ -3692,6 +3726,40 @@
    "sound": null,
    "demo": "ui-components/bottom-icon-dock__spring-distance-magnify/code/demo.html",
    "skill": "ui-components/bottom-icon-dock__spring-distance-magnify/SKILL.md"
+  },
+  {
+   "slug": "bottom-tab-capsule-expand__sliding-pill-label-fade",
+   "path": "ui-components/bottom-tab-capsule-expand__sliding-pill-label-fade",
+   "category": "ui-components",
+   "visual_name": "Bottom tab capsule expansion",
+   "code_name": "Sliding pill label fade",
+   "summary": "A floating tab bar with five grey line icons where a pale capsule slides under a swiping finger, widening for each label as it fades in while the previous label fades out.",
+   "aliases": [
+    "tab bar pill",
+    "sliding tab pill",
+    "bottom tabs",
+    "tab capsule",
+    "nav pill"
+   ],
+   "tags": [
+    "nav",
+    "dark",
+    "cursor"
+   ],
+   "tech": [
+    "vanilla-js",
+    "svg",
+    "spring"
+   ],
+   "duration_sec": 5.6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/bottom-tab-capsule-expand__sliding-pill-label-fade/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/bottom-tab-capsule-expand__sliding-pill-label-fade/code/demo.html",
+   "skill": "ui-components/bottom-tab-capsule-expand__sliding-pill-label-fade/SKILL.md"
   },
   {
    "slug": "brain-scan-3d-cortex__fresnel-shader-scan-plane-zaps",
@@ -3751,6 +3819,108 @@
    "sound": null,
    "demo": "ui-components/brand-logo-strip__two-opposed-rows-duplicated-track/code/demo.html",
    "skill": "ui-components/brand-logo-strip__two-opposed-rows-duplicated-track/SKILL.md"
+  },
+  {
+   "slug": "card-burn-particle-dissolve__noise-edge-ember-sparks",
+   "path": "ui-components/card-burn-particle-dissolve__noise-edge-ember-sparks",
+   "category": "ui-components",
+   "visual_name": "Card burn particle dissolve",
+   "code_name": "Noise edge ember sparks",
+   "summary": "A gradient story card burns away from the bottom up along a jagged noise edge with a glowing orange rim, embers and sparks drifting up, then reforms from the top down.",
+   "aliases": [
+    "burn card",
+    "card burns away",
+    "fire dissolve",
+    "ember dissolve",
+    "disintegrate card"
+   ],
+   "tags": [
+    "card",
+    "transition",
+    "dark"
+   ],
+   "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "seeded-noise"
+   ],
+   "duration_sec": 5.6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/card-burn-particle-dissolve__noise-edge-ember-sparks/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/card-burn-particle-dissolve__noise-edge-ember-sparks/code/demo.html",
+   "skill": "ui-components/card-burn-particle-dissolve__noise-edge-ember-sparks/SKILL.md"
+  },
+  {
+   "slug": "card-flip-overshoot__rotatey-spring-back-face",
+   "path": "ui-components/card-flip-overshoot__rotatey-spring-back-face",
+   "category": "ui-components",
+   "visual_name": "Card flip with overshoot",
+   "code_name": "RotateY spring back face",
+   "summary": "A tall dark green card with a date, a feeling line and a flower turns over in 3D on a tap, swinging a little past flat before settling, to show a pale back face; page dots follow; it flips back.",
+   "aliases": [
+    "card flip",
+    "flip card",
+    "turn card over",
+    "3d flip",
+    "flip to back"
+   ],
+   "tags": [
+    "card",
+    "3d",
+    "light",
+    "cursor"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css-3d",
+    "spring"
+   ],
+   "duration_sec": 5.6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/card-flip-overshoot__rotatey-spring-back-face/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/card-flip-overshoot__rotatey-spring-back-face/code/demo.html",
+   "skill": "ui-components/card-flip-overshoot__rotatey-spring-back-face/SKILL.md"
+  },
+  {
+   "slug": "comma-jump-number-input__digit-rise-comma-dip",
+   "path": "ui-components/comma-jump-number-input__digit-rise-comma-dip",
+   "category": "ui-components",
+   "visual_name": "Comma-jump number input",
+   "code_name": "Digit rise and comma dip",
+   "summary": "A huge white dollar amount typed digit by digit from a number pad: each digit springs up from below, every comma dips and slides when a new thousands group appears, and past $1,000,000 the grey converted line crossfades to a red balance warning.",
+   "aliases": [
+    "amount input",
+    "number pad",
+    "money entry",
+    "comma dip",
+    "currency keypad"
+   ],
+   "tags": [
+    "form",
+    "counter",
+    "dark"
+   ],
+   "tech": [
+    "vanilla-js",
+    "spring"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/comma-jump-number-input__digit-rise-comma-dip/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/comma-jump-number-input__digit-rise-comma-dip/code/demo.html",
+   "skill": "ui-components/comma-jump-number-input__digit-rise-comma-dip/SKILL.md"
   },
   {
    "slug": "command-palette__icon-swap-staggered-rows",
@@ -3839,6 +4009,39 @@
    "sound": null,
    "demo": "ui-components/day-night-island-diorama__three-sun-moon-cycle/code/demo.html",
    "skill": "ui-components/day-night-island-diorama__three-sun-moon-cycle/SKILL.md"
+  },
+  {
+   "slug": "delete-to-confirm-morph__blur-swap-pill",
+   "path": "ui-components/delete-to-confirm-morph__blur-swap-pill",
+   "category": "ui-components",
+   "visual_name": "Delete to confirm morph",
+   "code_name": "Blur swap pill",
+   "summary": "A white transaction sheet where tapping Delete blurs the grey pill and swaps it for a pink Confirm pill with a check; a second tap drops the sheet out of view and it rises again.",
+   "aliases": [
+    "confirm delete",
+    "two step delete",
+    "delete button",
+    "confirm pill",
+    "blur swap"
+   ],
+   "tags": [
+    "modal",
+    "dark",
+    "cursor"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css-filter"
+   ],
+   "duration_sec": 5.4,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/delete-to-confirm-morph__blur-swap-pill/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/delete-to-confirm-morph__blur-swap-pill/code/demo.html",
+   "skill": "ui-components/delete-to-confirm-morph__blur-swap-pill/SKILL.md"
   },
   {
    "slug": "extruded-logo-slab__stacked-slices-translatez",
@@ -4054,6 +4257,42 @@
    "skill": "ui-components/glass-pill-nav__scroll-glass-morph/SKILL.md"
   },
   {
+   "slug": "graph-scrub-highlight-glow__clip-path-split-line",
+   "path": "ui-components/graph-scrub-highlight-glow__clip-path-split-line",
+   "category": "ui-components",
+   "visual_name": "Graph scrub highlight glow",
+   "code_name": "Clip path split line",
+   "summary": "A dark finance card with a rolling-digit balance and a jagged line chart; a finger scrubs across and the line stays bright with a glow left of a guide line and dims right of it, a glowing dot rides the line, and the number rolls to the value under the finger.",
+   "aliases": [
+    "chart scrub",
+    "graph scrub",
+    "line chart glow",
+    "scrub the graph",
+    "rolling balance"
+   ],
+   "tags": [
+    "chart",
+    "counter",
+    "dark",
+    "cursor",
+    "card"
+   ],
+   "tech": [
+    "vanilla-js",
+    "svg",
+    "css-clip-path"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/graph-scrub-highlight-glow__clip-path-split-line/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/graph-scrub-highlight-glow__clip-path-split-line/code/demo.html",
+   "skill": "ui-components/graph-scrub-highlight-glow__clip-path-split-line/SKILL.md"
+  },
+  {
    "slug": "hero-stack-fade-up__expo-out-staggered-delays",
    "path": "ui-components/hero-stack-fade-up__expo-out-staggered-delays",
    "category": "ui-components",
@@ -4081,6 +4320,39 @@
    "sound": null,
    "demo": "ui-components/hero-stack-fade-up__expo-out-staggered-delays/code/demo.html",
    "skill": "ui-components/hero-stack-fade-up__expo-out-staggered-delays/SKILL.md"
+  },
+  {
+   "slug": "hold-to-commit-button__press-fill-progress-release",
+   "path": "ui-components/hold-to-commit-button__press-fill-progress-release",
+   "category": "ui-components",
+   "visual_name": "Hold to commit button",
+   "code_name": "Press fill progress and release",
+   "summary": "A wide black pill labelled Hold to send: a short press springs back, then a full 1.5 s hold sweeps a lighter fill across, the pill pops and the label becomes Sent with a check.",
+   "aliases": [
+    "hold button",
+    "press and hold",
+    "hold to send",
+    "long press button",
+    "hold to confirm"
+   ],
+   "tags": [
+    "cta",
+    "light",
+    "cursor"
+   ],
+   "tech": [
+    "vanilla-js",
+    "svg"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/hold-to-commit-button__press-fill-progress-release/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/hold-to-commit-button__press-fill-progress-release/code/demo.html",
+   "skill": "ui-components/hold-to-commit-button__press-fill-progress-release/SKILL.md"
   },
   {
    "slug": "imessage-typing-bubbles__spring-pop-in-dots",
@@ -4288,6 +4560,39 @@
    "skill": "ui-components/night-city-tower-street-diorama__three-canvas-window-grids/SKILL.md"
   },
   {
+   "slug": "number-flip-reflection__split-flap-mirror-fade",
+   "path": "ui-components/number-flip-reflection__split-flap-mirror-fade",
+   "category": "ui-components",
+   "visual_name": "Number flip with reflection",
+   "code_name": "Split-flap flip with mirror fade",
+   "summary": "A large three-digit streak counter on a glossy dark floor: digits flip like split-flap cards, 128 up to 132, with a faded mirror image flipping in sync below.",
+   "aliases": [
+    "flip counter",
+    "split flap",
+    "streak counter",
+    "flip clock digits",
+    "mirror counter"
+   ],
+   "tags": [
+    "counter",
+    "dark",
+    "3d"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css-3d"
+   ],
+   "duration_sec": 5,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/number-flip-reflection__split-flap-mirror-fade/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/number-flip-reflection__split-flap-mirror-fade/code/demo.html",
+   "skill": "ui-components/number-flip-reflection__split-flap-mirror-fade/SKILL.md"
+  },
+  {
    "slug": "numbered-card-grid-and-dark-steps__stagger-in-view-reveal",
    "path": "ui-components/numbered-card-grid-and-dark-steps__stagger-in-view-reveal",
    "category": "ui-components",
@@ -4377,6 +4682,39 @@
    "sound": null,
    "demo": "ui-components/orbit-video-ring__3d-carousel-spin/code/demo.html",
    "skill": "ui-components/orbit-video-ring__3d-carousel-spin/SKILL.md"
+  },
+  {
+   "slug": "otp-input-pulse-success__box-pulse-green-sweep",
+   "path": "ui-components/otp-input-pulse-success__box-pulse-green-sweep",
+   "category": "ui-components",
+   "visual_name": "OTP input pulse and success fill",
+   "code_name": "Box pulse and green sweep",
+   "summary": "Six rounded code boxes fill with digits one by one under a blinking caret and a pulsing border; after the sixth, a green fill sweeps through all boxes and a check mark draws.",
+   "aliases": [
+    "code input",
+    "otp boxes",
+    "verification code",
+    "pin entry",
+    "six digit code"
+   ],
+   "tags": [
+    "form",
+    "light",
+    "cta"
+   ],
+   "tech": [
+    "vanilla-js",
+    "svg"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/otp-input-pulse-success__box-pulse-green-sweep/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/otp-input-pulse-success__box-pulse-green-sweep/code/demo.html",
+   "skill": "ui-components/otp-input-pulse-success__box-pulse-green-sweep/SKILL.md"
   },
   {
    "slug": "pendulum-flip-chrome-wordmark__two-faced-rotatey",
@@ -4469,6 +4807,40 @@
    "sound": null,
    "demo": "ui-components/plinko-discount-drop__fixed-step-peg-physics/code/demo.html",
    "skill": "ui-components/plinko-discount-drop__fixed-step-peg-physics/SKILL.md"
+  },
+  {
+   "slug": "plus-to-tick-button__rotate-morph-check",
+   "path": "ui-components/plus-to-tick-button__rotate-morph-check",
+   "category": "ui-components",
+   "visual_name": "Plus to tick button",
+   "code_name": "Rotate and morph to check",
+   "summary": "A dark Buy pill with a round plus icon: a tap rotates the plus 45 degrees into a check mark, the label crossfades to Added, and the pill flashes green with a small bounce before returning.",
+   "aliases": [
+    "add to cart",
+    "plus to check",
+    "buy button",
+    "added confirmation",
+    "tick morph"
+   ],
+   "tags": [
+    "cta",
+    "dark",
+    "form"
+   ],
+   "tech": [
+    "svg",
+    "vanilla-js",
+    "spring"
+   ],
+   "duration_sec": 5,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/plus-to-tick-button__rotate-morph-check/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/plus-to-tick-button__rotate-morph-check/code/demo.html",
+   "skill": "ui-components/plus-to-tick-button__rotate-morph-check/SKILL.md"
   },
   {
    "slug": "portrait-video-reel__opposed-rows-tall-cards",
@@ -4706,6 +5078,39 @@
    "sound": null,
    "demo": "ui-components/sticky-command-bar-stats__flex-wrap-progress-rail/code/demo.html",
    "skill": "ui-components/sticky-command-bar-stats__flex-wrap-progress-rail/SKILL.md"
+  },
+  {
+   "slug": "subscribe-pill-toggle__yellow-wash-letter-slip",
+   "path": "ui-components/subscribe-pill-toggle__yellow-wash-letter-slip",
+   "category": "ui-components",
+   "visual_name": "Subscribe pill toggle",
+   "code_name": "Yellow wash and letter slip",
+   "summary": "A white Subscribed pill beside a round share button: a tap washes it yellow, narrows it and slips the trailing d down so it reads Subscribe, then a second tap restores it.",
+   "aliases": [
+    "subscribe button",
+    "follow button",
+    "toggle pill",
+    "letter slip",
+    "subscribed pill"
+   ],
+   "tags": [
+    "cta",
+    "hover",
+    "dark"
+   ],
+   "tech": [
+    "vanilla-js",
+    "spring"
+   ],
+   "duration_sec": 5,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/subscribe-pill-toggle__yellow-wash-letter-slip/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/subscribe-pill-toggle__yellow-wash-letter-slip/code/demo.html",
+   "skill": "ui-components/subscribe-pill-toggle__yellow-wash-letter-slip/SKILL.md"
   },
   {
    "slug": "tap-for-sound-video-player__pulse-ring-overlay",

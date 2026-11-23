@@ -1,6 +1,6 @@
 # Palettes
 
-Every colour look used across the kit. `palettes.json` has the same data, plus the colours of all 209 library pieces. Open `index.html` to see the swatches.
+Every colour look used across the kit. `palettes.json` has the same data, plus the colours of all 221 library pieces. Open `index.html` to see the swatches.
 
 ## Arizona sunset (pixel dino reel) (`arizona-sunset`)
 

@@ -1,0 +1,28 @@
+{
+  "slug": "card-burn-particle-dissolve__noise-edge-ember-sparks",
+  "visual_name": "Card burn particle dissolve",
+  "code_name": "Noise edge ember sparks",
+  "category": "ui-components",
+  "summary": "A gradient story card burns away from the bottom up along a jagged noise edge with a glowing orange rim, embers and sparks drifting up, then reforms from the top down.",
+  "aliases": [
+    "burn card",
+    "card burns away",
+    "fire dissolve",
+    "ember dissolve",
+    "disintegrate card"
+  ],
+  "tags": [
+    "card",
+    "transition",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "canvas-2d",
+    "seeded-noise"
+  ],
+  "duration_sec": 5.6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

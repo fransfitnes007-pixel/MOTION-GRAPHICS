@@ -1,0 +1,101 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>subscribe-pill-toggle</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;color:#0b0b10}
+.pill{position:absolute;border-radius:999px;background:#fff;white-space:nowrap;font-weight:600;letter-spacing:-.01em}
+.pill span{display:inline-block}
+.share{position:absolute;border-radius:50%;background:rgba(255,255,255,.14)}
+.fing{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.55);z-index:20}
+.rip{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.5);z-index:20}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5
+window.DUR = DUR
+const fing = el('div', 'fing'), rip = el('div', 'rip')
+function finger(x, y, a, press, rp, FS = 64) {
+  const sz = FS * (1 - .22 * press)
+  S(fing, { left: px(x - sz / 2), top: px(y - sz / 2), width: px(sz), height: px(sz), opacity: a.toFixed(3) })
+  vis(fing, a > .01)
+  const rs = FS * (1 + 1.4 * rp)
+  S(rip, { left: px(x - rs / 2), top: px(y - rs / 2), width: px(rs), height: px(rs), opacity: (a * (1 - rp) * .9).toFixed(3) })
+  vis(rip, a > .01 && rp > 0 && rp < 1)
+}
+// press / ripple for a tap at time T
+const tapPress = (t, T) => clamp(seg(t, T - .12, T) - seg(t, T + .05, T + .22))
+const tapRip = (t, T) => t >= T ? seg(t, T, T + .5) : 0
+const fs = TALL ? 96 : 110, ph = fs * 2.1, pad = fs * .95, gap = fs * .35, bd = ph * .86
+const pill = el('div', 'pill'), word = el('span', '', pill, 'Subscribe'), dd = el('span', '', pill, 'd')
+S(pill, { fontSize: px(fs), height: px(ph), lineHeight: px(ph), paddingLeft: px(pad), paddingRight: px(pad) })
+const share = el('div', 'share')
+share.innerHTML = '<svg viewBox="0 0 48 48" width="100%" height="100%"><g fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 29V11M17 18l7-7 7 7"/><path d="M15 25v10a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V25"/></g></svg>'
+S(share, { width: px(bd), height: px(bd), padding: px(bd * .26) })
+let wSub = 0, wD = 0
+const TAP1 = .9, TAP2 = 3.0
+
+function render(t) {
+  if (!wSub) { wSub = word.getBoundingClientRect().width; wD = dd.getBoundingClientRect().width }
+  const a = t < TAP2 ? spring(seg(t, TAP1, TAP1 + .6), 6, 10) : 1 - spring(seg(t, TAP2, TAP2 + .6), 6, 10)
+  const ac = clamp(a)
+  const fullW = wSub + wD + pad * 2, narrow = wD * .8 * 0 + wD
+  const w = fullW - narrow * a
+  const tot = fullW + gap + bd
+  const x0 = CX - tot / 2, y0 = CY - ph / 2
+  const tapS = Math.max(tapPress(t, TAP1), tapPress(t, TAP2))
+  const sc = 1 - .035 * tapS
+  S(pill, { left: px(x0), top: px(y0), width: px(w), transform: `scale(${sc})`, transformOrigin: '0 50%' })
+  // colour wash white -> yellow
+  const r = 255, g = Math.round(lerp(255, 214, ac)), b = Math.round(lerp(255, 10, ac))
+  pill.style.background = `rgb(${r},${g},${b})`
+  pill.style.boxShadow = `0 ${px(ph * .18)} ${px(ph * .6)} rgba(255,214,10,${(.28 * ac).toFixed(3)}), 0 ${px(ph * .08)} ${px(ph * .3)} rgba(0,0,0,.35)`
+  // trailing letter slips down and fades
+  S(dd, { transform: `translateY(${(ac * fs * .5).toFixed(2)}px)`, opacity: (1 - clamp(ac * 1.7)).toFixed(3) })
+  S(share, { left: px(x0 + w * sc + gap), top: px(CY - bd / 2), transform: `scale(${1 - .03 * tapS})` })
+  const ts = (T) => ({ p: tapPress(t, T), r: tapRip(t, T) })
+  const T = t < 2.2 ? TAP1 : TAP2, s = ts(T)
+  const fx = x0 + w * .55, fy = y0 + ph * .55
+  const fa = t < 2.2 ? seg(t, .45, .7) * (1 - seg(t, 1.35, 1.65)) : seg(t, 2.6, 2.85) * (1 - seg(t, 3.45, 3.75))
+  const mv = 1 - eo(seg(t, T - .45, T - .05))
+  const mo = 1 - eo(seg(t, T + .15, T + .6)) * 0
+  finger(fx + 60 * mv + 70 * seg(t, T + .1, T + .7), fy + 110 * mv + 90 * seg(t, T + .1, T + .7), fa, s.p, s.r)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

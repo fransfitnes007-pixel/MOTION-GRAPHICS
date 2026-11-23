@@ -1,0 +1,27 @@
+{
+  "slug": "comma-jump-number-input__digit-rise-comma-dip",
+  "visual_name": "Comma-jump number input",
+  "code_name": "Digit rise and comma dip",
+  "category": "ui-components",
+  "summary": "A huge white dollar amount typed digit by digit from a number pad: each digit springs up from below, every comma dips and slides when a new thousands group appears, and past $1,000,000 the grey converted line crossfades to a red balance warning.",
+  "aliases": [
+    "amount input",
+    "number pad",
+    "money entry",
+    "comma dip",
+    "currency keypad"
+  ],
+  "tags": [
+    "form",
+    "counter",
+    "dark"
+  ],
+  "tech": [
+    "vanilla-js",
+    "spring"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

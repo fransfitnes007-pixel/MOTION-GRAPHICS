@@ -1,0 +1,137 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Number flip reflection</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;color:#f4f4f8}
+.half{position:absolute;overflow:hidden}
+.glyph{position:absolute;left:0;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:#f2f2f6;letter-spacing:-.02em}
+.shade{position:absolute;left:0;top:0;right:0;bottom:0;background:#000;opacity:0}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5
+window.DUR = DUR
+
+const cw = TALL ? 270 : 300, ch = Math.round(cw * 1.42), gap = TALL ? 22 : 28, N = 3
+const totalW = N * cw + (N - 1) * gap, R = cw * .09
+const topY = Math.round(CY - ch * .62), floorY = topY + ch
+const START = [.9, 1.7, 2.5, 3.3], FLIP = .62, BASE = 128
+
+// floor: dark glossy plane with a horizon line and a soft pool of light
+const floor = el('div', 'abs'); S(floor, { left: 0, top: px(floorY), width: px(W), height: px(H - floorY), background: 'linear-gradient(#1a1a22 0%,#101016 38%,#0b0b10 100%)' })
+const pool = el('div', 'abs'); S(pool, { left: px(CX - totalW * .8), top: px(floorY - 6), width: px(totalW * 1.6), height: px(ch * .55), background: 'radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.10),rgba(255,255,255,0) 70%)' })
+const edge = el('div', 'abs'); S(edge, { left: 0, top: px(floorY - 1), width: px(W), height: '2px', background: 'linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22) 50%,rgba(255,255,255,0))' })
+const sheen = el('div', 'abs'); S(sheen, { left: 0, top: px(floorY), width: px(W), height: px(H - floorY), opacity: .5 })
+const glow = el('div', 'abs'); S(glow, { left: px(CX - totalW * .7), top: px(topY - ch * .25), width: px(totalW * 1.4), height: px(ch * 1.5), background: 'radial-gradient(ellipse at 50% 55%,rgba(120,130,255,.10),rgba(0,0,0,0) 65%)' })
+const group = el('div', 'abs'); S(group, { left: 0, top: 0, width: px(W), height: px(H) })
+const cap = el('div', 'abs', group, 'Day streak'); S(cap, { left: 0, top: px(topY - 118 * (TALL ? .8 : 1)), width: px(W), textAlign: 'center', fontSize: px(34 * (TALL ? .85 : 1)), letterSpacing: '.28em', textTransform: 'uppercase', color: '#8b8b99', fontWeight: 600 })
+const unit = el('div', 'abs', group, 'days'); S(unit, { left: 0, top: px(floorY + 24), width: px(W), textAlign: 'center', fontSize: px(30), color: '#6a6a78', letterSpacing: '.2em', textTransform: 'uppercase', display: 'none' })
+
+function makeCounter(parent) {
+  const root = el('div', 'abs', parent); S(root, { left: px(CX - totalW / 2), top: 0, width: px(totalW), height: px(ch) })
+  const digs = []
+  for (let j = 0; j < N; j++) {
+    const card = el('div', 'abs', root); S(card, { left: px(j * (cw + gap)), top: 0, width: px(cw), height: px(ch), perspective: px(cw * 3.4) })
+    const half = (isTop, bg) => {
+      const h = el('div', 'half', card)
+      S(h, { left: 0, top: px(isTop ? 0 : ch / 2), width: px(cw), height: px(ch / 2), background: bg, borderRadius: isTop ? `${R}px ${R}px 0 0` : `0 0 ${R}px ${R}px` })
+      const g = el('div', 'glyph', h); S(g, { top: px(isTop ? 0 : -ch / 2), width: px(cw), height: px(ch), lineHeight: px(ch), fontSize: px(ch * .74) })
+      const sh = el('div', 'shade', h)
+      return { h, g, sh, txt: '' }
+    }
+    const TOPBG = 'linear-gradient(#32323d,#25252e)', BOTBG = 'linear-gradient(#1d1d25,#16161c)'
+    const sTop = half(true, TOPBG), sBot = half(false, BOTBG), fTop = half(true, TOPBG), fBot = half(false, BOTBG)
+    S(fTop.h, { transformOrigin: '50% 100%' }); S(fBot.h, { transformOrigin: '50% 0%' })
+    const hinge = el('div', 'abs', card); S(hinge, { left: 0, top: px(ch / 2 - 2), width: px(cw), height: '4px', background: '#09090d' })
+    for (const x of [-7, cw - 7]) { const n = el('div', 'abs', card); S(n, { left: px(x), top: px(ch / 2 - 9), width: '14px', height: '18px', borderRadius: '9px', background: '#09090d' }) }
+    const gl = el('div', 'abs', card); S(gl, { left: 0, top: 0, width: px(cw), height: px(ch / 2), borderRadius: `${R}px ${R}px 0 0`, boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,.12)' })
+    digs.push({ sTop, sBot, fTop, fBot })
+  }
+  const setT = (o, s) => { if (o.txt !== s) { o.txt = s; o.g.textContent = s } }
+  return function update(t) {
+    // which step are we in
+    let i = 0; for (let k = 0; k < START.length; k++) if (t >= START[k]) i = k + 1
+    let from = BASE, to = BASE, p = 1
+    if (t >= 4.8) i = 0
+    if (i > 0) { from = BASE + i - 1; to = BASE + i; p = clamp((t - START[i - 1]) / FLIP, 0, 1) }
+    const fs = String(from), ts = String(to)
+    for (let j = 0; j < N; j++) {
+      const d = digs[j], o = fs[j], n = ts[j]
+      const flipping = o !== n && p > 0 && p < 1
+      if (!flipping) {
+        const c = p >= 1 ? n : o
+        setT(d.sTop, c); setT(d.sBot, c)
+        vis(d.fTop.h, false); vis(d.fBot.h, false)
+        d.sBot.sh.style.opacity = 0; d.sTop.sh.style.opacity = 0
+        continue
+      }
+      setT(d.sTop, n); setT(d.sBot, o); setT(d.fTop, o); setT(d.fBot, n)
+      const a = seg(p, 0, .5), b = seg(p, .5, 1)
+      vis(d.fTop.h, p < .5); vis(d.fBot.h, p >= .5)
+      S(d.fTop.h, { transform: `rotateX(${-90 * a * a}deg)` })
+      d.fTop.sh.style.opacity = (.7 * a).toFixed(3)
+      S(d.fBot.h, { transform: `rotateX(${90 * (1 - spring(b, 6, 9))}deg)` })
+      d.fBot.sh.style.opacity = (.55 * (1 - eo(b))).toFixed(3)
+      d.sBot.sh.style.opacity = (.7 * a).toFixed(3)
+      d.sTop.sh.style.opacity = (.25 * (1 - a)).toFixed(3)
+    }
+  }
+}
+
+const upMain = makeCounter(group)
+const refl = el('div', 'abs', group)
+S(refl, { left: 0, top: px(floorY + 2), width: px(W), height: px(ch), transform: 'scaleY(-1)', opacity: .42, filter: 'blur(1.6px)',
+  webkitMaskImage: 'linear-gradient(to top,rgba(0,0,0,.95),rgba(0,0,0,0) 72%)', maskImage: 'linear-gradient(to top,rgba(0,0,0,.95),rgba(0,0,0,0) 72%)' })
+const upRefl = makeCounter(refl)
+// the main counter sits at `top`; makeCounter roots sit at 0, so lift the first one
+group.children[2].style.top = px(topY)
+
+function render(t) {
+  const fin = eo(seg(t, 0, .5)), fout = 1 - seg(t, 4.4, 4.8)
+  const o = fin * fout
+  S(group, { opacity: o.toFixed(3), transform: `translateY(${(1 - fin) * 24}px)` })
+  const sx = ((t / DUR) * 2) % 2
+  S(sheen, { background: `linear-gradient(100deg,rgba(255,255,255,0) ${px(-300 + sx * W)},rgba(255,255,255,.035) ${px(-100 + sx * W)},rgba(255,255,255,0) ${px(100 + sx * W)})` })
+  upMain(t); upRefl(t)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

@@ -1,0 +1,163 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;color:#f2f4f8}
+.finger{position:absolute;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.5);box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.col{position:relative;overflow:hidden;display:inline-block}
+.strip{position:absolute;left:0;top:0;width:100%}
+.strip div{text-align:center}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 6
+window.DUR = DUR
+const CWD = TALL ? 960 : 1240, CHT = TALL ? 1010 : 780, PADX = 64
+const cL = CX - CWD / 2, cT = CY - CHT / 2
+const GREEN = '52,224,161'
+const NUMFS = TALL ? 112 : 128, LH = NUMFS * 1.08
+const chW = CWD - 2 * PADX, chH = TALL ? 520 : 320
+const chTop = TALL ? 330 : 300
+
+const card = el('div', 'abs'); S(card, { left: px(cL), top: px(cT), width: px(CWD), height: px(CHT), borderRadius: '44px', background: 'linear-gradient(180deg,#171821,#101118)', border: '1px solid rgba(255,255,255,.07)', boxShadow: '0 40px 100px rgba(0,0,0,.6)' })
+const lab = el('div', 'abs', card, 'Total balance'); S(lab, { left: px(PADX), top: '52px', fontSize: '28px', fontWeight: 600, color: 'rgba(242,244,248,.5)' })
+
+// rolling-digit number: $ 1 , 2 3 4 , 5 6 7
+const numRow = el('div', 'abs', card); S(numRow, { left: px(PADX - 4), top: '88px', height: px(LH), display: 'flex', alignItems: 'flex-start', fontSize: px(NUMFS), fontWeight: 800, letterSpacing: '-.03em', fontVariantNumeric: 'tabular-nums', lineHeight: px(LH) })
+const sym = el('span', '', numRow, '$'); S(sym, { opacity: .55, marginRight: px(NUMFS * .04) })
+const strips = []
+for (let k = 6; k >= 0; k--) {
+  if (k === 5 || k === 2) { const c = el('span', '', numRow, ','); S(c, { opacity: .55, width: px(NUMFS * .24), textAlign: 'center' }) }
+  const col = el('div', 'col', numRow); S(col, { width: px(NUMFS * .6), height: px(LH), webkitMaskImage: 'linear-gradient(180deg,transparent 0%,#000 14%,#000 88%,transparent 100%)', maskImage: 'linear-gradient(180deg,transparent 0%,#000 14%,#000 88%,transparent 100%)' })
+  const strip = el('div', 'strip', col)
+  for (let d = 0; d <= 10; d++) { const c = el('div', '', strip, String(d % 10)); S(c, { height: px(LH) }) }
+  strips[k] = strip
+}
+const pill = el('div', 'abs', card); S(pill, { left: px(PADX), top: px(88 + LH + 14), height: '48px', padding: '0 20px', borderRadius: '24px', fontSize: '26px', fontWeight: 700, lineHeight: '48px', letterSpacing: '0' })
+const pillSub = el('div', 'abs', card, 'since the start of the month'); S(pillSub, { left: px(PADX + 190), top: px(88 + LH + 14), fontSize: '26px', lineHeight: '48px', fontWeight: 500, color: 'rgba(242,244,248,.42)' })
+
+// chart data: seeded, jagged
+const hash = (i, s) => { let h = (Math.imul(i + 1, 374761393) + Math.imul(s, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296 }
+const N = 56
+let raw = []; for (let i = 0; i < N; i++) { const u = i / (N - 1); raw.push(.25 + .5 * Math.pow(u, 1.1) + (hash(i, 7) - .5) * .34 + .07 * Math.sin(i * .62)) }
+const mn = Math.min(...raw), mxv = Math.max(...raw)
+const D = raw.map(v => (v - mn) / (mxv - mn))
+const dLast = D[N - 1]
+const PY = chH * .09, PH = chH * .8
+const PX = D.map((_, i) => i / (N - 1) * chW), PYs = D.map(d => PY + (1 - d) * PH)
+const lineD = PX.map((x, i) => (i ? 'L' : 'M') + x.toFixed(1) + ' ' + PYs[i].toFixed(1)).join(' ')
+const areaD = lineD + ` L${chW} ${chH} L0 ${chH} Z`
+const valAt = (x) => { const f = clamp(x / chW) * (N - 1), i = Math.min(N - 2, Math.floor(f)), r = f - i; return lerp(D[i], D[i + 1], r) }
+const yAt = (x) => { const f = clamp(x / chW) * (N - 1), i = Math.min(N - 2, Math.floor(f)), r = f - i; return lerp(PYs[i], PYs[i + 1], r) }
+const toMoney = (d) => 1234567 + (d - dLast) * 160000
+const V0 = toMoney(D[0])
+
+const chart = el('div', 'abs', card); S(chart, { left: px(PADX), top: px(chTop), width: px(chW), height: px(chH) })
+const svg = (inner, extra) => `<svg viewBox="0 0 ${chW} ${chH}" width="${chW}" height="${chH}" style="position:absolute;left:0;top:0;overflow:visible;${extra || ''}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${GREEN})" stop-opacity=".30"/><stop offset="1" stop-color="rgb(${GREEN})" stop-opacity="0"/></linearGradient></defs>${inner}</svg>`
+const line = (w, op) => `<path d="${lineD}" fill="none" stroke="rgb(${GREEN})" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" opacity="${op || 1}"/>`
+const dimWrap = el('div', 'abs', chart); dimWrap.innerHTML = svg(`<path d="${areaD}" fill="url(#ag)"/>` + line(4)); S(dimWrap, { left: '0px', top: '0px', width: px(chW), height: px(chH) })
+// bright part: same line again, clipped at the finger with clip-path inset (the split line)
+const brightWrap = el('div', 'abs', chart); S(brightWrap, { left: '0px', top: '0px', width: px(chW), height: px(chH) })
+const glowLayer = el('div', 'abs', brightWrap); glowLayer.innerHTML = svg(line(14, .9) + line(6, 1), 'filter:blur(11px)'); S(glowLayer, { left: '0px', top: '0px', width: px(chW), height: px(chH) })
+const brightLayer = el('div', 'abs', brightWrap); brightLayer.innerHTML = svg(`<path d="${areaD}" fill="url(#ag)" opacity=".6"/>` + line(5)); S(brightLayer, { left: '0px', top: '0px', width: px(chW), height: px(chH) })
+
+const guide = el('div', 'abs', chart); S(guide, { width: '2px', top: '-26px', height: px(chH + 26), marginLeft: '-1px', background: 'linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.6) 14%,rgba(255,255,255,.12))' })
+const chip = el('div', 'abs', chart); S(chip, { top: '-64px', height: '36px', padding: '0 16px', borderRadius: '18px', background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.18)', fontSize: '22px', fontWeight: 600, lineHeight: '34px', whiteSpace: 'nowrap' })
+const halo = el('div', 'abs', chart); const dot = el('div', 'abs', chart)
+S(halo, { width: '56px', height: '56px', marginLeft: '-28px', marginTop: '-28px', borderRadius: '50%', background: `radial-gradient(closest-side, rgba(${GREEN},.75), rgba(${GREEN},0))` })
+S(dot, { width: '22px', height: '22px', marginLeft: '-11px', marginTop: '-11px', borderRadius: '50%', background: '#fff', border: `4px solid rgb(${GREEN})`, boxShadow: `0 0 18px 4px rgba(${GREEN},.8)` })
+
+// range tabs
+const tabs = ['1D', '1W', '1M', '3M', '1Y'].map((n, i) => { const d = el('div', 'abs', card, n); const on = i === 2; S(d, { left: px(PADX + i * 92), top: px(chTop + chH + 36), width: '80px', height: '46px', borderRadius: '23px', textAlign: 'center', lineHeight: '46px', fontSize: '24px', fontWeight: 700, color: on ? '#0b0b10' : 'rgba(242,244,248,.45)', background: on ? 'rgba(242,244,248,.92)' : 'transparent' }); return d })
+
+const finger = el('div', 'finger')
+
+// scrub timeline
+const P0 = .9, R0 = 4.4, TRAVEL = [[.9, .30], [1.2, .30], [2.8, .97], [3.6, .97], [4.3, .42]]
+function fracAt(t) {
+  let f = TRAVEL[0][1]
+  for (let i = 1; i < TRAVEL.length; i++) { const [t0, f0] = TRAVEL[i - 1], [t1, f1] = TRAVEL[i]; if (t >= t0) f = lerp(f0, f1, eio(seg(t, t0, t1))) }
+  return f
+}
+function scrub(t) {                       // x of the split line and the press amount
+  if (t < P0) return { x: chW, pr: 0 }
+  if (t < R0) { const a = spring(seg(t, P0, P0 + .4), 8, 9); return { x: clamp(lerp(chW, fracAt(t) * chW, a), 0, chW), pr: clamp(a) } }
+  const x0 = fracAt(R0) * chW, b = spring(seg(t, R0, R0 + .9), 7, 10)
+  return { x: clamp(lerp(x0, chW, b), 0, chW), pr: clamp(1 - spring(seg(t, R0, R0 + .5), 7, 10)) }
+}
+const sstep = (x) => { x = clamp(x); return x * x * (3 - 2 * x) }
+const fmt = (n) => n.toFixed(1)
+
+function render(t) {
+  const { x, pr } = scrub(t)
+  // line: bright left of the split, dim right of it
+  S(dimWrap, { opacity: lerp(1, .2, pr) })
+  S(brightWrap, { clipPath: `inset(-60px ${chW - x}px -60px -60px)` })
+  S(glowLayer, { opacity: pr })
+  const y = yAt(x)
+  S(guide, { left: px(x), opacity: pr })
+  const lbl = 'Jun ' + (1 + Math.round(clamp(x / chW) * 29)); chip.textContent = lbl
+  const cw2 = chip.offsetWidth || 90
+  S(chip, { left: px(clamp(x - cw2 / 2, -20, chW - cw2 + 20)), opacity: pr, transform: `translateY(${(1 - pr) * 10}px)` })
+  S(halo, { left: px(x), top: px(y), opacity: .35 + .65 * pr, transform: `scale(${.7 + .6 * pr})` })
+  S(dot, { left: px(x), top: px(y), transform: `scale(${.6 + .6 * pr})` })
+  // number follows the line a few frames behind, digits roll like an odometer
+  const xv = scrub(t - .05).x
+  const v = toMoney(valAt(xv))
+  for (let k = 0; k < 7; k++) {
+    const p = v / Math.pow(10, k), m = Math.floor(p), fr = p - m
+    const off = (m % 10) + sstep((fr - .78) / .22)
+    strips[k].style.transform = `translateY(${-off * LH}px)`
+  }
+  const pct = (v - V0) / V0 * 100
+  pill.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%'
+  S(pill, { color: pct >= 0 ? `rgb(${GREEN})` : '#ff7a7a', background: pct >= 0 ? `rgba(${GREEN},.14)` : 'rgba(255,122,122,.14)' })
+  S(pillSub, { left: px(PADX + pill.offsetWidth + 18) })
+  // finger
+  const fa = seg(t, .4, .85) * (1 - seg(t, R0, R0 + .4))
+  if (fa <= 0) vis(finger, 0); else {
+    const press = pr * (1 - seg(t, R0, R0 + .25))
+    const fs = 96 * (1 - .16 * press)
+    const fxl = fracAt(Math.min(t, R0)) * chW, fx = cL + PADX + fxl, fy = cT + chTop + yAt(fxl) + 96 + (1 - eo(seg(t, .4, .9))) * 60
+    vis(finger, 1); S(finger, { width: px(fs), height: px(fs), left: px(fx - fs / 2), top: px(fy - fs / 2), opacity: fa })
+  }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

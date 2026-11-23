@@ -2,9 +2,11 @@
 
 Make motion-graphics videos with Claude Code: Instagram Reels, TikToks, YouTube Shorts, X videos and long-form brand films, from a one-line prompt or a fully specified brief. White-label: put your brand in one file and every scene, logo, end card and template follows.
 
-![A sample of the library](docs/media/library-grid.jpg)
+[![motion-reel-kit showcase film](docs/media/showcase-preview.gif)](docs/media/showcase.mp4)
 
-Example output: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end by the kit (local voice, beats pinned to the words, 277 synthesised sound effects, App Store end card), still on the placeholder brand.
+**[▶ Watch the 50-second showcase with sound](docs/media/showcase.mp4)**. The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Source: [`docs/showcase/`](docs/showcase/).
+
+Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end (local voice, beats pinned to the words, 277 sound effects, App Store end card), still on the placeholder brand.
 
 ## What is inside
 
@@ -12,10 +14,11 @@ Example output: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 
 |---|---|
 | **14 Claude Code skills** | A to Z reel making, viral-format recreation, the animation library, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
 | **5 slash commands** | `/reel`, `/recreate`, `/motion`, `/voice`, `/rebrand` |
-| **Animation library** | 229 pieces: 122 motion graphics, 46 UI components, 41 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
+| **Animation library** | 241 pieces: 122 motion graphics, 58 UI components and micro-interactions, 41 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
 | **Pictogram reel pipeline** | A code-drawn, 20-beat faceless parable reel with beats pinned to the voiceover, synthesised sound effects and an App Store end card |
 | **Local voice pipeline** | Fast, natural voiceovers on Apple Silicon (Qwen3-TTS, Kokoro) at a set pace and pitch, line-by-line recording, voice design from a description |
 | **Reference analysis** | Measure any video you want to copy: cuts, words per minute, pauses, voice pitch, and the clicks, swishes, hits and music bed under the voice |
+| **Interaction pack** | 12 app-grade micro-interactions written from scratch for video: comma-jump number input, card burn, 3D card flip, border comet pulse, hold to commit, OTP success fill, split-flap counter and more |
 | **Palettes** | 9 named signature looks (including `arizona-sunset`) and the colours of every library piece |
 | **Formats and prompts** | 24 video formats written up beat by beat with what went wrong and how it was fixed, and a short and a detailed prompt for 23 of them |
 
@@ -87,7 +90,7 @@ idea or reference ─▶ script ─▶ voiceover ─▶ word times ─▶ beats 
 
 Try one now:
 ```bash
-open library/LIBRARY.html                                   # browse all 229 pieces, live
+open library/LIBRARY.html                                   # browse all 241 pieces, live
 node engine/tools/render_demo.cjs video \
   library/motion-graphics/dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax/code/demo.html \
   out/dino.mp4 1080 1920
@@ -113,7 +116,7 @@ python3 build/render.py vo/mix.wav out.mp4
 brand.config.json      your brand: the only file you have to edit
 commands/              /reel /recreate /motion /voice /rebrand
 skills/                the 14 skills Claude loads
-library/               229 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
+library/               241 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
 engine/                render, find, verify, poster, index, rebrand and chrome-logo tools; the demo template and spec
 pipelines/
   pictogram-reel/      the code-drawn reel renderer, example script, cues, sound effects

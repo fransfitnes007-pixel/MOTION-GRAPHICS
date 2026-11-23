@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>plus-to-tick-button</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10;color:#fff}
+.pb{position:absolute;border-radius:999px;box-shadow:0 30px 70px rgba(0,0,0,.5);overflow:hidden}
+.lb{position:absolute;white-space:nowrap;font-weight:600;text-align:center;letter-spacing:-.01em}
+.ic{position:absolute;border-radius:50%}
+svg{position:absolute;overflow:visible}
+.fing{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.55);z-index:20}
+.rip{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.5);z-index:20}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5
+window.DUR = DUR
+const fing = el('div', 'fing'), rip = el('div', 'rip')
+function finger(x, y, a, press, rp, FS = 64) {
+  const sz = FS * (1 - .22 * press)
+  S(fing, { left: px(x - sz / 2), top: px(y - sz / 2), width: px(sz), height: px(sz), opacity: a.toFixed(3) })
+  vis(fing, a > .01)
+  const rs = FS * (1 + 1.4 * rp)
+  S(rip, { left: px(x - rs / 2), top: px(y - rs / 2), width: px(rs), height: px(rs), opacity: (a * (1 - rp) * .9).toFixed(3) })
+  vis(rip, a > .01 && rp > 0 && rp < 1)
+}
+// press / ripple for a tap at time T
+const tapPress = (t, T) => clamp(seg(t, T - .12, T) - seg(t, T + .05, T + .22))
+const tapRip = (t, T) => t >= T ? seg(t, T, T + .5) : 0
+const PW = TALL ? 860 : 820, PH = 170, IC = 118, FSZ = 52
+const pill = el('div', 'pb'), icon = el('div', 'ic'), lab1 = el('div', 'lb', stage, 'Buy for $6.99'), lab2 = el('div', 'lb', stage, 'Added')
+const NS = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', IC); svg.setAttribute('height', IC); svg.setAttribute('viewBox', '-50 -50 100 100')
+stage.appendChild(svg)
+const mkp = () => { const p = document.createElementNS(NS, 'path'); p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#fff'); p.setAttribute('stroke-width', 7); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('stroke-linejoin', 'round'); svg.appendChild(p); return p }
+const L1 = mkp(), L2 = mkp()
+const px0 = CX - PW / 2, py0 = CY - PH / 2
+S(pill, { width: px(PW), height: px(PH) })
+S(icon, { width: px(IC), height: px(IC) })
+const TX = (PW - IC - 28) / 2 + IC + 28 // label centre inside pill
+;[lab1, lab2].forEach(l => S(l, { fontSize: px(FSZ), lineHeight: px(PH), height: px(PH), width: px(PW - IC - 80), left: px(px0 + IC + 48), top: px(py0) }))
+const TAP1 = .9, TAP2 = 3.3
+const rot = (x, y, a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)]
+const A = [-16, 2], B = [-5, 13], C = [18, -12]
+const mixc = (c1, c2, k) => c1.map((v, i) => Math.round(lerp(v, c2[i], k)))
+
+function render(t) {
+  const m = t < 3.2 ? spring(seg(t, TAP1, TAP1 + .55), 5, 9) : 1 - spring(seg(t, TAP2, TAP2 + .55), 5, 9)
+  const mc = clamp(m)
+  const th = (Math.PI / 4) * m
+  const k1 = eio(clamp((m - .12) / .55)), k2 = eio(clamp((m - .3) / .55))
+  // plus lines rotated by th, then eased into the check points
+  const p0 = rot(-20, 0, th), p1 = rot(20, 0, th), q0 = rot(0, 20, th), q1 = rot(0, -20, th)
+  const pt = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k)]
+  const a0 = pt(p0, A, k1), a1 = pt(p1, B, k1), b0 = pt(q0, B, k2), b1 = pt(q1, C, k2)
+  L1.setAttribute('d', `M${a0[0].toFixed(2)} ${a0[1].toFixed(2)} L${a1[0].toFixed(2)} ${a1[1].toFixed(2)}`)
+  L2.setAttribute('d', `M${b0[0].toFixed(2)} ${b0[1].toFixed(2)} L${b1[0].toFixed(2)} ${b1[1].toFixed(2)}`)
+  // flash + bounce
+  const fl = t < 3.2 ? Math.sin(Math.PI * seg(t, TAP1 + .08, TAP1 + .95)) : 0
+  const press = Math.max(tapPress(t, TAP1), tapPress(t, TAP2))
+  const bump = (t >= TAP1 && t < 3.2 ? Math.sin(Math.PI * seg(t, TAP1 + .05, TAP1 + .5)) : 0) * .055
+  const sc = 1 - .035 * press + bump
+  const base = [28, 28, 36], grn = [27, 94, 52]
+  const bc = mixc(base, grn, fl)
+  pill.style.background = `rgb(${bc[0]},${bc[1]},${bc[2]})`
+  pill.style.boxShadow = `0 30px 70px rgba(0,0,0,.5), 0 0 ${px(80 * fl)} rgba(48,209,88,${(.3 * fl).toFixed(3)}), inset 0 0 0 1.5px rgba(${mixc([255, 255, 255], [90, 230, 130], fl).join(',')},${(.08 + .35 * fl).toFixed(3)})`
+  const ib = mixc([255, 255, 255], [48, 209, 88], 0)
+  icon.style.background = `rgba(255,255,255,${(.14 + .1 * mc).toFixed(3)})`
+  const T = `scale(${sc})`
+  S(pill, { left: px(px0), top: px(py0), transform: T })
+  const ix = px0 + 26, iy = CY - IC / 2
+  const o = (e, x, y) => S(e, { left: px(x), top: px(y), transform: T, transformOrigin: `${px0 + PW / 2 - x}px ${CY - y}px` })
+  o(icon, ix, iy); o(svg, ix, iy)
+  const la = seg(m, .22, .6)
+  o(lab1, px0 + IC + 48, py0); o(lab2, px0 + IC + 48, py0)
+  S(lab1, { opacity: (1 - la).toFixed(3), transform: `${T} translateY(${(-la * 10).toFixed(2)}px)` })
+  S(lab2, { opacity: la.toFixed(3), transform: `${T} translateY(${((1 - la) * 10).toFixed(2)}px)` })
+  const T0 = t < 2.4 ? TAP1 : TAP2
+  const fa = t < 2.4 ? seg(t, .45, .7) * (1 - seg(t, 1.4, 1.7)) : seg(t, 2.85, 3.1) * (1 - seg(t, 3.9, 4.2))
+  const mv = 1 - eo(seg(t, T0 - .45, T0 - .05)), out = seg(t, T0 + .15, T0 + .7)
+  finger(px0 + 80 + 50 * mv + 60 * out, CY + 10 + 110 * mv + 90 * out, fa, tapPress(t, T0), tapRip(t, T0))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

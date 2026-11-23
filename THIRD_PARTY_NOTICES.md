@@ -15,3 +15,7 @@ Tools the kit calls but does not include, each under its own licence: ffmpeg, Pl
 The dino-runner pieces are inspired by the offline dinosaur game in Chrome; every pixel is drawn new. App Store-style end cards imitate the store's layout for a listing you own: use your own app's real name, icon and figures.
 
 Recommended reading that is not bundled: [blader/humanizer](https://github.com/blader/humanizer) (MIT) for editing captions and scripts.
+
+The 12-piece interaction pack recreates common iOS micro-interaction patterns. [60fps.design](https://60fps.design), a catalogue of iOS app animations, was used to choose which patterns to build. None of its code, videos or images are included; every piece here is written from scratch.
+
+The showcase film's voiceover was generated with ElevenLabs.

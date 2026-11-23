@@ -1,0 +1,27 @@
+{
+  "slug": "hold-to-commit-button__press-fill-progress-release",
+  "visual_name": "Hold to commit button",
+  "code_name": "Press fill progress and release",
+  "category": "ui-components",
+  "summary": "A wide black pill labelled Hold to send: a short press springs back, then a full 1.5 s hold sweeps a lighter fill across, the pill pops and the label becomes Sent with a check.",
+  "aliases": [
+    "hold button",
+    "press and hold",
+    "hold to send",
+    "long press button",
+    "hold to confirm"
+  ],
+  "tags": [
+    "cta",
+    "light",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

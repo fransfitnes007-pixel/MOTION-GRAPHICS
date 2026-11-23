@@ -1,0 +1,27 @@
+{
+  "slug": "delete-to-confirm-morph__blur-swap-pill",
+  "visual_name": "Delete to confirm morph",
+  "code_name": "Blur swap pill",
+  "category": "ui-components",
+  "summary": "A white transaction sheet where tapping Delete blurs the grey pill and swaps it for a pink Confirm pill with a check; a second tap drops the sheet out of view and it rises again.",
+  "aliases": [
+    "confirm delete",
+    "two step delete",
+    "delete button",
+    "confirm pill",
+    "blur swap"
+  ],
+  "tags": [
+    "modal",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-filter"
+  ],
+  "duration_sec": 5.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

@@ -1,0 +1,188 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0b0b10}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5.6
+window.DUR = DUR
+const B0 = .7, B1 = 2.3, R0 = 3.1, R1 = 4.6          // burn up, reform down
+const cw = TALL ? 720 : 620, ch = TALL ? 980 : 820, M = 70
+const TW = cw + 2 * M, TH = ch + 2 * M
+const cx0 = CX - cw / 2, cy0 = CY - ch / 2
+const AMP = .34 * ch                                   // noise amplitude of the burn line, px
+
+const cvs = el('canvas', 'abs'); cvs.width = W; cvs.height = H
+S(cvs, { left: '0px', top: '0px', width: W + 'px', height: H + 'px' })
+const ctx = cvs.getContext('2d')
+const tmp = document.createElement('canvas'); tmp.width = TW; tmp.height = TH
+const tctx = tmp.getContext('2d')
+
+// ---- seeded hash noise (never Math.random) ----
+function hash(x, y, s) { let h = (Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(s, 1442695041)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296 }
+function vnoise(x, y, cell, s) {
+  const gx = x / cell, gy = y / cell, ix = Math.floor(gx), iy = Math.floor(gy)
+  let fx = gx - ix, fy = gy - iy; fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy)
+  const a = hash(ix, iy, s), b = hash(ix + 1, iy, s), c = hash(ix, iy + 1, s), d = hash(ix + 1, iy + 1, s)
+  return lerp(lerp(a, b, fx), lerp(c, d, fx), fy)
+}
+const NZ = new Float32Array(TW * TH)
+for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++)
+  NZ[y * TW + x] = .5 * vnoise(x, y, 130, 1) + .32 * vnoise(x, y, 48, 2) + .18 * vnoise(x, y, 22, 3)
+
+// ---- the card, drawn once ----
+const FONT = '-apple-system, "SF Pro Display", BlinkMacSystemFont, system-ui, sans-serif'
+const art = document.createElement('canvas'); art.width = TW; art.height = TH
+const a = art.getContext('2d')
+a.save(); a.translate(M, M)
+a.beginPath(); a.roundRect(0, 0, cw, ch, 48); a.clip()
+let g = a.createLinearGradient(0, 0, cw * .6, ch); g.addColorStop(0, '#5b4bff'); g.addColorStop(.5, '#c23fd8'); g.addColorStop(1, '#ff7a4f')
+a.fillStyle = g; a.fillRect(0, 0, cw, ch)
+const blob = (x, y, r, c0, c1) => { const q = a.createRadialGradient(x, y, 0, x, y, r); q.addColorStop(0, c0); q.addColorStop(1, c1); a.fillStyle = q; a.fillRect(0, 0, cw, ch) }
+blob(cw * .85, ch * .18, cw * .7, 'rgba(255,255,255,.30)', 'rgba(255,255,255,0)')
+blob(cw * .1, ch * .95, cw * .8, 'rgba(255,200,120,.35)', 'rgba(255,200,120,0)')
+const pad = 48
+for (let i = 0; i < 3; i++) { a.fillStyle = i === 0 ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.35)'; a.beginPath(); a.roundRect(pad + i * ((cw - 2 * pad - 24) / 3 + 12), 44, (cw - 2 * pad - 24) / 3, 8, 4); a.fill() }
+a.fillStyle = 'rgba(255,255,255,.9)'; a.beginPath(); a.arc(pad + 28, 112, 28, 0, 7); a.fill()
+a.fillStyle = 'rgba(255,255,255,.35)'; a.beginPath(); a.arc(pad + 28, 112, 14, 0, 7); a.fill()
+a.fillStyle = 'rgba(255,255,255,.85)'; a.font = '600 28px ' + FONT; a.textBaseline = 'middle'; a.fillText('Just now', pad + 76, 112)
+a.fillStyle = '#fff'; a.textBaseline = 'alphabetic'; a.font = '800 ' + (TALL ? 92 : 84) + 'px ' + FONT
+a.fillText('My story', pad, ch - 250)
+a.fillStyle = 'rgba(255,255,255,.88)'; a.font = '500 ' + (TALL ? 38 : 34) + 'px ' + FONT
+a.fillText('A few small moments from this week,', pad, ch - 170)
+a.fillText('kept together in one place.', pad, ch - 120)
+a.fillStyle = 'rgba(255,255,255,.28)'; a.beginPath(); a.roundRect(pad, ch - 74, 150, 8, 4); a.fill()
+a.restore()
+const BASE = a.getImageData(0, 0, TW, TH).data
+const outImg = tctx.createImageData(TW, TH), OUT = outImg.data
+
+// ---- seeded particles: each one is born where the burn line crosses a pixel of the card ----
+const NP = 300, P = []
+for (let i = 0; i < NP; i++) {
+  let x, y, tries = 0
+  do { x = Math.floor(hash(i, 1, 11) * cw * .96 + cw * .02) + M; y = Math.floor(hash(i, 2, 12) * ch * .98) + M; tries++; if (tries > 1) { x = Math.floor(hash(i, 1 + tries, 11) * cw) + M; y = Math.floor(hash(i, 2 + tries, 12) * ch) + M } } while (BASE[(y * TW + x) * 4 + 3] < 250 && tries < 6)
+  const d = (TH - M - y) + (NZ[y * TW + x] - .5) * AMP        // same formula as the pixel pass
+  const p = (d / ch + .3) / 1.6
+  P.push({ x: x - M, y: y - M, ts: B0 + p * (B1 - B0), spark: hash(i, 3, 13) < .3, vy: 140 + hash(i, 4, 14) * 420, wind: -20 + hash(i, 5, 15) * 70, vx: -170 + hash(i, 11, 21) * 340,
+           amp: 6 + hash(i, 6, 16) * 22, fr: 2 + hash(i, 7, 17) * 4, ph: hash(i, 8, 18) * 6.28, life: .7 + hash(i, 9, 19) * 1.0, r: 1.2 + hash(i, 10, 20) * 3.2 })
+}
+
+function prog(t) {
+  if (t < B0) return 0
+  if (t < B1) return (t - B0) / (B1 - B0)
+  if (t < R0) return 1
+  if (t < R1) return 1 - eio((t - R0) / (R1 - R0))
+  return 0
+}
+
+function drawCard(p) {
+  tctx.clearRect(0, 0, TW, TH)
+  if (p <= 0) { tctx.drawImage(art, 0, 0); return }
+  if (p >= 1) return
+  const front = lerp(-.3, 1.3, p) * ch
+  OUT.fill(0)
+  for (let y = 0; y < TH; y++) {
+    const yy = TH - M - y
+    for (let x = 0; x < TW; x++) {
+      const i = y * TW + x, j = i * 4, al = BASE[j + 3]
+      if (!al) continue
+      const s = yy + (NZ[i] - .5) * AMP - front
+      if (s < 0) {
+        const gg = 1 + s / 50
+        if (gg > 0) { OUT[j] = 255; OUT[j + 1] = 120 + 60 * gg; OUT[j + 2] = 30; OUT[j + 3] = gg * gg * .6 * al }
+      } else if (s < 10) {
+        const k = s / 10
+        OUT[j] = 255; OUT[j + 1] = 250 - 80 * k; OUT[j + 2] = 200 - 140 * k; OUT[j + 3] = al
+      } else if (s < 30) {
+        const k = (s - 10) / 20, m = 1 - .65 * k, r0 = 255, g0 = 170 - 80 * k, b0 = 60 - 35 * k
+        OUT[j] = r0 * m + BASE[j] * (1 - m); OUT[j + 1] = g0 * m + BASE[j + 1] * (1 - m); OUT[j + 2] = b0 * m + BASE[j + 2] * (1 - m); OUT[j + 3] = al
+      } else if (s < 90) {
+        const k = (s - 30) / 60, m = .6 * Math.pow(1 - k, 1.5)
+        OUT[j] = 70 * m + BASE[j] * (1 - m); OUT[j + 1] = 20 * m + BASE[j + 1] * (1 - m); OUT[j + 2] = 8 * m + BASE[j + 2] * (1 - m); OUT[j + 3] = al
+      } else { OUT[j] = BASE[j]; OUT[j + 1] = BASE[j + 1]; OUT[j + 2] = BASE[j + 2]; OUT[j + 3] = al }
+    }
+  }
+  tctx.putImageData(outImg, 0, 0)
+}
+
+function render(t) {
+  const p = prog(t)
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.fillStyle = '#0b0b10'; ctx.fillRect(0, 0, W, H)
+  // warm light cast on the stage by the burn line
+  const act = clamp(Math.min(p, 1 - p) * 10)
+  if (act > 0) {
+    const fy = cy0 + ch - lerp(-.3, 1.3, p) * ch
+    ctx.save(); ctx.translate(CX, clamp(fy, cy0, cy0 + ch)); ctx.scale(1, .45)
+    const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, cw * .9)
+    rg.addColorStop(0, 'rgba(255,120,40,' + (.22 * act) + ')'); rg.addColorStop(1, 'rgba(255,120,40,0)')
+    ctx.fillStyle = rg; ctx.fillRect(-cw, -cw * 2, cw * 2, cw * 4); ctx.restore()
+  }
+  drawCard(p)
+  ctx.drawImage(tmp, cx0 - M, cy0 - M)
+  // embers and sparks
+  ctx.globalCompositeOperation = 'lighter'
+  for (const q of P) {
+    const age = t - q.ts
+    if (age < 0 || age > q.life) continue
+    const u = age / q.life
+    const rise = q.vy * age * (1 - .25 * u)
+    const px0 = cx0 + q.x + (q.spark ? q.vx * age * (1 - .3 * u) : q.wind * age) + q.amp * Math.sin(q.fr * age + q.ph) * Math.min(1, age * 2)
+    const py0 = cy0 + q.y - rise
+    const fl = .7 + .3 * Math.sin(age * 26 + q.ph * 3)
+    const al = clamp(age * 14) * Math.pow(1 - u, 1.4) * fl
+    const rr = 255, gg = u < .3 ? lerp(225, 130, u / .3) : lerp(130, 45, (u - .3) / .7), bb = u < .3 ? lerp(130, 40, u / .3) : 20
+    const col = 'rgba(' + rr + ',' + Math.round(gg) + ',' + Math.round(bb) + ','
+    if (q.spark) {
+      const vx = q.vx, vyy = -q.vy, L = Math.hypot(vx, vyy), len = 14 + 14 * (1 - u)
+      ctx.strokeStyle = col + al + ')'; ctx.lineWidth = 2; ctx.lineCap = 'round'
+      ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px0 - vx / L * len, py0 - vyy / L * len); ctx.stroke()
+    } else {
+      const r = q.r * (1 - .5 * u)
+      ctx.fillStyle = col + (al * .18) + ')'; ctx.beginPath(); ctx.arc(px0, py0, r * 3.6, 0, 7); ctx.fill()
+      ctx.fillStyle = col + al + ')'; ctx.beginPath(); ctx.arc(px0, py0, r, 0, 7); ctx.fill()
+    }
+  }
+  ctx.globalCompositeOperation = 'source-over'
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

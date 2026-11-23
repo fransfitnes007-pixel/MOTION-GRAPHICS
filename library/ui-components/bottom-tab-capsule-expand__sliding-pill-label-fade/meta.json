@@ -1,0 +1,28 @@
+{
+  "slug": "bottom-tab-capsule-expand__sliding-pill-label-fade",
+  "visual_name": "Bottom tab capsule expansion",
+  "code_name": "Sliding pill label fade",
+  "category": "ui-components",
+  "summary": "A floating tab bar with five grey line icons where a pale capsule slides under a swiping finger, widening for each label as it fades in while the previous label fades out.",
+  "aliases": [
+    "tab bar pill",
+    "sliding tab pill",
+    "bottom tabs",
+    "tab capsule",
+    "nav pill"
+  ],
+  "tags": [
+    "nav",
+    "dark",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "spring"
+  ],
+  "duration_sec": 5.6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": []
+}

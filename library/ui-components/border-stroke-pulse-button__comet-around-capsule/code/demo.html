@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>border-stroke-pulse-button</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#14141c;color:#fff}
+.ghost{position:absolute;border-radius:22px;background:rgba(255,255,255,.05)}
+.btn{position:absolute;border-radius:999px;background:linear-gradient(180deg,#20202a,#15151c);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);text-align:center;font-weight:600;color:#fff;letter-spacing:-.01em;white-space:nowrap}
+svg{position:absolute;overflow:visible}
+.fing{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.55);z-index:20}
+.rip{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.5);z-index:20}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5
+window.DUR = DUR
+const fing = el('div', 'fing'), rip = el('div', 'rip')
+function finger(x, y, a, press, rp, FS = 64) {
+  const sz = FS * (1 - .22 * press)
+  S(fing, { left: px(x - sz / 2), top: px(y - sz / 2), width: px(sz), height: px(sz), opacity: a.toFixed(3) })
+  vis(fing, a > .01)
+  const rs = FS * (1 + 1.4 * rp)
+  S(rip, { left: px(x - rs / 2), top: px(y - rs / 2), width: px(rs), height: px(rs), opacity: (a * (1 - rp) * .9).toFixed(3) })
+  vis(rip, a > .01 && rp > 0 && rp < 1)
+}
+// press / ripple for a tap at time T
+const tapPress = (t, T) => clamp(seg(t, T - .12, T) - seg(t, T + .05, T + .22))
+const tapRip = (t, T) => t >= T ? seg(t, T, T + .5) : 0
+const BW = 760, BH = 176, R = BH / 2, PADS = 40
+// faint ghost UI behind, so the dim reads
+const ghosts = []
+const gw = TALL ? 820 : 1100
+;[[-1, 300, 70], [-1, 190, 120], [1, 190, 120], [1, 300, 70]].forEach(([s, off, h]) => {
+  const g = el('div', 'ghost'); S(g, { width: px(gw), height: px(h), left: px(CX - gw / 2), top: px(CY + s * off - h / 2) }); ghosts.push(g)
+})
+const dim = el('div', 'abs'); S(dim, { left: 0, top: 0, width: px(W), height: px(H), background: '#000' })
+const btn = el('div', 'btn', stage, 'Start with payment')
+S(btn, { width: px(BW), height: px(BH), lineHeight: px(BH), fontSize: px(50), left: px(CX - BW / 2), top: px(CY - BH / 2) })
+const NS = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(NS, 'svg')
+svg.setAttribute('width', BW); svg.setAttribute('height', BH); svg.setAttribute('viewBox', `0 0 ${BW} ${BH}`)
+S(svg, { left: px(CX - BW / 2), top: px(CY - BH / 2) })
+stage.appendChild(svg)
+const D = `M ${BW - 1} ${R} A ${R - 1} ${R - 1} 0 0 1 ${BW - R} ${BH - 1} L ${R} ${BH - 1} A ${R - 1} ${R - 1} 0 0 1 ${R} 1 L ${BW - R} 1 A ${R - 1} ${R - 1} 0 0 1 ${BW - 1} ${R}`
+const mk = (p, parent, attrs) => { const e = document.createElementNS(NS, p); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e }
+const defs = mk('defs', svg, {})
+const flt = mk('filter', defs, { id: 'bl', x: '-20%', y: '-80%', width: '140%', height: '260%' })
+mk('feGaussianBlur', flt, { stdDeviation: 9 })
+mk('path', svg, { d: D, fill: 'none', stroke: 'rgba(255,255,255,.11)', 'stroke-width': 1.5 })
+const halo = mk('g', svg, { filter: 'url(#bl)' }), core = mk('g', svg, {})
+const NSEG = 14, segsH = [], segsC = []
+for (let i = 0; i < NSEG; i++) {
+  segsH.push(mk('path', halo, { d: D, fill: 'none', stroke: '#9fd2ff', 'stroke-width': 10, 'stroke-linecap': 'butt' }))
+  segsC.push(mk('path', core, { d: D, fill: 'none', stroke: '#ffffff', 'stroke-width': 4, 'stroke-linecap': 'butt' }))
+}
+const LEN = segsC[0].getTotalLength()
+const TAP = .55
+
+function render(t) {
+  const d = eio(seg(t, TAP + .1, TAP + .55)) * (1 - eio(seg(t, 3.0, 3.6)))
+  const grow = d
+  const gs = 1 + .06 * grow
+  const wrap = `scale(${gs})`
+  ghosts.forEach(g => S(g, { transform: `scale(${1 - .02 * grow})` }))
+  S(dim, { opacity: (.62 * d).toFixed(3) })
+  const press = Math.max(tapPress(t, TAP), 0)
+  const bs = gs * (1 - .02 * press)
+  btn.style.transform = `scale(${bs})`; svg.style.transform = `scale(${bs})`
+  // comet
+  const pr = seg(t, 1.0, 2.7)
+  const e = pr < .5 ? 2 * pr * pr : 1 - Math.pow(-2 * pr + 2, 2) / 2
+  const pe = lerp(pr, e, .45)
+  const head = LEN * pe
+  const len = LEN * (.07 + .36 * pe)
+  const tail = Math.max(0, head - len)
+  const total = head - tail
+  const fade = 1 - seg(pr, .82, 1)
+  const on = pr > 0 && pr < 1
+  for (let i = 0; i < NSEG; i++) {
+    const a0 = tail + total * i / NSEG, l = total / NSEG + 3.5
+    const o = Math.pow((i + 1) / NSEG, 1.05) * fade
+    ;[segsH[i], segsC[i]].forEach((p, k) => {
+      p.setAttribute('stroke-dasharray', `${Math.max(l, 0.01)} ${LEN * 2}`)
+      p.setAttribute('stroke-dashoffset', -a0)
+      p.setAttribute('opacity', on ? (k ? o : o * .85).toFixed(3) : 0)
+    })
+  }
+  const fa = seg(t, .2, .4) * (1 - seg(t, .95, 1.2))
+  const mv = 1 - eo(seg(t, TAP - .4, TAP - .05))
+  finger(CX + 120 + 60 * mv + 60 * seg(t, TAP + .1, TAP + .6), CY + 20 + 110 * mv + 80 * seg(t, TAP + .1, TAP + .6), fa, tapPress(t, TAP), tapRip(t, TAP))
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

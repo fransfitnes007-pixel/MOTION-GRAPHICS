@@ -3841,6 +3841,25 @@
    ]
   },
   {
+   "piece": "ui-components/border-stroke-pulse-button__comet-around-capsule",
+   "name": "Border stroke pulse button",
+   "tags": [
+    "cta",
+    "dark",
+    "hover"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#14141C",
+    "#20202A",
+    "#15151C",
+    "#9FD2FF"
+   ]
+  },
+  {
    "piece": "ui-components/bottom-icon-dock__spring-distance-magnify",
    "name": "Bottom icon dock",
    "tags": [
@@ -3855,6 +3874,27 @@
     "#93C5FD",
     "#F2F2F4",
     "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/bottom-tab-capsule-expand__sliding-pill-label-fade",
+   "name": "Bottom tab capsule expansion",
+   "tags": [
+    "nav",
+    "dark",
+    "cursor"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0B0B10",
+    "#F2F2F4",
+    "#1A1B22",
+    "#1D1D25",
+    "#15151B",
+    "#F3F4F8",
+    "#DFE2EA",
+    "#787E91"
    ]
   },
   {
@@ -3897,6 +3937,64 @@
     "#F59E0B",
     "#38BDF8",
     "#6366F1"
+   ]
+  },
+  {
+   "piece": "ui-components/card-burn-particle-dissolve__noise-edge-ember-sparks",
+   "name": "Card burn particle dissolve",
+   "tags": [
+    "card",
+    "transition",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#FFC878",
+    "#FF7828",
+    "#000000",
+    "#F2F2F4",
+    "#5B4BFF",
+    "#C23FD8",
+    "#FF7A4F"
+   ]
+  },
+  {
+   "piece": "ui-components/card-flip-overshoot__rotatey-spring-back-face",
+   "name": "Card flip with overshoot",
+   "tags": [
+    "card",
+    "3d",
+    "light",
+    "cursor"
+   ],
+   "colors": [
+    "#133A2D",
+    "#0A281E",
+    "#000000",
+    "#FFFFFF",
+    "#F2F2F4",
+    "#0B0B10",
+    "#7FC29B",
+    "#5FA77F",
+    "#6FB88F",
+    "#F3D9E0"
+   ]
+  },
+  {
+   "piece": "ui-components/comma-jump-number-input__digit-rise-comma-dip",
+   "name": "Comma-jump number input",
+   "tags": [
+    "form",
+    "counter",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#000000",
+    "#F2F2F4",
+    "#FF453A"
    ]
   },
   {
@@ -3961,6 +4059,27 @@
     "#E2E8F0",
     "#FFF0C8",
     "#FFC864"
+   ]
+  },
+  {
+   "piece": "ui-components/delete-to-confirm-morph__blur-swap-pill",
+   "name": "Delete to confirm morph",
+   "tags": [
+    "modal",
+    "dark",
+    "cursor"
+   ],
+   "colors": [
+    "#000000",
+    "#FFFFFF",
+    "#0B0B10",
+    "#E5233F",
+    "#F2F2F4",
+    "#EFEFF3",
+    "#8A8A96",
+    "#14141A",
+    "#DCDCE2",
+    "#F59E0B"
    ]
   },
   {
@@ -4121,6 +4240,27 @@
    ]
   },
   {
+   "piece": "ui-components/graph-scrub-highlight-glow__clip-path-split-line",
+   "name": "Graph scrub highlight glow",
+   "tags": [
+    "chart",
+    "counter",
+    "dark",
+    "cursor",
+    "card"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#F2F4F8",
+    "#0B0B10",
+    "#FF7A7A",
+    "#F2F2F4",
+    "#171821",
+    "#101118"
+   ]
+  },
+  {
    "piece": "ui-components/hero-stack-fade-up__expo-out-staggered-delays",
    "name": "Hero stack fade-up",
    "tags": [
@@ -4140,6 +4280,25 @@
     "#0EA5E9",
     "#0B0B10",
     "#E6E8EC"
+   ]
+  },
+  {
+   "piece": "ui-components/hold-to-commit-button__press-fill-progress-release",
+   "name": "Hold to commit button",
+   "tags": [
+    "cta",
+    "light",
+    "cursor"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#0A0A14",
+    "#F2F2F4",
+    "#3D3D47",
+    "#6B6B79",
+    "#787A87"
    ]
   },
   {
@@ -4296,6 +4455,27 @@
    ]
   },
   {
+   "piece": "ui-components/number-flip-reflection__split-flap-mirror-fade",
+   "name": "Number flip with reflection",
+   "tags": [
+    "counter",
+    "dark",
+    "3d"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#09090D",
+    "#F2F2F4",
+    "#F4F4F8",
+    "#F2F2F6",
+    "#1A1A22",
+    "#101016",
+    "#8B8B99"
+   ]
+  },
+  {
    "piece": "ui-components/numbered-card-grid-and-dark-steps__stagger-in-view-reveal",
    "name": "Numbered card grid and dark steps panel",
    "tags": [
@@ -4363,6 +4543,27 @@
    ]
   },
   {
+   "piece": "ui-components/otp-input-pulse-success__box-pulse-green-sweep",
+   "name": "OTP input pulse and success fill",
+   "tags": [
+    "form",
+    "light",
+    "cta"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#1FB860",
+    "#3478F6",
+    "#141428",
+    "#000000",
+    "#F2F2F4",
+    "#0B0B10",
+    "#3DDC84",
+    "#7B7B88",
+    "#D6D6DE"
+   ]
+  },
+  {
    "piece": "ui-components/pendulum-flip-chrome-wordmark__two-faced-rotatey",
    "name": "Pendulum-flip chrome wordmark",
    "tags": [
@@ -4422,6 +4623,22 @@
     "#3D3F45",
     "#F2F2F4",
     "#0B0B10"
+   ]
+  },
+  {
+   "piece": "ui-components/plus-to-tick-button__rotate-morph-check",
+   "name": "Plus to tick button",
+   "tags": [
+    "cta",
+    "dark",
+    "form"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#000000",
+    "#0B0B10",
+    "#F2F2F4",
+    "#30D158"
    ]
   },
   {
@@ -4591,6 +4808,22 @@
     "#5B6B64",
     "#8A9A93",
     "#0F6E4F"
+   ]
+  },
+  {
+   "piece": "ui-components/subscribe-pill-toggle__yellow-wash-letter-slip",
+   "name": "Subscribe pill toggle",
+   "tags": [
+    "cta",
+    "hover",
+    "dark"
+   ],
+   "colors": [
+    "#FFFFFF",
+    "#0B0B10",
+    "#000000",
+    "#F2F2F4",
+    "#FFD60A"
    ]
   },
   {

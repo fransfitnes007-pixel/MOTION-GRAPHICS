@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DEMO</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.face{position:absolute;left:0;top:0;width:100%;height:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.shade{position:absolute;inset:0;background:#000;pointer-events:none}
+.finger{position:absolute;border-radius:50%;background:rgba(255,255,255,.34);border:2px solid rgba(255,255,255,.7);box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.ripple{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.75)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const DUR = 5.6
+window.DUR = DUR
+const sc = TALL ? 1.32 : 1
+const CW = 500 * sc, CH = 760 * sc, R = 46 * sc
+const FLIP = 1.15
+const T1 = .45, T2 = 3.35                        // tap start times; flip starts .4s after
+const F1 = T1 + .4, F2 = T2 + .4
+const cardY = CY - 38 * sc
+
+const scene = el('div', 'abs'); S(scene, { left: '0px', top: '0px', width: W + 'px', height: H + 'px', perspective: (2100 * sc) + 'px', perspectiveOrigin: CX + 'px ' + cardY + 'px' })
+const floor = el('div', 'abs', scene); S(floor, { width: px(CW * .9), height: px(60 * sc), left: px(CX - CW * .45), top: px(cardY + CH / 2 + 6 * sc), background: 'radial-gradient(closest-side, rgba(10,40,30,.38), rgba(10,40,30,0))' })
+const card = el('div', 'abs', scene); S(card, { width: px(CW), height: px(CH), left: px(CX - CW / 2), top: px(cardY - CH / 2), transformStyle: 'preserve-3d' })
+
+const flower = (w) => `<svg viewBox="0 0 200 270" width="${w}" height="${w * 270 / 200}" xmlns="http://www.w3.org/2000/svg">
+<path d="M100 150 C 96 190 104 230 100 266" stroke="#7fc29b" stroke-width="7" fill="none" stroke-linecap="round"/>
+<path d="M100 215 C 70 215 52 195 46 172 C 76 172 96 188 100 215Z" fill="#5fa77f"/>
+<path d="M101 190 C 128 190 148 172 154 150 C 126 150 106 166 101 190Z" fill="#6fb88f"/>
+<g transform="translate(100 96)">
+${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<ellipse cx="0" cy="-40" rx="17" ry="38" fill="#f3d9e0" transform="rotate(${i * 45})"/>`).join('')}
+${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<ellipse cx="0" cy="-27" rx="11" ry="24" fill="#e8b4c4" transform="rotate(${i * 45 + 22.5})"/>`).join('')}
+<circle r="19" fill="#f2c14e"/><circle r="9" fill="#e0a52f"/></g></svg>`
+
+const front = el('div', 'face', card); S(front, { borderRadius: px(R), background: 'linear-gradient(160deg,#1f5240 0%,#133a2d 55%,#0c241c 100%)', boxShadow: '0 30px 60px rgba(10,40,30,.28)' })
+front.innerHTML = `<div style="position:absolute;left:${44 * sc}px;top:${46 * sc}px;color:rgba(214,240,226,.7);font-size:${26 * sc}px;font-weight:600;letter-spacing:.02em">Mon, 14 Oct</div>
+<div style="position:absolute;left:${44 * sc}px;top:${96 * sc}px;width:${CW - 88 * sc}px;color:#f1f8f3;font-size:${68 * sc}px;line-height:1.08;font-weight:800;letter-spacing:-.02em">I’m feeling<br>balanced</div>
+<div style="position:absolute;left:0;width:100%;bottom:${34 * sc}px;display:flex;justify-content:center">${flower(300 * sc)}</div>`
+const frontShade = el('div', 'shade', front)
+const back = el('div', 'face', card); S(back, { borderRadius: px(R), transform: 'rotateY(180deg)', background: 'linear-gradient(200deg,#eef4e8 0%,#d9e6d3 100%)', boxShadow: '0 30px 60px rgba(10,40,30,.28)' })
+back.innerHTML = `<div style="position:absolute;left:${44 * sc}px;top:${46 * sc}px;width:${84 * sc}px;height:${84 * sc}px;border-radius:50%;background:#133a2d;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="${44 * sc}" height="${44 * sc}" fill="none" stroke="#e8f4ec" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+<div style="position:absolute;left:${44 * sc}px;top:${190 * sc}px;width:${CW - 88 * sc}px;color:#133a2d;font-size:${64 * sc}px;line-height:1.1;letter-spacing:-.02em"><span style="font-weight:500;opacity:.72">First check-in</span><br><span style="font-weight:800">feeling balanced</span></div>
+<div style="position:absolute;left:${44 * sc}px;bottom:${46 * sc}px;color:rgba(19,58,45,.6);font-size:${26 * sc}px;font-weight:600">Day 1</div>
+<div style="position:absolute;right:${36 * sc}px;bottom:${22 * sc}px;opacity:.9">${flower(120 * sc)}</div>`
+const backShade = el('div', 'shade', back)
+
+// page dots
+const dY = cardY + CH / 2 + 92 * sc
+const dots = [0, 1].map(() => { const d = el('div', 'abs', scene); S(d, { height: px(14 * sc), borderRadius: px(7 * sc), top: px(dY - 7 * sc) }); return d })
+
+// finger
+const finger = el('div', 'finger', scene), rip = el('div', 'ripple', scene)
+function placeFinger(t0, t) {
+  const tt = t - t0
+  if (tt < 0 || tt > 1.1) { vis(finger, 0); vis(rip, 0); return }
+  const a = seg(tt, 0, .2) * (1 - seg(tt, .85, 1.1))
+  const press = seg(tt, .3, .42) * (1 - seg(tt, .6, .74))
+  const fs = 92 * sc * (1 - .24 * press)
+  const x = CX + 120 * sc, y = cardY + 180 * sc + (1 - eo(seg(tt, 0, .35))) * 50 * sc
+  vis(finger, 1); S(finger, { width: px(fs), height: px(fs), left: px(x - fs / 2), top: px(y - fs / 2), opacity: a })
+  const rp = seg(tt, .36, 1.05)
+  if (rp > 0) { const r = lerp(30, 130, eo(rp)) * sc; vis(rip, 1); S(rip, { width: px(r * 2), height: px(r * 2), left: px(x - r), top: px(y - r), opacity: (1 - rp) * .55 }) } else vis(rip, 0)
+}
+
+const flip = (x) => spring(x, 8, 8.5)
+
+function render(t) {
+  const ang = t < F1 ? 0 : t < F2 ? 180 * flip(seg(t, F1, F1 + FLIP)) : 180 * (1 - flip(seg(t, F2, F2 + FLIP)))
+  const mv = t < F2 ? seg(t, F1, F1 + FLIP) : seg(t, F2, F2 + FLIP)
+  const lifting = (t >= F1 && t < F1 + FLIP + .1) || (t >= F2 && t < F2 + FLIP + .1)
+  const lift = lifting ? Math.sin(Math.PI * clamp(mv * 1.1)) : 0
+  const press = Math.max(seg(t, T1 + .3, T1 + .42) * (1 - seg(t, T1 + .6, T1 + .74)), seg(t, T2 + .3, T2 + .42) * (1 - seg(t, T2 + .6, T2 + .74)))
+  const s = 1 - .03 * press + .05 * lift
+  const bob = Math.sin(t / DUR * Math.PI * 2) * 4 * sc
+  card.style.transform = `translateY(${bob}px) translateZ(${lift * 90 * sc}px) rotateY(${ang}deg) scale(${s})`
+  const sh = Math.abs(Math.sin(ang * Math.PI / 180))
+  frontShade.style.opacity = .5 * sh; backShade.style.opacity = .5 * sh
+  S(floor, { opacity: .9 - .35 * lift, transform: `scaleX(${.75 + .25 * Math.abs(Math.cos(ang * Math.PI / 180))})` })
+  const q = clamp(ang / 180)
+  const wA = lerp(40 * sc, 14 * sc, q), wB = lerp(14 * sc, 40 * sc, q), gap = 12 * sc
+  const total = wA + wB + gap, x0 = CX - total / 2
+  S(dots[0], { width: px(wA), left: px(x0), background: `rgba(19,58,45,${lerp(.9, .2, q)})` })
+  S(dots[1], { width: px(wB), left: px(x0 + wA + gap), background: `rgba(19,58,45,${lerp(.2, .9, q)})` })
+  placeFinger(T1, t)
+  if (t >= T2) placeFinger(T2, t)
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>
