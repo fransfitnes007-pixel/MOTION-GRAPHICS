@@ -6,7 +6,7 @@ The kit's own code and docs are MIT (see `LICENSE`). These parts come from other
 |---|---|---|
 | Playfair Display, Rye, Great Vibes fonts | `library/**/code/fonts/` | SIL Open Font License 1.1 (`LICENSES/*-OFL.txt`) |
 | Special Elite font | `library/**/code/fonts/` | Apache License 2.0 (`LICENSES/SpecialElite-Apache-2.0.txt`) |
-| three.js (bundled build) | `library/**/code/three.global.js` | MIT (`LICENSES/three.js-MIT.txt`) |
+| three.js (bundled build) | `library/**/code/three.global.js`, `library/**/code/three.min.js` | MIT (`LICENSES/three.js-MIT.txt`) |
 | Lucide icon paths (inline SVG in some UI and dashboard pieces) | `library/**/code/demo.html` | ISC License, Copyright (c) Lucide Contributors (https://lucide.dev/license) |
 | playwright-core | `engine/` (installed by npm, not committed) | Apache License 2.0 |
 

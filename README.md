@@ -16,7 +16,14 @@ The film plays the authoring team's own reels and films inside it; those clips b
 
 Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end (local voice, beats pinned to the words, 277 sound effects, App Store end card), still on the placeholder brand.
 
-## What's new (1.1, 25 Nov 2026)
+## What's new (1.2, 25 Nov 2026)
+
+- **Low-poly 3D "day in the life" series** ([`pipelines/day-in-the-life/`](pipelines/day-in-the-life/)): a 40-second first-person reel format in three.js, 50 finished episodes in the library (`library/motion-graphics/day-in-the-life-*`), each a different creator, setting and pain, your product brought in at the midpoint with one real feature, and a callback ending. Playbook, scene kit (rigged people, poses, phone sheets, cameras), the 50-part episode log as the "already used" list, and tools: spec-driven `fill.py`, word times, voice speed rule, contact sheets, mux, and `port_episode.py` for adding your own parts. New `/dayinlife` command and `day-in-the-life-series` skill: type `go` for the next part.
+- **Four new formats** in [`docs/FORMATS.md`](docs/FORMATS.md) (25 to 28) with prompts: the faceless explainer, story devices ("change the format, not the skin"), a 3D studio with a mascot, and the low-poly series. New [`docs/FACELESS-EXPLAINER-STYLES.md`](docs/FACELESS-EXPLAINER-STYLES.md): what nine faceless explainer reels share, measured frame by frame.
+- **Multi-account pipeline:** claim checker (length, product words held to the last line, banned claims), live App Store facts for the closing call to action, breakdown / product-facts / shared-pieces templates, new voice lessons and pitfalls.
+- **Library 390 -> 440.** About 100 more pieces in the private master library were re-checked against the licence gate and stay out ([`docs/LOCAL-LIBRARY-ONLY.md`](docs/LOCAL-LIBRARY-ONLY.md)).
+
+## What's new (1.1, 24 Nov 2026)
 
 - **Multi-account content pipeline** ([`pipelines/multi-account-content/`](pipelines/multi-account-content/)): one agent session per account, a locked format per account, and a single `GO` that makes one finished vertical video per sub niche with parallel subagents, checks every contact sheet, and drops caption and video into the folder your posting system watches. Account pack template (FORMAT LOCK + log), an ElevenLabs helper that reads its key from the OS keychain, word-time, beat-fill, contact-sheet and check tools, and a safe drop-folder hand-off. New `/go` command and `multi-account-content` skill.
 - **32 new library pieces** (390 in all): a mechanical odometer, a liquid-glass sidebar, three icon kits (88 animated, seekable SVG icons plus 36 static), an AI chat with a model menu, a dither donut, an isometric bar chart, a diagonal-wave KPI board, a holographic business card, an upload queue and more in `ui-components/`; and 13 motion graphics rebuilt by eye from the most-shared AI-made launch films: notification storm, wordmark squeeze into a pill, six-blade iris, paper-map grid unfold, habit-grid logo, two-phone sync arc, slot-roll stat stack, theme-toggle flood, UI state morph chain, log-zoom follow camera, unit dot grid, easing lanes board, Truchet wave.
@@ -28,9 +35,9 @@ Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 
 
 | Part | What you get |
 |---|---|
-| **18 Claude Code skills** | A to Z reel making, multi-account batches, viral-format recreation, the animation library, motion moves, showreels and launch films, eyes-and-scrapey reference reading, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
-| **6 slash commands** | `/reel`, `/go`, `/recreate`, `/motion`, `/voice`, `/rebrand` |
-| **Animation library** | 390 pieces: 149 motion graphics, 177 UI components and micro-interactions, 44 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
+| **19 Claude Code skills** | A to Z reel making, the low-poly day-in-the-life series, multi-account batches, viral-format recreation, the animation library, motion moves, showreels and launch films, eyes-and-scrapey reference reading, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
+| **7 slash commands** | `/reel`, `/go`, `/dayinlife`, `/recreate`, `/motion`, `/voice`, `/rebrand` |
+| **Animation library** | 440 pieces: 199 motion graphics (50 of them low-poly 3D day-in-the-life reels), 177 UI components and micro-interactions, 44 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
 | **Multi-account content pipeline** | Many accounts, one kit: account packs with a FORMAT LOCK and log, a GO routine that builds one video per sub niche with parallel subagents, checks, and a drop-folder hand-off to any posting system |
 | **Motion rules** | Measured cut rates, lengths, palettes and easing curves from the most-shared AI-made motion videos, build rules, motion blur, and a 15-second vertical recipe made only of library pieces |
 | **Pictogram reel pipeline** | A code-drawn, 20-beat faceless parable reel with beats pinned to the voiceover, synthesised sound effects and an App Store end card |
@@ -40,7 +47,7 @@ Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 
 | **Motion moves** | A named vocabulary of 45+ motion techniques (timing, type, transitions, camera, texture, data, sound) with the exact easing and spring numbers, each tied to a demo |
 | **Showreel and launch-film playbook** | Beat structures, timing tokens, palette and type rules learned from the most-shared AI-made showreels and launch films, with a storyboard template |
 | **Palettes** | 10 named signature looks (including `arizona-sunset` and the film's `sunset-ink`) and the colours of every library piece |
-| **Formats and prompts** | 24 video formats written up beat by beat with what went wrong and how it was fixed, and a short and a detailed prompt for 23 of them |
+| **Formats and prompts** | 28 video formats written up beat by beat with what went wrong and how it was fixed, and a short and a detailed prompt for 27 of them |
 
 ## Install
 
@@ -91,6 +98,9 @@ Simple:
 ```
 /go my-account
 ```
+```
+/dayinlife go
+```
 
 Detailed:
 ```
@@ -101,7 +111,7 @@ swish on every cut, a thud on the slam words, a boom on the end card. End card: 
 Deliver tall and wide, a contact sheet, and the numbers you measured.
 ```
 
-More in [`prompts/PROMPTS.md`](prompts/PROMPTS.md): a short and a detailed prompt for 23 of the 24 formats in [`docs/FORMATS.md`](docs/FORMATS.md).
+More in [`prompts/PROMPTS.md`](prompts/PROMPTS.md): a short and a detailed prompt for 27 of the 28 formats in [`docs/FORMATS.md`](docs/FORMATS.md).
 
 ## How the videos are made
 
@@ -113,7 +123,7 @@ idea or reference ─▶ script ─▶ voiceover ─▶ word times ─▶ beats 
 
 Try one now:
 ```bash
-open library/LIBRARY.html                                   # browse all 390 pieces, live
+open library/LIBRARY.html                                   # browse all 440 pieces, live
 node engine/tools/render_demo.cjs video \
   library/motion-graphics/dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax/code/demo.html \
   out/dino.mp4 1080 1920
@@ -150,18 +160,20 @@ Details in [`AGENTS.md`](AGENTS.md).
 .claude-plugin/        plugin.json and marketplace.json (installable plugin)
 brand.config.json      your brand: the only file you have to edit
 AGENTS.md              how agents work here, several at once
-commands/              /reel /go /recreate /motion /voice /rebrand
-skills/                the 18 skills Claude loads
-library/               390 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
+commands/              /reel /go /dayinlife /recreate /motion /voice /rebrand
+skills/                the 19 skills Claude loads
+library/               440 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
 engine/                render, find, verify, poster, index, rebrand and chrome-logo tools; the demo template and spec
 pipelines/
+  day-in-the-life/     the low-poly 3D first-person series: playbook, scene kit, episode log, build tools
   multi-account-content/  account packs, the GO routine playbook, tts/account-info/drop helpers, beat and check tools
   pictogram-reel/      the code-drawn reel renderer, example script, cues, sound effects
   voice/               local TTS: voice.py, reel_vo.py, design.py, pitch check, setup
   reference-analysis/  measure a reference video
 palettes/              PALETTES.md, palettes.json, index.html swatches
-docs/FORMATS.md        24 formats, beat by beat, with lessons
+docs/FORMATS.md        28 formats, beat by beat, with lessons
 docs/MOTION-RULES.md   measured timings, easing, cut rates, build rules, the 15-second recipe
+docs/FACELESS-EXPLAINER-STYLES.md  measured faceless explainer looks
 docs/EYES-AND-SCRAPEY.md  how every reference is read and rebuilt
 docs/LOCAL-LIBRARY-ONLY.md  pieces held back by the licence gate, and why
 prompts/PROMPTS.md     ready-to-paste prompts
@@ -172,6 +184,7 @@ prompts/PROMPTS.md     ready-to-paste prompts
 | Skill | Use it for |
 |---|---|
 | `reel-maker` | The whole job, idea to exported file |
+| `day-in-the-life-series` | The low-poly 3D first-person reel series: `go` makes the next part end to end |
 | `multi-account-content` | Many accounts: FORMAT LOCK per account, GO = one video per sub niche with parallel subagents, checks, drop-folder hand-off |
 | `eyes-and-scrapey` | Read any reference before rebuilding it: frame-by-frame screenshots, DOM/CSS/JS, polite scraping, terms first |
 | `recreate-viral-format` | "Make one like this": measure a reference and map a new story onto its beats |

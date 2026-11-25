@@ -22,3 +22,16 @@ the public pages if you need them, and check the licence on each page first.
 
 The repository's rule since 1.0: a component whose page states no licence is not recreated in public; anything
 derived from a site whose terms forbid building a library from it stays out. MIT, ISC, Apache and own builds go in.
+
+## Held back since 1.0 (re-checked 25 Nov 2026)
+
+About 100 more pieces live only in the private master library. They were re-checked for 1.2 and stay out, for these
+reasons (no names are listed because several sources are private):
+
+- Recreations of 21st.dev components whose page shows no licence.
+- Recreations of components under AGPL-3.0 or MPL-2.0 (copyleft; not mixed into an MIT kit).
+- Moments from launch films assembled from third-party video blocks whose terms are unclear.
+- Pieces extracted from client or private product code, or from private published documents.
+
+Where one of these was the authoring team's own work, a white-label rebuild is already in the library under a neutral
+name (for example `payment-card-check`, `phone-grid-tilted-row`, `end-card-monogram-flip`, `dino-runner-arizona-sunset`).
