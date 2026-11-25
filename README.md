@@ -2,6 +2,8 @@
 
 Make motion-graphics videos with Claude Code: Instagram Reels, TikToks, YouTube Shorts, X videos and long-form brand films, from a one-line prompt or a fully specified brief. White-label: put your brand in one file and every scene, logo, end card and template follows.
 
+This repository is the main plugin: the single home for every motion-graphics skill, library piece, pipeline and rule. It is built to be run by agents, many at once: one session per video or per account, subagents building in parallel, a lead agent checking every frame before anything ships (see [`AGENTS.md`](AGENTS.md)).
+
 [![motion-reel-kit showcase film](docs/media/showcase-preview.gif)](docs/media/showcase.mp4)
 
 **▶ The 62-second showcase, with sound:**
@@ -14,13 +16,23 @@ The film credits [growthkit.net](https://growthkit.net), whose team made the kit
 
 Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end (local voice, beats pinned to the words, 277 sound effects, App Store end card), still on the placeholder brand.
 
+## What's new (1.1, 25 Nov 2026)
+
+- **Multi-account content pipeline** ([`pipelines/multi-account-content/`](pipelines/multi-account-content/)): one agent session per account, a locked format per account, and a single `GO` that makes one finished vertical video per sub niche with parallel subagents, checks every contact sheet, and drops caption and video into the folder your posting system watches. Account pack template (FORMAT LOCK + log), an ElevenLabs helper that reads its key from the OS keychain, word-time, beat-fill, contact-sheet and check tools, and a safe drop-folder hand-off. New `/go` command and `multi-account-content` skill.
+- **32 new library pieces** (390 in all): a mechanical odometer, a liquid-glass sidebar, three icon kits (88 animated, seekable SVG icons plus 36 static), an AI chat with a model menu, a dither donut, an isometric bar chart, a diagonal-wave KPI board, a holographic business card, an upload queue and more in `ui-components/`; and 13 motion graphics rebuilt by eye from the most-shared AI-made launch films: notification storm, wordmark squeeze into a pill, six-blade iris, paper-map grid unfold, habit-grid logo, two-phone sync arc, slot-roll stat stack, theme-toggle flood, UI state morph chain, log-zoom follow camera, unit dot grid, easing lanes board, Truchet wave.
+- **Rules docs:** [`docs/MOTION-RULES.md`](docs/MOTION-RULES.md) (measured cut rates, lengths, colours, easing curves, build rules, motion blur, the 15-second vertical recipe) and [`docs/EYES-AND-SCRAPEY.md`](docs/EYES-AND-SCRAPEY.md) (watch frame by frame, screenshot every frame, read DOM/CSS/JS, scrape politely, rebuild, run until it matches; quotas and paywalls never shrink the output; site terms always win), with an `eyes-and-scrapey` skill.
+- **Agents at once:** [`AGENTS.md`](AGENTS.md): one build folder per agent, directory locks for shared resources, render caps, cheaper models for mechanical steps, one index rebuild at the end, a leak scan before every commit.
+- **Licence gate** written down: what was held back and why is in [`docs/LOCAL-LIBRARY-ONLY.md`](docs/LOCAL-LIBRARY-ONLY.md).
+
 ## What is inside
 
 | Part | What you get |
 |---|---|
-| **16 Claude Code skills** | A to Z reel making, viral-format recreation, the animation library, motion moves, showreels and launch films, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
-| **5 slash commands** | `/reel`, `/recreate`, `/motion`, `/voice`, `/rebrand` |
-| **Animation library** | 358 pieces: 136 motion graphics, 158 UI components and micro-interactions, 44 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
+| **18 Claude Code skills** | A to Z reel making, multi-account batches, viral-format recreation, the animation library, motion moves, showreels and launch films, eyes-and-scrapey reference reading, local voiceover, sound design, brand setup, short-form writing rules, transcription, ffmpeg recipes, AI image and video, UGC formats, video breakdowns, cloud voice |
+| **6 slash commands** | `/reel`, `/go`, `/recreate`, `/motion`, `/voice`, `/rebrand` |
+| **Animation library** | 390 pieces: 149 motion graphics, 177 UI components and micro-interactions, 44 dashboards, 20 sound recipes. Each is a runnable `demo.html` where every frame is `render(t)`, plus a guide with the exact numbers, timings and colours |
+| **Multi-account content pipeline** | Many accounts, one kit: account packs with a FORMAT LOCK and log, a GO routine that builds one video per sub niche with parallel subagents, checks, and a drop-folder hand-off to any posting system |
+| **Motion rules** | Measured cut rates, lengths, palettes and easing curves from the most-shared AI-made motion videos, build rules, motion blur, and a 15-second vertical recipe made only of library pieces |
 | **Pictogram reel pipeline** | A code-drawn, 20-beat faceless parable reel with beats pinned to the voiceover, synthesised sound effects and an App Store end card |
 | **Local voice pipeline** | Fast, natural voiceovers on Apple Silicon (Qwen3-TTS, Kokoro) at a set pace and pitch, line-by-line recording, voice design from a description |
 | **Reference analysis** | Measure any video you want to copy: cuts, words per minute, pauses, voice pitch, and the clicks, swishes, hits and music bed under the voice |
@@ -76,6 +88,9 @@ Simple:
 ```
 /motion dino sunset, our colours, 30 seconds
 ```
+```
+/go my-account
+```
 
 Detailed:
 ```
@@ -98,7 +113,7 @@ idea or reference ─▶ script ─▶ voiceover ─▶ word times ─▶ beats 
 
 Try one now:
 ```bash
-open library/LIBRARY.html                                   # browse all 358 pieces, live
+open library/LIBRARY.html                                   # browse all 390 pieces, live
 node engine/tools/render_demo.cjs video \
   library/motion-graphics/dino-runner-arizona-sunset__pixel-dithered-sky-mesa-parallax/code/demo.html \
   out/dino.mp4 1080 1920
@@ -117,21 +132,38 @@ python3 build/sfx.py build/events.json vo/voiceover.wav vo/mix.wav
 python3 build/render.py vo/mix.wav out.mp4
 ```
 
+## Many agents at once
+
+The kit is made to be run by several agents in parallel, on one machine or several:
+
+- **One session per job.** A session per video, or per account in the multi-account pipeline. Each builds in its own folder; the library stays read-only during builds (copy a piece, change its `CONFIG`).
+- **Subagents for the mechanical work.** On `GO`, the lead session writes the scripts, then sends one subagent per video (on a cheaper model) to fill beats, render stills, mix and render. Each returns paths to its stills and contact sheets, length and loudness; the lead looks at every sheet before anything ships.
+- **Locks, not timers.** Anything only one agent can use (a shared browser tab, a web app, a device) is guarded by `mkdir <dir>/.<name>.lock`. Waiting agents do other work; nothing wakes a model on a timer.
+- **Render caps.** 2 or 3 full video renders per machine at once; stills are cheap.
+- **One writer for the index.** New library pieces are added one agent at a time, then `build_index.py` runs once.
+
+Details in [`AGENTS.md`](AGENTS.md).
+
 ## Repository map
 
 ```
 .claude-plugin/        plugin.json and marketplace.json (installable plugin)
 brand.config.json      your brand: the only file you have to edit
-commands/              /reel /recreate /motion /voice /rebrand
-skills/                the 14 skills Claude loads
-library/               358 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
+AGENTS.md              how agents work here, several at once
+commands/              /reel /go /recreate /motion /voice /rebrand
+skills/                the 18 skills Claude loads
+library/               390 animation, UI, dashboard and sound pieces; LIBRARY.html, INDEX.md, catalog.json
 engine/                render, find, verify, poster, index, rebrand and chrome-logo tools; the demo template and spec
 pipelines/
+  multi-account-content/  account packs, the GO routine playbook, tts/account-info/drop helpers, beat and check tools
   pictogram-reel/      the code-drawn reel renderer, example script, cues, sound effects
   voice/               local TTS: voice.py, reel_vo.py, design.py, pitch check, setup
   reference-analysis/  measure a reference video
 palettes/              PALETTES.md, palettes.json, index.html swatches
 docs/FORMATS.md        24 formats, beat by beat, with lessons
+docs/MOTION-RULES.md   measured timings, easing, cut rates, build rules, the 15-second recipe
+docs/EYES-AND-SCRAPEY.md  how every reference is read and rebuilt
+docs/LOCAL-LIBRARY-ONLY.md  pieces held back by the licence gate, and why
 prompts/PROMPTS.md     ready-to-paste prompts
 ```
 
@@ -140,6 +172,8 @@ prompts/PROMPTS.md     ready-to-paste prompts
 | Skill | Use it for |
 |---|---|
 | `reel-maker` | The whole job, idea to exported file |
+| `multi-account-content` | Many accounts: FORMAT LOCK per account, GO = one video per sub niche with parallel subagents, checks, drop-folder hand-off |
+| `eyes-and-scrapey` | Read any reference before rebuilding it: frame-by-frame screenshots, DOM/CSS/JS, polite scraping, terms first |
 | `recreate-viral-format` | "Make one like this": measure a reference and map a new story onto its beats |
 | `motion-library` | Find and adapt a scene, transition, UI animation, dashboard or sound |
 | `pictogram-reel` | The black-and-white faceless parable format |
@@ -170,7 +204,7 @@ node engine/tools/verify_library.cjs <slug>      # runs the demo and checks ever
 The render tools start Chrome with `--allow-file-access-from-files` so a demo can load its own fonts and scripts from disk. They only ever open the kit's local demo files.
 
 
-Nothing in the kit calls a paid service unless you ask for it. Cloud tools read keys from environment variables (`ELEVENLABS_API_KEY`, `FAL_KEY` and similar) and never from files. Reference videos, recordings and renders go in git-ignored folders (`reference/`, `out/`, `vo/`). See `.gitignore`.
+Nothing in the kit calls a paid service unless you ask for it. Cloud tools read keys from environment variables (`ELEVENLABS_API_KEY`, `FAL_KEY` and similar) or, for the multi-account voice helper, the OS keychain, and never from files. Account packs, voice aliases and builds in the multi-account pipeline are git-ignored. Reference videos, recordings and renders go in git-ignored folders (`reference/`, `out/`, `vo/`). See `.gitignore`.
 
 ## Troubleshooting
 
@@ -181,4 +215,4 @@ Nothing in the kit calls a paid service unless you ask for it. Cloud tools read 
 
 ## Licence
 
-MIT for the kit's own code and docs. 95 pieces are credited recreations of MIT and Apache-licensed 21st.dev components (see each piece's Credit section). Bundled fonts and three.js keep their own licences: see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Use your own brand assets and real facts on end cards.
+MIT for the kit's own code and docs. 108 pieces are credited recreations of MIT and Apache-licensed 21st.dev components, 6 follow MIT/ISC code or icon sets (notices in `LICENSES/`), and 13 are original code recreating motion seen in public videos, credited to their creators (see each piece's Credit section). Components with no licence shown are not published ([`docs/LOCAL-LIBRARY-ONLY.md`](docs/LOCAL-LIBRARY-ONLY.md)). Bundled fonts and three.js keep their own licences: see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Use your own brand assets and real facts on end cards.
