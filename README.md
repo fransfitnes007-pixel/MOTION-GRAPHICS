@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/a635e51f-ae3a-49c3-8d3e-e540e5399195
 
 The film was made with this kit: every frame is code, every cut is pinned to the voiceover's word times, the library pieces play inside it, and the music and sound effects are synthesised. Full quality: [`docs/media/showcase.mp4`](docs/media/showcase.mp4). Source: [`docs/showcase/`](docs/showcase/).
 
-The film credits [growthkit.net](https://growthkit.net), whose team made the kit, and plays that team's own reels and films inside it. Everything else in the repository is white-label.
+The film plays the authoring team's own reels and films inside it; those clips belong to that team. Everything else in the repository is white-label.
 
 Second example: [`docs/media/example-reel.mp4`](docs/media/example-reel.mp4), a 70-second 9:16 pictogram reel made end to end (local voice, beats pinned to the words, 277 sound effects, App Store end card), still on the placeholder brand.
 

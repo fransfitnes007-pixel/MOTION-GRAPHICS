@@ -76,4 +76,4 @@ The videos were found through the public galleries at revid.ai and motionvideo.x
 
 ## The showcase film
 
-`docs/media/showcase.mp4` and its preview credit growthkit.net, whose team made this kit, and show that team's own reels and films. Those clips and the G mark are theirs; everything else in the repository stays white-label.
+`docs/media/showcase.mp4` and its preview show the authoring team's own reels and films. Those clips and any marks in them are theirs; everything else in the repository stays white-label.
