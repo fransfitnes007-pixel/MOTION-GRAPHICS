@@ -1,0 +1,55 @@
+{
+  "slug": "day-in-the-life-hashtag-hour-hashtag-research__low-poly-3d-diner-booth-word-timed-captions",
+  "visual_name": "Day in the life, part twelve: the hashtag hour (low-poly 3D)",
+  "code_name": "three.js diner at night with flickering neon, box-built character, pancakes that frost over, guru cards / Hashtag Research results, a caption box of tag chips, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 39 second 9:16 reel in low-poly 3D: a ten-minute video and an hour of hashtags, three gurus with three answers, FYP typed four ways with one banned, pancakes gone cold; then YourBrand's Hashtag Research: type the niche, fifteen tags in broad, niche and micro buckets with reasons, the campaign's tags on top, Copy all. This time he eats the pancakes.",
+  "aliases": [
+    "hashtags",
+    "hashtag research",
+    "fyp",
+    "banned hashtag",
+    "guru",
+    "thirty hashtags",
+    "broad niche micro",
+    "copy all",
+    "pancakes",
+    "diner",
+    "neon",
+    "tag chips",
+    "day in the life 12",
+    "part twelve",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "hashtags",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 39,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 12,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-follower-count-leaderboard-by-views__low-poly-3d-living-room-cat-word-timed-captions"
+  ]
+}

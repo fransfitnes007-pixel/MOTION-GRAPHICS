@@ -1,0 +1,58 @@
+{
+  "slug": "day-in-the-life-two-minute-script-scissors-script-generator__low-poly-3d-sewing-room-word-timed-captions",
+  "visual_name": "Day in the life, part seventeen: two minutes (low-poly 3D)",
+  "code_name": "three.js sewing room, box-built character, a paper script that shortens with each cut, a stopwatch, first draft / cutting stack / generated script pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.3 second 9:16 reel in low-poly 3D: a thirty second brief, a script that reads at two minutes, scissors through the intro, the middle and the ending until it fits, makes no sense and never mentions the product; then YourBrand's script generator: pick thirty seconds and get a hook, beats, the product moment and a CTA sized to fit, plus three more hooks. Her first draft is still running.",
+  "aliases": [
+    "script",
+    "script generator",
+    "thirty seconds",
+    "two minutes",
+    "too long",
+    "stopwatch",
+    "scissors",
+    "cut the intro",
+    "hook",
+    "beats",
+    "product moment",
+    "cta",
+    "alternative hooks",
+    "sewing room",
+    "day in the life 17",
+    "part seventeen",
+    "pt 17",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "script",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.3,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 17,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-handbook-webinar-quiz-getting-started__low-poly-3d-classroom-word-timed-captions"
+  ]
+}

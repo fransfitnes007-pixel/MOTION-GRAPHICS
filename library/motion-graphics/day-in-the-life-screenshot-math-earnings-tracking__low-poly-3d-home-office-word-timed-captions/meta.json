@@ -1,0 +1,51 @@
+{
+  "slug": "day-in-the-life-screenshot-math-earnings-tracking__low-poly-3d-home-office-word-timed-captions",
+  "visual_name": "Day in the life, part five: an accountant with a ring light (low-poly 3D)",
+  "code_name": "three.js home office and box-built character, one canvas sheet as spreadsheet then YourBrand posts page, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 41.2 second 9:16 reel in low-poly 3D: a veteran creator screenshots views, fills tab 31, invoices, is told the numbers are lower, screenshots again with a timestamp; then YourBrand: paste the link once, views tracked, what every post earned and when it pays out. She deletes tab 31.",
+  "aliases": [
+    "accountant",
+    "screenshots",
+    "spreadsheet",
+    "tab 31",
+    "getting paid",
+    "view tracking",
+    "earnings",
+    "payout",
+    "day in the life 5",
+    "part five",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "earnings",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 41.2,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 5,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-one-line-brief-proven-brief__low-poly-3d-cafe-word-timed-captions"
+  ]
+}

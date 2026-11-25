@@ -1,0 +1,51 @@
+{
+  "slug": "day-in-the-life-too-many-accounts-phone-farm__low-poly-3d-kitchen-word-timed-captions",
+  "visual_name": "Day in the life, part three: 18 accounts, one phone (low-poly 3D)",
+  "code_name": "three.js kitchen and box-built character, dark rack of 20 phones lighting and posting in a wave, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.4 second 9:16 reel in low-poly 3D: six campaigns become 18 accounts on one phone (logins, wrong account, storage full, skincare on the dog food account), then YourBrand's phone farm of real phones posts her video; she only films, uploads and submits.",
+  "aliases": [
+    "phone farm",
+    "too many accounts",
+    "18 accounts",
+    "storage full",
+    "wrong account",
+    "dog food account",
+    "day in the life 3",
+    "part three",
+    "phone rack",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "phone-farm",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 3,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-ugc-creator__low-poly-3d-rooms-word-timed-captions",
+    "motion-graphics/day-in-the-life-not-approved-review-brain__low-poly-3d-studio-word-timed-captions"
+  ]
+}

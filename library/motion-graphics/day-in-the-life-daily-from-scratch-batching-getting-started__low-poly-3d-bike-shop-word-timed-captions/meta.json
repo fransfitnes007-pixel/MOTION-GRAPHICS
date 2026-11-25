@@ -1,0 +1,56 @@
+{
+  "slug": "day-in-the-life-daily-from-scratch-batching-getting-started__low-poly-3d-bike-shop-word-timed-captions",
+  "visual_name": "Day in the life, part forty five: the wheel (low-poly 3D)",
+  "code_name": "three.js bike repair shop (cut away at the front: brick back wall, a side window that flips between day and night, three bikes hung on wall hooks and one empty hook, a pegboard of tools, stacked tyres, a repair stand with a bike whose front wheel spins, a stool, a laptop table, a ring light on a tripod that sets up and packs away, a teal pendant lamp), box-built mechanic with an auburn bun, a teal bandana, freckles, a navy apron over a mustard tee whose colour changes clip by clip, a wrench, phone sheets for her post of a spinning wheel / YourBrand Getting started (three levels, Level 3 Time management & editing, the Batch step, seven days becoming three sessions) / her grid where the wheel has the longest view bar, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: a bike mechanic posts every day from scratch: set up the light, film, edit, post, pack it away, Monday, Tuesday, Wednesday. By Sunday she is editing in her sleep and ends up asleep on a bike hook; she posted a wheel, just a wheel, spinning. Then YourBrand: Getting started, level three: batch it, film a week in one go, edit in a second, caption in a third; three short sessions beat seven long ones. The wheel got more views than her. She's fine.",
+  "aliases": [
+    "posting every day",
+    "daily grind",
+    "burnout",
+    "batching content",
+    "film a week in one go",
+    "getting started",
+    "level three",
+    "time management",
+    "editing at midnight",
+    "bike shop",
+    "spinning wheel",
+    "ring light",
+    "day in the life 45",
+    "part forty five",
+    "pt 45",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice",
+    "workflow"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.84,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 45,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-tagging-brands-for-a-year-discoverable-profile__low-poly-3d-car-wash-word-timed-captions"
+  ]
+}

@@ -1,0 +1,306 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part twenty nine: now do last year</title>
+<!-- A 40.85 s reel (1080x1920) in low-poly 3D, twenty-ninth in the series. Tax time in an attic: her accountant wants
+     one number, what she earned this year. Brand one paid by bank transfer (the statement just says TRANSFER), brand two
+     through an app (it says Kevin), brand three in candles. The shoebox of receipts is shoes. Then YourBrand: every
+     campaign on one earnings page, every payout request makes an invoice, marked paid. She shows her accountant one
+     page. He writes back: great, now do last year. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Every campaign.', 'Every invoice. One page.'],
+  skin: 0xe0ac86, hoodie: 0xd9a23a, pants: 0x8a8f98, hair: 0xece4cc,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day", 0.0, 0.24],["in", 0.24, 0.36],["the", 0.36, 0.44],["life", 0.44, 0.64],["of", 0.64, 0.88],["a", 0.88, 1.0],["UGC", 1.0, 1.4],["creator", 1.4, 1.92],["Part", 2.5, 2.52],["twenty", 2.52, 2.86],["nine", 2.86, 3.24],["Tax", 3.64, 3.82],["time", 3.82, 4.12],["My", 4.92, 5.04],["accountant", 5.04, 5.24],["wants", 5.24, 5.62],["one", 5.62, 5.92],["number:", 5.92, 6.26],["What", 6.7, 6.88],["I", 6.88, 7.0],["earned", 7.0, 7.22],["this", 7.22, 7.44],["year", 7.44, 7.74],["Brand", 8.42, 8.54],["one", 8.54, 8.72],["paid", 8.72, 9.04],["by", 9.04, 9.26],["bank", 9.26, 9.48],["transfer", 9.48, 9.92],["The", 10.42, 10.54],["statement", 10.54, 10.78],["just", 10.78, 11.04],["says", 11.04, 11.38],["transfer", 11.38, 12.1],["Brand", 12.58, 12.82],["two", 12.82, 13.16],["paid", 13.16, 13.52],["through", 13.52, 13.72],["an", 13.72, 13.82],["app", 13.82, 14.12],["It", 14.54, 14.6],["says", 14.6, 14.86],["Kevin", 14.86, 15.36],["Brand", 15.88, 16.06],["three", 16.06, 16.44],["paid", 16.44, 16.84],["me", 16.84, 16.98],["in", 16.98, 17.08],["candles", 17.08, 17.44],["I", 18.08, 18.14],["found", 18.14, 18.32],["the", 18.32, 18.46],["shoebox", 18.46, 18.76],["of", 18.76, 18.94],["receipts", 18.94, 19.28],["It", 19.92, 19.94],["was", 19.94, 20.08],["shoes", 20.08, 20.3],["Then", 20.88, 21.14],["I", 21.14, 21.42],["found", 21.42, 21.66],["YourBrand", 21.66, 22.16],["Every", 22.62, 22.88],["campaign", 22.88, 23.3],["on", 23.3, 23.58],["one", 23.58, 23.92],["earnings", 23.92, 24.24],["page", 24.24, 24.58],["Every", 25.12, 25.28],["payout", 25.28, 25.6],["request", 25.6, 26.0],["makes", 26.0, 26.26],["an", 26.26, 26.42],["invoice", 26.42, 26.76],["Marked", 27.4, 27.78],["paid", 27.78, 27.94],["I", 28.46, 28.58],["showed", 28.58, 28.76],["my", 28.76, 28.92],["accountant", 28.92, 29.26],["one", 29.26, 29.6],["page", 29.6, 29.94],["No", 30.48, 30.62],["shoebox", 30.62, 31.04],["No", 31.34, 31.52],["candles", 31.52, 31.86],["No", 32.42, 32.5],["bullshit", 32.5, 32.82],["He", 33.34, 33.44],["wrote", 33.44, 33.58],["back:", 33.58, 33.86],["great", 34.2, 34.4],["Now", 34.86, 34.94],["do", 34.94, 35.06],["last", 35.06, 35.28],["year", 35.28, 35.54]]
+const GROUPS = [[0,7,6,1],[8,10,-1,1.3],[11,12,-1,1.6],[13,17,17,1.1],[18,22,20,1.2],[23,28,28,1.1],[29,33,33,1.1],[34,39,39,1.15],[40,42,42,1.4],[43,48,48,1.15],[49,54,52,1.1],[55,57,57,1.5],[58,61,61,1.1],[62,67,65,1.05],[68,73,73,1.05],[74,75,75,1.6],[76,81,80,1.1],[82,83,-1,1.5],[84,85,-1,1.5],[86,87,-1,1.5],[88,91,91,1.3],[92,95,94,1.4]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.5, tax: 3.64, taxHit: 3.82, my: 4.8, numHit: 5.92, what: 6.7, earnHit: 7.0, b1: 8.42, bankHit: 9.26, stmt: 10.42, xferHit: 11.38,
+  b2: 12.58, appHit: 13.82, kevin: 14.54, kevinHit: 14.86, b3: 15.88, candHit: 17.08, found1: 18.08, boxHit: 18.46, was: 19.92, shoesHit: 20.08,
+  found: 20.88, foundG: 21.66, every: 22.62, earnHit2: 23.92, every2: 25.12, invHit: 26.42, marked: 27.4, paidHit: 27.78, showed: 28.46, pageHit: 29.26,
+  no: 30.48, n1: 30.62, n2s: 31.34, n2: 31.52, nob: 32.42, nobHit: 32.5, wrote: 33.34, greatHit: 34.2, now: 34.86, lastHit: 35.06, year: 35.28, end: 35.85, dur: 40.85 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- the attic
+const plank = canvasTex(256, 256); { const x = plank.x; for (let i = 0; i < 8; i++) { x.fillStyle = ['#9a7350', '#8d6846', '#a57c57', '#94704c'][i % 4]; x.fillRect(0, i * 32, 256, 32); x.fillStyle = 'rgba(40,24,12,.35)'; x.fillRect(0, i * 32, 256, 2); x.fillRect((i * 97) % 256, i * 32, 2, 32) } plank.t.wrapS = plank.t.wrapT = THREE.RepeatWrapping; plank.t.repeat.set(4, 4); plank.t.needsUpdate = true }
+const floorMat = M(0xffffff, { map: plank.t }); box(20, 0.2, 20, floorMat, 2, -0.1, -2)
+const woodMat = M(0xb08a62), wallMat = M(0xcdbba0)
+// a pitched roof: two slopes, a ridge beam, rafters, low knee walls
+for (const [cx, rz] of [[-1.6, 0.75], [5.6, -0.75]]) { const s = box(9, 0.2, 18, woodMat, cx, 4.4, -2); s.rotation.z = rz; for (let k = 0; k < 7; k++) { const r = box(9, 0.26, 0.22, 0x7a5a3c, cx + (rz > 0 ? 0.12 : -0.12), 4.4 - 0.18, -9 + k * 2.5); r.rotation.z = rz } }
+box(0.4, 0.4, 18, 0x6b4a30, 2.0, 7.45, -2); for (const z of [-5.0, -0.5]) box(9.2, 0.26, 0.26, 0x6b4a30, 2.0, 5.9, z)
+box(16, 9, 0.2, wallMat, 2.0, 4.5, -6.6)
+// the round window in the gable, sky behind it, rain streaks
+const skyMat = basic(0x8a96a4); { const sk = cyl(0.95, 0.95, 0.05, 20, skyMat, 2.0, 4.6, -6.5); sk.rotation.x = PI / 2; sk.castShadow = false; const fr = mesh(new THREE.TorusGeometry(0.98, 0.12, 6, 20), 0x6b4a30, 2.0, 4.6, -6.44); fr.castShadow = false; box(1.9, 0.08, 0.06, 0x6b4a30, 2.0, 4.6, -6.42); box(0.08, 1.9, 0.06, 0x6b4a30, 2.0, 4.6, -6.42) }
+const rainMat = basic(0xdfe8f0, { transparent: true, opacity: 0.6 }); const rain = []; for (let i = 0; i < 10; i++) { const r = box(0.02, 0.28, 0.01, rainMat, 1.3 + (i * 0.37) % 1.4, 4.6, -6.46); r.castShadow = false; rain.push(r) }
+// cardboard boxes, labels, a rocking horse, a trunk, a dress form, a hanging bulb
+const label = (txt) => { const c = canvasTex(160, 80); c.x.fillStyle = '#f4f1ea'; c.x.fillRect(0, 0, 160, 80); c.x.fillStyle = '#2a2c33'; c.x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText(txt, 80, 52); c.t.needsUpdate = true; return basic(0xffffff, { map: c.t }) }
+const cbox = (x, y, z, w, h, d, txt, ry = 0) => { const g2 = grp(x, y, z); g2.rotation.y = ry; box(w, h, d, 0xc49a6c, 0, h / 2, 0, g2); box(w * 0.18, 0.012, d + 0.01, 0xd9c28f, 0, h + 0.002, 0, g2); if (txt) { const m = mesh(new THREE.PlaneGeometry(w * 0.6, w * 0.3), label(txt), 0, h * 0.55, d / 2 + 0.01, g2); m.castShadow = false } return g2 }
+cbox(-2.6, 0, -4.2, 1.4, 1.1, 1.2, 'XMAS', 0.2); cbox(-2.5, 1.1, -4.1, 1.1, 0.8, 1.0, 'BOOKS', -0.1); cbox(-1.0, 0, -5.2, 1.3, 1.0, 1.1, 'MISC', 0.1); cbox(6.2, 0, -4.6, 1.5, 1.2, 1.2, 'KITCHEN', -0.2); cbox(6.0, 1.2, -4.5, 1.2, 0.9, 1.0, '2019', 0.1); cbox(-2.9, 0, -1.2, 1.2, 0.9, 1.1, 'CABLES', 0.4)
+const stack = cbox(3.9, 0, -2.7, 1.1, 1.1, 1.0, 'SHOES?', -0.2)
+{ const hz = grp(5.6, 0, -1.6); hz.rotation.y = -0.6; for (const sx of [-1, 1]) { const rk = mesh(new THREE.TorusGeometry(1.0, 0.06, 4, 16, PI * 0.6), 0x8a4a2a, 0, 0.98, sx * 0.3, hz); rk.rotation.z = PI * 1.2 } box(1.1, 0.4, 0.4, 0xf4f1ea, 0, 1.0, 0, hz); box(0.3, 0.6, 0.3, 0xf4f1ea, 0.55, 1.3, 0, hz); box(0.5, 0.3, 0.3, 0xf4f1ea, 0.75, 1.55, 0, hz); box(0.1, 0.5, 0.06, 0xc8482f, 0.4, 1.4, 0, hz); for (const [dx, dz] of [[-0.4, -0.15], [-0.4, 0.15], [0.4, -0.15], [0.4, 0.15]]) box(0.1, 0.5, 0.1, 0xf4f1ea, dx, 0.7, dz, hz) }
+box(1.8, 0.8, 0.9, 0x5a3a22, -0.6, 0.4, -6.0); box(1.84, 0.12, 0.94, 0x3a2414, -0.6, 0.84, -6.0)
+{ cyl(0.04, 0.04, 1.2, 5, 0x2a2c33, 7.4, 0.6, -2.2); const df = mesh(new THREE.IcosahedronGeometry(0.42, 0), 0xc89aa0, 7.4, 1.6, -2.2); df.scale.set(1, 1.6, 0.7) }
+cyl(0.01, 0.01, 1.0, 3, 0x2a2c33, 2.0, 6.95, -0.9); const bulbMat = basic(0xfff2c8); { const b = mesh(new THREE.IcosahedronGeometry(0.13, 1), bulbMat, 2.0, 6.35, -0.9); b.castShadow = false }
+const bulb = new THREE.PointLight(0xffd9a0, 2.0, 9, 1.4); bulb.position.set(2.0, 6.2, -0.9); scene.add(bulb)
+// the desk, a chair, the laptop
+box(3.2, 0.12, 1.4, 0x6b4a30, 2.0, 1.5, -1.2); for (const [dx, dz] of [[-1.45, -0.55], [1.45, -0.55], [-1.45, 0.55], [1.45, 0.55]]) box(0.12, 1.45, 0.12, 0x553820, 2.0 + dx, 0.725, -1.2 + dz); box(0.9, 0.6, 1.2, 0x5a3c22, 3.0, 1.1, -1.2)
+box(1.0, 0.1, 0.9, 0x7a5a3c, 2.0, 0.92, -2.45); box(1.0, 1.2, 0.1, 0x7a5a3c, 2.0, 1.55, -2.92); for (const [dx, dz] of [[-0.42, -0.38], [0.42, -0.38], [-0.42, 0.38], [0.42, 0.38]]) box(0.08, 0.9, 0.08, 0x553820, 2.0 + dx, 0.45, -2.45 + dz)
+const laptop = grp(2.0, 1.57, -1.3); box(1.15, 0.06, 0.78, 0xc9ced6, 0, 0.03, 0, laptop)
+const lid = grp(0, 0.06, 0.39, laptop); box(1.15, 0.78, 0.05, 0x2b2d33, 0, 0.39, 0, lid)
+const scr = canvasTex(640, 420); const scrMesh = mesh(new THREE.PlaneGeometry(1.05, 0.68), basic(0xffffff, { map: scr.t }), 0, 0.39, -0.03, lid); scrMesh.rotation.y = PI; scrMesh.castShadow = false
+const scrF = mesh(new THREE.PlaneGeometry(1.05, 0.68), basic(0xffffff, { map: scr.t }), 0, 0.39, 0.03, lid); scrF.castShadow = false; scrF.visible = false
+const mug = cyl(0.12, 0.11, 0.22, 10, 0x2f7cf6, 0.9, 1.67, -0.9)
+// candles: brand three paid in candles; they light up all over the attic
+const CANDLE_AT = [[0.8, 1.56, -0.7], [3.3, 1.56, -0.65], [3.55, 1.4, -1.5], [3.9, 1.1, -2.5], [4.2, 1.1, -2.9], [-1.0, 0, -0.6], [-0.4, 0, 0.4], [4.8, 0, -0.2], [5.2, 0, 0.6], [-2.6, 1.9, -3.9], [-2.2, 1.9, -4.3], [6.2, 2.1, -4.3], [5.8, 2.1, -4.7], [0.0, 0, -2.0], [-0.5, 0.88, -5.9], [-0.9, 0.88, -6.0], [1.2, 0, 1.2], [3.2, 0, 1.3], [6.6, 1.2, -4.2], [-1.4, 1.0, -5.0]]
+const candles = CANDLE_AT.map(([x, y, z], i) => { const g2 = grp(x, y, z); const h = 0.18 + (i % 3) * 0.08; cyl(0.06, 0.07, h, 8, 0xf4efe0, 0, h / 2, 0, g2); const f = mesh(new THREE.ConeGeometry(0.035, 0.1, 5), basic(0xffb02e), 0, h + 0.06, 0, g2); f.castShadow = false; g2.userData.f = f; g2.visible = false; return g2 })
+const crate = grp(0, -9, 0); box(0.9, 0.5, 0.7, 0x9a7350, 0, 0.25, 0, crate); { const m = mesh(new THREE.PlaneGeometry(0.6, 0.24), label('WICK&CO'), 0, 0.28, 0.36, crate); m.castShadow = false } for (let i = 0; i < 6; i++) cyl(0.07, 0.07, 0.26, 8, 0xf4efe0, -0.3 + (i % 3) * 0.3, 0.55, -0.15 + Math.floor(i / 3) * 0.3, crate)
+glow.color.set(0xffb060); glow.distance = 10; glow.decay = 1.5
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+const lidG = mesh(new THREE.PlaneGeometry(0.36, 0.45), basic(0xffffff, { map: gTex, transparent: true, opacity: 0 }), 0, 0.39, 0.031, lid); lidG.castShadow = false
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), hd = M(CONFIG.hoodie), pant = M(CONFIG.pants), dark = M(0x15161a), hair = M(CONFIG.hair), white = M(0xf4f1ea)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.06, 1.2, 0.62, hd, 0, 0.6, 0, p.torso); box(0.62, 0.3, 0.05, M(0xc48e2c), 0, 0.3, 0.32, p.torso); box(0.74, 0.3, 0.28, hd, 0, 1.1, -0.36, p.torso); for (const sx of [-1, 1]) box(0.03, 0.26, 0.03, white, sx * 0.1, 0.98, 0.33, p.torso); box(0.52, 0.2, 0.56, pant, 0, -0.02, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.78, 0.78, 0.74, skin, 0, 0.44, 0, p.head)
+  box(0.86, 0.24, 0.82, hair, 0, 0.84, -0.02, p.head); { const fr = box(0.66, 0.16, 0.08, hair, 0.06, 0.73, 0.38, p.head); fr.rotation.z = -0.12 } for (const sx of [-1, 1]) box(0.08, 0.36, 0.6, hair, sx * 0.42, 0.62, -0.06, p.head); box(0.82, 0.36, 0.1, hair, 0, 0.62, -0.38, p.head)
+  { const pc = cyl(0.025, 0.025, 0.5, 6, 0xffd23f, 0.44, 0.5, 0.02, p.head); pc.rotation.x = PI / 2 - 0.2; pc.rotation.z = 0.2 }
+  p.eyeL = box(0.08, 0.11, 0.04, dark, -0.18, 0.46, 0.38, p.head); p.eyeR = box(0.08, 0.11, 0.04, dark, 0.18, 0.46, 0.38, p.head)
+  const brow = M(0x8a7a5a); p.browL = box(0.2, 0.05, 0.04, brow, -0.18, 0.66, 0.39, p.head); p.browR = box(0.2, 0.05, 0.04, brow, 0.18, 0.66, 0.39, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0xa8424a), 0, 0.2, 0.38, p.head); for (const sx of [-1, 1]) box(0.05, 0.05, 0.03, M(0xd8846a), sx * 0.27, 0.32, 0.375, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.66, 1.08, 0, p.torso); box(0.36, 0.34, 0.38, hd, 0, -0.12, 0, a.sh); box(0.3, 0.32, 0.32, hd, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.28, 0.36, 0.3, hd, 0, -0.14, 0, a.el); box(0.3, 0.08, 0.32, M(0xc48e2c), 0, -0.34, 0, a.el); a.hand = box(0.24, 0.22, 0.26, skin, 0, -0.5, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.42, 0.6, 0.44, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.42, 0.4, 0.44, pant, 0, -0.18, 0, l.knee); box(0.44, 0.2, 0.62, white, 0, -0.5, 0.08, l.knee); box(0.45, 0.06, 0.64, M(0xc8ced6), 0, -0.6, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const TYPE = { ...SIT, alx: -0.45, ale: -1.15, arx: -0.45, are: -1.15, tx: 0.1, hx: 0.22 }
+const HOLDBOX = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.35, are: -0.5, arz: -0.45, hx: 0.1, hy: 0.35, tx: 0.04 }
+const SLUMP = { ...SIT, y: DESK.y - 0.72, z: DESK.z - 0.1, rx: -0.3, llh: -1.2, llk: 1.3, lrh: -1.2, lrk: 1.3, alx: -0.2, arx: -0.2, ale: -0.4, are: -0.4, hx: 0.05, eye: 0.55, brow: 0.22, mw: 1.0, mh: 0.5 }
+const UGH = { ...SIT, alx: -2.6, ale: -1.5, alz: 0.35, arx: -2.6, are: -1.5, arz: -0.35, hx: 0.12, eye: 0.6, brow: 0.22, mw: 1.3, mh: 0.6 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+const shoeBox = grp(0, -9, 0); box(0.9, 0.36, 0.56, 0xe8762c, 0, 0, 0, shoeBox); const shoeLid = grp(0, 0.18, -0.29, shoeBox); box(0.94, 0.08, 0.6, 0xff8f45, 0, 0.04, 0.29, shoeLid); { const m = mesh(new THREE.PlaneGeometry(0.4, 0.14), label('RECEIPTS'), 0, 0.0, 0.29, shoeBox); m.castShadow = false }
+const shoe = grp(0, -9, 0); box(0.62, 0.16, 0.26, 0xf4f1ea, 0, 0, 0, shoe); box(0.34, 0.22, 0.24, 0xf4f1ea, -0.12, 0.16, 0, shoe); box(0.64, 0.05, 0.28, 0xff4d4f, 0, -0.09, 0, shoe); box(0.2, 0.04, 0.25, 0x2f7cf6, 0.05, 0.1, 0, shoe)
+const boxP = grp(0, -9, 0); box(0.9, 0.36, 0.56, 0xe8762c, 0, 0, 0, boxP); box(0.94, 0.08, 0.6, 0xff8f45, 0, 0.22, 0, boxP)
+const candP = grp(0, -9, 0); cyl(0.14, 0.16, 0.6, 8, 0xf4efe0, 0, 0, 0, candP); { const f = mesh(new THREE.ConeGeometry(0.09, 0.24, 6), basic(0xffb02e), 0, 0.44, 0, candP); f.castShadow = false }
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function bub(x, X, Y, w, lines, font, k, o = {}) { if (k <= 0) return; const fs = parseInt(font.split(' ')[1]), h = lines.length * fs * 1.22 + 40; x.save(); x.translate(o.right ? X + w : X, Y + h / 2); x.scale(k, k); x.fillStyle = o.col || '#eceef2'; rr(x, o.right ? -w : 0, -h / 2, w, h, 26); x.fill(); x.fillStyle = o.tcol || '#16161a'; x.font = font; x.textAlign = 'left'; lines.forEach((s, i) => x.fillText(s, (o.right ? -w : 0) + 26, -h / 2 + 20 + fs * 0.86 + i * fs * 1.22)); x.restore() }
+function hl(x, X, Y, w, k) { if (k <= 0) return; x.fillStyle = 'rgba(255,225,74,.6)'; x.fillRect(X - 6, Y - 32, (w + 12) * k, 42) }
+function bar(x, X, Y, w, col) { x.fillStyle = col || 'rgba(255,255,255,.16)'; rr(x, X, Y - 14, w, 22, 11); x.fill() }
+function chip(x, X, Y, txt, good) { x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = x.measureText(txt).width + 30; x.fillStyle = good ? 'rgba(16,185,129,.18)' : 'rgba(245,158,11,.18)'; rr(x, X, Y - 26, w, 38, 19); x.fill(); x.fillStyle = good ? '#6ee7b7' : '#fcd34d'; x.fillText(txt, X + 15, Y + 1) }
+const CAMPS = ['Wick & Co. Candles', 'Night Owl Tea', 'Pebble Phone Cases']
+// 0 accountant chat · 1 bank statement · 2 payment app · 3 YourBrand earnings · 4 YourBrand invoices
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  const hdr = (title, col, sub) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = '#16161a'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 40, 92); if (sub) { x.fillStyle = '#8a90a0'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 40, 132) } x.fillStyle = '#eceef2'; x.fillRect(0, 160, w, 3) }
+  if (mode === 0) {
+    hdr('Accountant', '#2f7cf6', 'Messages'); x.fillStyle = '#6b7080'; x.beginPath(); x.arc(640, 80, 34, 0, 7); x.fill(); x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('A', 640, 91); x.textAlign = 'left'
+    const late = t >= T.wrote
+    if (!late) { const k = back(seg(t, T.my + 0.1, T.my + 0.35)); if (k > 0) { x.save(); x.translate(40, 250); x.scale(k, k); x.fillStyle = '#eceef2'; rr(x, 0, -60, 620, 250, 30); x.fill(); x.fillStyle = '#16161a'; x.font = '700 38px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Hi! For your taxes I need', 28, 0); const pre = x.measureText('').width; hl(x, 28, 54, x.measureText('one number:').width, eo(seg(t, T.numHit - 0.05, T.numHit + 0.25))); x.fillStyle = '#16161a'; x.fillText('one number:', 28, 54); x.fillText('what did you earn this year?', 28, 108); x.restore() } }
+    else {
+      bub(x, 40, 176, 560, ['What did you earn this year?'], '700 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif', 1)
+      x.fillStyle = '#2f7cf6'; rr(x, 300, 268, 380, 156, 26); x.fill(); x.fillStyle = '#0b0c10'; rr(x, 316, 280, 348, 100, 12); x.fill(); x.drawImage(G_IMG, 330, 290, 20, 25); x.fillStyle = '#fff'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Earnings', 358, 310); for (let i = 0; i < 2; i++) { bar(x, 334, 340 + i * 24, 150, 'rgba(255,255,255,.22)'); x.fillStyle = '#34d399'; rr(x, 570, 328 + i * 24, 70, 18, 9); x.fill() } x.fillStyle = '#fff'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Screenshot', 320, 410)
+      bub(x, 40, 436, 260, ['Great.'], '700 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif', back(seg(t, T.greatHit - 0.1, T.greatHit + 0.12)))
+      if (t >= T.now) { x.save(); x.translate(0, 0); bub(x, 40, 540, 540, ['Now do last year.'], '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif', back(seg(t, T.now, T.now + 0.2)), { col: '#16161a', tcol: '#fff' }); x.restore() }
+    }
+  } else if (mode === 1) {
+    hdr('Checking', '#3d7a50', 'Statement · this year'); const rows = [['TRANSFER', '+$400.00'], ['COFFEE SHOP', '−$5.40'], ['TRANSFER', '+$250.00'], ['TRANSFER', '+$600.00'], ['GROCERIES', '−$62.18']]
+    const hk = eo(seg(t, T.xferHit - 0.1, T.xferHit + 0.2))
+    rows.forEach(([a, b], i) => { const Y = 230 + i * 86, k = back(seg(t, T.b1 + 0.15 + i * 0.12, T.b1 + 0.35 + i * 0.12)); if (k <= 0) return; x.save(); x.globalAlpha = Math.min(1, k); const tr = a === 'TRANSFER'; x.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; if (tr) hl(x, 40, Y + 6, x.measureText(a).width, hk); x.fillStyle = '#16161a'; x.fillText(a, 40, Y); x.textAlign = 'right'; x.fillStyle = b[0] === '+' ? '#10b981' : '#6b7080'; x.fillText(b, 680, Y); x.textAlign = 'left'; x.fillStyle = '#9aa0ad'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(tr ? (t >= T.xferHit ? 'From: ?' : 'Ref: —') : 'Card', 40, Y + 32); x.restore() })
+  } else if (mode === 2) {
+    hdr('Activity', '#8b5cf6', 'Payments'); const k = back(seg(t, T.appHit - 0.1, T.appHit + 0.15))
+    if (k > 0) { x.save(); x.translate(360, 380); x.scale(k, k); x.fillStyle = '#f4f2fb'; rr(x, -320, -150, 640, 300, 30); x.fill(); x.fillStyle = '#8b5cf6'; x.beginPath(); x.arc(-220, -40, 56, 0, 7); x.fill(); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('K', -220, -22); x.textAlign = 'left'
+      x.fillStyle = '#16161a'; x.font = '800 42px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const kk = eo(seg(t, T.kevinHit - 0.05, T.kevinHit + 0.25)); hl(x, -140, -50, x.measureText('Kevin').width, kk); x.fillStyle = '#16161a'; x.fillText('Kevin', -140, -50); x.fillStyle = '#6b7080'; x.font = '600 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('paid you', -140 + 130, -50); x.fillStyle = '#10b981'; x.font = '800 54px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('+$300.00', -140, 30); x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Note: "for the thing"', -140, 90); x.restore() }
+  } else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Earnings', 88, 64)
+    if (mode === 3) {
+      x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Live numbers from every campaign you are in.', 32, 124)
+      ;['Earned', 'Available', 'Locked'].forEach((lb, i) => { const X = 30 + i * 224; x.fillStyle = '#161619'; rr(x, X, 156, 208, 120, 18); x.fill(); x.fillStyle = '#a1a1aa'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(lb, X + 20, 196); bar(x, X + 20, 240, 120) })
+      x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Per campaign', 32, 336)
+      CAMPS.forEach((cn, i) => { const Y = 360 + i * 92, k = back(seg(t, T.every + 0.3 + i * 0.25, T.every + 0.5 + i * 0.25)); if (k <= 0) return; x.save(); x.translate(360, Y + 40); x.scale(k, k); x.translate(-360, -Y - 40); x.fillStyle = '#161619'; rr(x, 30, Y, 660, 80, 16); x.fill(); x.fillStyle = '#fff'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(cn, 56, Y + 50); bar(x, 520, Y + 46, 140); x.restore() })
+    } else {
+      x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Invoices', 32, 130); x.fillStyle = '#a1a1aa'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('INVOICE', 48, 180); x.fillText('CAMPAIGN', 210, 180); x.fillText('STATUS', 560, 180)
+      CAMPS.forEach((cn, i) => { const Y = 200 + i * 104, t0 = T.every2 + 0.2 + i * 0.32, k = back(seg(t, t0, t0 + 0.2)); if (k <= 0) return; x.save(); x.translate(360, Y + 44); x.scale(k, k); x.translate(-360, -Y - 44); x.fillStyle = '#161619'; rr(x, 30, Y, 660, 88, 16); x.fill(); x.fillStyle = '#fff'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('INV-10' + (41 + i * 11), 48, Y + 54); x.fillText(cn.length > 15 ? cn.slice(0, 14) + '…' : cn, 210, Y + 54); const paid = t >= T.paidHit + i * 0.08; chip(x, 556, Y + 52, paid ? 'Paid' : 'Approved', paid); x.restore() })
+      if (t >= T.invHit - 0.1) { const k = back(seg(t, T.invHit - 0.1, T.invHit + 0.12)); x.save(); x.translate(360, 960); x.scale(k, k); x.fillStyle = '#16161a'; rr(x, -320, -56, 640, 112, 20); x.fill(); x.strokeStyle = '#2a2c35'; x.lineWidth = 3; rr(x, -320, -56, 640, 112, 20); x.stroke(); x.fillStyle = '#e4e4e7'; x.font = '600 25px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Every payout request creates', 0, -8); x.fillText('an invoice to YourBrand.', 0, 28); x.restore() }
+    }
+  }
+  dc.t.needsUpdate = true
+}
+function drawLaptop(t) {
+  const x = scr.x, w = 640, h = 420; x.textAlign = 'left'
+  if (t < T.found) { x.fillStyle = '#f4f5f8'; x.fillRect(0, 0, w, h); x.fillStyle = '#1f7a4a'; x.fillRect(0, 0, w, 44); x.fillStyle = '#fff'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('taxes_FINAL_v3.xlsx', 18, 30); x.strokeStyle = '#d4d8e0'; x.lineWidth = 2; for (let i = 0; i < 8; i++) { x.beginPath(); x.moveTo(0, 44 + i * 47); x.lineTo(w, 44 + i * 47); x.stroke() } for (let j = 1; j < 4; j++) { x.beginPath(); x.moveTo(j * 160, 44); x.lineTo(j * 160, h); x.stroke() } x.fillStyle = '#16161a'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; ['Brand 1', 'Brand 2', 'Brand 3', 'TOTAL'].forEach((s, i) => { x.fillText(s, 14, 76 + i * 47); x.fillStyle = '#ff4d4f'; x.fillText('???', 180, 76 + i * 47); x.fillStyle = '#16161a' }) }
+  else if (t < T.every || t >= T.showed) { x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); if (t < T.every) { x.textAlign = 'center'; const k = back(seg(t, T.foundG - 0.1, T.foundG + 0.35)); x.save(); x.translate(w / 2, 170); x.scale(k, k); x.drawImage(G_IMG, -84, -105, 168, 210); x.restore(); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand', w / 2, 350) } else { x.drawImage(G_IMG, 24, 20, 34, 42); x.fillStyle = '#fff'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Earnings', 72, 56); CAMPS.forEach((cn, i) => { const Y = 96 + i * 100; x.fillStyle = '#18181d'; rr(x, 20, Y, 600, 84, 14); x.fill(); x.fillStyle = '#fff'; x.font = '700 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(cn, 40, Y + 52); chip(x, 500, Y + 52, 'Paid', true) }) } }
+  else { x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 24, 20, 34, 42); x.fillStyle = '#fff'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Earnings', 72, 56) }
+  scr.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[3.6, 3.7, 7.8], [1.4, 2.8, -3.0], 46], front: [[2.0, 3.3, 4.6], [2.0, 2.5, -2.4], 34], face: [[2.0, 3.3, 2.2], [2.0, 2.6, -2.4], 34],
+  shoulder: [[3.5, 3.6, -3.6], [2.0, 1.95, -1.2], 44], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+  candles: [[5.6, 2.6, 5.2], [1.8, 1.6, -2.0], 48], low: [[4.4, 2.1, 2.4], [2.0, 1.95, -2.3], 34], show: [[2.0, 2.7, 2.6], [2.0, 1.75, -1.7], 44],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = TYPE, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, turn = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [shoeBox, shoe, boxP, candP, crate]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) } shoeLid.rotation.x = 0
+  const breathe = Math.sin(t * 2.2) * 0.012, ty = Math.sin(t * 9)
+  const typing = { ...TYPE, ale: -1.15 + ty * 0.06, are: -1.15 - ty * 0.06 }
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  // the crate of candles lands on the floor; candles light one by one and stay lit
+  if (t >= T.candHit - 0.25) { const k = seg(t, T.candHit - 0.25, T.candHit); crate.position.set(3.7, lerp(2.4, 0, k * k), -0.5); crate.rotation.y = 0.3 }
+  const nLit = t < T.candHit ? 0 : Math.min(candles.length, 1 + Math.floor((t - T.candHit) * 22))
+  candles.forEach((cd, i) => { cd.visible = i < nLit; const f = cd.userData.f; f.scale.y = 1 + Math.sin(t * 13 + i * 2.1) * 0.25; f.scale.x = 1 + Math.sin(t * 9 + i) * 0.1 })
+
+  if (t < T.part) { q = typing; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.tax) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(typing, { ...SIT, alz: -2.6, ale: -0.3, hx: -0.05, mw: 1.7, mh: 2.0, eye: 1.2, arx: -0.45, are: -1.15 }, k); c = CAM.front; ckk = seg(t, T.part, T.tax); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.my) { q = mixP(TYPE, UGH, back(seg(t, T.tax, T.tax + 0.25))); c = CAM.front; ckk = seg(t, T.tax, T.my); if (t >= T.taxHit) { v.pills.push(['TAX SEASON', 0, back(seg(t, T.taxHit, T.taxHit + 0.2)), 'bad']); shake = (1 - seg(t, T.taxHit, T.taxHit + 0.3)) * 0.4 } }
+  else if (t < T.what) { c = CAM.phone; ckk = seg(t, T.my, T.what); docMode = 0; showDoc(T.my); if (t >= T.numHit) shake = (1 - seg(t, T.numHit, T.numHit + 0.3)) * 0.35 }
+  else if (t < T.b1) { q = { ...SIT, alx: -0.3, ale: -0.9, arx: -1.6, are: -1.9, arz: -0.2, hy: 0.25, hx: -0.12, eye: 1.0, brow: 0.15, mw: 0.8, mh: 0.7 }; c = CAM.face; ckk = seg(t, T.what, T.b1); if (t >= T.earnHit) { v.pills.push(['EARNED: ???', 0, back(seg(t, T.earnHit, T.earnHit + 0.2)), 'bad']); shake = (1 - seg(t, T.earnHit, T.earnHit + 0.3)) * 0.3 } }
+  else if (t < T.b2) { c = CAM.phone; ckk = seg(t, T.b1, T.b2); docMode = 1; showDoc(T.b1); if (t >= T.xferHit) { shake = (1 - seg(t, T.xferHit, T.xferHit + 0.3)) * 0.45; v.pills.push(['FROM: ???', 0, back(seg(t, T.xferHit + 0.1, T.xferHit + 0.3)), 'bad']) } }
+  else if (t < T.b3) { c = CAM.phone; ckk = seg(t, T.b2, T.b3); docMode = 2; showDoc(T.b2); v.pills.push(['FROM: ???', 0, 1, 'bad']); if (t >= T.kevinHit) { shake = (1 - seg(t, T.kevinHit, T.kevinHit + 0.3)) * 0.45; v.pills.push(['WHO IS KEVIN?', 1, back(seg(t, T.kevinHit + 0.1, T.kevinHit + 0.3)), 'bad']) } }
+  else if (t < T.found1) { q = { ...SIT, hy: 0.55, hx: 0.25, tx: 0.05, alx: -0.3, ale: -0.9, arx: -0.3, are: -0.9, eye: 1.2, brow: 0.15, mw: 1.1, mh: 1.4 }; c = CAM.candles; ckk = seg(t, T.b3, T.found1); if (t >= T.candHit) { shake = (1 - seg(t, T.candHit, T.candHit + 0.35)) * 0.6; v.pills.push(['PAID IN: CANDLES', 0, back(seg(t, T.candHit + 0.1, T.candHit + 0.3)), 'bad']) } }
+  else if (t < T.found) {                                                    // the shoebox of receipts is shoes; she sinks under the desk
+    const lift = eio(seg(t, T.found1, T.boxHit)), from = [3.9, 1.3, -2.7], to = [2.8, 2.45, -1.95]
+    shoeBox.position.set(lerp(from[0], to[0], lift), lerp(from[1], to[1], lift) + Math.sin(lift * PI) * 0.4, lerp(from[2], to[2], lift)); shoeBox.rotation.y = (1 - lift) * 0.5
+    const open = eo(seg(t, T.shoesHit - 0.22, T.shoesHit)); shoeLid.rotation.x = -open * 1.9
+    if (t >= T.shoesHit - 0.12) { const s = back(seg(t, T.shoesHit - 0.12, T.shoesHit + 0.12)); shoe.position.set(2.8, 2.45 + 0.2 + s * 0.42, -1.95); shoe.rotation.set(0, 0.3, Math.sin(t * 6) * 0.1); shoe.scale.setScalar(Math.max(0.01, s)) }
+    const sl = eio(seg(t, T.shoesHit + 0.3, T.found - 0.05))
+    if (sl <= 0) { q = mixP({ ...SIT, eye: 1.1 }, { ...HOLDBOX, eye: t >= T.shoesHit ? 0.55 : 1.25, brow: t >= T.shoesHit ? 0.22 : -0.15, mw: t >= T.shoesHit ? 1.1 : 1.5, mh: t >= T.shoesHit ? 0.5 : 1.3 }, eio(seg(t, T.found1, T.found1 + 0.3))); c = CAM.front; ckk = seg(t, T.found1, T.found)
+      if (t >= T.boxHit && t < T.shoesHit) v.pills.push(['RECEIPTS: FOUND', 0, back(seg(t, T.boxHit, T.boxHit + 0.2)), 'good']) }
+    else { q = mixP({ ...HOLDBOX, eye: 0.55, brow: 0.22 }, SLUMP, sl); c = CAM.low; ckk = seg(t, T.shoesHit + 0.3, T.found); shoeBox.position.y = lerp(shoeBox.position.y, 1.74, sl); shoe.position.y = lerp(shoe.position.y, 2.1, sl); shoe.rotation.z = sl * 1.4 }
+    if (t >= T.shoesHit) { v.stamp = ['SHOES', seg(t, T.shoesHit, T.shoesHit + 0.2), '#ff4d4f', -0.12, 0.12]; shake = Math.max(shake, (1 - seg(t, T.shoesHit, T.shoesHit + 0.35)) * 0.6); v.pills.push(['RECEIPTS: 0', 0, back(seg(t, T.shoesHit + 0.05, T.shoesHit + 0.25)), 'bad']) }
+  } else if (t < T.every) {                                                    // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP(SLUMP, { ...SIT, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...typing, eye: 1.3, hx: 0.18 }; c = CAM.shoulder; ckk = seg(t, T.foundG, T.every); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.every2) { c = CAM.phone; ckk = seg(t, T.every, T.every2); docMode = 3; showDoc(T.every); if (t >= T.earnHit2) { shake = (1 - seg(t, T.earnHit2, T.earnHit2 + 0.3)) * 0.4; v.pills.push(['EVERY CAMPAIGN', 0, back(seg(t, T.earnHit2, T.earnHit2 + 0.2)), 'good']) } }
+  else if (t < T.showed) { c = CAM.phone; ckk = seg(t, T.every2, T.showed); docMode = 4; showDoc(T.every2); for (const [h0, a] of [[T.invHit, 0.35], [T.paidHit, 0.5]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * a); if (t >= T.paidHit) v.pills.push(['MARKED PAID', 0, back(seg(t, T.paidHit + 0.1, T.paidHit + 0.3)), 'good']) }
+  else if (t < T.no) { turn = eio(seg(t, T.showed + 0.05, T.showed + 0.55)); q = mixP(TYPE, { ...SIT, alx: 0.15, ale: -0.25, alz: -0.15, arx: 0.15, are: -0.25, arz: 0.15, hx: -0.12, eye: 0.75, mw: 1.6, mh: 1.0, brow: -0.12 }, eio(seg(t, T.showed + 0.5, T.showed + 0.9))); if (t < T.showed + 0.5) q = { ...TYPE, alx: -0.9, ale: -0.5, arx: -0.9, are: -0.5 }; c = CAM.show; ckk = seg(t, T.showed, T.no); if (t >= T.pageHit) { v.pills.push(['ONE PAGE', 0, back(seg(t, T.pageHit, T.pageHit + 0.2)), 'good']); shake = (1 - seg(t, T.pageHit, T.pageHit + 0.3)) * 0.35 } }
+  else if (t < T.wrote) {                                                      // no shoebox, no candles, no bullshit
+    turn = 1; c = CAM.center; ckk = seg(t, T.no, T.wrote)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.05 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? candP : boxP
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['SHOEBOX', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['SHOEBOX', 0, 1, 'bad']); if (t >= h0) v.pills.push(['CANDLES', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['SHOEBOX', 0, 1, 'bad'], ['CANDLES', 1, 1, 'bad']) }
+  } else if (t < T.year) { turn = 1; c = CAM.phone; ckk = seg(t, T.wrote, T.year); docMode = 0; showDoc(T.wrote); for (const h0 of [T.greatHit, T.now]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.45) }
+  else { turn = 0; q = { ...SIT, alx: -0.3, ale: -0.9, arx: -0.3, are: -0.9, eye: 0.45 + (Math.sin(t * 40) > 0.6 ? -0.3 : 0), brow: 0.25, mw: 1.0, mh: 0.5, hx: 0.05 }; c = CAM.face; ckk = seg(t, T.year, T.end); v.pills.push(['LAST YEAR: ???', 0, back(seg(t, T.year + 0.05, T.year + 0.25)), 'bad']); shake = (1 - seg(t, T.year + 0.05, T.year + 0.35)) * 0.4 }
+  applyPose({ ...q, tx: q.tx + breathe })
+  laptop.rotation.y = turn * PI; scrF.visible = false; lidG.visible = turn <= 0.5
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // rain on the round window until the turn
+  rain.forEach((r, i) => { r.visible = good < 0.5; r.position.y = 5.4 - ((t * 2.4 + i * 0.37) % 1.6); r.position.x = 1.25 + ((i * 0.53) % 1.5) })
+  // light and mood: a grey rainy attic, then warm low sun through the round window
+  skyMat.color.set(0x8a96a4).lerp(new THREE.Color(0xffb36b), good); scene.background.set(0x5a5650).lerp(new THREE.Color(0x6a4a34), good)
+  floorMat.color.set(0xd0c8bc).lerp(new THREE.Color(0xffffff), good); wallMat.color.set(0xb8ab96).lerp(new THREE.Color(0xe8d2b0), good); woodMat.color.set(0xa08060).lerp(new THREE.Color(0xc79a6a), good)
+  sun.color.set(0xd6dbe4).lerp(new THREE.Color(0xffd29a), good); sun.intensity = lerp(1.0, 1.6, good); hemi.intensity = lerp(1.0, 1.25, good); hemi.color.set(0xd8dce4).lerp(new THREE.Color(0xfff0dc), good)
+  const lit = nLit / candles.length; glow.position.set(2.4, 1.6, -0.6); glow.intensity = Math.max(glowOn * 2.0, lit * 2.2) * (0.92 + Math.sin(t * 17) * 0.05)
+  bulb.intensity = lerp(1.6, 1.0, good) * (t < T.found && Math.sin(t * 31) > 0.97 ? 0.3 : 1)
+  lidG.material.opacity = good
+  drawLaptop(t); if (docMode >= 0) { docBody.color.set(docMode >= 3 ? 0x15161a : 0xffffff); drawDoc(docMode, t) }
+}
+
+
+/*SHARED_UI*/
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

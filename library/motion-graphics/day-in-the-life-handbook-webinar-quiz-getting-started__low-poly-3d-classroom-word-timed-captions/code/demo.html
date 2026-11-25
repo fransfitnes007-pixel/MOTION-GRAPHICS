@@ -1,0 +1,345 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part sixteen: the welcome pack</title>
+<!-- A 37.9 s reel (1080x1920) in low-poly 3D, sixteenth in the series. He signs up to a creator platform and gets a welcome pack:
+     a ninety page handbook (it lands on his desk), a two hour webinar whose replay only works on Tuesdays, then a quiz on the
+     handbook: four out of twenty. Then YourBrand's Getting started: three levels, each a five minute read, finish one and the next
+     unlocks, every step linking to the page it is talking about. three.js scene + a 2D canvas for captions, pills and the end card.
+     Every frame is a pure function of time: window.render(t). voice B (men), sped 1.1x. -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Three levels.', 'Five minutes each.'],
+  skin: 0xe6b98f, jacket: 0x4a6fa5, pants: 0xb9a27a, hair: 0x1c1714, beanie: 0x2f5d8c,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0,0.26],["in",0.26,0.38],["the",0.38,0.46],["life",0.46,0.66],["of",0.66,0.88],["a",0.88,1.0],["UGC",1.0,1.46],["creator",1.46,2.0],["Part",2.2,2.44],["sixteen",2.44,3.0],["I",3.44,3.54],["signed",3.54,3.76],["up",3.76,3.92],["to",3.92,4.08],["a",4.08,4.2],["creator",4.2,4.5],["platform",4.5,4.95],["They",5.36,5.46],["sent",5.46,5.62],["a",5.62,5.74],["welcome",5.74,5.92],["pack",5.92,6.2],["A",6.56,6.7],["ninety",6.7,7.06],["page",7.06,7.44],["handbook",7.44,7.95],["A",8.38,8.5],["two",8.5,8.78],["hour",8.78,9.0],["webinar",9.0,9.5],["The",9.94,10.06],["replay",10.06,10.32],["only",10.32,10.66],["works",10.66,10.92],["on",10.92,11.14],["Tuesdays",11.14,11.65],["Then",12.04,12.2],["a",12.2,12.36],["quiz",12.36,12.7],["On",13.02,13.18],["the",13.18,13.3],["handbook",13.3,13.75],["I",14.06,14.24],["got",14.24,14.36],["four",14.36,14.7],["out",14.7,14.82],["of",14.82,14.94],["twenty",14.94,15.35],["I",15.68,15.8],["still",15.8,16.08],["don't",16.08,16.22],["know",16.22,16.36],["where",16.36,16.48],["anything",16.48,16.76],["is",16.76,17.05],["Then",17.6,17.84],["I",17.84,18.1],["found",18.1,18.36],["YourBrand",18.36,18.9],["Getting",19.24,19.4],["started",19.4,19.68],["has",19.68,19.94],["three",19.94,20.28],["levels",20.28,20.7],["Each",21.0,21.12],["one",21.12,21.38],["is",21.38,21.54],["a",21.54,21.68],["five",21.68,21.92],["minute",21.92,22.08],["read",22.08,22.4],["Finish",22.82,22.96],["one",22.96,23.25],["The",23.52,23.62],["next",23.62,23.84],["one",23.84,24.02],["unlocks",24.02,24.45],["And",24.78,24.92],["every",24.92,25.28],["step",25.28,25.56],["links",25.56,25.84],["to",25.84,26.06],["the",26.06,26.16],["page",26.16,26.36],["it's",26.36,26.54],["talking",26.54,26.8],["about",26.8,27.1],["No",27.36,27.56],["handbook",27.56,28.0],["No",28.24,28.4],["webinar",28.4,28.85],["No",29.14,29.3],["bullshit",29.3,29.75],["I",30.2,30.3],["failed",30.3,30.56],["their",30.56,30.72],["quiz",30.72,30.98],["again",30.98,31.35],["On",31.72,31.82],["purpose",31.82,32.1],["this",32.1,32.38],["time",32.38,32.75]]
+const GROUPS = [[0,7,3,1],[8,9,-1,1.3],[10,16,13,1],[17,21,-1,1.1],[22,25,-1,1.15],[26,29,-1,1.15],[30,35,32,1.05],[36,38,-1,1.4],[39,41,-1,1.3],[42,47,-1,1.05],[48,54,51,1],[55,58,57,1.1],[59,63,60,1.05],[64,70,66,1.05],[71,72,-1,1.5],[73,76,-1,1.15],[77,86,80,1],[87,88,-1,1.3],[89,90,-1,1.3],[91,92,-1,1.7],[93,97,-1,1.1],[98,101,-1,1.2]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.2, sign: 3.44, signHit: 3.76, pack: 5.36, packHit: 5.74, book: 6.56, bookHit: 7.44, web: 8.38, webHit: 9.0, tues: 9.94, tuesHit: 11.14, quiz: 12.04, quizHit: 12.36, onb: 13.02, onbHit: 13.3, score: 14.06, scoreHit: 14.36, lost: 15.68, lostHit: 16.48,
+  found: 17.6, foundG: 18.2, levels: 19.24, levelsHit: 19.94, five: 21.0, fiveHit: 21.68, fin: 22.82, finHit: 22.96, next: 23.52, unlockHit: 24.02, links: 24.78, linksHit: 25.56, pageHit: 26.16, no: 27.36, n1: 27.56, n2s: 28.24, n2: 28.4, nob: 29.14, nobHit: 29.3,
+  cb: 30.2, cbHit: 30.3, purpose: 31.72, purposeHit: 31.82, end: 32.9, dur: 37.9 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- the classroom
+const fl = canvasTex(256, 256); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { fl.x.fillStyle = (i + j) % 2 ? '#d9d2c0' : '#cdc5b0'; fl.x.fillRect(i * 64, j * 64, 64, 64) } fl.t.needsUpdate = true; fl.t.wrapS = fl.t.wrapT = THREE.RepeatWrapping; fl.t.repeat.set(8, 8)
+box(34, 0.2, 34, M(0xffffff, { map: fl.t }), 0, -0.1, -2)
+const wallMat = M(0xdfe3d4), wall2 = M(0xd0d5c5), dado = M(0x6f9a7a)
+box(34, 9, 0.3, wallMat, 0, 4.5, -6.5); box(0.3, 9, 34, wall2, -7.4, 4.5, -2); box(34, 1.6, 0.34, dado, 0, 0.8, -6.48); box(0.34, 1.6, 34, dado, -7.38, 0.8, -2)
+const winMat = basic(0xc9d6de); for (const wz of [-3.4, 0.6]) { const w = box(0.1, 3.4, 2.8, winMat, -7.2, 4.4, wz); w.castShadow = false; box(0.14, 3.6, 0.14, 0xf4f1ea, -7.15, 4.4, wz); box(0.14, 0.14, 2.9, 0xf4f1ea, -7.15, 4.4, wz) }
+// the chalkboard, redrawn when the day turns
+const cb = canvasTex(1024, 440); box(7.5, 3.5, 0.14, 0x8a6a44, 2.0, 4.5, -6.3); const board = mesh(new THREE.PlaneGeometry(7.1, 3.1), basic(0xffffff, { map: cb.t }), 2.0, 4.5, -6.22); board.castShadow = false; box(7.5, 0.12, 0.3, 0x8a6a44, 2.0, 2.78, -6.2); box(0.4, 0.08, 0.1, 0xf4f1ea, 0.4, 2.88, -6.14)
+let boardState = -1
+function drawBoard(st) { if (st === boardState) return; boardState = st; const x = cb.x; x.fillStyle = '#2f5a48'; x.fillRect(0, 0, 1024, 440); x.fillStyle = 'rgba(255,255,255,.06)'; for (let i = 0; i < 14; i++) x.fillRect((i * 173) % 1024, (i * 97) % 440, 220, 26); x.fillStyle = '#f2f2e6'; x.textAlign = 'center'
+  if (!st) { x.font = '800 120px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('ONBOARDING', 512, 170); x.font = '700 62px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Module 1 of 37', 512, 270); x.fillRect(250, 300, 524, 6); x.font = '600 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('(bring the handbook)', 512, 372) }
+  else { x.font = '800 130px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('LEVEL 1', 440, 250); x.strokeStyle = '#b6f09a'; x.lineWidth = 22; x.lineCap = 'round'; x.beginPath(); x.moveTo(720, 200); x.lineTo(770, 255); x.lineTo(870, 130); x.stroke(); x.lineCap = 'butt' }
+  cb.t.needsUpdate = true }
+for (let i = 0; i < 9; i++) box(0.6, 0.6, 0.04, [0xe0453a, 0xffb347, 0xffd23f, 0x34d399, 0x5aa9e6, 0xb79cf2, 0xe58fa6, 0x2f8f8f, 0xff8f3f][i], -1.2 + i * 0.8, 6.75, -6.3)
+const ckc = canvasTex(128, 128); { const x = ckc.x; x.fillStyle = '#fff'; x.beginPath(); x.arc(64, 64, 62, 0, 7); x.fill(); x.strokeStyle = '#2a2c33'; x.lineWidth = 6; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.stroke(); x.lineWidth = 5; x.beginPath(); x.moveTo(64, 64); x.lineTo(64, 24); x.moveTo(64, 64); x.lineTo(92, 78); x.stroke(); ckc.t.needsUpdate = true }
+const clk = mesh(new THREE.CircleGeometry(0.55, 20), basic(0xffffff, { map: ckc.t }), -3.0, 6.4, -6.3); clk.castShadow = false
+// other desks, a shelf with a globe, a backpack
+const deskAt = (x, z) => { box(1.7, 0.1, 1.1, 0xc9a26b, x, 1.5, z); for (const [dx, dz] of [[-.75, -.45], [.75, -.45], [-.75, .45], [.75, .45]]) box(0.06, 1.45, 0.06, 0x8d939e, x + dx, 0.725, z + dz); box(0.8, 0.08, 0.8, 0x5aa9e6, x, 0.9, z - 1.1); box(0.8, 0.8, 0.08, 0x5aa9e6, x, 1.4, z - 1.5); for (const [dx, dz] of [[-.35, -.35], [.35, -.35], [-.35, .35], [.35, .35]]) box(0.05, 0.9, 0.05, 0x8d939e, x + dx, 0.45, z - 1.1 + dz) }
+deskAt(-3.4, -2.6); deskAt(-3.4, 0.6); deskAt(7.0, -2.8); deskAt(7.0, 0.4)
+box(2.4, 1.8, 0.7, 0x8a6a44, 6.6, 0.9, -5.9); cyl(0.2, 0.26, 0.2, 8, 0x2a2c33, 6.2, 1.9, -5.9); mesh(new THREE.IcosahedronGeometry(0.5, 1), 0x5aa9e6, 6.2, 2.5, -5.9); for (const dx of [0.5, 0.75, 1.0]) box(0.2, 0.7, 0.5, [0xe0453a, 0x34d399, 0xffd23f][Math.round(dx * 4) % 3], 6.6 + dx, 2.15, -5.9)
+box(0.8, 1.0, 0.5, 0xd8323a, 4.4, 0.5, -2.2); box(0.6, 0.4, 0.14, 0xb3262d, 4.4, 0.4, -1.9)
+// his desk, chair, laptop
+box(3.3, 0.12, 1.3, 0xc9a26b, 2.0, 1.5, -1.2); for (const [dx, dz] of [[-1.5, -0.55], [1.5, -0.55], [-1.5, 0.55], [1.5, 0.55]]) box(0.08, 1.45, 0.08, 0x8d939e, 2.0 + dx, 0.725, -1.2 + dz); box(3.0, 0.3, 0.06, 0xb98a55, 2.0, 1.3, -0.6)
+box(0.95, 0.1, 0.95, 0x5aa9e6, 2.0, 0.92, -2.4); box(0.95, 0.9, 0.1, 0x5aa9e6, 2.0, 1.6, -2.88); for (const [dx, dz] of [[-.4, -.4], [.4, -.4], [-.4, .4], [.4, .4]]) box(0.06, 0.9, 0.06, 0x8d939e, 2.0 + dx, 0.45, -2.4 + dz)
+cyl(0.11, 0.1, 0.26, 8, 0xffb347, 3.25, 1.69, -1.55); for (const [dx, c] of [[-0.03, 0xffd23f], [0.04, 0x16161a]]) cyl(0.015, 0.015, 0.34, 4, c, 3.25 + dx, 1.9, -1.55); mesh(new THREE.IcosahedronGeometry(0.13, 1), 0xe0453a, 3.0, 1.69, -0.9)
+const laptop = grp(2.0, 1.56, -1.3); box(1.15, 0.06, 0.78, 0xc9ced6, 0, 0.03, 0, laptop)
+const lid = grp(0, 0.06, 0.39, laptop); box(1.15, 0.78, 0.05, 0x2b2d33, 0, 0.39, 0, lid)
+const scr = canvasTex(640, 420); const scrMesh = mesh(new THREE.PlaneGeometry(1.05, 0.68), basic(0xffffff, { map: scr.t }), 0, 0.39, -0.03, lid); scrMesh.rotation.y = PI; scrMesh.castShadow = false
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+const lidG = mesh(new THREE.PlaneGeometry(0.36, 0.45), basic(0xffffff, { map: gTex, transparent: true, opacity: 0 }), 0, 0.39, 0.03, lid); lidG.castShadow = false
+// the handbook
+const hb = canvasTex(512, 200); hb.x.fillStyle = '#2f5d8c'; hb.x.fillRect(0, 0, 512, 200); hb.x.fillStyle = '#e0b23c'; hb.x.font = '800 86px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; hb.x.textAlign = 'center'; hb.x.fillText('HANDBOOK', 256, 96); hb.x.font = '700 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; hb.x.fillText('90 pages · vol. 1', 256, 160); hb.t.needsUpdate = true
+function makeTome(parent) { const g = grp(0, 0, 0, parent); box(1.0, 0.44, 0.74, 0x2f5d8c, 0, 0, 0, g); box(0.94, 0.36, 0.76, 0xf4f1ea, 0.04, 0, 0, g); box(1.0, 0.04, 0.74, 0x2f5d8c, 0, 0.2, 0, g); box(1.0, 0.04, 0.74, 0x2f5d8c, 0, -0.2, 0, g); const f = mesh(new THREE.PlaneGeometry(0.96, 0.38), basic(0xffffff, { map: hb.t }), 0, 0, 0.375, g); f.castShadow = false; const tp = mesh(new THREE.PlaneGeometry(0.9, 0.36), basic(0xffffff, { map: hb.t }), 0, 0.222, 0.1, g); tp.rotation.x = -PI / 2; tp.castShadow = false; return g }
+const tome = makeTome(); tome.position.set(0.85, 9, -1.0); tome.scale.setScalar(1.2)
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), jk = M(CONFIG.jacket), jk2 = M(0x3c5c8c), pant = M(CONFIG.pants), hair = M(CONFIG.hair), dark = M(0x15161a), white = M(0xfafafa), grey = M(0xb8bcc6), bn = M(CONFIG.beanie), bn2 = M(0x254a70)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.0, 1.15, 0.58, jk, 0, 0.6, 0, p.torso); box(0.34, 1.0, 0.03, grey, 0, 0.66, 0.3, p.torso); for (const sx of [-1, 1]) { box(0.2, 0.2, 0.04, jk2, sx * 0.32, 0.86, 0.3, p.torso); const lp = box(0.14, 0.4, 0.05, jk2, sx * 0.2, 1.0, 0.3, p.torso); lp.rotation.z = sx * 0.3 } box(0.52, 0.26, 0.56, pant, 0, 0.08, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.8, 0.78, 0.76, skin, 0, 0.44, 0, p.head)
+  box(0.9, 0.36, 0.86, bn, 0, 0.92, -0.02, p.head); box(0.92, 0.14, 0.88, bn2, 0, 0.74, -0.02, p.head); box(0.3, 0.18, 0.3, bn, 0, 1.16, -0.04, p.head); box(0.84, 0.36, 0.14, hair, 0, 0.5, -0.37, p.head); for (const sx of [-1, 1]) box(0.08, 0.26, 0.4, hair, sx * 0.41, 0.56, -0.12, p.head)
+  p.eyeL = box(0.11, 0.16, 0.04, dark, -0.19, 0.44, 0.39, p.head); p.eyeR = box(0.11, 0.16, 0.04, dark, 0.19, 0.44, 0.39, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.19, 0.62, 0.4, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.19, 0.62, 0.4, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x6a2c2c), 0, 0.2, 0.4, p.head)
+  p.fnote = grp(0, 0, 0, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.64, 1.08, 0, p.torso); box(0.31, 0.56, 0.33, jk, 0, -0.24, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.31, 0.4, 0.33, jk, 0, -0.18, 0, a.el); box(0.33, 0.08, 0.35, jk2, 0, -0.4, 0, a.el); a.hand = box(0.24, 0.2, 0.26, skin, 0, -0.55, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.4, 0.6, 0.42, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.36, 0.44, 0.38, pant, 0, -0.22, 0, l.knee); box(0.4, 0.22, 0.6, white, 0, -0.53, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.62 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const TYPE = { ...SIT, alx: -0.45, ale: -1.15, arx: -0.45, are: -1.15, tx: 0.1, hx: 0.22 }
+const FLAT = { ...SIT, hx: 0.04, eye: 0.5, brow: 0.2, mw: 1.2, mh: 0.8, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }
+const CHEER = { ...SIT, alz: -2.75, arz: 2.75, ale: -0.3, are: -0.3, hx: -0.2, eye: 1.4, mw: 1.8, mh: 2.6, brow: -0.1, y: DESK.y + 0.18, llk: 1.1, lrk: 1.1, llh: -1.3, lrh: -1.3 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const hero = grp(0, 3.0, 2.6); hero.visible = false
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+const tome2 = makeTome(); tome2.position.y = -9
+const ws = canvasTex(256, 160); ws.x.fillStyle = '#f4f5f8'; ws.x.fillRect(0, 0, 256, 160); ws.x.fillStyle = '#e0453a'; ws.x.beginPath(); ws.x.moveTo(100, 44); ws.x.lineTo(100, 116); ws.x.lineTo(166, 80); ws.x.fill(); ws.x.fillStyle = '#c9ccd6'; ws.x.fillRect(20, 134, 216, 8); ws.x.fillStyle = '#e0453a'; ws.x.fillRect(20, 134, 10, 8); ws.t.needsUpdate = true
+const webP = grp(0, -9, 0); box(1.1, 0.72, 0.08, 0x2a2c33, 0, 0, 0, webP); const wsm = mesh(new THREE.PlaneGeometry(1.0, 0.62), basic(0xffffff, { map: ws.t }), 0, 0, 0.045, webP); wsm.castShadow = false
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function padlock(x, X, Y, s, open, col) { x.strokeStyle = col; x.lineWidth = 8 * s; x.beginPath(); x.arc(X + (open ? 22 * s : 0), Y - 22 * s, 20 * s, PI, open ? PI * 1.9 : 0); x.stroke(); x.fillStyle = col; rr(x, X - 32 * s, Y - 20 * s, 64 * s, 52 * s, 10 * s); x.fill() }
+function drawLaptop(t) {
+  const x = scr.x, w = 640, h = 420
+  if (t < T.found) { x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('Welcome to the platform!', 24, 50); x.fillStyle = '#6b7080'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Step 1 of 41: read the handbook', 24, 86); for (let i = 0; i < 5; i++) { x.fillStyle = '#eef0f5'; x.fillRect(24, 110 + i * 56, 592, 44); x.fillStyle = '#c9ccd6'; x.fillRect(40, 124 + i * 56, 300 - i * 30, 14) } }
+  else { x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.textAlign = 'center'; const k = back(seg(t, T.foundG - 0.1, T.foundG + 0.35)); x.save(); x.translate(w / 2, 170); x.scale(k, k); x.drawImage(G_IMG, -84, -105, 168, 210); x.restore(); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand', w / 2, 350) }
+  scr.t.needsUpdate = true
+}
+// mode 0: the welcome email. 1: the webinar. 2: the quiz (and its second attempt). 3: Getting started. 4: level one, opened.
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'
+  if (mode === 0) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#9aa0ad'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('From: Onboarding Team', 40, 70); x.fillStyle = '#16161a'; x.font = '800 54px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Your welcome pack!', 40, 140); x.fillStyle = '#e4e6ec'; x.fillRect(40, 168, 640, 3)
+    ;[['PDF', 'Handbook.pdf', '90 pages', '#e0453a'], ['▶', 'Onboarding webinar', '2 hours', '#2f7cf6'], ['?', 'Quiz', 'on the handbook', '#12a06b']].forEach(([ic, a, b, col], i) => { const k = back(seg(t, T.packHit - 0.1 + i * 0.16, T.packHit + 0.1 + i * 0.16)); if (k <= 0) return; const y = 200 + i * 136; x.save(); x.translate(360, y + 60); x.scale(k, k); x.fillStyle = '#f4f5f8'; rr(x, -320, -58, 640, 116, 18); x.fill(); x.fillStyle = col; rr(x, -300, -40, 80, 80, 16); x.fill(); x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(ic, -260, 11); x.textAlign = 'left'; x.fillStyle = '#16161a'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(a, -200, -2); x.fillStyle = '#6b7080'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(b, -200, 36); x.restore() })
+    return void (dc.t.needsUpdate = true)
+  }
+  if (mode === 1) {
+    x.fillStyle = '#16171c'; x.fillRect(0, 0, w, h); x.fillStyle = '#fff'; rr(x, 20, 40, 680, 382, 12); x.fill(); x.fillStyle = '#16161a'; x.font = '800 46px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Onboarding', 56, 126); x.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillStyle = '#6b7080'; x.fillText('Part 1 of 9 · Slide 3 of 214', 56, 176); for (let i = 0; i < 4; i++) { x.fillStyle = '#e4e6ec'; rr(x, 56, 214 + i * 40, 420 - i * 50, 18, 9); x.fill() }
+    x.fillStyle = '#2a2c33'; rr(x, 520, 262, 160, 140, 12); x.fill(); x.fillStyle = '#f0c9a8'; rr(x, 568, 292, 64, 64, 10); x.fill(); x.fillStyle = '#16161a'; x.fillRect(582, 316, 10, 12); x.fillRect(608, 316, 10, 12); x.fillStyle = '#5b6ee8'; rr(x, 556, 360, 88, 42, 10); x.fill()
+    const ck = back(seg(t, T.webHit + 0.25, T.webHit + 0.45)); if (ck > 0) { x.save(); x.translate(290, 388); x.scale(ck, ck); x.fillStyle = '#16161a'; rr(x, -250, -26, 440, 52, 26); x.fill(); x.fillStyle = '#fff'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('“can everyone see my screen?”', -30, 9); x.restore() }
+    x.fillStyle = '#3d4050'; rr(x, 20, 446, 680, 14, 7); x.fill(); x.fillStyle = '#e0453a'; rr(x, 20, 446, 20, 14, 7); x.fill(); x.beginPath(); x.arc(40, 453, 13, 0, 7); x.fill(); x.fillStyle = '#d4d4d8'; x.font = '700 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('0:03:' + String(10 + Math.floor((t - T.web) * 1)).padStart(2, '0') + '  /  2:00:00', 22, 504)
+    const bk = back(seg(t, T.tues + 0.1, T.tues + 0.32)); if (bk > 0) { const hit = t >= T.tuesHit; x.save(); x.translate(360, 590); x.scale(bk, bk); x.fillStyle = hit ? '#ff4d4f' : '#3a2a12'; rr(x, -330, -56, 660, 112, 16); x.fill(); x.fillStyle = hit ? '#fff' : '#ffb347'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Replay available on Tuesdays only', 0, -6); x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Today: Wednesday', 0, 34); x.restore() }
+    return void (dc.t.needsUpdate = true)
+  }
+  if (mode === 2) {
+    const again = t >= T.cb; x.fillStyle = '#fffdf5'; x.fillRect(0, 0, w, h); x.fillStyle = '#f2b8b8'; x.fillRect(84, 0, 3, h); x.fillStyle = '#16161a'; x.font = '800 70px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('QUIZ', 110, 100)
+    const hl = again ? 1 : eo(seg(t, T.onb, T.onbHit + 0.15)); x.fillStyle = '#ffe14a'; x.fillRect(106, 122, 400 * hl, 50); x.fillStyle = '#16161a'; x.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('The Handbook, ch. 1–12', 114, 160)
+    for (let i = 0; i < 5; i++) { const k = again ? 1 : back(seg(t, T.quizHit + i * 0.07, T.quizHit + 0.16 + i * 0.07)); if (k <= 0) continue; const y = 210 + i * 88; x.globalAlpha = clamp(k); x.fillStyle = '#16161a'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText((i + 1) + '.', 110, y + 30); x.fillStyle = '#d9dbe2'; rr(x, 154, y + 10, 360 - (i % 3) * 50, 18, 9); x.fill(); 'ABCD'.split('').forEach((c2, j) => { const fill = again ? j === 2 : j === (i * 3 + 1) % 4; x.strokeStyle = '#16161a'; x.lineWidth = 3; x.beginPath(); x.arc(170 + j * 70, y + 60, 15, 0, 7); x.stroke(); if (fill) { x.fillStyle = '#16161a'; x.beginPath(); x.arc(170 + j * 70, y + 60, 15, 0, 7); x.fill() } })
+      const sk = again ? (t >= T.cbHit ? 1 : 0) : (t >= T.scoreHit - 0.1 + i * 0.05 ? 1 : 0); if (sk && (again || i !== 1)) { x.strokeStyle = '#e0453a'; x.lineWidth = 7; x.lineCap = 'round'; x.beginPath(); x.moveTo(560, y + 22); x.lineTo(600, y + 62); x.moveTo(600, y + 22); x.lineTo(560, y + 62); x.stroke(); x.lineCap = 'butt' } x.globalAlpha = 1 }
+    const th = again ? T.cbHit : T.scoreHit, ck = back(seg(t, th - 0.05, th + 0.18)); if (ck > 0) { x.save(); x.translate(566, 104); x.rotate(-0.14); x.scale(ck, ck); x.strokeStyle = '#e0453a'; x.lineWidth = 8; x.beginPath(); x.ellipse(0, 0, 118, 70, 0, 0, 7); x.stroke(); x.fillStyle = '#e0453a'; x.font = '800 78px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(again ? '0/20' : '4/20', 0, 28); x.restore() }
+    if (again) { const pk = back(seg(t, T.purposeHit - 0.05, T.purposeHit + 0.18)); if (pk > 0) { x.save(); x.translate(470, 250); x.rotate(-0.08); x.scale(pk, pk); x.fillStyle = '#2f7cf6'; x.font = '800 54px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('on purpose :)', 0, 0); x.restore() } }
+    return void (dc.t.needsUpdate = true)
+  }
+  x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 20, 40, 50); x.fillStyle = '#fff'; x.font = '800 38px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Getting started', 88, 60)
+  if (mode === 3) {
+    x.fillStyle = '#a1a1aa'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Learn the platform in three levels', 30, 118)
+    ;['Dashboard & deals', 'Tracking & analytics', 'Time management & editing'].forEach((s, i) => { const k = back(seg(t, T.levelsHit - 0.1 + i * 0.13, T.levelsHit + 0.12 + i * 0.13)); if (k <= 0) return; const y = 146 + i * 168, done = i === 0 && t >= T.finHit, open = i === 0 || (i === 1 && t >= T.unlockHit), fiveOn = t >= T.fiveHit - 0.1 + i * 0.1
+      x.save(); x.translate(360, y + 76); x.scale(k, k); x.fillStyle = open ? '#1b1530' : '#161619'; rr(x, -334, -76, 668, 152, 20); x.fill(); x.strokeStyle = done ? '#34d399' : open ? '#8b5cf6' : '#2a2c35'; x.lineWidth = 3; rr(x, -334, -76, 668, 152, 20); x.stroke()
+      x.fillStyle = done ? '#34d399' : open ? '#8b5cf6' : '#3d4050'; x.beginPath(); x.arc(-282, -22, 28, 0, 7); x.fill(); x.fillStyle = '#0b0c10'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(done ? '✓' : String(i + 1), -282, -11); x.textAlign = 'left'; x.fillStyle = open ? '#fff' : '#8e93a3'; x.font = '800 ' + (s.length > 22 ? 30 : 34) + 'px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(s, -238, -10)
+      const p5 = fiveOn ? 1 + 0.12 * (1 - seg(t, T.fiveHit - 0.1 + i * 0.1, T.fiveHit + 0.25 + i * 0.1)) : 1; x.save(); x.translate(-166, 38); x.scale(p5, p5); x.fillStyle = fiveOn ? '#ffe14a' : '#2a2c35'; rr(x, -72, -22, 144, 44, 22); x.fill(); x.fillStyle = fiveOn ? '#16161a' : '#a1a1aa'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('5 min read', 0, 8); x.restore()
+      if (i === 0) { const pr = t >= T.finHit ? 1 - 0.07 * (1 - seg(t, T.finHit, T.finHit + 0.2)) : 1; x.save(); x.translate(200, 38); x.scale(pr, pr); x.fillStyle = done ? '#34d399' : '#fff'; rr(x, -116, -24, 232, 48, 24); x.fill(); x.fillStyle = '#0b0c10'; x.font = '800 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(done ? 'Completed ✓' : 'Mark complete', 0, 9); x.restore() }
+      else { const o = i === 1 && t >= T.unlockHit, lp = o ? back(seg(t, T.unlockHit, T.unlockHit + 0.25)) : 1; x.save(); x.translate(270, 34); x.scale(0.8 + 0.2 * lp, 0.8 + 0.2 * lp); padlock(x, 0, 0, 0.9, o, o ? '#34d399' : '#5a5e70'); x.restore(); if (o) { x.fillStyle = '#34d399'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'right'; x.fillText('In progress', 220, 44); x.textAlign = 'left' } }
+      x.restore() })
+    return void (dc.t.needsUpdate = true)
+  }
+  x.fillStyle = '#b79cf2'; x.font = '800 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('LEVEL 1', 30, 124); x.fillStyle = '#fff'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Dashboard & deals', 30, 174)
+  const rows = [['Open Home'], ['Manage handles'], ['Browse deals', 'My campaigns'], ['Link chat', 'Payout details']]; let n = 0
+  rows.forEach((chs, i) => { const y = 200 + i * 114; x.fillStyle = '#161619'; rr(x, 26, y, 668, 104, 16); x.fill(); x.fillStyle = '#3d4050'; rr(x, 46, y + 16, 380 - i * 40, 14, 7); x.fill(); rr(x, 46, y + 38, 250 + i * 30, 12, 6); x.fill(); let cx = 46
+    chs.forEach(s => { const k = back(seg(t, T.linksHit - 0.1 + n * 0.1, T.linksHit + 0.1 + n * 0.1)), on = n === 0 && t >= T.pageHit; n++; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText(s + ' →').width + 36; if (k > 0) { x.save(); x.translate(cx + tw / 2, y + 76); x.scale(k * (on ? 1.08 : 1), k * (on ? 1.08 : 1)); x.fillStyle = on ? '#ffe14a' : 'rgba(139,92,246,.2)'; rr(x, -tw / 2, -20, tw, 40, 20); x.fill(); x.strokeStyle = on ? '#ffe14a' : '#8b5cf6'; x.lineWidth = 2; rr(x, -tw / 2, -20, tw, 40, 20); x.stroke(); x.fillStyle = on ? '#16161a' : '#d9ccff'; x.textAlign = 'center'; x.fillText(s + ' →', 0, 10); x.restore() } cx += tw + 14 }) })
+  if (t >= T.pageHit - 0.3) { const k = eo(seg(t, T.pageHit - 0.3, T.pageHit)), cx = lerp(440, 170, k), cy = lerp(430, 286, k); x.fillStyle = '#fff'; x.strokeStyle = '#16161a'; x.lineWidth = 4; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx, cy + 50); x.lineTo(cx + 14, cy + 38); x.lineTo(cx + 34, cy + 36); x.closePath(); x.fill(); x.stroke() }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[3.4, 3.6, 7.8], [1.7, 2.6, -3.0], 46], front: [[2.0, 2.95, 4.6], [2.0, 2.3, -2.4], 34], frontR: [[4.0, 2.9, 2.9], [2.0, 2.3, -2.2], 38], face: [[2.0, 3.25, 1.5], [2.0, 2.62, -2.4], 36],
+  shoulder: [[3.75, 3.75, -3.5], [1.8, 1.9, -1.2], 50], desk: [[1.35, 3.3, 4.6], [1.4, 1.8, -1.6], 40], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = STAND, c = CAM.wide, ck = 0, shake = 0, lidA = 0.22, docMode = -1, glowOn = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; tome2.position.y = -9; webP.position.y = -9
+  const breathe = Math.sin(t * 2.2) * 0.012, ty = Math.sin(t * 26)
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.25))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  // the handbook: it falls out of the sky onto his desk and never leaves
+  { const d = t - (T.bookHit - 0.32); if (d < 0) tome.position.y = 9; else { const fall = Math.min(1, d / 0.32), bounce = d > 0.32 ? Math.abs(Math.sin((d - 0.32) * 13)) * 0.16 * Math.max(0, 1 - (d - 0.32) / 0.5) : 0; tome.position.set(0.85, lerp(7.5, 1.83, fall * fall) + bounce, -1.0); tome.rotation.set(0, 0.2, d > 0.32 ? 0 : (1 - fall) * 0.5) } }
+  const jolt = t >= T.bookHit ? Math.max(0, 1 - (t - T.bookHit) / 0.4) : 0; laptop.position.y = 1.56 + Math.abs(Math.sin((t - T.bookHit) * 16)) * 0.1 * jolt
+
+  if (t < T.part) { q = { ...TYPE, ale: -1.15 + ty * 0.1, are: -1.15 - ty * 0.1 }; c = CAM.wide; ck = seg(t, 0, T.part); glowOn = 0.4 }
+  else if (t < T.sign) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(TYPE, { ...SIT, alz: -2.6, ale: -0.3, hx: -0.05, mw: 1.7, mh: 2.2, eye: 1.2, arx: -0.45, are: -1.15 }, k); c = CAM.frontR; ck = seg(t, T.part, T.sign); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.pack) { const k = back(seg(t, T.signHit - 0.2, T.signHit + 0.1)); q = mixP(TYPE, CHEER, k); c = CAM.front; ck = seg(t, T.sign, T.pack); if (t >= T.signHit) { v.pills.push(['SIGNED UP', 0, back(seg(t, T.signHit, T.signHit + 0.2)), 'good']); shake = (1 - seg(t, T.signHit, T.signHit + 0.3)) * 0.4 } }
+  else if (t < T.book) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.pack, T.book); docMode = 0; showDoc(T.pack) }
+  else if (t < T.web) {                                                         // a ninety page handbook
+    const fl2 = seg(t, T.bookHit, T.bookHit + 0.25); q = t < T.bookHit ? { ...SIT, hx: -0.35, hy: -0.2, eye: 1.4, mw: 0.9, mh: 1.6, brow: -0.3, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 } : mixP({ ...SIT, alz: -1.0, arz: 1.0, ale: -1.6, are: -1.6, hx: -0.1, eye: 1.6, mh: 2.4, mw: 1.3, brow: -0.4, y: DESK.y + 0.2 }, { ...FLAT, hy: -0.3, hx: 0.16 }, eo(fl2 * 0.6 + seg(t, T.bookHit + 0.25, T.bookHit + 0.6) * 0.4)); c = CAM.desk; ck = seg(t, T.book, T.web)
+    if (t >= T.bookHit) { v.pills.push(['90 PAGES', 0, back(seg(t, T.bookHit, T.bookHit + 0.2)), 'bad']); shake = (1 - seg(t, T.bookHit, T.bookHit + 0.5)) * 1.3 }
+  } else if (t < T.quiz) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.web, T.quiz); docMode = 1; showDoc(T.web); if (t >= T.webHit && t < T.tues) v.pills.push(['2 HOURS', 0, back(seg(t, T.webHit, T.webHit + 0.2)), 'bad']); if (t >= T.tuesHit) { shake = (1 - seg(t, T.tuesHit, T.tuesHit + 0.35)) * 0.8 } }
+  else if (t < T.lost) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.quiz, T.lost); docMode = 2; showDoc(T.quiz); if (t >= T.scoreHit) shake = 1 - seg(t, T.scoreHit, T.scoreHit + 0.4) }
+  else if (t < T.found) { q = { ...SIT, hy: Math.sin((t - T.lost) * 6) * 0.45, hx: 0.02, eye: 1.3, brow: -0.3, mw: 0.9, mh: 1.2, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }; c = CAM.face; ck = seg(t, T.lost, T.found); if (t >= T.lostHit) { v.pills.push(['WHERE IS ANYTHING', 0, back(seg(t, T.lostHit, T.lostHit + 0.2)), 'bad']); shake = (1 - seg(t, T.lostHit, T.lostHit + 0.35)) * 0.6 } }
+  else if (t < T.levels) {                                                      // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP(FLAT, { ...SIT, hx: 0.12, eye: 1.45, mw: 0.8, mh: 2, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }, k); c = CAM.face; ck = seg(t, T.found, T.foundG) }
+    else { q = { ...TYPE, eye: 1.3 }; c = CAM.shoulder; ck = seg(t, T.foundG, T.levels); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.links) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.levels, T.links); docMode = 3; showDoc(T.levels); if (t >= T.levelsHit && t < T.five) v.pills.push(['3 LEVELS', 0, back(seg(t, T.levelsHit, T.levelsHit + 0.2)), 'good']); for (const h of [T.levelsHit, T.fiveHit, T.finHit, T.unlockHit]) if (t >= h) shake = Math.max(shake, (1 - seg(t, h, h + 0.26)) * (h === T.unlockHit ? 0.6 : 0.4)) }
+  else if (t < T.no) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.links, T.no); docMode = 4; showDoc(T.links, false); for (const h of [T.linksHit, T.pageHit]) if (t >= h) shake = Math.max(shake, (1 - seg(t, h, h + 0.26)) * 0.4) }
+  else if (t < T.cb) {                                                          // no handbook, no webinar, no bullshit
+    c = CAM.center; ck = seg(t, T.no, T.cb)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.16 : T.n1 + 0.14, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (0.98 + fly * 6), py = 3.75 + fly * 2.4 + Math.sin(t * 5) * 0.06, spin = fly * 9, o = n ? webP : tome2
+      o.position.set(px, py, 2.3); o.rotation.set(n ? 0 : 0.3, spin * 0.6 + (n ? -0.2 : 0.3), spin); o.scale.setScalar(Math.max(0.01, inK * (n ? 0.95 : 0.8))); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['HANDBOOK', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['HANDBOOK', 0, 1, 'bad']); if (t >= h0) v.pills.push(['WEBINAR', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['HANDBOOK', 0, 1, 'bad'], ['WEBINAR', 1, 1, 'bad']) }
+  } else { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.cb, T.end); docMode = 2; showDoc(T.cb); if (t >= T.cbHit) shake = Math.max(shake, (1 - seg(t, T.cbHit, T.cbHit + 0.35)) * 0.7); if (t >= T.purposeHit) { v.pills.push(['ON PURPOSE', 0, back(seg(t, T.purposeHit, T.purposeHit + 0.2)), 'good']); shake = Math.max(shake, (1 - seg(t, T.purposeHit, T.purposeHit + 0.3)) * 0.5) } }
+  applyPose({ ...q, tx: q.tx + breathe })
+  setCam(c[0], c[1], c[2], eo(ck) * 0.6 + ck * 0.4, 0.07, shake)
+  lid.rotation.x = lidA
+  docBody.color.set(docMode >= 3 ? 0x15161a : docMode === 1 ? 0x16171c : 0xffffff)
+  // light and mood: a grey school day, then sun through the windows
+  const warm = new THREE.Color(0xffd9a8)
+  scene.background.set(0xb9c0b6).lerp(new THREE.Color(0xf0dcb4), good); wallMat.color.set(0xdfe3d4).lerp(new THREE.Color(0xf7e8c6), good); wall2.color.set(0xd0d5c5).lerp(new THREE.Color(0xf0dcb4), good); winMat.color.set(0xc9d6de).lerp(new THREE.Color(0xffe9a8), good); dado.color.set(0x6f9a7a).lerp(new THREE.Color(0x8fb37f), good)
+  sun.color.set(0xdfe9e6).lerp(warm, good); sun.intensity = lerp(1.35, 1.95, good); hemi.intensity = lerp(1.25, 1.3, good); hemi.color.set(0xe3ede9).lerp(new THREE.Color(0xffe9cf), good)
+  glow.position.set(2.0, 2.1, -1.55); glow.intensity = glowOn * 2.2
+  lidG.material.opacity = good
+  drawBoard(good > 0.5 ? 1 : 0); drawLaptop(t); if (docMode >= 0) drawDoc(docMode, t)
+}
+
+// ---------- 2D layer: captions, pills, stamps, list, end card
+const SAFE = CONFIG.safe, CX = (SAFE.left + SAFE.right) / 2
+function pill(text, row, k, kind) {
+  if (k <= 0) return
+  const fs = 44; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; const mark = kind === 'good' ? '✓' : kind === 'bad' ? '✕' : '', tw = g.measureText(text).width, w = tw + (mark ? 124 : 76), h = 92, y = SAFE.top + 60 + row * 112
+  g.save(); g.translate(CX, y); g.scale(k, k); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 30; g.shadowOffsetY = 12
+  g.fillStyle = CONFIG.card; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, h / 2); g.fill(); g.shadowColor = 'transparent'
+  let x = -w / 2 + 38
+  if (mark) { g.fillStyle = kind === 'good' ? CONFIG.good : CONFIG.bad; g.beginPath(); g.arc(x + 16, 0, 26, 0, 7); g.fill(); g.fillStyle = '#0b0c10'; g.font = `800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(mark, x + 16, 2); x += 58 }
+  g.fillStyle = CONFIG.bright; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(text, x, 2); g.restore()
+}
+function stamp(text, k, color, rot, yShare) {
+  if (k <= 0) return
+  const s = lerp(2.6, 1, eo(k)); g.save(); g.translate(CX, H * yShare + SAFE.top); g.rotate(rot); g.scale(s, s); g.globalAlpha = clamp(k * 3)
+  g.font = '800 92px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(text).width + 90; g.fillStyle = color; g.beginPath(); g.roundRect(-w / 2, -80, w, 160, 26); g.fill()
+  g.strokeStyle = '#fff'; g.lineWidth = 8; g.beginPath(); g.roundRect(-w / 2 + 14, -66, w - 28, 132, 16); g.stroke()
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, 6); g.restore()
+}
+function coin(xs, ys, k, t, size = 400) {
+  if (k <= 0) return
+  const sx = Math.cos(t * 3.2), h = size * k, w = h * 0.8 * Math.abs(sx)
+  g.save(); g.translate(W * xs, H * ys); g.shadowColor = 'rgba(255,255,255,.55)'; g.shadowBlur = 70; g.drawImage(G_IMG, -w / 2, -h / 2, Math.max(2, w), h); g.restore()
+}
+function captions(t) {
+  let gi = -1; for (let i = 0; i < GROUPS.length; i++) { if (t >= WORDS[GROUPS[i][0]][1] - 0.04) gi = i }
+  if (gi < 0) return
+  const [a, b, br, mul] = GROUPS[gi]; const endT = gi + 1 < GROUPS.length ? WORDS[GROUPS[gi + 1][0]][1] - 0.04 : WORDS[b][2] + 0.5
+  if (t > Math.min(endT, WORDS[b][2] + 0.9)) return
+  const lines = [[]]; for (let i = a; i <= b; i++) { lines[lines.length - 1].push(i); if (i === br) lines.push([]) }
+  let fs = 118 * mul; const maxW = SAFE.right - SAFE.left - 20
+  const widthOf = (ln) => { g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; return g.measureText(ln.map(i => WORDS[i][0].toUpperCase()).join(' ')).width }
+  while (Math.max(...lines.map(widthOf)) > maxW && fs > 40) fs -= 4
+  g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textBaseline = 'middle'; g.textAlign = 'left'; g.lineJoin = 'round'
+  const lh = fs * 1.1, y0 = H * CONFIG.capY - (lines.length - 1) * lh / 2, sp = g.measureText(' ').width
+  lines.forEach((ln, li) => {
+    let x = CX - widthOf(ln) / 2; const y = y0 + li * lh
+    for (const i of ln) {
+      const txt = WORDS[i][0].toUpperCase(), ww = g.measureText(txt).width, said = t >= WORDS[i][1] - 0.04
+      if (said) { const k = back(seg(t, WORDS[i][1] - 0.04, WORDS[i][1] + 0.1)), cur = t < WORDS[i][2] + 0.06 || i === b
+        g.save(); g.translate(x + ww / 2, y); g.scale(0.7 + 0.3 * k, 0.7 + 0.3 * k); g.textAlign = 'center'
+        g.strokeStyle = '#000'; g.lineWidth = fs * 0.2; g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 0; g.shadowOffsetY = fs * 0.07; g.strokeText(txt, 0, 0); g.shadowColor = 'transparent'
+        g.fillStyle = cur ? CONFIG.capHi : CONFIG.capBase; g.fillText(txt, 0, 0); g.restore() }
+      x += ww + sp
+    }
+  })
+}
+function endCard(t) {
+  const k = seg(t, T.end, T.end + 0.35); if (k <= 0) return
+  g.fillStyle = `rgba(6,6,9,${eo(k)})`; g.fillRect(0, 0, W, H)
+  const a = eo(seg(t, T.end + 0.15, T.end + 0.6)), gh = 340, gy = H * 0.3
+  g.save(); g.globalAlpha = a; g.translate(W / 2, gy); const s = lerp(1.25, 1, eo(seg(t, T.end + 0.15, T.end + 0.8))); g.scale(s, s); g.shadowColor = 'rgba(255,255,255,.35)'; g.shadowBlur = 90; g.drawImage(G_IMG, -gh * 0.4, -gh / 2, gh * 0.8, gh); g.restore()
+  const ww = 540, wh = ww * WORD_IMG.height / WORD_IMG.width, wy = gy + gh / 2 + 10; g.save(); g.globalAlpha = eo(seg(t, T.end + 0.35, T.end + 0.8)); g.drawImage(WORD_IMG, W / 2 - ww / 2, wy, ww, wh); g.restore()
+  g.textAlign = 'center'; g.textBaseline = 'middle'; const ly = wy + wh + 90
+  CONFIG.endLines.forEach((s, i) => { const kk = eo(seg(t, T.end + 0.7 + i * 0.32, T.end + 1.05 + i * 0.32)); g.globalAlpha = kk; g.fillStyle = i === CONFIG.endLines.length - 1 ? '#fff' : '#d4d4d8'; g.font = '700 78px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.fillText(s, W / 2, ly + i * 100 + (1 - kk) * 26) })
+  const kk = back(seg(t, T.end + 1.9, T.end + 2.2)); if (kk > 0) { g.globalAlpha = 1; g.save(); g.translate(W / 2, ly + CONFIG.endLines.length * 100 + 70); g.scale(kk, kk); g.font = '700 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(CONFIG.site).width + 110; g.fillStyle = '#fff'; g.beginPath(); g.roundRect(-w / 2, -60, w, 120, 60); g.fill(); g.fillStyle = '#0b0c10'; g.fillText(CONFIG.site, 0, 3); g.restore() }
+  g.globalAlpha = 1
+}
+
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

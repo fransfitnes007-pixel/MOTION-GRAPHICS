@@ -1,0 +1,373 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part twenty five: the mirror is right</title>
+<!-- A 40.6 s reel (1080x1920) in low-poly 3D, twenty-fifth in the series. In a hair salon, hair in rollers, she wants to
+     know if her video is any good. She asks the mirror (you look tired), pulls petals off a daisy (post it, don't, post it),
+     flips a coin (heads) and posts: two hundred views, everyone gone at second two. Then YourBrand: she uploads the draft
+     before she posts and gets a verdict, "No, minor changes first", with the fixes on a timeline: the hook comes too late,
+     dead air at second four. She fixes both: "Yes, good to post". The mirror still says she looks tired; the mirror is
+     right. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Know before you post.'],
+  skin: 0xe8b48a, shirt: 0x8fe3c8, pants: 0x23252d, hair: 0x8a3a24,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0,0.24],["in",0.24,0.36],["the",0.36,0.42],["life",0.42,0.64],["of",0.64,0.88],["a",0.88,0.98],["UGC",0.98,1.4],["creator",1.4,1.95],["Part",2.3,2.56],["twenty",2.56,2.84],["five",2.84,3.2],
+  ["Is",3.74,3.84],["my",3.84,4.0],["video",4.0,4.3],["any",4.3,4.5],["good?",4.5,4.9],["I",5.22,5.4],["ask",5.4,5.58],["the",5.58,5.74],["mirror",5.74,6.15],
+  ["The",6.46,6.56],["mirror",6.56,6.7],["says:",6.7,7.1],["you",7.4,7.64],["look",7.64,7.78],["tired",7.78,8.25],
+  ["I",8.7,8.9],["pull",8.9,9.06],["petals",9.06,9.44],["off",9.44,9.62],["a",9.62,9.74],["daisy",9.74,10.2],
+  ["Post",10.56,10.66],["it",10.66,10.95],["Don't",11.34,11.75],["Post",12.04,12.18],["it",12.18,12.5],
+  ["I",12.86,12.96],["flip",12.96,13.12],["a",13.12,13.24],["coin",13.24,13.6],["Heads",13.92,14.35],
+  ["I",14.58,14.6],["post",14.6,14.8],["it",14.8,15.1],["Two",15.42,15.52],["hundred",15.52,15.88],["views",15.88,16.3],
+  ["Everyone",16.72,16.94],["left",16.94,17.22],["at",17.22,17.42],["second",17.42,17.56],["two",17.56,17.95],
+  ["Then",18.26,18.48],["I",18.48,18.72],["found",18.72,18.92],["YourBrand",18.92,19.4],
+  ["I",19.72,19.86],["upload",19.86,20.12],["the",20.12,20.28],["draft",20.28,20.58],["before",20.58,20.96],["I",20.96,21.18],["post",21.18,21.55],
+  ["It",21.86,21.96],["says:",21.96,22.3],["No,",22.56,22.95],["minor",23.05,23.28],["changes",23.28,23.62],["first",23.62,24.0],
+  ["The",24.4,24.5],["hook",24.5,24.66],["comes",24.66,24.96],["too",24.96,25.22],["late",25.22,25.6],
+  ["Dead",26.02,26.1],["air",26.1,26.32],["at",26.32,26.5],["second",26.5,26.66],["four",26.66,27.05],["I",27.42,27.5],["fix",27.5,27.66],["both",27.66,28.05],
+  ["Yes,",28.38,28.8],["good",28.8,28.9],["to",28.9,29.0],["post",29.0,29.35],
+  ["No",29.64,29.84],["daisies",29.84,30.3],["No",30.56,30.68],["coin",30.68,30.9],["flips",30.9,31.3],["No",31.5,31.64],["bullshit",31.64,32.1],
+  ["The",32.5,32.58],["mirror",32.58,32.74],["still",32.74,33.12],["says",33.12,33.38],["I",33.38,33.56],["look",33.56,33.68],["tired",33.68,34.1],["The",34.54,34.62],["mirror",34.62,34.82],["is",34.82,35.04],["right",35.04,35.45]]
+const GROUPS = [[0,7,3,1],[8,10,-1,1.3],[11,15,-1,1.2],[16,19,-1,1.3],[20,22,-1,1.3],[23,25,-1,1.5],[26,31,28,1.1],[32,33,-1,1.6],[34,34,-1,1.8],[35,36,-1,1.6],[37,40,-1,1.3],[41,41,-1,1.8],[42,44,-1,1.4],[45,47,-1,1.4],[48,52,50,1.2],[53,56,55,1.1],[57,63,60,1.05],[64,65,-1,1.4],[66,69,67,1.2],[70,74,72,1.2],[75,79,77,1.2],[80,82,-1,1.4],[83,86,-1,1.3],[87,88,-1,1.3],[89,91,-1,1.3],[92,93,-1,1.7],[94,100,97,1.1],[101,104,-1,1.3]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.3, ask: 3.74, mirror: 5.22, mirrorHit: 5.74, says: 6.46, tiredHit: 7.78, daisy: 8.7, daisyHit: 9.74, p1: 10.56, dont: 11.34, p2: 12.04, flip: 12.86, coinHit: 13.24, heads: 13.92,
+  post: 14.58, viewsHit: 15.88, left: 16.72, twoHit: 17.56, found: 18.26, foundG: 18.85, upload: 19.72, draftHit: 20.28, postHit: 21.18, says2: 21.86, noHit: 22.56,
+  hook: 24.4, lateHit: 25.22, dead: 26.02, fourHit: 26.66, fix: 27.42, bothHit: 27.66, yesHit: 28.38, no: 29.64, n1: 29.84, n2s: 30.56, n2: 30.68, nob: 31.5, nobHit: 31.64,
+  still: 32.5, tired2: 33.68, right: 34.54, rightHit: 35.04, end: 35.6, dur: 40.6 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- the salon
+const tz = canvasTex(256, 256); { const x = tz.x; x.fillStyle = '#efe6da'; x.fillRect(0, 0, 256, 256); let s = 13; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; for (let i = 0; i < 160; i++) { x.fillStyle = ['#ff8fb3', '#8fd3c8', '#b9aea0', '#ffd23f', '#7a7067'][Math.floor(r() * 5)]; x.beginPath(); x.moveTo(r() * 256, r() * 256); x.lineTo(r() * 256, r() * 256); x.lineTo(r() * 256, r() * 256); x.fill() } x.globalAlpha = 0.85; x.fillStyle = '#efe6da'; x.fillRect(0, 0, 256, 256); x.globalAlpha = 1; for (let i = 0; i < 220; i++) { x.fillStyle = ['#ff8fb3', '#5fbfb0', '#9a8f84', '#e0b030'][Math.floor(r() * 4)]; x.fillRect(r() * 256, r() * 256, 3 + r() * 4, 2 + r() * 3) } tz.t.needsUpdate = true; tz.t.wrapS = tz.t.wrapT = THREE.RepeatWrapping; tz.t.repeat.set(6, 6) }
+const floorMat = M(0xffffff, { map: tz.t }); box(34, 0.2, 34, floorMat, 0, -0.1, -2)
+const wallMat = M(0xf6c7d0), wall2 = M(0xf0b6c3); box(34, 9, 0.3, wallMat, 0, 4.5, -6.5); box(0.3, 9, 34, wall2, -7.4, 4.5, -2); box(34, 0.3, 0.32, 0xffffff, 0, 1.5, -6.32)
+// three styling stations on the back wall: counter, mirror, a frame of bulbs
+const mirMat = basic(0x9fb4bd), bulbMats = []
+for (const X of [-3.6, 2.0, 7.6]) { box(4.0, 0.12, 1.0, 0xffffff, X, 1.6, -5.9); box(4.0, 1.5, 0.9, 0xe9dfe3, X, 0.8, -5.95); for (const dx of [-1.0, 0, 1.0]) cyl(0.04, 0.04, 0.02, 6, 0xc9ced6, X + dx, 1.2, -5.49).rotation.x = PI / 2
+  box(3.0, 3.2, 0.12, 0xffffff, X, 3.8, -6.28); { const m = box(2.7, 2.9, 0.06, mirMat, X, 3.8, -6.2); m.castShadow = false }
+  for (let i = 0; i < 6; i++) for (const s2 of [-1, 1]) { const b = mesh(new THREE.SphereGeometry(0.12, 8, 6), basic(0xfff3c4), X + s2 * 1.5, 2.5 + i * 0.52, -6.16); b.castShadow = false; bulbMats.push(b.material) }
+  for (let i = 0; i < 5; i++) { const b = cyl(0.11, 0.11, 0.42 + (i % 2) * 0.16, 8, [0xff8fb3, 0x8fe3c8, 0xffd23f, 0xb79cf2, 0xffffff][i], X - 1.4 + i * 0.32, 1.88 + (i % 2) * 0.08, -6.1); cyl(0.06, 0.06, 0.1, 6, 0x2a2c33, X - 1.4 + i * 0.32, 2.14 + (i % 2) * 0.16, -6.1) } }
+// two hood dryers and their chairs on the left, a sign, a plant, a towel cart
+for (const Z of [-3.6, -0.6]) { const ch = grp(-5.6, 0, Z); ch.rotation.y = PI / 2; box(1.1, 0.24, 1.0, 0xff8fb3, 0, 0.9, 0, ch); box(1.1, 1.1, 0.2, 0xff8fb3, 0, 1.5, -0.45, ch); cyl(0.08, 0.3, 0.9, 8, 0xc9ced6, 0, 0.45, 0, ch); cyl(0.05, 0.05, 2.6, 6, 0xc9ced6, 0, 1.3, -0.8, ch); const hd = mesh(new THREE.SphereGeometry(0.62, 12, 8, 0, PI * 2, 0, PI / 2), M(0xf4f1ea, { side: THREE.DoubleSide }), 0, 2.6, -0.32, ch); hd.rotation.x = -0.5 }
+const sg = canvasTex(512, 160); { const x = sg.x; x.fillStyle = '#2a1f2d'; x.fillRect(0, 0, 512, 160); x.strokeStyle = '#ff5cae'; x.lineWidth = 8; x.font = 'italic 800 96px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.strokeText('salon', 256, 112); x.fillStyle = '#ffd6ea'; x.fillText('salon', 256, 112); sg.t.needsUpdate = true }
+const signMat = basic(0xffffff, { map: sg.t }); { box(3.4, 1.12, 0.1, 0x2a1f2d, -3.0, 6.8, -6.3); const m = mesh(new THREE.PlaneGeometry(3.2, 1.0), signMat, -3.0, 6.8, -6.24); m.castShadow = false }
+cyl(0.4, 0.3, 0.7, 8, 0xffffff, 6.6, 0.35, -1.0); for (const [dx, dy, s2] of [[0, 1.2, 0.6], [-0.3, 1.7, 0.45], [0.3, 1.9, 0.5]]) mesh(new THREE.IcosahedronGeometry(s2, 0), 0x3f9a5b, 6.6 + dx, dy, -1.0)
+box(1.0, 0.08, 0.7, 0xc9ced6, 5.0, 1.2, -2.6); box(1.0, 0.08, 0.7, 0xc9ced6, 5.0, 0.5, -2.6); for (const [dx, dz] of [[-0.45, -0.3], [0.45, -0.3], [-0.45, 0.3], [0.45, 0.3]]) box(0.05, 1.2, 0.05, 0xc9ced6, 5.0 + dx, 0.6, -2.6 + dz); for (let i = 0; i < 3; i++) for (const y of [0.62, 1.32]) box(0.84, 0.12, 0.56, [0xffffff, 0x8fe3c8, 0xff8fb3][i], 5.0, y + i * 0.12, -2.6)
+// her station: the salon chair, the counter in front of her, a dryer, a comb, a spray bottle
+cyl(0.45, 0.45, 0.06, 12, 0xc9ced6, 2.0, 0.03, -2.4); cyl(0.09, 0.09, 0.8, 8, 0xc9ced6, 2.0, 0.42, -2.4); box(1.1, 0.26, 1.0, 0xc0392b, 2.0, 0.92, -2.45); box(1.1, 1.3, 0.22, 0xc0392b, 2.0, 1.66, -2.98); for (const sx of [-1, 1]) box(0.14, 0.12, 0.9, 0xc0392b, 2.0 + sx * 0.62, 1.32, -2.45)
+box(3.4, 0.12, 1.4, 0xffffff, 2.0, 1.5, -1.2); box(3.2, 1.44, 1.2, 0xe9dfe3, 2.0, 0.72, -1.2)
+{ const hd = grp(3.25, 1.6, -1.55); box(0.24, 0.24, 0.5, 0x2a2c33, 0, 0.14, 0, hd); cyl(0.11, 0.11, 0.12, 8, 0x2a2c33, 0, 0.14, 0.3, hd).rotation.x = PI / 2; box(0.14, 0.4, 0.14, 0x2a2c33, 0, -0.04, -0.12, hd); hd.rotation.y = 0.6 }
+{ const cb = box(0.6, 0.02, 0.1, 0x2a2c33, 0.95, 1.57, -0.85); cb.rotation.y = 0.3; cyl(0.1, 0.1, 0.36, 8, 0x8fd3ff, 0.75, 1.74, -1.45); box(0.12, 0.12, 0.08, 0xffffff, 0.75, 1.98, -1.45) }
+const laptop = grp(2.0, 1.57, -1.3); box(1.15, 0.06, 0.78, 0xc9ced6, 0, 0.03, 0, laptop)
+const lid = grp(0, 0.06, 0.39, laptop); box(1.15, 0.78, 0.05, 0x2b2d33, 0, 0.39, 0, lid)
+const scr = canvasTex(640, 420); const scrMesh = mesh(new THREE.PlaneGeometry(1.05, 0.68), basic(0xffffff, { map: scr.t }), 0, 0.39, -0.03, lid); scrMesh.rotation.y = PI; scrMesh.castShadow = false
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+const lidG = mesh(new THREE.PlaneGeometry(0.36, 0.45), basic(0xffffff, { map: gTex, transparent: true, opacity: 0 }), 0, 0.39, 0.03, lid); lidG.castShadow = false
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), sh = M(CONFIG.shirt), pant = M(CONFIG.pants), hair = M(CONFIG.hair), dark = M(0x15161a)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.14, 1.26, 0.7, sh, 0, 0.6, 0, p.torso); box(0.5, 0.12, 0.05, M(0xffffff), 0, 1.16, 0.34, p.torso); for (const [dx, dy] of [[-0.3, 0.8], [0.26, 0.5], [-0.12, 0.26], [0.34, 0.96]]) box(0.1, 0.1, 0.02, M(0x5fbfb0), dx, dy, 0.36, p.torso); box(0.52, 0.2, 0.56, pant, 0, -0.02, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.8, 0.78, 0.76, skin, 0, 0.44, 0, p.head)
+  box(0.88, 0.22, 0.82, hair, 0, 0.88, 0, p.head); box(0.88, 0.7, 0.2, hair, 0, 0.5, -0.38, p.head); for (const sx of [-1, 1]) box(0.1, 0.5, 0.6, hair, sx * 0.44, 0.6, -0.06, p.head)
+  ;[[-0.26, 1.04, 0.2, 0xff8fb3], [0.04, 1.06, 0.22, 0x8fd3ff], [0.3, 1.03, 0.16, 0xff8fb3], [-0.2, 1.02, -0.18, 0x8fd3ff], [0.12, 1.04, -0.16, 0xffd23f], [-0.36, 0.86, -0.4, 0xffd23f], [0.32, 0.86, -0.42, 0x8fd3ff]].forEach(([x, y, z, c]) => { const r2 = cyl(0.11, 0.11, 0.34, 8, c, x, y, z, p.head); r2.rotation.z = PI / 2 })
+  p.eyeL = box(0.11, 0.16, 0.04, dark, -0.19, 0.44, 0.39, p.head); p.eyeR = box(0.11, 0.16, 0.04, dark, 0.19, 0.44, 0.39, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.19, 0.66, 0.4, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.19, 0.66, 0.4, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x8a2433), 0, 0.2, 0.4, p.head)
+  for (const sx of [-1, 1]) box(0.1, 0.06, 0.02, M(0xf2a6a0), sx * 0.27, 0.3, 0.385, p.head)
+  p.fnote = grp(0, 0, 0, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.66, 1.08, 0, p.torso); box(0.36, 0.56, 0.38, sh, 0, -0.24, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.36, 0.14, 0.38, sh, 0, -0.04, 0, a.el); box(0.25, 0.36, 0.27, skin, 0, -0.26, 0, a.el); a.hand = box(0.24, 0.2, 0.26, skin, 0, -0.52, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.4, 0.6, 0.42, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.36, 0.3, 0.38, pant, 0, -0.14, 0, l.knee); box(0.44, 0.34, 0.64, M(0xff8fb3), 0, -0.46, 0.08, l.knee); box(0.46, 0.12, 0.66, M(0xffffff), 0, -0.3, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const TYPE = { ...SIT, alx: -0.45, ale: -1.15, arx: -0.45, are: -1.15, tx: 0.1, hx: 0.22 }
+const FLAT = { ...SIT, hx: 0.04, eye: 0.5, brow: 0.2, mw: 1.2, mh: 0.8, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+// the daisy (eight petals she pulls off one at a time), a loose petal, a coin
+const daisy = grp(0, -9, 0); cyl(0.025, 0.025, 1.0, 5, 0x3a8a4a, 0, -0.5, 0, daisy); { const lf = mesh(new THREE.IcosahedronGeometry(0.12, 0), 0x3aae68, 0.08, -0.55, 0, daisy); lf.scale.set(1.4, 0.5, 0.5) } mesh(new THREE.SphereGeometry(0.13, 10, 8), 0xffd23f, 0, 0, 0.02, daisy)
+const petals = [...Array(8)].map((_, i) => { const a = i * PI / 4, g2 = grp(0, 0, 0, daisy); g2.rotation.z = a; box(0.11, 0.34, 0.04, 0xffffff, 0, 0.28, 0, g2); return g2 })
+const loose = box(0.11, 0.34, 0.04, 0xffffff, 0, -9, 0)
+const coinP = grp(0, -9, 0); cyl(0.2, 0.2, 0.04, 16, M(0xf2c230, { metalness: 0.3, roughness: 0.5 }), 0, 0, 0, coinP).rotation.x = PI / 2; cyl(0.14, 0.14, 0.045, 16, 0xd9a520, 0, 0, 0, coinP).rotation.x = PI / 2
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function chk(x, cx, cy, r, col) { x.fillStyle = col || '#34d399'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.strokeStyle = '#0b0c10'; x.lineWidth = r * 0.26; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(cx - r * 0.42, cy + r * 0.02); x.lineTo(cx - r * 0.1, cy + r * 0.36); x.lineTo(cx + r * 0.46, cy - r * 0.32); x.stroke() }
+// her face, drawn, as the mirror sees it
+function face(x, cx, cy, s, tired) { const u = s / 100; x.fillStyle = '#8a3a24'; x.fillRect(cx - 58 * u, cy - 66 * u, 116 * u, 40 * u); x.fillRect(cx - 62 * u, cy - 40 * u, 14 * u, 70 * u); x.fillRect(cx + 48 * u, cy - 40 * u, 14 * u, 70 * u)
+  x.fillStyle = '#e8b48a'; x.fillRect(cx - 50 * u, cy - 40 * u, 100 * u, 100 * u); x.fillStyle = '#8a3a24'; x.fillRect(cx - 50 * u, cy - 40 * u, 100 * u, 14 * u)
+  ;[[-40, -86, '#ff8fb3'], [-8, -90, '#8fd3ff'], [24, -86, '#ff8fb3'], [-56, -70, '#ffd23f'], [44, -70, '#8fd3ff']].forEach(([dx, dy, c]) => { x.fillStyle = c; rr(x, cx + dx * u, cy + dy * u, 34 * u, 22 * u, 10 * u); x.fill() })
+  x.fillStyle = '#15161a'; const eh = tired ? 8 : 20; x.fillRect(cx - 32 * u, cy + (8 + (20 - eh) / 2) * u, 14 * u, eh * u); x.fillRect(cx + 18 * u, cy + (8 + (20 - eh) / 2) * u, 14 * u, eh * u)
+  if (tired) { x.fillStyle = 'rgba(120,70,140,.55)'; x.fillRect(cx - 36 * u, cy + 26 * u, 22 * u, 7 * u); x.fillRect(cx + 14 * u, cy + 26 * u, 22 * u, 7 * u); x.fillStyle = '#8a3a24'; x.save(); x.translate(cx - 25 * u, cy + 2 * u); x.rotate(-0.25); x.fillRect(-13 * u, -3 * u, 26 * u, 6 * u); x.restore(); x.save(); x.translate(cx + 25 * u, cy + 2 * u); x.rotate(0.25); x.fillRect(-13 * u, -3 * u, 26 * u, 6 * u); x.restore() }
+  x.fillStyle = '#8a2433'; x.fillRect(cx - 12 * u, cy + 44 * u, 24 * u, 5 * u); x.fillStyle = '#f2a6a0'; x.fillRect(cx - 40 * u, cy + 34 * u, 12 * u, 6 * u); x.fillRect(cx + 28 * u, cy + 34 * u, 12 * u, 6 * u) }
+function drawLaptop(t) {
+  const x = scr.x, w = 640, h = 420
+  if (t < T.found) { x.fillStyle = '#16161a'; x.fillRect(0, 0, w, h); x.fillStyle = '#ff8fb3'; x.fillRect(220, 30, 200, 300); x.fillStyle = 'rgba(255,255,255,.9)'; x.beginPath(); x.moveTo(296, 140); x.lineTo(356, 180); x.lineTo(296, 220); x.fill(); x.fillStyle = '#fff'; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('my_video.mp4', w / 2, 380); x.textAlign = 'left' }
+  else { x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.textAlign = 'center'; const k = back(seg(t, T.foundG - 0.1, T.foundG + 0.35)); x.save(); x.translate(w / 2, 170); x.scale(k, k); x.drawImage(G_IMG, -84, -105, 168, 210); x.restore(); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand', w / 2, 350) }
+  scr.t.needsUpdate = true
+}
+// 0 the mirror · 1 her post, two seconds in · 2 submit the draft · 3 the review · 4 the mirror again
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  if (mode === 0 || mode === 4) {
+    x.fillStyle = '#f6c7d0'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffffff'; rr(x, 70, 40, 580, 620, 40); x.fill(); const gm = x.createLinearGradient(100, 70, 620, 630); gm.addColorStop(0, '#d9e6ea'); gm.addColorStop(1, '#a9bcc4'); x.fillStyle = gm; rr(x, 100, 70, 520, 560, 28); x.fill()
+    x.fillStyle = 'rgba(255,255,255,.35)'; x.beginPath(); x.moveTo(140, 600); x.lineTo(240, 100); x.lineTo(290, 100); x.lineTo(190, 600); x.fill()
+    for (let i = 0; i < 6; i++) for (const sx of [70, 650]) { x.fillStyle = '#fff3c4'; x.beginPath(); x.arc(sx, 90 + i * 108, 20, 0, 7); x.fill(); x.strokeStyle = '#e6c98a'; x.lineWidth = 3; x.stroke() }
+    const tired = mode === 4 || t >= T.tiredHit - 0.05; face(x, 360, 300, 230, tired)
+    if (mode === 0) { const k = back(seg(t, T.says - 0.05, T.says + 0.18)); if (k > 0) { x.save(); x.translate(360, 560); x.scale(k, k); x.fillStyle = '#16161a'; rr(x, -230, -50, 460, 100, 50); x.fill(); x.fillStyle = '#fff'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(t >= T.tiredHit ? 'you look tired.' : 'you look…', 0, 16); x.restore(); x.textAlign = 'left' } }
+    else { const k = back(seg(t, T.tired2 - 0.4, T.tired2 - 0.2)); if (k > 0) { x.save(); x.translate(360, 560); x.scale(k, k); x.fillStyle = '#16161a'; rr(x, -250, -50, 500, 100, 50); x.fill(); x.fillStyle = '#fff'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('still tired.', 0, 16); x.restore(); x.textAlign = 'left' } }
+    return void (dc.t.needsUpdate = true)
+  }
+  if (mode === 1) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Your post', 40, 78); x.fillStyle = '#e4e6ec'; x.fillRect(40, 104, 640, 3)
+    const vk = back(seg(t, T.viewsHit - 0.08, T.viewsHit + 0.16)); x.fillStyle = '#9aa0ad'; x.font = '700 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Views', 40, 170); if (vk > 0) { x.save(); x.translate(40, 262); x.scale(vk, vk); x.fillStyle = '#16161a'; x.font = '800 96px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('200', 0, 0); x.restore() }
+    x.fillStyle = '#9aa0ad'; x.font = '700 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Still watching', 40, 340); x.fillStyle = '#f4f5f8'; rr(x, 40, 360, 640, 280, 18); x.fill()
+    const X0 = 70, X1 = 650, Y0 = 400, Y1 = 600, L = 15, at = s => X0 + (X1 - X0) * s / L, dr = seg(t, T.left - 0.3, T.twoHit + 0.4)
+    x.strokeStyle = '#e4e6ec'; x.lineWidth = 2; for (let s = 0; s <= L; s += 5) { x.beginPath(); x.moveTo(at(s), Y0 - 10); x.lineTo(at(s), Y1 + 6); x.stroke(); x.fillStyle = '#9aa0ad'; x.font = '700 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('0:' + String(s).padStart(2, '0'), at(s) - 18, Y1 + 32) }
+    x.strokeStyle = '#ff4d4f'; x.lineWidth = 7; x.lineJoin = 'round'; x.beginPath(); for (let s = 0; s <= L * Math.max(dr, 0.14); s += 0.1) { const v = s < 2 ? 1 - s * 0.06 : Math.max(0.04, 0.88 * Math.exp(-(s - 2) * 3.2)); const px = at(s), py = Y1 - (Y1 - Y0) * v; s ? x.lineTo(px, py) : x.moveTo(px, py) } x.stroke()
+    if (t >= T.twoHit) { const k = back(seg(t, T.twoHit, T.twoHit + 0.2)); x.save(); x.translate(at(2), 420); x.scale(k, k); x.fillStyle = '#ff4d4f'; rr(x, 14, -26, 230, 52, 26); x.fill(); x.fillStyle = '#fff'; x.font = '800 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('everyone left', 34, 9); x.restore(); x.setLineDash([8, 6]); x.strokeStyle = '#ff4d4f'; x.lineWidth = 3; x.beginPath(); x.moveTo(at(2), Y0 - 6); x.lineTo(at(2), Y1); x.stroke(); x.setLineDash([]) }
+    return void (dc.t.needsUpdate = true)
+  }
+  x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 20, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Content', 88, 60)
+  if (mode === 2) {
+    x.fillStyle = '#a1a1aa'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Instant feedback before you post', 30, 116)
+    x.fillStyle = '#161619'; rr(x, 24, 140, 672, 500, 22); x.fill(); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Submit a draft for review', 54, 198)
+    const landed = t >= T.draftHit, lk = landed ? 1 + 0.06 * (1 - seg(t, T.draftHit, T.draftHit + 0.3)) : 1, dk = seg(t, T.upload + 0.1, T.draftHit)
+    x.save(); x.translate(360, 330); x.scale(lk, lk); x.setLineDash(landed ? [] : [16, 12]); x.strokeStyle = landed ? '#8b5cf6' : '#4a4d5e'; x.lineWidth = 4; x.fillStyle = landed ? 'rgba(139,92,246,.14)' : '#101116'; rr(x, -306, -96, 612, 192, 20); x.fill(); rr(x, -306, -96, 612, 192, 20); x.stroke(); x.setLineDash([]); if (!landed) { x.fillStyle = '#d4d4d8'; x.font = '800 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Drop the video file', 0, 50); x.textAlign = 'left' } x.restore()
+    if (dk > 0) { x.save(); x.translate(360, landed ? 330 : lerp(-60, 290, dk * dk)); x.scale(lk, lk); x.fillStyle = '#23252d'; rr(x, -260, -56, 520, 112, 18); x.fill(); x.fillStyle = '#ff8fb3'; rr(x, -236, -36, 72, 72, 14); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.moveTo(-210, -16); x.lineTo(-184, 0); x.lineTo(-210, 16); x.fill(); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('my_video_v2.mp4', -146, 0); x.fillStyle = '#a1a1aa'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('draft · not posted', -146, 34); x.restore() }
+    const on = t >= T.postHit, pr = on ? 1 - 0.06 * (1 - seg(t, T.postHit, T.postHit + 0.2)) : 1; x.save(); x.translate(360, 506); x.scale(pr, pr); x.fillStyle = on ? '#8b5cf6' : '#fff'; rr(x, -306, -44, 612, 88, 44); x.fill(); x.fillStyle = on ? '#fff' : '#0b0c10'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Upload and review', 0, 13); x.restore(); x.textAlign = 'left'
+    x.fillStyle = '#2a2c35'; rr(x, 54, 584, 612, 14, 7); x.fill(); if (on) { x.fillStyle = '#34d399'; rr(x, 54, 584, Math.max(14, 612 * eo(seg(t, T.postHit, T.says2 - 0.1))), 14, 7); x.fill() }
+    return void (dc.t.needsUpdate = true)
+  }
+  const fixed = t >= T.bothHit, yes = t >= T.yesHit, vk = back(seg(t, T.noHit - 0.08, T.noHit + 0.14)), fk = yes ? 1 + 0.1 * (1 - seg(t, T.yesHit, T.yesHit + 0.3)) : 1
+  if (vk > 0) { x.save(); x.translate(360, 160); x.scale(vk * fk, vk * fk); x.fillStyle = yes ? 'rgba(52,211,153,.16)' : 'rgba(255,179,71,.16)'; rr(x, -336, -60, 672, 120, 20); x.fill(); x.strokeStyle = yes ? '#34d399' : '#ffb347'; x.lineWidth = 4; rr(x, -336, -60, 672, 120, 20); x.stroke(); if (yes) chk(x, -282, 0, 30); else { x.fillStyle = '#ffb347'; x.beginPath(); x.arc(-282, 0, 30, 0, 7); x.fill(); x.fillStyle = '#0b0c10'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('!', -282, 14); x.textAlign = 'left' } x.fillStyle = '#fff'; x.font = '800 42px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(yes ? 'Yes, good to post' : 'No, minor changes first', -232, 15); x.restore() }
+  const hk = back(seg(t, T.lateHit - 0.1, T.lateHit + 0.12)); if (hk > 0) { x.save(); x.translate(360, 330); x.scale(hk, hk); x.fillStyle = '#161619'; rr(x, -336, -84, 672, 168, 20); x.fill(); x.fillStyle = '#a1a1aa'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('THE HOOK, FIRST 3 SECONDS', -306, -40); x.fillStyle = '#ff8fb3'; rr(x, -306, -20, 84, 84, 12); x.fill(); x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(fixed ? 'Hook in the first second.' : 'The hook comes at 0:03.', -204, 18); x.fillStyle = fixed ? '#34d399' : '#ffb347'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(fixed ? 'Fixed in v2.' : 'Move it to the first second.', -204, 56); x.restore() }
+  const tk = eo(seg(t, T.hook - 0.1, T.hook + 0.2)); if (tk > 0) { x.globalAlpha = tk; x.fillStyle = '#161619'; rr(x, 24, 436, 672, 210, 20); x.fill(); x.fillStyle = '#a1a1aa'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('TIMELINE', 54, 478); x.textAlign = 'right'; x.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Click a marker to jump there', 666, 478); x.textAlign = 'left'
+    const X0 = 54, X1 = 666, L = 15, at = s => X0 + (X1 - X0) * s / L; x.fillStyle = '#2a2c35'; rr(x, X0, 510, X1 - X0, 36, 10); x.fill(); x.fillStyle = '#6b7080'; x.font = '700 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; for (let s = 0; s <= L; s += 5) x.fillText('0:' + String(s).padStart(2, '0'), at(s) - 16, 574)
+    if (t >= T.lateHit && !fixed) { const k = back(seg(t, T.lateHit, T.lateHit + 0.2)); x.save(); x.translate(at(3), 528); x.scale(k, k); x.fillStyle = '#ffb347'; x.beginPath(); x.moveTo(0, -30); x.lineTo(14, -12); x.lineTo(-14, -12); x.fill(); x.fillRect(-3, -14, 6, 32); x.restore(); x.fillStyle = 'rgba(255,179,71,.35)'; x.fillRect(at(0), 510, at(3) - at(0), 36) }
+    if (t >= T.fourHit && !fixed) { const k = eo(seg(t, T.fourHit, T.fourHit + 0.25)); x.fillStyle = 'rgba(239,68,68,.75)'; x.fillRect(at(4), 510, (at(5.4) - at(4)) * k, 36); x.fillStyle = '#ff4d4f'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Dead air', at(4) - 4, 616) }
+    if (fixed) { const k = back(seg(t, T.bothHit, T.bothHit + 0.2)); for (const s of [0.4, 4.6]) { x.save(); x.translate(at(s), 528); x.scale(k, k); chk(x, 0, 0, 16); x.restore() } x.fillStyle = '#34d399'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('2 fixes done', 54, 616) }
+    x.globalAlpha = 1 }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[3.4, 3.6, 7.8], [1.5, 2.6, -3.0], 46], front: [[2.0, 2.95, 4.6], [2.0, 2.3, -2.4], 34], frontR: [[4.0, 2.9, 2.9], [2.0, 2.3, -2.2], 38], face: [[2.0, 3.25, 1.5], [2.0, 2.62, -2.4], 36],
+  shoulder: [[3.75, 3.75, -3.5], [1.8, 1.9, -1.2], 50], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+  daisy: [[2.0, 3.15, 2.6], [2.0, 2.75, -2.4], 38],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = STAND, c = CAM.wide, ck = 0, shake = 0, lidA = 0.22, docMode = -1, glowOn = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; daisy.position.y = -9; daisy.scale.setScalar(1); daisy.rotation.set(0, 0, 0); loose.position.y = -9; coinP.position.y = -9; coinP.scale.setScalar(1)
+  const breathe = Math.sin(t * 2.2) * 0.012, ty = Math.sin(t * 26)
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const pulls = [T.p1, T.dont, T.p2], gone = pulls.filter(h0 => t >= h0 - 0.12).length
+  petals.forEach((pt, i) => { pt.visible = i >= gone })
+
+  if (t < T.part) { q = { ...TYPE, ale: -1.15 + ty * 0.1, are: -1.15 - ty * 0.1 }; c = CAM.wide; ck = seg(t, 0, T.part); glowOn = 0.4 }
+  else if (t < T.ask) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(TYPE, { ...SIT, alz: -2.6, ale: -0.3, hx: -0.05, mw: 1.7, mh: 2.2, eye: 1.2, arx: -0.45, are: -1.15 }, k); c = CAM.frontR; ck = seg(t, T.part, T.ask); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.mirror) {                                                      // is my video any good?
+    const k = back(seg(t, T.ask, T.ask + 0.25)); q = mixP(TYPE, { ...SIT, alx: -1.5, ale: -2.2, alz: 0.35, arx: -0.3, are: -0.9, hy: 0.2, hx: -0.05, hz: 0.12, eye: 1.0, brow: 0.22, mw: 0.9, mh: 0.8 }, k); c = CAM.face; ck = seg(t, T.ask, T.mirror)
+  } else if (t < T.daisy) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.mirror, T.daisy); docMode = 0; showDoc(T.mirror); for (const [h0, a] of [[T.mirrorHit, 0.3], [T.tiredHit, 0.8]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * a); if (t >= T.tiredHit + 0.1) v.pills.push(['MIRROR SAYS: TIRED', 0, back(seg(t, T.tiredHit + 0.1, T.tiredHit + 0.3)), 'bad']) }
+  else if (t < T.flip) {                                                        // the daisy: post it, don't, post it
+    const up = back(seg(t, T.daisy, T.daisy + 0.25)); let pk = 0; for (const h0 of pulls) pk = Math.max(pk, Math.sin(seg(t, h0 - 0.2, h0 + 0.05) * PI))
+    q = mixP(TYPE, { ...SIT, arx: -1.95, are: -0.75, arz: 0.15, alx: -1.6 - pk * 0.25, ale: -1.05 + pk * 0.2, alz: -0.15 - pk * 0.1, hx: 0.06, eye: 1.15, brow: -0.1, mw: 0.8, mh: 0.9 }, up); c = CAM.daisy; ck = seg(t, T.daisy, T.flip)
+    daisy.position.set(2.62, lerp(1.6, 3.12, up), -1.5); daisy.rotation.set(0, 0, Math.sin(t * 2) * 0.06)
+    pulls.forEach((h0, i) => { const f = seg(t, h0 - 0.1, h0 + 0.9); if (f > 0 && f < 1) { loose.position.set(2.62 + Math.sin(f * 7 + i) * 0.4 - f * 0.3, 3.3 - f * 1.9, -1.4); loose.rotation.set(f * 9, f * 6 + i, f * 4) } })
+    const words = [['POST IT', 'good'], ["DON'T", 'bad'], ['POST IT', 'good']]; const cur = pulls.filter(h0 => t >= h0).length - 1; if (cur >= 0) { v.pills.push([words[cur][0], 0, back(seg(t, pulls[cur], pulls[cur] + 0.2)), words[cur][1]]); shake = (1 - seg(t, pulls[cur], pulls[cur] + 0.25)) * 0.35 }
+    if (t >= T.daisyHit && cur < 0) v.pills.push(['PETALS: 8', 0, back(seg(t, T.daisyHit, T.daisyHit + 0.2)), 'bad'])
+  } else if (t < T.post) {                                                      // I flip a coin. Heads.
+    const fl = seg(t, T.coinHit - 0.08, T.heads - 0.05), flick = Math.sin(seg(t, T.coinHit - 0.25, T.coinHit) * PI)
+    q = { ...SIT, arx: -1.35 - flick * 0.4, are: -1.0 + flick * 0.3, arz: 0.15, alx: -0.3, ale: -0.9, hx: -0.28 + fl * 0.1, eye: 1.25, mw: 1.1, mh: 1.3, brow: -0.1 }; c = CAM.front; ck = seg(t, T.flip, T.post)
+    const hand = [2.62, 2.56, -1.58]; coinP.position.set(hand[0], hand[1] + Math.sin(fl * PI) * 2.0, hand[2]); coinP.rotation.set(fl * 26, 0.4, 0); coinP.scale.setScalar(1.4)
+    if (t >= T.heads) { coinP.rotation.set(0, 0.4, 0); v.pills.push(['HEADS', 0, back(seg(t, T.heads, T.heads + 0.2)), 'good']); shake = (1 - seg(t, T.heads, T.heads + 0.25)) * 0.4 }
+  } else if (t < T.found) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.post, T.found); docMode = 1; showDoc(T.post); for (const [h0, a] of [[T.viewsHit, 0.4], [T.twoHit, 0.9]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.35)) * a); if (t >= T.twoHit + 0.15) v.pills.push(['GONE AT 0:02', 0, back(seg(t, T.twoHit + 0.15, T.twoHit + 0.35)), 'bad']) }
+  else if (t < T.upload) {                                                      // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP(FLAT, { ...SIT, hx: 0.12, eye: 1.45, mw: 0.8, mh: 2, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }, k); c = CAM.face; ck = seg(t, T.found, T.foundG) }
+    else { q = { ...TYPE, eye: 1.3 }; c = CAM.shoulder; ck = seg(t, T.foundG, T.upload); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.says2) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.upload, T.says2); docMode = 2; showDoc(T.upload); for (const [h0, a] of [[T.draftHit, 0.6], [T.postHit, 0.4]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.28)) * a); if (t >= T.postHit + 0.1) v.pills.push(['NOT POSTED YET', 0, back(seg(t, T.postHit + 0.1, T.postHit + 0.3)), 'good']) }
+  else if (t < T.no) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.says2, T.no); docMode = 3; showDoc(T.says2); for (const [h0, a] of [[T.noHit, 0.6], [T.lateHit, 0.5], [T.fourHit, 0.5], [T.bothHit, 0.5], [T.yesHit, 0.8]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * a); if (t >= T.yesHit + 0.1) v.pills.push(['KNOWN BEFORE POSTING', 0, back(seg(t, T.yesHit + 0.1, T.yesHit + 0.3)), 'good']) }
+  else if (t < T.still) {                                                       // no daisies, no coin flips, no bullshit
+    c = CAM.center; ck = seg(t, T.no, T.still)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.1 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.02 + fly * 6), py = 3.75 + fly * 2.4 + Math.sin(t * 5) * 0.06, spin = fly * 9, o = n ? coinP : daisy
+      o.position.set(px, py, 2.3); o.rotation.set(n ? 0 : 0, spin * 0.6 + (n ? -0.2 : 0.2), spin + (n ? 0 : 0.1)); o.scale.setScalar(Math.max(0.01, inK * (n ? 3.2 : 1.7))); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['DAISIES', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['DAISIES', 0, 1, 'bad']); if (t >= h0) v.pills.push(['COIN FLIPS', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['DAISIES', 0, 1, 'bad'], ['COIN FLIPS', 1, 1, 'bad']) }
+    petals.forEach(pt => { pt.visible = true })
+  } else { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.still, T.end); docMode = 4; showDoc(T.still); if (t >= T.tired2 - 0.3) shake = (1 - seg(t, T.tired2 - 0.3, T.tired2)) * 0.4; if (t >= T.rightHit) { v.pills.push(['THE MIRROR IS RIGHT', 0, back(seg(t, T.rightHit, T.rightHit + 0.2)), 'bad']); shake = Math.max(shake, (1 - seg(t, T.rightHit, T.rightHit + 0.35)) * 0.7) } }
+  applyPose({ ...q, tx: q.tx + breathe })
+  setCam(c[0], c[1], c[2], eo(ck) * 0.6 + ck * 0.4, 0.07, shake)
+  lid.rotation.x = lidA
+  docBody.color.set(docMode === 2 || docMode === 3 ? 0x15161a : docMode === 0 || docMode === 4 ? 0xf6c7d0 : 0xffffff)
+  // light and mood: flat fluorescent before, warm bulbs after
+  scene.background.set(0xc3c9c6).lerp(new THREE.Color(0xffe0e6), good); wallMat.color.set(0xd6cfd0).lerp(new THREE.Color(0xffe6ec), good); wall2.color.set(0xc9c1c3).lerp(new THREE.Color(0xffdbe4), good); floorMat.color.set(0xd2d4d4).lerp(new THREE.Color(0xffffff), good)
+  mirMat.color.set(0x8d9da3).lerp(new THREE.Color(0xc9e2ea), good); bulbMats.forEach(m => m.color.set(0x9a9a92).lerp(new THREE.Color(0xfff3c4), good)); signMat.color.set(0x7a7a7a).lerp(new THREE.Color(0xffffff), good)
+  sun.color.set(0xe3ece8).lerp(new THREE.Color(0xffe2d0), good); sun.intensity = lerp(1.3, 2.05, good); hemi.intensity = lerp(1.25, 1.5, good); hemi.color.set(0xe6eeea).lerp(new THREE.Color(0xffeef0), good)
+  glow.position.set(2.0, 2.1, -1.55); glow.intensity = glowOn * 2.2
+  lidG.material.opacity = good
+  drawLaptop(t); if (docMode >= 0) drawDoc(docMode, t)
+}
+
+
+// ---------- 2D layer: captions, pills, stamps, list, end card
+const SAFE = CONFIG.safe, CX = (SAFE.left + SAFE.right) / 2
+function pill(text, row, k, kind) {
+  if (k <= 0) return
+  const fs = 44; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; const mark = kind === 'good' ? '✓' : kind === 'bad' ? '✕' : '', tw = g.measureText(text).width, w = tw + (mark ? 124 : 76), h = 92, y = SAFE.top + 60 + row * 112
+  g.save(); g.translate(CX, y); g.scale(k, k); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 30; g.shadowOffsetY = 12
+  g.fillStyle = CONFIG.card; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, h / 2); g.fill(); g.shadowColor = 'transparent'
+  let x = -w / 2 + 38
+  if (mark) { g.fillStyle = kind === 'good' ? CONFIG.good : CONFIG.bad; g.beginPath(); g.arc(x + 16, 0, 26, 0, 7); g.fill(); g.fillStyle = '#0b0c10'; g.font = `800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(mark, x + 16, 2); x += 58 }
+  g.fillStyle = CONFIG.bright; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(text, x, 2); g.restore()
+}
+function stamp(text, k, color, rot, yShare) {
+  if (k <= 0) return
+  const s = lerp(2.6, 1, eo(k)); g.save(); g.translate(CX, H * yShare + SAFE.top); g.rotate(rot); g.scale(s, s); g.globalAlpha = clamp(k * 3)
+  g.font = '800 92px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(text).width + 90; g.fillStyle = color; g.beginPath(); g.roundRect(-w / 2, -80, w, 160, 26); g.fill()
+  g.strokeStyle = '#fff'; g.lineWidth = 8; g.beginPath(); g.roundRect(-w / 2 + 14, -66, w - 28, 132, 16); g.stroke()
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, 6); g.restore()
+}
+function coin(xs, ys, k, t, size = 400) {
+  if (k <= 0) return
+  const sx = Math.cos(t * 3.2), h = size * k, w = h * 0.8 * Math.abs(sx)
+  g.save(); g.translate(W * xs, H * ys); g.shadowColor = 'rgba(255,255,255,.55)'; g.shadowBlur = 70; g.drawImage(G_IMG, -w / 2, -h / 2, Math.max(2, w), h); g.restore()
+}
+function captions(t) {
+  let gi = -1; for (let i = 0; i < GROUPS.length; i++) { if (t >= WORDS[GROUPS[i][0]][1] - 0.04) gi = i }
+  if (gi < 0) return
+  const [a, b, br, mul] = GROUPS[gi]; const endT = gi + 1 < GROUPS.length ? WORDS[GROUPS[gi + 1][0]][1] - 0.04 : WORDS[b][2] + 0.5
+  if (t > Math.min(endT, WORDS[b][2] + 0.9)) return
+  const lines = [[]]; for (let i = a; i <= b; i++) { lines[lines.length - 1].push(i); if (i === br) lines.push([]) }
+  let fs = 118 * mul; const maxW = SAFE.right - SAFE.left - 20
+  const widthOf = (ln) => { g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; return g.measureText(ln.map(i => WORDS[i][0].toUpperCase()).join(' ')).width }
+  while (Math.max(...lines.map(widthOf)) > maxW && fs > 40) fs -= 4
+  g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textBaseline = 'middle'; g.textAlign = 'left'; g.lineJoin = 'round'
+  const lh = fs * 1.1, y0 = H * CONFIG.capY - (lines.length - 1) * lh / 2, sp = g.measureText(' ').width
+  lines.forEach((ln, li) => {
+    let x = CX - widthOf(ln) / 2; const y = y0 + li * lh
+    for (const i of ln) {
+      const txt = WORDS[i][0].toUpperCase(), ww = g.measureText(txt).width, said = t >= WORDS[i][1] - 0.04
+      if (said) { const k = back(seg(t, WORDS[i][1] - 0.04, WORDS[i][1] + 0.1)), cur = t < WORDS[i][2] + 0.06 || i === b
+        g.save(); g.translate(x + ww / 2, y); g.scale(0.7 + 0.3 * k, 0.7 + 0.3 * k); g.textAlign = 'center'
+        g.strokeStyle = '#000'; g.lineWidth = fs * 0.2; g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 0; g.shadowOffsetY = fs * 0.07; g.strokeText(txt, 0, 0); g.shadowColor = 'transparent'
+        g.fillStyle = cur ? CONFIG.capHi : CONFIG.capBase; g.fillText(txt, 0, 0); g.restore() }
+      x += ww + sp
+    }
+  })
+}
+function endCard(t) {
+  const k = seg(t, T.end, T.end + 0.35); if (k <= 0) return
+  g.fillStyle = `rgba(6,6,9,${eo(k)})`; g.fillRect(0, 0, W, H)
+  const a = eo(seg(t, T.end + 0.15, T.end + 0.6)), gh = 340, gy = H * 0.3
+  g.save(); g.globalAlpha = a; g.translate(W / 2, gy); const s = lerp(1.25, 1, eo(seg(t, T.end + 0.15, T.end + 0.8))); g.scale(s, s); g.shadowColor = 'rgba(255,255,255,.35)'; g.shadowBlur = 90; g.drawImage(G_IMG, -gh * 0.4, -gh / 2, gh * 0.8, gh); g.restore()
+  const ww = 540, wh = ww * WORD_IMG.height / WORD_IMG.width, wy = gy + gh / 2 + 10; g.save(); g.globalAlpha = eo(seg(t, T.end + 0.35, T.end + 0.8)); g.drawImage(WORD_IMG, W / 2 - ww / 2, wy, ww, wh); g.restore()
+  g.textAlign = 'center'; g.textBaseline = 'middle'; const ly = wy + wh + 90
+  CONFIG.endLines.forEach((s, i) => { const kk = eo(seg(t, T.end + 0.7 + i * 0.32, T.end + 1.05 + i * 0.32)); g.globalAlpha = kk; g.fillStyle = i === CONFIG.endLines.length - 1 ? '#fff' : '#d4d4d8'; g.font = '700 78px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.fillText(s, W / 2, ly + i * 100 + (1 - kk) * 26) })
+  const kk = back(seg(t, T.end + 1.9, T.end + 2.2)); if (kk > 0) { g.globalAlpha = 1; g.save(); g.translate(W / 2, ly + CONFIG.endLines.length * 100 + 70); g.scale(kk, kk); g.font = '700 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(CONFIG.site).width + 110; g.fillStyle = '#fff'; g.beginPath(); g.roundRect(-w / 2, -60, w, 120, 60); g.fill(); g.fillStyle = '#0b0c10'; g.fillText(CONFIG.site, 0, 3); g.restore() }
+  g.globalAlpha = 1
+}
+
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

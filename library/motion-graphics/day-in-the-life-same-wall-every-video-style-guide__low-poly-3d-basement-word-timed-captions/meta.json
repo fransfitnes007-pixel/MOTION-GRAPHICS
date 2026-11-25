@@ -1,0 +1,59 @@
+{
+  "slug": "day-in-the-life-same-wall-every-video-style-guide__low-poly-3d-basement-word-timed-captions",
+  "visual_name": "Day in the life, part forty two: the wall (low-poly 3D)",
+  "code_name": "three.js basement (cut away at the front: concrete floor, grey block walls, one beige painted wall he films in front of, ceiling beams and pipes, a beam that sags, falling dust, a boiler, shelves of boxes, stairs, a bare bulb, an old green couch, a tripod), googly eyes and a talking mouth that appear on the wall, an I WANT ROYALTIES sticky note, box-built creator with a blond buzz cut, freckles, an orange hoodie, grey sweatpants and slides with socks, a blue cap for his second character, phone sheets for his grid of forty one identical videos / the brand's 'try something new' / the YourBrand Content Style Guide (ten styles, When to use it) / his grid now, every style, the wall in each, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.3 second 9:16 reel in low-poly 3D: in a basement, every video he makes is the same: him, talking, at the same beige wall, forty one videos, one wall. The brand asks for something new, so he tries to move the wall; it is load-bearing, and he ends up holding the ceiling up. Then YourBrand: the Content Style Guide, ten styles and when to use each one (POV, unboxing, tutorials, skits); he does a skit, plays both characters, and one of them is the wall. The wall is in every video now. It wants royalties.",
+  "aliases": [
+    "creative rut",
+    "same format",
+    "same background",
+    "talking head",
+    "try something new",
+    "content style guide",
+    "ten styles",
+    "when to use it",
+    "skit",
+    "POV",
+    "unboxing",
+    "tutorial",
+    "load-bearing",
+    "googly eyes",
+    "basement",
+    "day in the life 42",
+    "part forty two",
+    "pt 42",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "styles",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.3,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 42,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-imaginary-rival-campaign-leaderboard__low-poly-3d-ice-rink-word-timed-captions"
+  ]
+}

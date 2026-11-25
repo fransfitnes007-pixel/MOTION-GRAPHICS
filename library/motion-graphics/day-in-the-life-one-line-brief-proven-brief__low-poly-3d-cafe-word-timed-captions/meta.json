@@ -1,0 +1,52 @@
+{
+  "slug": "day-in-the-life-one-line-brief-proven-brief__low-poly-3d-cafe-word-timed-captions",
+  "visual_name": "Day in the life, part four: the one-line brief (low-poly 3D)",
+  "code_name": "three.js cafe and box-built character, a floating canvas page that fills and scrolls block by block, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.7 second 9:16 reel in low-poly 3D: a one-line brief ('make it viral'), no script, hook, examples or onboarding, two hours at a wall, 'just be authentic', 40 views; then YourBrand's brief with the hook, script, shot list, demo video and videos that already worked.",
+  "aliases": [
+    "one line brief",
+    "make it viral",
+    "no script",
+    "content ideas",
+    "just be authentic",
+    "the brief",
+    "proven",
+    "day in the life 4",
+    "part four",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "brief",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.7,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 4,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-ugc-creator__low-poly-3d-rooms-word-timed-captions",
+    "motion-graphics/day-in-the-life-not-approved-review-brain__low-poly-3d-studio-word-timed-captions",
+    "motion-graphics/day-in-the-life-too-many-accounts-phone-farm__low-poly-3d-kitchen-word-timed-captions"
+  ]
+}

@@ -1,0 +1,263 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part thirty three: a lovely abacus</title>
+<!-- A 40.7 s reel (1080x1920) in low-poly 3D, thirty-third in the series. Sunday is numbers day on her balcony: she posts
+     on three apps; one says views, one says plays, one says impressions. She screenshots everything, adds it up by hand,
+     and it takes all morning, so she buys an abacus. Then YourBrand: she adds her handles once, her tracked accounts are
+     on one page (views, likes, engagement) and it updates for her. Sunday is hers again. She kept the abacus. It is a
+     lovely abacus. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Every account.', 'One page. Kept up to date.'],
+  skin: 0x8a5a3c, sweater: 0x6aa86a, pants: 0x2a2c33, hair: 0x1a1210,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day", 0.0, 0.26],["in", 0.26, 0.4],["the", 0.4, 0.48],["life", 0.48, 0.72],["of", 0.72, 0.98],["a", 0.98, 1.08],["UGC", 1.08, 1.6],["creator", 1.6, 2.14],["Part", 2.78, 2.8],["thirty", 2.8, 3.16],["three", 3.16, 3.7],["Sunday", 4.24, 4.44],["is", 4.44, 4.8],["numbers", 4.8, 5.16],["day", 5.16, 5.5],["I", 6.0, 6.08],["post", 6.08, 6.32],["on", 6.32, 6.56],["three", 6.56, 6.9],["apps", 6.9, 7.22],["One", 7.78, 7.94],["says", 7.94, 8.2],["views", 8.2, 8.52],["One", 8.98, 9.2],["says", 9.2, 9.42],["plays", 9.42, 9.8],["One", 10.32, 10.6],["says", 10.6, 10.94],["impressions", 10.94, 11.48],["I", 12.16, 12.3],["screenshot", 12.3, 12.68],["all", 12.68, 13.18],["of", 13.18, 13.3],["it", 13.3, 13.48],["I", 13.9, 14.0],["add", 14.0, 14.18],["it", 14.18, 14.26],["up", 14.26, 14.38],["by", 14.38, 14.56],["hand", 14.56, 14.9],["It", 15.36, 15.48],["takes", 15.48, 15.72],["all", 15.72, 16.08],["morning", 16.08, 16.4],["So", 17.04, 17.3],["I", 17.3, 17.64],["bought", 17.64, 17.8],["an", 17.8, 17.92],["abacus", 17.92, 18.26],["Then", 18.96, 19.12],["I", 19.12, 19.36],["found", 19.36, 19.62],["YourBrand", 19.62, 20.1],["I", 20.62, 20.9],["add", 20.9, 21.1],["my", 21.1, 21.24],["handles", 21.24, 21.54],["once", 21.54, 21.96],["My", 22.42, 22.54],["tracked", 22.54, 22.76],["accounts", 22.76, 23.16],["on", 23.38, 23.5],["one", 23.5, 23.68],["page", 23.68, 23.96],["Views", 24.5, 24.95],["likes", 25.18, 25.45],["engagement", 25.68, 25.96],["It", 26.56, 26.64],["updates", 26.64, 26.9],["for", 26.9, 27.16],["me", 27.16, 27.4],["Sunday's", 27.9, 28.48],["mine", 28.48, 28.62],["again", 28.62, 28.92],["No", 29.44, 29.52],["screenshots", 29.52, 29.9],["No", 30.52, 30.6],["abacus", 30.6, 30.98],["No", 31.52, 31.6],["bullshit", 31.6, 31.96],["I", 32.7, 32.82],["kept", 32.82, 32.98],["the", 32.98, 33.16],["abacus", 33.16, 33.52],["It's", 34.04, 34.18],["a", 34.18, 34.3],["lovely", 34.3, 34.54],["abacus", 34.54, 35.2]]
+const GROUPS = [[0,7,6,1],[8,10,-1,1.3],[11,14,13,1.3],[15,19,18,1.25],[20,22,22,1.4],[23,25,25,1.4],[26,28,28,1.25],[29,33,30,1.15],[34,39,39,1.2],[40,43,43,1.3],[44,48,48,1.25],[49,52,52,1.1],[53,57,56,1.2],[58,63,62,1.1],[64,64,-1,1.6],[65,65,-1,1.6],[66,66,-1,1.5],[67,70,68,1.3],[71,73,72,1.4],[74,75,-1,1.3],[76,77,-1,1.4],[78,79,-1,1.5],[80,83,83,1.3],[84,87,86,1.3]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.78, sunday: 4.24, numHit: 4.8, post: 6.0, threeHit: 6.56, one1: 7.78, viewsHit: 8.2, one2: 8.98, playsHit: 9.42, one3: 10.32, imprHit: 10.94,
+  shot: 12.16, shotHit: 12.3, add: 13.9, handHit: 14.56, takes: 15.36, mornHit: 16.08, so: 17.04, abaHit: 17.92, found: 18.96, foundG: 19.62,
+  handles: 20.62, handHit2: 21.24, tracked: 22.42, pageHit: 23.5, views: 24.5, likes: 25.18, eng: 25.68, upd: 26.56, updHit: 26.64, sunday2: 27.9, mineHit: 28.48,
+  no: 29.44, n1: 29.52, n2s: 30.52, n2: 30.6, nob: 31.52, nobHit: 31.6, kept: 32.7, keptHit: 33.16, lovely: 34.04, lovelyHit: 34.3, end: 35.7, dur: 40.7 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- a city balcony on a Sunday morning
+const deckC = canvasTex(256, 256); { const x = deckC.x; for (let i = 0; i < 8; i++) { x.fillStyle = ['#b98a5e', '#a97c52', '#c4956a', '#b08356'][i % 4]; x.fillRect(i * 32, 0, 32, 256); x.fillStyle = 'rgba(40,24,12,.3)'; x.fillRect(i * 32, 0, 2, 256) } deckC.t.wrapS = deckC.t.wrapT = THREE.RepeatWrapping; deckC.t.repeat.set(3, 3); deckC.t.needsUpdate = true }
+const deckMat = M(0xffffff, { map: deckC.t }); box(10, 0.2, 7, deckMat, 2, -0.1, -1.6)
+box(10, 0.4, 7, 0xb8b0a4, 2, -0.4, -1.6)
+const wallMat = M(0xd8cbb8); box(12, 9, 0.2, wallMat, 2, 4.5, -5.0)
+{ box(2.4, 3.4, 0.08, 0x2a2c33, 3.6, 1.7, -4.88); const gl = box(2.2, 3.2, 0.06, M(0xbcd8e6, { transparent: true, opacity: 0.5, roughness: 0.1 }), 3.6, 1.7, -4.84); gl.castShadow = false; box(0.06, 3.2, 0.1, 0x2a2c33, 3.6, 1.7, -4.82) }
+{ box(1.6, 1.4, 0.08, 0x2a2c33, -0.6, 3.6, -4.88); const gl = box(1.5, 1.3, 0.06, M(0xbcd8e6, { transparent: true, opacity: 0.5, roughness: 0.1 }), -0.6, 3.6, -4.84); gl.castShadow = false }
+// railing at the front edge, planters, string of bunting, the neighbours' buildings, the sky
+for (let i = 0; i <= 20; i++) box(0.05, 1.1, 0.05, 0x2a2c33, -2.8 + i * 0.48, 0.55, 1.8); box(9.8, 0.08, 0.1, 0x2a2c33, 2, 1.12, 1.8)
+for (const sx of [-1, 1]) { for (let i = 0; i <= 12; i++) box(0.05, 1.1, 0.05, 0x2a2c33, 2 + sx * 4.9, 0.55, 1.8 - i * 0.5); box(0.1, 0.08, 6.4, 0x2a2c33, 2 + sx * 4.9, 1.12, -1.4) }
+const leafM = [0x4f8a5a, 0x5a9a62, 0x3f7a4a]
+for (const [x, z, s] of [[-2.4, -4.2, 1.2], [6.2, -4.2, 1.0], [-2.4, 0.8, 0.8], [6.3, 0.9, 0.9]]) { cyl(0.36 * s, 0.28 * s, 0.6 * s, 8, 0xc8582f, x, 0.3 * s, z); for (let k = 0; k < 4; k++) mesh(new THREE.IcosahedronGeometry((0.32 - k * 0.04) * s, 0), leafM[k % 3], x + Math.cos(k * 1.7) * 0.18 * s, (0.75 + k * 0.22) * s, z + Math.sin(k * 1.7) * 0.18 * s) }
+{ cyl(0.5, 0.4, 0.5, 8, 0x8a9aa8, 5.4, 0.25, -2.0); for (let k = 0; k < 6; k++) { const l = box(0.06, 0.7, 0.2, 0x5a9a62, 5.4 + Math.cos(k) * 0.2, 0.8, -2.0 + Math.sin(k) * 0.2); l.rotation.z = Math.cos(k) * 0.4; l.rotation.x = Math.sin(k) * 0.4 } }
+const skyMat = basic(0xb8c0cc); { const sk = box(160, 70, 0.2, skyMat, 0, 20, -40); sk.castShadow = false }
+const bldMat = M(0x9aa0aa); for (const [x, z, w, h] of [[-9, -8, 5, 14], [13, -8, 5, 12], [-14, 6, 6, 10], [18, 5, 6, 13]]) box(w, h, 5, bldMat, x, h / 2 - 1, z)
+// the bistro table and chair, coffee, a croissant, three phones, a notebook
+cyl(0.85, 0.85, 0.06, 18, 0xf4f1ea, 2.0, 1.5, -1.3); cyl(0.05, 0.05, 1.45, 6, 0x2a2c33, 2.0, 0.75, -1.3); cyl(0.4, 0.4, 0.04, 10, 0x2a2c33, 2.0, 0.02, -1.3)
+box(0.9, 0.08, 0.8, 0x2a2c33, 2.0, 0.92, -2.45); box(0.9, 1.0, 0.06, 0x2a2c33, 2.0, 1.45, -2.86); for (const [dx, dz] of [[-0.4, -0.35], [0.4, -0.35], [-0.4, 0.35], [0.4, 0.35]]) box(0.05, 0.9, 0.05, 0x2a2c33, 2.0 + dx, 0.45, -2.45 + dz)
+const mug = grp(2.75, 1.53, -1.55); cyl(0.13, 0.12, 0.26, 10, 0xf6d36b, 0, 0.13, 0, mug); cyl(0.11, 0.11, 0.02, 10, 0x5a3a22, 0, 0.255, 0, mug)
+{ const pl = cyl(0.26, 0.26, 0.03, 12, 0xf4f1ea, 1.2, 1.545, -1.55); const cr = mesh(new THREE.TorusGeometry(0.12, 0.06, 5, 8, PI), M(0xd9a060), 1.2, 1.6, -1.55); cr.rotation.x = -PI / 2 }
+const phones = [[1.45, 0xff8fb3], [2.0, 0x34d399], [2.55, 0x2f7cf6]].map(([x, c]) => { const g2 = grp(x, 1.545, -1.7); box(0.26, 0.03, 0.46, c, 0, 0, 0, g2); box(0.22, 0.01, 0.4, basic(0x2a2c33), 0, 0.02, 0, g2); return g2 })
+const book = grp(2.0, 1.535, -1.15); box(0.6, 0.03, 0.44, 0xf4f1ea, 0, 0, 0, book); for (let i = 0; i < 5; i++) box(0.48, 0.005, 0.01, 0x8fa8c8, 0, 0.018, -0.15 + i * 0.07, book); book.rotation.y = 0.15
+// the abacus
+const abacus = grp(0, -9, 0); { for (const sx of [-1, 1]) box(0.06, 0.6, 0.08, 0x8a5a3a, sx * 0.46, 0.3, 0, abacus); for (const y of [0.02, 0.58]) box(0.98, 0.06, 0.1, 0x8a5a3a, 0, y, 0, abacus) }
+const beads = []; for (let r = 0; r < 5; r++) { cyl(0.012, 0.012, 0.9, 4, 0xc9ced6, 0, 0.1 + r * 0.11, 0, abacus).rotation.z = PI / 2; for (let b = 0; b < 5; b++) { const bd = mesh(new THREE.SphereGeometry(0.045, 8, 6), [0xff4d4f, 0xf6d36b, 0x34d399, 0x2f7cf6, 0xb48ae0][r], -0.36 + b * 0.09, 0.1 + r * 0.11, 0, abacus); bd.scale.x = 0.8; beads.push({ m: bd, r, b }) } }
+glow.color.set(0xffd8a0); glow.distance = 9; glow.decay = 1.5
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), sw = M(CONFIG.sweater), pant = M(CONFIG.pants), dark = M(0x15161a), hair = M(CONFIG.hair)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.1, 1.24, 0.66, sw, 0, 0.6, 0, p.torso); box(0.6, 0.12, 0.68, M(0x5a9a5a), 0, 1.16, 0, p.torso); box(0.52, 0.2, 0.56, pant, 0, -0.02, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.78, 0.78, 0.74, skin, 0, 0.44, 0, p.head)
+  box(0.84, 0.2, 0.8, hair, 0, 0.86, -0.02, p.head); for (const sx of [-1, 1]) box(0.08, 0.5, 0.6, hair, sx * 0.42, 0.62, -0.06, p.head)
+  const pony = grp(0, 1.02, -0.2, p.head); for (let i = 0; i < 6; i++) { const b = box(0.12, 0.12, 0.32, hair, (i % 2 ? 0.06 : -0.06), -i * 0.12, -0.12 - i * 0.04, pony); b.rotation.x = 0.4 } box(0.22, 0.08, 0.22, 0xf6d36b, 0, 0.02, -0.05, pony)
+  for (let i = 0; i < 4; i++) box(0.04, 0.04, 0.04, 0xf6d36b, (i % 2 ? 0.06 : -0.06), -0.18 - i * 0.24, -0.3 - i * 0.1, pony)
+  for (const sx of [-1, 1]) { box(0.26, 0.18, 0.04, M(0xc8302f), sx * 0.19, 0.46, 0.39, p.head); box(0.18, 0.12, 0.045, M(0xe8eef4), sx * 0.19, 0.46, 0.395, p.head) } box(0.14, 0.04, 0.04, M(0xc8302f), 0, 0.5, 0.39, p.head)
+  p.eyeL = box(0.07, 0.09, 0.04, dark, -0.19, 0.45, 0.41, p.head); p.eyeR = box(0.07, 0.09, 0.04, dark, 0.19, 0.45, 0.41, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.19, 0.66, 0.39, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.19, 0.66, 0.39, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x7a2a30), 0, 0.2, 0.38, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.68, 1.08, 0, p.torso); box(0.38, 0.36, 0.4, sw, 0, -0.12, 0, a.sh); box(0.32, 0.34, 0.34, sw, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.3, 0.38, 0.32, sw, 0, -0.14, 0, a.el); a.hand = box(0.24, 0.22, 0.26, skin, 0, -0.44, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.42, 0.6, 0.44, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.42, 0.4, 0.44, pant, 0, -0.18, 0, l.knee); box(0.44, 0.2, 0.62, M(0xf4f1ea), 0, -0.5, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 0.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const BEAD = { ...SIT, tx: 0.25, hx: 0.3, alx: -0.7, ale: -0.8, alz: 0.15, arx: -0.9, are: -0.5, arz: -0.1 }
+const CHIN = { ...SIT, tx: 0.55, hx: 0.2, alx: -1.1, ale: -1.7, alz: 0.35, arx: -0.9, are: -0.4, arz: -0.1, eye: 0.5, brow: 0.22, mw: 1.0, mh: 0.5 }
+const LOUNGE = { ...SIT, rx: -0.12, alx: -2.6, ale: -1.5, alz: 0.35, arx: -1.0, are: -1.3, arz: -0.2, eye: 0.7, mw: 1.6, mh: 1.0, brow: -0.12 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+const shotP = grp(0, -9, 0); box(0.5, 0.9, 0.05, 0x2a2c33, 0, 0, 0, shotP); box(0.44, 0.8, 0.01, basic(0xf4f1ea), 0, 0, 0.03, shotP); box(0.3, 0.06, 0.012, basic(0xff4d4f), 0, 0.25, 0.04, shotP)
+const abaP = grp(0, -9, 0); for (const sx of [-1, 1]) box(0.06, 0.5, 0.06, 0x8a5a3a, sx * 0.4, 0, 0, abaP); for (const y of [-0.24, 0.24]) box(0.86, 0.06, 0.08, 0x8a5a3a, 0, y, 0, abaP); for (let r = 0; r < 3; r++) for (let b = 0; b < 4; b++) mesh(new THREE.SphereGeometry(0.05, 6, 4), [0xff4d4f, 0xf6d36b, 0x34d399][r], -0.25 + b * 0.12, -0.12 + r * 0.12, 0, abaP)
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function hl(x, X, Y, w, k) { if (k <= 0) return; x.fillStyle = 'rgba(255,225,74,.6)'; x.fillRect(X - 6, Y - 34, (w + 12) * k, 46) }
+function bar(x, X, Y, w, col) { x.fillStyle = col || 'rgba(255,255,255,.16)'; rr(x, X, Y - 14, w, 22, 11); x.fill() }
+const APPS = [['App one', '#ff8fb3', '1,204', 'views', 'viewsHit', 'one1'], ['App two', '#34d399', '860', 'plays', 'playsHit', 'one2'], ['App three', '#2f7cf6', '3,410', 'impressions', 'imprHit', 'one3']]
+const HANDLE = '@brunch.and.bits'
+// 0 three apps · 1 screenshots · 2 notebook · 3 YourBrand handles · 4 YourBrand analytics
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  if (mode === 0) {
+    x.fillStyle = '#f4f5f8'; x.fillRect(0, 0, w, h)
+    APPS.forEach(([nm, col, n, unit, hk, t0], i) => { const Y = 40 + i * 205, k = back(seg(t, T[t0] - 0.05, T[t0] + 0.15)); if (k <= 0) return; x.save(); x.translate(360, Y + 90); x.scale(k, k); x.translate(-360, -Y - 90); x.fillStyle = '#fff'; rr(x, 30, Y, 660, 180, 24); x.fill(); x.fillStyle = col; rr(x, 30, Y, 660, 14, 7); x.fill(); x.fillStyle = col; rr(x, 56, Y + 40, 64, 64, 16); x.fill(); x.fillStyle = '#6b7080'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(nm, 140, Y + 66); x.fillStyle = '#16161a'; x.font = '800 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(n, 140, Y + 140); const nw = x.measureText(n).width; x.font = '700 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const ux = 160 + nw; hl(x, ux, Y + 140, x.measureText(unit).width, eo(seg(t, T[hk] - 0.05, T[hk] + 0.2))); x.fillStyle = '#16161a'; x.fillText(unit, ux, Y + 140); x.restore() })
+  } else if (mode === 1) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Screenshots', 40, 92); const n = Math.min(24, Math.floor(seg(t, T.shot, T.add) * 30)); x.fillStyle = '#8a90a0'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(n * 2 + ' photos', 40, 132)
+    for (let i = 0; i < n; i++) { const X = 30 + (i % 4) * 166, Y = 160 + Math.floor(i / 4) * 140; x.fillStyle = ['#ffe0ea', '#d8f6e8', '#dce8ff'][i % 3]; rr(x, X, Y, 156, 130, 10); x.fill(); x.fillStyle = ['#ff8fb3', '#34d399', '#2f7cf6'][i % 3]; rr(x, X + 12, Y + 14, 132, 10, 5); x.fill(); x.fillStyle = '#16161a'; x.font = '800 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(['1,204', '860', '3,410'][i % 3], X + 14, Y + 70) }
+  } else if (mode === 2) {
+    x.fillStyle = '#fffdf2'; x.fillRect(0, 0, w, h); x.strokeStyle = '#c8d8ec'; x.lineWidth = 2; for (let i = 0; i < 16; i++) { x.beginPath(); x.moveTo(0, 120 + i * 58); x.lineTo(w, 120 + i * 58); x.stroke() } x.strokeStyle = '#f0a0a0'; x.beginPath(); x.moveTo(90, 0); x.lineTo(90, h); x.stroke()
+    x.fillStyle = '#2a3a6a'; x.font = 'italic 700 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const L = ['1,204 views', '+ 860 plays', '+ 3,410 impr.', '= ? ? ?']; const n = Math.min(4, Math.floor(seg(t, T.add, T.handHit + 0.3) * 4) + 1); L.slice(0, n).forEach((s, i) => x.fillText(s, 120, 166 + i * 58))
+    if (t >= T.handHit) { x.strokeStyle = '#c8302f'; x.lineWidth = 6; for (let i = 0; i < 3; i++) { const k = seg(t, T.handHit + i * 0.25, T.handHit + i * 0.25 + 0.2); if (k > 0) { x.beginPath(); x.moveTo(110, 400 + i * 116); x.lineTo(110 + 420 * k, 400 + i * 116 - 30 * k); x.stroke() } } x.fillStyle = '#2a3a6a'; x.font = 'italic 700 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; ;['5,474?', '5,374?', '5,47...'].forEach((s, i) => { if (t >= T.handHit + i * 0.25) x.fillText(s, 120, 410 + i * 116) }) }
+  } else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(mode === 3 ? 'My profile' : 'Analytics', 88, 64)
+    if (mode === 3) {
+      x.fillStyle = '#a1a1aa'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YOUR ACCOUNTS', 32, 130)
+      APPS.forEach(([nm, col], i) => { const Y = 150 + i * 118, k = back(seg(t, T.handles + 0.15 + i * 0.18, T.handles + 0.35 + i * 0.18)); if (k <= 0) return; x.save(); x.translate(360, Y + 50); x.scale(k, k); x.translate(-360, -Y - 50); x.fillStyle = '#161619'; rr(x, 30, Y, 660, 100, 18); x.fill(); x.fillStyle = col; rr(x, 52, Y + 22, 56, 56, 14); x.fill(); x.fillStyle = '#fff'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(HANDLE, 130, Y + 48); x.fillStyle = '#a1a1aa'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(nm, 130, Y + 80); const on = t >= T.handHit2 + i * 0.1; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText(on ? 'Tracking' : 'Queued').width + 28; x.fillStyle = on ? 'rgba(16,185,129,.18)' : 'rgba(245,158,11,.18)'; rr(x, 670 - tw, Y + 32, tw, 36, 18); x.fill(); x.fillStyle = on ? '#6ee7b7' : '#fcd34d'; x.fillText(on ? 'Tracking' : 'Queued', 684 - tw, Y + 57); x.restore() })
+    } else {
+      x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('How your tracked accounts perform.', 32, 118); x.fillText('Numbers refresh every time YourBrand', 32, 150); x.fillText('updates your stats.', 32, 182)
+      const C = [['Followers', '#8b5cf6', 0], ['Avg likes', '#3b82f6', T.likes], ['Avg views', '#10b981', T.views], ['Engagement', '#f59e0b', T.eng], ['Posts tracked', '#8b5cf6', 0]]
+      C.forEach(([lb, col, th], i) => { const X = 30 + (i % 2) * 336, Y = 214 + Math.floor(i / 2) * 140, k = back(seg(t, T.tracked + 0.2 + i * 0.1, T.tracked + 0.4 + i * 0.1)); if (k <= 0) return; const on = th && t >= th - 0.05; x.save(); x.translate(X + 160, Y + 60); x.scale(k * (on ? 1.05 : 1), k * (on ? 1.05 : 1)); x.translate(-X - 160, -Y - 60); x.fillStyle = on ? '#1d1a2b' : '#161619'; rr(x, X, Y, 320, 120, 18); x.fill(); x.strokeStyle = on ? col : '#2a2c35'; x.lineWidth = on ? 4 : 2; rr(x, X, Y, 320, 120, 18); x.stroke(); x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(lb, X + 22, Y + 44); bar(x, X + 22, Y + 86, 160 + (i * 37) % 80, col); x.restore() })
+      if (t >= T.updHit) { const k = back(seg(t, T.updHit, T.updHit + 0.2)); x.save(); x.translate(360, 960); x.scale(k, k); x.fillStyle = '#16161a'; rr(x, -240, -40, 480, 80, 40); x.fill(); x.strokeStyle = '#2a2c35'; x.lineWidth = 3; rr(x, -240, -40, 480, 80, 40); x.stroke(); x.save(); x.translate(-170, 0); x.rotate(t * 4); x.strokeStyle = '#34d399'; x.lineWidth = 5; x.beginPath(); x.arc(0, 0, 16, 0.3, PI * 1.7); x.stroke(); x.restore(); x.fillStyle = '#fff'; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Updated by YourBrand', 20, 10); x.restore() }
+    }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[3.6, 3.7, 7.8], [1.6, 2.2, -2.4], 46], front: [[2.0, 3.3, 4.6], [2.0, 2.5, -2.4], 34], face: [[2.0, 3.3, 2.2], [2.0, 2.6, -2.4], 34],
+  table: [[2.6, 2.25, 2.9], [2.0, 2.45, -1.5], 46], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 8.4], [0.25, 2.6, 0.9], 46],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = SIT, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = false, aba = t >= T.abaHit - 0.2, slide = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [shotP, abaP]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+
+  if (t < T.part) { q = { ...HOLD, hx: 0.25 }; inHand = true; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.sunday) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2, arx: -1.15, are: -1.15 }, k); inHand = true; c = CAM.front; ckk = seg(t, T.part, T.sunday); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.post) { q = { ...SIT, alx: -0.5, ale: -1.3, alz: 0.3, arx: -0.5, are: -1.3, arz: -0.3, hx: 0.3, eye: 0.8 }; c = CAM.table; ckk = seg(t, T.sunday, T.post); if (t >= T.numHit) { v.pills.push(['SUNDAY: NUMBERS DAY', 0, back(seg(t, T.numHit, T.numHit + 0.2)), 'bad']); shake = (1 - seg(t, T.numHit, T.numHit + 0.3)) * 0.3 } }
+  else if (t < T.one1) { q = { ...SIT, alx: -0.6, ale: -0.8, arx: -0.6, are: -0.8, hx: 0.35, eye: 1.0 }; c = CAM.table; ckk = seg(t, T.post, T.one1); if (t >= T.threeHit) { v.pills.push(['3 APPS', 0, back(seg(t, T.threeHit, T.threeHit + 0.2)), 'good']); shake = (1 - seg(t, T.threeHit, T.threeHit + 0.3)) * 0.3 } }
+  else if (t < T.shot) { c = CAM.phone; ckk = seg(t, T.one1, T.shot); docMode = 0; showDoc(T.one1); for (const k of ['viewsHit', 'playsHit', 'imprHit']) if (t >= T[k]) shake = Math.max(shake, (1 - seg(t, T[k], T[k] + 0.3)) * 0.35); if (t >= T.imprHit + 0.15) v.pills.push(['3 WORDS FOR 1 THING', 0, back(seg(t, T.imprHit + 0.15, T.imprHit + 0.35)), 'bad']) }
+  else if (t < T.add) { c = CAM.phone; ckk = seg(t, T.shot, T.add); docMode = 1; showDoc(T.shot); if (t >= T.shotHit) v.pills.push(['SCREENSHOTS: 48', 0, back(seg(t, T.shotHit + 0.4, T.shotHit + 0.6)), 'bad']) }
+  else if (t < T.takes) { c = CAM.phone; ckk = seg(t, T.add, T.takes); docMode = 2; showDoc(T.add); if (t >= T.handHit) shake = (1 - seg(t, T.handHit, T.handHit + 0.3)) * 0.35 }
+  else if (t < T.so) { q = { ...CHIN, eye: 0.6 }; c = CAM.front; ckk = seg(t, T.takes, T.so); if (t >= T.mornHit) { v.pills.push(['9 AM → 1 PM', 0, back(seg(t, T.mornHit, T.mornHit + 0.2)), 'bad']); shake = (1 - seg(t, T.mornHit, T.mornHit + 0.3)) * 0.4 } }
+  else if (t < T.found) { q = { ...CHIN, eye: 0.45 }; c = CAM.table; ckk = seg(t, T.so, T.found); slide = Math.floor((t - T.abaHit) * 5); if (t >= T.abaHit) { v.pills.push(['ABACUS: BOUGHT', 0, back(seg(t, T.abaHit, T.abaHit + 0.2)), 'bad']); shake = (1 - seg(t, T.abaHit - 0.15, T.abaHit + 0.3)) * 0.5 } }
+  else if (t < T.handles) {                                                    // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP(CHIN, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); inHand = k > 0.3; c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; inHand = true; c = CAM.face; ckk = seg(t, T.foundG, T.handles); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.tracked) { c = CAM.phone; ckk = seg(t, T.handles, T.tracked); docMode = 3; showDoc(T.handles); if (t >= T.handHit2) { shake = (1 - seg(t, T.handHit2, T.handHit2 + 0.3)) * 0.4; v.pills.push(['HANDLES: ADDED ONCE', 0, back(seg(t, T.handHit2 + 0.3, T.handHit2 + 0.5)), 'good']) } }
+  else if (t < T.sunday2) { c = CAM.phone; ckk = seg(t, T.tracked, T.sunday2); docMode = 4; showDoc(T.tracked); for (const h0 of [T.pageHit, T.views, T.likes, T.eng, T.updHit]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35); if (t >= T.pageHit) v.pills.push(['ONE PAGE', 0, back(seg(t, T.pageHit, T.pageHit + 0.2)), 'good']) }
+  else if (t < T.no) { q = LOUNGE; c = CAM.wide; ckk = seg(t, T.sunday2, T.no); if (t >= T.mineHit) { v.pills.push(['SUNDAY: MINE', 0, back(seg(t, T.mineHit, T.mineHit + 0.2)), 'good']); shake = (1 - seg(t, T.mineHit, T.mineHit + 0.3)) * 0.3 } }
+  else if (t < T.kept) {                                                       // no screenshots, no abacus, no bullshit
+    c = CAM.center; ckk = seg(t, T.no, T.kept); aba = false
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.05 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? abaP : shotP
+      o.position.set(px, py, 1.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['SCREENSHOTS', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['SCREENSHOTS', 0, 1, 'bad']); if (t >= h0) v.pills.push(['ABACUS', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['SCREENSHOTS', 0, 1, 'bad'], ['ABACUS', 1, 1, 'bad']) }
+  } else { q = t < T.lovely ? { ...BEAD, eye: 0.9, mw: 1.4, mh: 1.0 } : { ...BEAD, alx: -1.0, ale: -1.0, alz: 0.4, arx: -1.0, are: -1.0, arz: -0.4, tx: 0.3, eye: 0.6, mw: 1.7, mh: 0.9, brow: -0.15 }; c = CAM.table; ckk = seg(t, T.kept, T.end); slide = Math.floor((t - T.kept) * 3); if (t >= T.keptHit) v.pills.push(['ABACUS: KEPT', 0, back(seg(t, T.keptHit, T.keptHit + 0.2)), 'good']); if (t >= T.lovelyHit) { v.pills.push(['LOVELY', 1, back(seg(t, T.lovelyHit, T.lovelyHit + 0.2)), 'good']); shake = (1 - seg(t, T.lovelyHit, T.lovelyHit + 0.3)) * 0.3 } }
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.phone.visible = inHand
+  // the abacus lands on the table on "abacus" and stays; beads slide across one at a time
+  if (aba) { const k = t < T.abaHit + 0.2 ? eo(seg(t, T.abaHit - 0.2, T.abaHit)) : 1; const up = eio(seg(t, T.kept - 0.1, T.kept + 0.3)); abacus.position.set(2.0, lerp(3.0, 1.53, k) + up * 0.22, -0.85 + up * 0.15); abacus.rotation.set(-up * 0.15, 0, 0) } else abacus.position.set(0, -9, 0)
+  beads.forEach(bd => { const moved = (bd.r * 5 + bd.b) < Math.max(0, slide) % 26; bd.m.position.x = moved ? 0.36 - (4 - bd.b) * 0.09 : -0.36 + bd.b * 0.09 })
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: an overcast morning, then a bright Sunday
+  skyMat.color.set(0xb8c0cc).lerp(new THREE.Color(0x8cc4f2), good); scene.background.set(0xb8c0cc).lerp(new THREE.Color(0x9ccff4), good); bldMat.color.set(0x9aa0aa).lerp(new THREE.Color(0xd8c8b4), good)
+  deckMat.color.set(0xd0c8bc).lerp(new THREE.Color(0xffffff), good); wallMat.color.set(0xc4b8a6).lerp(new THREE.Color(0xf0e0c8), good)
+  sun.color.set(0xdfe6ee).lerp(new THREE.Color(0xfff0d0), good); sun.intensity = lerp(1.2, 2.0, good); hemi.intensity = lerp(1.15, 1.3, good); hemi.color.set(0xe3e9f0).lerp(new THREE.Color(0xfff4e4), good)
+  glow.position.set(2.0, 2.4, -0.6); glow.intensity = glowOn * 1.4
+  if (docMode >= 0) { docBody.color.set(docMode >= 3 ? 0x15161a : (docMode === 2 ? 0xfffdf2 : 0xffffff)); drawDoc(docMode, t) }
+}
+
+
+/*SHARED_UI*/
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

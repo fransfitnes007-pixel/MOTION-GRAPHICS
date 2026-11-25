@@ -1,0 +1,307 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part forty four: the office chair</title>
+<!-- A 40.76 s reel (1080x1920) in low-poly 3D, forty-fourth in the series. A car wash attendant tags brands on
+     every post on his break: two hundred tags, a fire comment on everything they post for a year, a like on a photo of
+     their office chair. One follow back: a bot. So he films in the car wash for attention, and the brushes win. Then
+     YourBrand: his Profile, a headline, his top three videos, one switch, Discoverable to brands; brands browse and
+     invite. He still comments on the chair. It's a good chair. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['One switch.', 'Brands find you.'],
+  skin: 0xc68a5e, hoodie: 0x8ac83a, sweats: 0x23304a, hair: 0x1a1410,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0.0,0.26],["in",0.26,0.38],["the",0.38,0.46],["life",0.46,0.66],["of",0.66,0.9],["a",0.9,1.02],["UGC",1.02,1.46],["creator",1.46,1.94],["Part",2.36,2.5],["forty",2.5,2.78],["four",2.78,3.12],["I",3.48,3.62],["wash",3.62,3.84],["cars",3.84,4.24],["On",4.66,4.82],["my",4.82,4.96],["break",4.96,5.22],["I",5.52,5.6],["tag",5.6,5.86],["brands",5.86,6.26],["Every",6.74,7.02],["post",7.02,7.36],["Two",7.84,7.96],["hundred",7.96,8.44],["tags",8.44,8.8],["I",9.28,9.4],["commented",9.4,9.8],["fire",9.8,10.22],["on",10.22,10.5],["everything",10.5,10.96],["they",10.96,11.24],["posted",11.24,11.54],["For",11.9,12.14],["a",12.14,12.3],["year",12.3,12.62],["I",13.0,13.18],["liked",13.18,13.34],["a",13.34,13.48],["photo",13.48,13.64],["of",13.64,13.82],["their",13.82,13.92],["office",13.92,14.26],["chair",14.26,14.54],["They",14.96,15.08],["followed",15.08,15.28],["me",15.28,15.46],["back",15.46,15.62],["once",15.62,16.0],["It",16.48,16.56],["was",16.56,16.64],["a",16.64,16.76],["bot",16.76,16.92],["So",17.32,17.56],["I",17.56,17.88],["filmed",17.88,18.1],["in",18.1,18.24],["the",18.24,18.34],["car",18.34,18.48],["wash",18.48,18.76],["For",19.12,19.28],["attention",19.28,19.62],["The",20.16,20.26],["brushes",20.26,20.5],["won",20.5,20.84],["Then",21.34,21.52],["I",21.52,21.82],["found",21.82,22.04],["YourBrand",22.04,22.46],["My",22.8,22.96],["profile",22.96,23.34],["A",23.8,23.88],["headline",23.88,24.16],["My",24.62,24.76],["top",24.76,24.96],["three",24.96,25.18],["videos",25.18,25.52],["One",25.52,26.22],["switch",26.22,26.6],["Discoverable",27.1,27.58],["to",27.58,27.74],["brands",27.74,28.04],["They",28.54,28.64],["browse",28.64,28.92],["They",29.3,29.48],["invite",29.48,29.76],["No",30.26,30.42],["tagging",30.42,30.72],["No",31.14,31.22],["fire",31.22,31.52],["emojis",31.52,32.0],["No",32.28,32.44],["bullshit",32.44,32.8],["I",33.24,33.32],["still",33.32,33.5],["comment",33.5,33.74],["on",33.74,33.94],["the",33.94,34.06],["chair",34.06,34.26],["It's",34.68,34.78],["a",34.78,34.86],["good",34.86,34.94],["chair",34.94,35.26]]
+const GROUPS = [[0, 7, 6, 1], [8, 10, -1, 1.3], [11, 13, 13, 1.4], [14, 19, 19, 1.2], [20, 21, 21, 1.4], [22, 24, 23, 1.3], [25, 31, 27, 1.1], [32, 34, 34, 1.4], [35, 42, 41, 1.1], [43, 47, 44, 1.2], [48, 51, 51, 1.4], [52, 58, 58, 1.1], [59, 60, 60, 1.4], [61, 63, 62, 1.4], [64, 67, 67, 1.1], [68, 69, 69, 1.4], [70, 71, 71, 1.4], [72, 75, 75, 1.2], [76, 77, 77, 1.5], [78, 80, 78, 1.2], [81, 82, 82, 1.5], [83, 84, 84, 1.5], [85, 86, -1, 1.4], [87, 89, -1, 1.3], [90, 91, -1, 1.5], [92, 97, 97, 1.1], [98, 101, 100, 1.3]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = {part: 2.36, i1: 3.48, cars: 3.84, on: 4.66, brands: 5.86, every: 6.74, post: 7.02, tags: 8.44, commentI: 9.28, commented: 9.4, fire: 9.8, year: 12.3, liked0: 13.0, liked: 13.18, chair: 14.26, followed: 14.96, once: 15.62, bot: 16.76, so: 17.32, filmed: 17.88, wash: 18.34, attention: 19.28, brushes0: 20.16, won: 20.5, found: 21.34, foundG: 22.04, my: 22.8, profile: 22.96, headline: 23.88, top: 24.76, switch: 26.22, disc: 27.1, browse: 28.64, invite: 29.48, no: 30.26, n1: 30.42, n2s: 31.14, n2: 31.52, nob: 32.28, nobHit: 32.44, still: 33.24, chairC: 34.06, its: 34.68, good: 34.86, end: 35.76, dur: 40.76}
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2119)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xf0e6d8, 0x5a4a3a, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6e2da, 1.4); sun.position.set(4, 9, 8); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffd8a0, 0, 9, 1.5); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- a car wash on a sunny day: a tunnel with brushes on the left, a bay with a car on the right
+const groundMat = M(0x9a9ea4); box(30, 0.1, 30, groundMat, 0, -0.05, 0)
+for (let i = 0; i < 7; i++) { const l = box(0.06, 0.012, 14, M(0x7a7e84), -7 + i * 2.4, 0.006, -1); l.castShadow = false }
+for (const [x, z, w, d] of [[1.8, 2.6, 1.6, 0.9], [-1.2, 3.4, 1.1, 0.7], [4.4, 1.6, 1.4, 0.8]]) { const p = box(w, 0.014, d, M(0x6a7a8c, { roughness: 0.2, metalness: 0.3 }), x, 0.008, z); p.castShadow = false }
+// the tunnel (cut away at the front)
+const tunMat = M(0xe8eef4); box(6.4, 4.8, 0.2, tunMat, -3.2, 2.4, -4.3); box(6.8, 0.4, 4.6, M(0xdfe6ee), -3.2, 4.9, -2.0)
+box(6.8, 0.3, 0.12, M(0x2f7cf6), -3.2, 4.55, 0.25); for (const x of [-6.5, 0.1]) box(0.36, 4.8, 0.36, M(0xc8d0da), x, 2.4, 0.1)
+box(6.4, 0.5, 0.06, M(0x2f7cf6), -3.2, 1.0, -4.18)
+{ const c = canvasTex(512, 128); c.x.fillStyle = '#2f7cf6'; c.x.fillRect(0, 0, 512, 128); c.x.fillStyle = '#fff'; c.x.font = '800 78px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText('CAR WASH', 256, 92); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(3.6, 0.9), basic(0xffffff, { map: c.t }), -3.2, 5.6, 0.2); m.castShadow = false; box(3.7, 1.0, 0.08, 0x1a3a7a, -3.2, 5.6, 0.14) }
+// brushes: two upright, one overhead; each a core with a ring of fringes
+function brush(n, len, cols) { const g = grp(0, 0, 0); cyl(0.1, 0.1, len, 8, M(0xc8ccd2, { metalness: 0.5 }), 0, 0, 0, g); for (let i = 0; i < n; i++) { const a = i / n * PI * 2; const f = box(0.08, len * 0.92, 0.55, cols[i % cols.length], Math.cos(a) * 0.36, 0, Math.sin(a) * 0.36, g); f.rotation.y = -a } return g }
+const brushL = brush(18, 3.4, [0x2f7cf6, 0x5aa0ff]); brushL.position.set(-4.6, 2.0, -1.8)
+const brushR = brush(18, 3.4, [0xe5484d, 0xff7a7a]); brushR.position.set(-1.4, 2.0, -1.8)
+const brushT = brush(18, 4.2, [0x34d399, 0x7ae8b8]); brushT.position.set(-3.0, 4.0, -1.8); brushT.rotation.z = PI / 2
+for (const x of [-4.6, -1.4]) box(0.2, 0.2, 0.2, 0x3a3e48, x, 3.8, -1.8)
+// the car in the open bay
+const car = grp(3.4, 0, -1.0); const paint = M(0x1aa894, { roughness: 0.4, metalness: 0.2 }), glass = M(0x23304a, { roughness: 0.2, metalness: 0.4 })
+box(2.1, 0.7, 4.2, paint, 0, 0.75, 0, car); box(1.8, 0.62, 2.2, paint, 0, 1.4, -0.2, car); box(1.84, 0.46, 2.0, glass, 0, 1.42, -0.2, car); box(1.6, 0.44, 0.04, glass, 0, 1.42, 0.92, car)
+for (const [x, z] of [[-1, 1.3], [1, 1.3], [-1, -1.3], [1, -1.3]]) { const w = cyl(0.42, 0.42, 0.3, 12, 0x1e1f26, x * 1.02, 0.42, z, car); w.rotation.z = PI / 2 }
+for (const x of [-0.7, 0.7]) box(0.36, 0.16, 0.04, basic(0xfff4c0), x, 0.86, 2.11, car)
+// bucket he sits on, a hose reel, cones, the pay station
+const bucket = cyl(0.42, 0.34, 0.86, 12, M(0x2f7cf6), 0.6, 0.43, 1.4)
+cyl(0.5, 0.5, 0.3, 14, M(0xe5484d), 6.4, 2.2, -3.6).rotation.x = PI / 2; box(0.2, 2.2, 0.2, 0x5a5e68, 6.4, 1.1, -3.8)
+for (const [x, z] of [[-6.8, 2.2], [-0.6, 3.6]]) { cyl(0.04, 0.3, 0.7, 8, M(0xff8a2a), x, 0.35, z); box(0.6, 0.06, 0.6, 0xff8a2a, x, 0.03, z) }
+box(0.8, 1.8, 0.6, M(0x23304a), 6.6, 0.9, 0.8); box(0.5, 0.3, 0.04, basic(0x7ad8ff), 6.6, 1.4, 1.11)
+// foam: puffs that fly in the brushes, and a few that stay on his head
+const foam = []; for (let i = 0; i < 30; i++) { const f = mesh(new THREE.IcosahedronGeometry(0.14 + (i % 4) * 0.05, 0), M(0xffffff), 0, -9, 0); f.castShadow = false; foam.push(f) }
+const carFoam = []; for (let i = 0; i < 10; i++) { const f = mesh(new THREE.IcosahedronGeometry(0.16, 0), M(0xffffff), 2.3, 0.9 + (i % 3) * 0.25, -0.2 + i * 0.12); f.castShadow = false; carFoam.push(f) }
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+// swatted props: an @ tag bubble and a flame
+function tagProp() { const o = grp(0, -9, 0); const c = canvasTex(320, 180); c.x.fillStyle = '#2f7cf6'; c.x.beginPath(); c.x.roundRect(10, 30, 300, 120, 60); c.x.fill(); c.x.fillStyle = '#fff'; c.x.font = '800 64px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText('@brand', 160, 112); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.6, 0.9), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, o); m.castShadow = false; return o }
+function flameProp() { const o = grp(0, -9, 0); const c = canvasTex(256, 256); flame(c.x, 128, 236, 1.9); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.1, 1.1), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, o); m.castShadow = false; return o }
+function flame(x, X, Y, s) { x.save(); x.translate(X, Y); x.scale(s, s); x.fillStyle = '#ff6a1a'; x.beginPath(); x.moveTo(0, 0); x.bezierCurveTo(-50, -10, -55, -60, -20, -105); x.bezierCurveTo(-18, -70, 0, -70, 5, -110); x.bezierCurveTo(30, -80, 55, -50, 45, -20); x.bezierCurveTo(40, -5, 20, 0, 0, 0); x.fill(); x.fillStyle = '#ffd23a'; x.beginPath(); x.moveTo(0, -4); x.bezierCurveTo(-25, -10, -28, -40, -8, -62); x.bezierCurveTo(0, -40, 10, -45, 14, -60); x.bezierCurveTo(30, -40, 28, -14, 0, -4); x.fill(); x.restore() }
+const tagP = tagProp(), flameP = flameProp()
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), sh = M(CONFIG.hoodie), tr = M(CONFIG.sweats), dark = M(0x15161a), hair = M(CONFIG.hair), boot = M(0xffd23a), glove = M(0xff8a2a)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.04, 1.2, 0.64, sh, 0, 0.6, 0, p.torso); box(0.36, 0.08, 0.66, M(0x9ad83a), 0, 1.16, 0, p.torso); box(0.26, 0.14, 0.02, 0xffffff, 0.26, 0.92, 0.33, p.torso); box(1.04, 0.4, 0.62, tr, 0, -0.06, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.76, 0.76, 0.72, skin, 0, 0.44, 0, p.head)
+  box(0.78, 0.3, 0.2, hair, 0, 0.16, 0.3, p.head); box(0.78, 0.36, 0.5, hair, 0, 0.24, 0.06, p.head); box(0.4, 0.06, 0.04, hair, 0, 0.3, 0.37, p.head)
+  for (const sx of [-1, 1]) box(0.1, 0.22, 0.14, skin, sx * 0.43, 0.46, 0, p.head)
+  p.foamHead = grp(0, 0.84, 0, p.head); for (let i = 0; i < 6; i++) { const f = mesh(new THREE.IcosahedronGeometry(0.13 + (i % 3) * 0.05, 0), M(0xffffff), Math.sin(i * 2.1) * 0.24, (i % 2) * 0.1, Math.cos(i * 1.7) * 0.2, p.foamHead); f.castShadow = false } p.foamHead.visible = false
+  p.eyeL = box(0.08, 0.11, 0.04, dark, -0.17, 0.5, 0.37, p.head); p.eyeR = box(0.08, 0.11, 0.04, dark, 0.17, 0.5, 0.37, p.head)
+  p.browL = box(0.2, 0.06, 0.04, hair, -0.17, 0.66, 0.38, p.head); p.browR = box(0.2, 0.06, 0.04, hair, 0.17, 0.66, 0.38, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0xa8424a), 0, 0.3, 0.41, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.64, 1.08, 0, p.torso); box(0.36, 0.32, 0.38, sh, 0, -0.1, 0, a.sh); box(0.3, 0.36, 0.32, skin, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.28, 0.32, 0.3, skin, 0, -0.12, 0, a.el); a.hand = box(0.26, 0.24, 0.28, glove, 0, -0.4, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  p.sponge = box(0.34, 0.2, 0.26, M(0xffd23a), 0, -0.6, 0.08, p.aL.el); p.sponge.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.24, 0, 0, p.root); box(0.42, 0.5, 0.44, tr, 0, -0.25, 0, l.hip); box(0.3, 0.14, 0.3, skin, 0, -0.56, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.44, 0.46, 0.44, boot, 0, -0.22, 0, l.knee); box(0.46, 0.14, 0.6, boot, 0, -0.5, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const SEAT = { x: 0.6, y: 1.2, z: 1.4 }, SPOT = { x: 0.25, y: 1.1, z: 1.9 }
+const SIT = pose({ ...SEAT, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const SCRUB = pose({ x: 1.6, y: 1.1, z: 0.2, ry: 1.2, alx: -1.3, ale: -0.4, alz: 0.2, arz: 0.2, hy: -0.6 })
+const SELFIE = pose({ x: -3.0, y: 1.1, z: 0.6, arx: -1.6, arz: -0.25, are: -0.3, alz: -0.3, mw: 1.4, mh: 1.4, brow: -0.15 })
+const STAND = pose({ ...SPOT })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+
+// ---------- phone sheets
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function thumb(x, X, Y, w, h, bg, k) { x.fillStyle = bg; rr(x, X, Y, w, h, 12); x.fill(); x.fillStyle = '#9ad83a'; x.fillRect(X + w * 0.3, Y + h * 0.6, w * 0.4, h * 0.4); x.fillStyle = '#c68a5e'; x.fillRect(X + w * 0.35, Y + h * 0.34, w * 0.3, h * 0.26); x.fillStyle = '#1a1410'; x.fillRect(X + w * 0.35, Y + h * 0.5, w * 0.3, h * 0.1); if (k === 1) { x.fillStyle = '#1aa894'; x.fillRect(X + w * 0.05, Y + h * 0.72, w * 0.24, h * 0.18) } if (k === 2) { x.fillStyle = '#fff'; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(X + w * (0.2 + i * 0.2), Y + h * 0.2, 9, 0, 7); x.fill() } } }
+function chairPic(x, X, Y, w, h) { x.fillStyle = '#e8ecf2'; x.fillRect(X, Y, w, h); x.fillStyle = '#d8dde6'; x.fillRect(X, Y + h * 0.75, w, h * 0.25); const cx = X + w / 2; x.fillStyle = '#23252e'; rr(x, cx - 60, Y + h * 0.12, 120, 150, 20); x.fill(); rr(x, cx - 75, Y + h * 0.5, 150, 34, 12); x.fill(); x.fillRect(cx - 7, Y + h * 0.5 + 34, 14, 60); x.fillRect(cx - 70, Y + h * 0.5 + 92, 140, 10); for (const dx of [-70, 0, 70]) { x.beginPath(); x.arc(cx + dx, Y + h * 0.5 + 108, 9, 0, 7); x.fill() } }
+// 0 his post: two hundred tags · 1 their feed, a flame under every post · 2 their office chair, liked · 3 the follow back (a bot) · 4 YourBrand Profile, then Browse creators · 5 the chair, still
+const TAGS = ['@lumaskin', '@brivo', '@zesty.co', '@kettleco', '@nimbusfit', '@glowlab', '@snackbox', '@ponder', '@frothy', '@vela.home', '@ritmo', '@bloomy', '@sprig', '@tidal.co']
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1; x.textBaseline = 'alphabetic'
+  const hdr = (title, col, sub) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 40, 90); if (sub) { x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 40, 130) } x.fillStyle = '#eceef2'; x.fillRect(0, 156, w, 3) }
+  if (mode === 0) {
+    hdr('@ronnie.washes', '#9ad83a', 'New post'); thumb(x, 40, 180, 200, 250, '#7ac0f0', 0)
+    x.fillStyle = '#16161a'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('new vid!!', 262, 214)
+    const n = Math.floor(clamp(seg(t, T.every, T.tags + 0.4)) * 40); let X = 262, Y = 258; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'
+    for (let i = 0; i < n; i++) { const tg = TAGS[i % TAGS.length], tw = x.measureText(tg).width + 10; if (X + tw > 690) { X = 262; Y += 32 } if (Y > 520) break; x.fillStyle = '#2f7cf6'; x.fillText(tg, X, Y); X += tw }
+  } else if (mode === 1) {
+    hdr('@lumaskin', '#f08a6a', 'Posts')
+    for (let i = 0; i < 4; i++) { const Y = 178 + i * 92, k = clamp(seg(t, T.commented + i * 0.25, T.commented + 0.2 + i * 0.25)); x.fillStyle = ['#f6d0c0', '#e0e8f4', '#f0e0b0', '#d0f0e0'][i]; rr(x, 40, Y, 76, 76, 12); x.fill(); x.fillStyle = '#c8ccd6'; rr(x, 134, Y + 10, 300, 14, 7); x.fill(); rr(x, 134, Y + 34, 220, 14, 7); x.fill()
+      if (k > 0) { x.globalAlpha = k; x.fillStyle = '#16161a'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('ronnie.washes', 134, Y + 72); flame(x, 330, Y + 76, 0.24); x.globalAlpha = 1 } }
+  } else if (mode === 2) {
+    hdr('@lumaskin', '#f08a6a', 'Behind the scenes'); chairPic(x, 40, 176, 640, 300)
+    const lk = t >= T.liked ? back(seg(t, T.liked, T.liked + 0.25)) : 0; x.save(); x.translate(80, 512); x.scale(0.9 + lk * 0.3, 0.9 + lk * 0.3); x.fillStyle = lk > 0 ? '#ff3b5c' : '#fff'; x.strokeStyle = lk > 0 ? '#ff3b5c' : '#16161a'; x.lineWidth = 4; x.beginPath(); x.moveTo(0, 12); x.bezierCurveTo(-30, -10, -18, -32, 0, -16); x.bezierCurveTo(18, -32, 30, -10, 0, 12); x.fill(); x.stroke(); x.restore()
+    x.fillStyle = '#16161a'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Our new office chair', 120, 522)
+  } else if (mode === 3) {
+    hdr('Notifications', '#2f7cf6', 'Today'); const k = back(seg(t, T.followed, T.followed + 0.25)); if (k > 0) { x.save(); x.translate(360, 240); x.scale(k, k); x.translate(-360, -240); x.fillStyle = '#f4f5f8'; rr(x, 30, 180, 660, 120, 22); x.fill(); x.fillStyle = '#c8ccd6'; x.beginPath(); x.arc(96, 240, 38, 0, 7); x.fill(); x.fillStyle = '#5a5e68'; x.fillRect(80, 226, 10, 10); x.fillRect(102, 226, 10, 10); x.fillRect(84, 250, 24, 5); x.fillStyle = '#16161a'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('zesty_fan_bot_4471', 150, 232); x.fillStyle = '#5a5e68'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('followed you back', 150, 266); x.restore() }
+    if (t >= T.bot) { const q = back(seg(t, T.bot, T.bot + 0.25)); x.save(); x.translate(360, 400); x.scale(q, q); x.fillStyle = '#e5484d'; rr(x, -150, -38, 300, 76, 38); x.fill(); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('0 FOLLOWERS', 0, 13); x.restore(); x.textAlign = 'left' }
+  } else if (mode === 4) {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h)
+    const brw = t >= T.browse ? eio(seg(t, T.browse - 0.1, T.browse + 0.25)) : 0
+    if (brw < 1) {
+      x.globalAlpha = 1 - brw; x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Profile', 88, 58); x.fillStyle = '#a1a1aa'; x.font = '600 19px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('What brands see when they look for creators.', 88, 88)
+      // header card
+      x.fillStyle = '#161619'; rr(x, 30, 112, 660, 120, 18); x.fill(); const gr = x.createLinearGradient(50, 130, 130, 210); gr.addColorStop(0, '#8b5cf6'); gr.addColorStop(1, '#3b82f6'); x.fillStyle = gr; rr(x, 50, 132, 80, 80, 16); x.fill(); x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('RO', 90, 183); x.textAlign = 'left'
+      x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Ronnie', 150, 162); x.fillStyle = '#2a2440'; rr(x, 262, 138, 96, 30, 15); x.fill(); x.fillStyle = '#c4b5fd'; x.font = '700 17px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Creator', 278, 159)
+      const HL = 'Car wash guy. Honest product reviews.', hn = t >= T.headline ? Math.floor(clamp(seg(t, T.headline, T.headline + 0.6)) * HL.length) : 0
+      x.font = '600 21px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; if (hn > 0) { x.fillStyle = '#e4e4e7'; x.fillText(HL.slice(0, hn), 150, 200) } else { x.fillStyle = '#71717a'; x.font = 'italic 600 21px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Add a headline brands will see first', 150, 200) }
+      // discoverable card
+      const on = t >= T.switch + 0.1 ? eo(seg(t, T.switch + 0.1, T.switch + 0.35)) : 0, hot = t >= T.switch
+      x.fillStyle = hot ? '#1d1a2b' : '#161619'; rr(x, 30, 246, 660, 120, 18); x.fill(); if (hot) { x.strokeStyle = '#a78bfa'; x.lineWidth = 3; rr(x, 30, 246, 660, 120, 18); x.stroke() }
+      x.fillStyle = '#fff'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Discoverable to brands', 56, 290); x.fillStyle = on > 0.5 ? '#8b5cf6' : '#3a3a44'; rr(x, 590, 266, 76, 40, 20); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(lerp(612, 644, on), 286, 15, 0, 7); x.fill()
+      x.fillStyle = '#a1a1aa'; x.font = '600 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const L = on > 0.5 ? ['Brands browsing the creator directory can see your', 'profile and invite you to campaigns.'] : ['Hidden from the directory. Brands can only reach you', 'through campaigns you apply to.']; x.fillText(L[0], 56, 326); x.fillText(L[1], 56, 350)
+      // top 3 videos
+      x.fillStyle = '#161619'; rr(x, 30, 380, 660, 160, 18); x.fill(); x.fillStyle = '#fff'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('My top 3 videos', 56, 414)
+      for (let i = 0; i < 3; i++) { const k = t >= T.top ? back(seg(t, T.top + i * 0.1, T.top + 0.25 + i * 0.1)) : 0; if (k <= 0) continue; x.save(); x.translate(110 + i * 208, 478); x.scale(k, k); thumb(x, -90, -50, 180, 100, ['#7ac0f0', '#f0a04a', '#7ac08a'][i], i); x.restore() }
+      x.globalAlpha = 1
+    }
+    if (brw > 0) {
+      x.globalAlpha = brw; x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Browse creators', 40, 62); x.fillStyle = '#a1a1aa'; x.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Discover creators and invite them to your campaigns', 40, 94)
+      x.fillStyle = '#161619'; rr(x, 30, 120, 660, 410, 20); x.fill(); x.strokeStyle = '#a78bfa'; x.lineWidth = 3; rr(x, 30, 120, 660, 410, 20); x.stroke()
+      const gr = x.createLinearGradient(54, 144, 124, 214); gr.addColorStop(0, '#8b5cf6'); gr.addColorStop(1, '#3b82f6'); x.fillStyle = gr; rr(x, 54, 144, 70, 70, 14); x.fill(); x.fillStyle = '#fff'; x.font = '800 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('RO', 89, 189); x.textAlign = 'left'
+      x.fillStyle = '#fff'; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Ronnie', 142, 172); x.fillStyle = '#a1a1aa'; x.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Car wash guy. Honest product reviews.', 142, 204)
+      for (let i = 0; i < 3; i++) thumb(x, 54 + i * 208, 236, 196, 150, ['#7ac0f0', '#f0a04a', '#7ac08a'][i], i)
+      const pr = t >= T.invite ? seg(t, T.invite, T.invite + 0.2) : 0, sent = t >= T.invite + 0.25
+      x.fillStyle = sent ? '#34d399' : '#8b5cf6'; rr(x, 54, 414, 300, 64, 14); x.fill(); x.fillStyle = sent ? '#0b0c10' : '#fff'; x.font = '800 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(sent ? 'Invited ✓' : 'Invite to campaign', 204, 455); x.textAlign = 'left'
+      if (pr > 0 && pr < 1) { x.strokeStyle = `rgba(255,225,74,${1 - pr})`; x.lineWidth = 6; x.beginPath(); x.arc(204, 446, 20 + pr * 50, 0, 7); x.stroke() }
+      x.globalAlpha = 1
+    }
+  } else {
+    hdr('@lumaskin', '#f08a6a', 'Behind the scenes'); chairPic(x, 40, 176, 640, 300); x.fillStyle = '#ff3b5c'; x.beginPath(); x.moveTo(80, 524); x.bezierCurveTo(50, 502, 62, 480, 80, 496); x.bezierCurveTo(98, 480, 110, 502, 80, 524); x.fill()
+    x.fillStyle = '#8a90a0'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('ronnie.washes and 3 others', 120, 522)
+    const msg = 'still a good chair.', n = Math.floor(clamp(seg(t, T.good - 0.3, T.good + 0.3)) * msg.length); x.fillStyle = '#f4f5f8'; rr(x, 30, 930, 660, 80, 20); x.fill(); x.fillStyle = '#16161a'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('ronnie.washes', 56, 980); x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(msg.slice(0, n), 244, 980)
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[5.8, 3.6, 8.0], [0.0, 2.0, -0.8], 50], front: [[0.6, 3.0, 9.8], [0.6, 2.1, 1.4], 40], face: [[0.6, 3.1, 7.8], [0.6, 2.5, 1.4], 36],
+  scrub: [[-1.8, 3.0, 7.8], [1.9, 1.9, -0.3], 42], tunnel: [[-2.2, 2.8, 6.4], [-3.0, 2.2, -1.2], 44], brushes: [[-1.8, 2.6, 4.6], [-3.0, 2.2, -1.8], 46],
+  phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0, notes: 0, sad: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = HOLD, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = true, sponge = false, spin = 0, burst = -1
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [tagP, flameP]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  foam.forEach(f => f.position.y = -9)
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, p = true) => { doc.visible = true; doc.scale.setScalar(p ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const latest = (list, kind, row = 0) => { const L = list.filter(a => t >= a[0]); if (L.length) { const [h0, lab] = L[L.length - 1]; v.pills.push([lab, row, back(seg(t, h0, h0 + 0.2)), kind]); shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35) } }
+  const thumbs = () => ({ are: HOLD.are + Math.sin(t * 30) * 0.08, arx: HOLD.arx + Math.sin(t * 27) * 0.05 })
+
+  if (t < T.part) { q = { ...HOLD, hx: 0.25 }; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.i1) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2, arx: -1.15, are: -1.15 }, k); c = CAM.front; ckk = seg(t, T.part, T.i1); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.on) { inHand = false; sponge = true; const s = t * 7; q = { ...SCRUB, alz: SCRUB.alz + Math.sin(s) * 0.35, ale: SCRUB.ale + Math.cos(s) * 0.3, tx: 0.08, mw: 1.2, mh: 1 + Math.abs(Math.sin(t * 12)) * 0.5 }; c = CAM.scrub; ckk = seg(t, T.i1, T.on); latest([[T.cars, 'JOB: CAR WASH']], '') }
+  else if (t < T.every) { q = { ...HOLD, ...thumbs(), hx: 0.3, brow: -0.2 }; c = CAM.front; ckk = seg(t, T.on, T.every); latest([[T.brands, 'BREAK: TAGGING BRANDS']], '') }
+  else if (t < T.commentI) { c = CAM.phone; ckk = seg(t, T.every, T.commentI); docMode = 0; showDoc(T.every); latest([[T.post, 'EVERY POST'], [T.tags, 'TAGS: 200']], 'bad') }
+  else if (t < T.liked0) { c = CAM.phone; ckk = seg(t, T.commentI, T.liked0); docMode = 1; showDoc(T.commentI); latest([[T.fire, 'COMMENT: FIRE'], [T.year, 'FOR: A YEAR']], 'bad') }
+  else if (t < T.followed) { c = CAM.phone; ckk = seg(t, T.liked0, T.followed); docMode = 2; showDoc(T.liked0); latest([[T.chair, 'LIKED: AN OFFICE CHAIR']], 'bad') }
+  else if (t < T.so) { c = CAM.phone; ckk = seg(t, T.followed, T.so); docMode = 3; showDoc(T.followed); latest([[T.once, 'FOLLOW BACKS: 1'], [T.bot, 'IT WAS A BOT']], 'bad') }
+  else if (t < T.brushes0) {                                                    // so I filmed in the car wash, for attention
+    const k = eio(seg(t, T.so, T.attention)); q = { ...SELFIE, z: lerp(0.8, -1.4, k), llh: Math.sin(t * 8) * 0.4 * (k < 1 ? 1 : 0), lrh: -Math.sin(t * 8) * 0.4 * (k < 1 ? 1 : 0), mh: 1 + Math.abs(Math.sin(t * 13)) * 0.7, hz: Math.sin(t * 3) * 0.05 }; c = CAM.tunnel; ckk = seg(t, T.so, T.brushes0); spin = seg(t, T.wash, T.brushes0) * 0.5
+    latest([[T.filmed, 'FILMING: IN THE WASH'], [T.attention, 'FOR: ATTENTION']], '')
+  } else if (t < T.found) {                                                     // the brushes won
+    inHand = false; spin = 1; burst = t - T.brushes0; const w = t * 9; q = pose({ x: -3.0 + Math.sin(w * 0.5) * 0.3, y: 1.3 + Math.abs(Math.sin(w)) * 0.25, z: -1.8, ry: w, rz: Math.sin(w * 0.7) * 0.4, alz: -2.4 + Math.sin(w) * 0.4, arz: 2.4 - Math.sin(w) * 0.4, llh: Math.sin(w) * 0.8, lrh: -Math.sin(w) * 0.8, eye: 1.4, mw: 1.4, mh: 2, brow: 0.3 }); c = CAM.brushes; ckk = seg(t, T.brushes0, T.found); shake = 0.25
+    if (t >= T.won) { v.stamp = ['THE BRUSHES WON', seg(t, T.won, T.won + 0.2), '#ff4d4f', -0.1, 0.14]; shake = Math.max((1 - seg(t, T.won, T.won + 0.4)) * 0.7, 0.25) }
+  } else if (t < T.my) {                                                        // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP({ ...SIT, eye: 0.6, brow: 0.2 }, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; c = CAM.face; ckk = seg(t, T.foundG, T.my); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.no) { c = CAM.phone; ckk = seg(t, T.my, T.no); docMode = 4; showDoc(T.my); latest([[T.profile, 'PROFILE'], [T.headline, 'HEADLINE'], [T.top, 'TOP 3 VIDEOS'], [T.switch, 'ONE SWITCH'], [T.disc + 0.1, 'DISCOVERABLE: ON'], [T.browse, 'BRANDS BROWSE'], [T.invite, 'BRANDS INVITE']], 'good') }
+  else if (t < T.still) {                                                       // no tagging, no fire emojis, no bullshit
+    inHand = false; c = CAM.center; ckk = seg(t, T.no, T.still)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.15, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.1 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? flameP : tagP
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['TAGGING', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['TAGGING', 0, 1, 'bad']); if (t >= h0) v.pills.push(['FIRE EMOJIS', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['TAGGING', 0, 1, 'bad'], ['FIRE EMOJIS', 1, 1, 'bad']) }
+  } else if (t < T.its) { q = { ...HOLD, ...thumbs(), hx: 0.3, eye: 0.8 }; c = CAM.front; ckk = seg(t, T.still, T.its); latest([[T.chairC, 'STILL COMMENTING: THE CHAIR']], '') }
+  else { c = CAM.phone; ckk = seg(t, T.its, T.end); docMode = 5; showDoc(T.its); latest([[T.good, 'THE CHAIR: STILL GOOD']], '') }
+
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.root.visible = docMode < 0; P.phone.visible = inHand; P.sponge.visible = sponge; P.foamHead.visible = t >= T.brushes0
+  carFoam.forEach((f, i) => { f.visible = t >= T.i1 && t < T.found; f.scale.setScalar(t < T.on ? 0.6 + 0.4 * Math.sin(t * 3 + i) ** 2 : 1) })
+  brushL.rotation.y = t * 6 * spin; brushR.rotation.y = -t * 6 * spin; brushT.rotation.x = t * 5 * spin
+  if (burst >= 0) foam.forEach((f, i) => { const u = (burst * 0.9 + i / 30) % 1, a = i * 2.4 + burst * 3; f.position.set(-3.0 + Math.cos(a) * (0.6 + u * 1.6), 0.6 + (i % 7) * 0.5 + u * 0.8, -1.8 + Math.sin(a) * (0.6 + u * 1.2)); f.scale.setScalar(1 - u * 0.5) })
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: hazy noon, then crisp sun
+  scene.background.set(0xa8c8e0).lerp(new THREE.Color(0x7ac0f4), good); groundMat.color.set(0x8e9298).lerp(new THREE.Color(0xa4a8ae), good)
+  sun.color.set(0xf0ece4).lerp(new THREE.Color(0xfff4e0), good); sun.intensity = lerp(1.3, 1.8, good); hemi.intensity = lerp(1.1, 1.3, good); hemi.color.set(0xe8eef4).lerp(new THREE.Color(0xfff8ec), good)
+  glow.position.set(0.6, 2.6, 2.8); glow.intensity = glowOn * 1.4
+  if (docMode >= 0) { docBody.color.set(docMode === 4 ? 0x15161a : 0xffffff); drawDoc(docMode, t) }
+}
+
+/*SHARED_UI*/
+function notes(t) {
+  const n = view.notes; if (n <= 0) return; g.save(); g.fillStyle = '#ffe14a'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; g.textAlign = 'center'; g.textBaseline = 'middle'
+  for (let i = 0; i < 5; i++) { const sad = view.sad, u = ((t * (sad ? 0.25 : 0.6)) + i * 0.21) % 1, X = CX + (i - 2) * 150 + Math.sin(t * 3 + i) * 30, Y = sad ? 360 + u * 160 : 520 - u * 260; g.globalAlpha = n * Math.sin(u * PI) * (sad ? 0.6 : 1); g.font = `800 ${sad ? 60 : 84}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.fillText(i % 2 ? '♫' : '♪', X, Y) }
+  g.restore(); g.globalAlpha = 1
+}
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    notes(t)
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

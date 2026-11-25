@@ -1,0 +1,55 @@
+{
+  "slug": "day-in-the-life-follower-count-leaderboard-by-views__low-poly-3d-living-room-cat-word-timed-captions",
+  "visual_name": "Day in the life, part eleven: how many followers (low-poly 3D)",
+  "code_name": "three.js living room at dusk, box-built character and cat, application / forms / leaderboard pages, profile and follower-shop phone pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.6 second 9:16 reel in low-poly 3D: a brand's first question is her follower count, two thousand is too small, every form wants a media kit, her cat has more followers and she nearly buys some; then YourBrand: every campaign has a leaderboard ranked by views, not followers. The cat is not on the leaderboard and pushes her mug off the table.",
+  "aliases": [
+    "followers",
+    "follower count",
+    "too small",
+    "media kit",
+    "buy followers",
+    "leaderboard",
+    "ranked by views",
+    "cat",
+    "mr biscuit",
+    "mug",
+    "small account",
+    "day in the life 11",
+    "part eleven",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "animal",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "leaderboard",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.6,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 11,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-refresh-200-times-daily-recap__low-poly-3d-laundromat-word-timed-captions"
+  ]
+}

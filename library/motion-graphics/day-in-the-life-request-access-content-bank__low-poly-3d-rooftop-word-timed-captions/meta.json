@@ -1,0 +1,52 @@
+{
+  "slug": "day-in-the-life-request-access-content-bank__low-poly-3d-rooftop-word-timed-captions",
+  "visual_name": "Day in the life, part seven: request access (low-poly 3D)",
+  "code_name": "three.js rooftop with skyline and box-built character, link / lock / email / folder pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 41.3 second 9:16 reel in low-poly 3D: a first brand deal, an expired link, 'request access', three unusable logo files, screen recording the brand's site in a bandit mask; then YourBrand's content bank, one folder already shared. Her access is approved after the campaign ends.",
+  "aliases": [
+    "request access",
+    "expired link",
+    "brand assets",
+    "logo final final",
+    "content bank",
+    "first brand deal",
+    "day in the life 7",
+    "part seven",
+    "rooftop",
+    "tumbleweed",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "content-bank",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "outdoor",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 41.3,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 7,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-nobody-to-ask-tickets-chat__low-poly-3d-garage-gym-word-timed-captions"
+  ]
+}

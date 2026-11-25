@@ -1,0 +1,51 @@
+{
+  "slug": "day-in-the-life-nobody-to-ask-tickets-chat__low-poly-3d-garage-gym-word-timed-captions",
+  "visual_name": "Day in the life, part six: number 41 in the queue (low-poly 3D)",
+  "code_name": "three.js garage gym and box-built character, email / bot chat / campaign chat on a floating phone and page, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 39.5 second 9:16 reel in low-poly 3D: one yes-or-no question, an out-of-office reply, a support bot, number 41 in a phone queue, a wrong guess; then YourBrand: open a ticket, the team gets pinged, a campaign chat where a human answers. He is still number 41.",
+  "aliases": [
+    "nobody to ask",
+    "support",
+    "ticket",
+    "chat",
+    "out of office",
+    "chatbot",
+    "on hold",
+    "queue",
+    "day in the life 6",
+    "part six",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "support",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 39.5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 6,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-screenshot-math-earnings-tracking__low-poly-3d-home-office-word-timed-captions"
+  ]
+}

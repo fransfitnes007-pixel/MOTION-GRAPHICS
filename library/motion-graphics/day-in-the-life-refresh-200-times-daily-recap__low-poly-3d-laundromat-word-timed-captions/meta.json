@@ -1,0 +1,55 @@
+{
+  "slug": "day-in-the-life-refresh-200-times-daily-recap__low-poly-3d-laundromat-word-timed-captions",
+  "visual_name": "Day in the life, part ten: refreshed two hundred times (low-poly 3D)",
+  "code_name": "three.js laundromat with spinning washers, box-built character with a three-size shrug, post / mom chat / my videos / chat recap pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 39.9 second 9:16 reel in low-poly 3D: a post refreshed two hundred times, 300 views and no idea if that is good, a proud mom, a hit he cannot explain and a copy that flopped; then YourBrand: views tracked, and a morning recap in the campaign chat with the top videos and why number one worked. His laundry has been done for three hours.",
+  "aliases": [
+    "refresh",
+    "is that good",
+    "300 views",
+    "mom chat",
+    "flopped",
+    "shrug",
+    "analytics",
+    "daily recap",
+    "chat wins",
+    "why it worked",
+    "laundromat",
+    "washer",
+    "day in the life 10",
+    "part ten",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "analytics",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 39.9,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 10,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-vendor-portal-gift-card-payout__low-poly-3d-truck-tailgate-word-timed-captions"
+  ]
+}

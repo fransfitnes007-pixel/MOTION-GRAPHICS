@@ -1,0 +1,63 @@
+{
+  "slug": "day-in-the-life-sunday-stats-abacus-analytics__low-poly-3d-balcony-word-timed-captions",
+  "visual_name": "Day in the life, part thirty three: a lovely abacus (low-poly 3D)",
+  "code_name": "three.js city balcony (plank deck, railing, planters, a sliding door and window, neighbouring buildings, sky), a round bistro table with coffee, a croissant, three phones and a notebook, an abacus whose beads slide one at a time, box-built creator with a beaded high ponytail, red glasses and a green sweater, phone sheets for three apps' stats / a screenshot roll / a handwritten sum / YourBrand handles / YourBrand analytics, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.7 second 9:16 reel in low-poly 3D: Sunday is numbers day on her balcony. She posts on three apps; one says views, one says plays, one says impressions. She screenshots everything, adds it up by hand, and it takes all morning, so she buys an abacus. Then YourBrand: she adds her handles once, her tracked accounts are on one page (views, likes, engagement) and it updates for her. Sunday is hers again. She kept the abacus. It is a lovely abacus.",
+  "aliases": [
+    "sunday stats",
+    "weekly numbers",
+    "adding up stats",
+    "views plays impressions",
+    "three apps",
+    "screenshots",
+    "camera roll",
+    "handwritten sum",
+    "notebook",
+    "abacus",
+    "beads",
+    "balcony",
+    "bistro table",
+    "coffee",
+    "croissant",
+    "analytics",
+    "tracked accounts",
+    "handles",
+    "tracking",
+    "day in the life 33",
+    "part thirty three",
+    "pt 33",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "analytics",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.7,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 33,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-new-brand-contact-every-week-tickets__low-poly-3d-food-truck-word-timed-captions"
+  ]
+}

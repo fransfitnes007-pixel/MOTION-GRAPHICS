@@ -1,0 +1,266 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part thirty two: Jess is back</title>
+<!-- A 40.2 s reel (1080x1920) in low-poly 3D, thirty-second in the series. A food truck creator's brand contact changes
+     every week: Monday Jess, Wednesday Tom, Friday "Brand Inbox", and every one asks for his handle (and the brief,
+     again). He has sent it eleven times, so he paints it on the truck. Then YourBrand: questions go in a ticket, the whole
+     conversation stays in one thread and the team answers there. Nothing gets lost. Jess is back. She asks for his
+     handle. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['One ticket. One thread.', 'Nothing gets lost.'],
+  skin: 0xd8a27a, shirt: 0xf4f1ea, apron: 0x2a2c33, pants: 0x3a4a5a, bandana: 0xc8482f,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day", 0.0, 0.26],["in", 0.26, 0.38],["the", 0.38, 0.46],["life", 0.46, 0.66],["of", 0.66, 0.88],["a", 0.88, 1.0],["UGC", 1.0, 1.42],["creator", 1.42, 1.94],["Part", 2.48, 2.5],["thirty", 2.5, 2.8],["two", 2.8, 3.18],["I", 3.48, 3.64],["run", 3.64, 3.76],["a", 3.76, 3.92],["food", 3.92, 4.1],["truck", 4.1, 4.32],["channel", 4.32, 4.64],["My", 5.04, 5.16],["brand", 5.16, 5.4],["contact", 5.4, 5.84],["changes", 5.84, 6.24],["every", 6.24, 6.66],["week", 6.66, 7.0],["Monday", 7.4, 7.68],["it's", 7.68, 8.0],["Jess", 8.0, 8.22],["She", 8.6, 8.68],["asks", 8.68, 8.88],["for", 8.88, 9.08],["my", 9.08, 9.2],["handle", 9.2, 9.44],["Wednesday", 9.92, 10.12],["it's", 10.12, 10.54],["Tom", 10.54, 10.76],["He", 11.14, 11.22],["asks", 11.22, 11.44],["for", 11.44, 11.64],["my", 11.64, 11.76],["handle", 11.76, 12.04],["Friday", 12.54, 12.72],["it's", 12.72, 13.08],["someone", 13.08, 13.28],["called", 13.28, 13.64],["Brand", 13.64, 14.08],["Inbox", 14.08, 14.6],["They", 15.0, 15.18],["ask", 15.18, 15.36],["for", 15.36, 15.54],["my", 15.54, 15.66],["handle", 15.66, 15.96],["And", 16.34, 16.5],["the", 16.5, 16.62],["brief", 16.62, 16.82],["Again", 17.44, 17.74],["I've", 18.3, 18.46],["sent", 18.46, 18.62],["my", 18.62, 18.8],["handle", 18.8, 19.1],["eleven", 19.1, 19.5],["times", 19.5, 20.04],["So", 20.48, 20.76],["I", 20.76, 21.12],["painted", 21.12, 21.34],["it", 21.34, 21.5],["on", 21.5, 21.62],["the", 21.62, 21.72],["truck", 21.72, 21.96],["Then", 22.4, 22.68],["I", 22.68, 22.94],["found", 22.94, 23.2],["YourBrand", 23.2, 23.74],["Questions", 24.24, 24.44],["go", 24.44, 24.68],["in", 24.68, 24.8],["a", 24.8, 24.96],["ticket", 24.96, 25.12],["The", 25.46, 25.54],["whole", 25.54, 25.78],["conversation", 25.78, 26.24],["stays", 26.24, 26.6],["in", 26.6, 26.82],["one", 26.82, 27.04],["thread", 27.04, 27.36],["and", 27.36, 27.56],["the", 27.56, 27.68],["team", 27.68, 27.9],["answers", 27.9, 28.22],["there", 28.22, 28.62],["Nothing", 29.08, 29.24],["gets", 29.24, 29.48],["lost", 29.48, 29.82],["No", 30.22, 30.34],["Jess", 30.34, 30.62],["No", 30.96, 31.08],["Tom", 31.08, 31.44],["No", 31.86, 31.98],["bullshit", 31.98, 32.44],["Jess", 33.06, 33.16],["is", 33.16, 33.3],["back", 33.3, 33.56],["She", 34.0, 34.04],["asked", 34.04, 34.22],["for", 34.22, 34.36],["my", 34.36, 34.48],["handle", 34.48, 34.78]]
+const GROUPS = [[0,7,6,1],[8,10,-1,1.3],[11,16,15,1.15],[17,22,19,1.1],[23,25,25,1.3],[26,30,30,1.2],[31,33,33,1.3],[34,38,38,1.2],[39,42,-1,1.3],[43,44,-1,1.5],[45,49,49,1.2],[50,52,52,1.3],[53,53,-1,1.6],[54,59,58,1.1],[60,66,66,1.1],[67,70,70,1.1],[71,75,75,1.2],[76,82,81,1.05],[83,87,85,1.15],[88,90,90,1.3],[91,92,-1,1.5],[93,94,-1,1.5],[95,96,-1,1.5],[97,99,99,1.4],[100,104,104,1.2]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.48, run: 3.48, truckHit: 4.1, my: 5.04, contactHit: 5.4, mon: 7.4, jessHit: 8.0, h1: 9.2, wed: 9.92, tomHit: 10.54, h2: 11.76,
+  fri: 12.54, inboxHit: 13.64, h3: 15.66, briefHit: 16.62, again: 17.44, sent: 18.3, elevenHit: 19.1, so: 20.48, paintHit: 21.12, truckHit2: 21.72,
+  found: 22.4, foundG: 23.2, quest: 24.24, ticketHit: 24.96, whole: 25.46, threadHit: 27.04, teamHit: 27.68, nothing: 29.08, lostHit: 29.48,
+  no: 30.22, n1: 30.34, n2s: 30.96, n2: 31.08, nob: 31.86, nobHit: 31.98, back: 33.06, backHit: 33.3, asked: 34.0, h4: 34.48, end: 35.2, dur: 40.2 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- a street corner with his food truck
+const groundMat = M(0x6a6e76); box(60, 0.2, 60, groundMat, 2, -0.1, -6)
+box(60, 0.18, 1.2, 0xa8a8a2, 2, 0.09, 2.6); box(60, 0.02, 0.1, basic(0xf6d36b), 2, 0.01, 5.2)
+const skyMat = basic(0xa8b0ba); { const sk = box(160, 70, 0.2, skyMat, 0, 20, -40); sk.castShadow = false }
+const bldMat = M(0x8a8f98); for (let i = 0; i < 10; i++) { const h = 5 + (i * 37 % 7) * 1.6; box(4.4, h, 3, bldMat, -18 + i * 4.8, h / 2, -16 - (i % 2) * 2) }
+for (const [x, z] of [[-4.6, -2.0], [9.4, -3.0]]) { cyl(0.16, 0.22, 2.4, 6, 0x6b4a30, x, 1.2, z); mesh(new THREE.IcosahedronGeometry(1.3, 0), 0x4f8a5a, x, 3.0, z) }
+// the truck: front wall with a serving window, awning, counter, wheels
+const teal = M(0x2fa7a0), white = M(0xf4f1ea)
+box(5.2, 0.9, 0.12, teal, 2.0, 0.95, -0.9)                         // lower panel (the handle gets painted here)
+box(5.2, 0.8, 0.12, teal, 2.0, 3.7, -0.9)                          // above the window
+for (const x of [-0.05, 4.05]) box(1.1, 1.8, 0.12, teal, x, 2.4, -0.9)
+box(5.2, 0.12, 3.4, white, 2.0, 4.15, -2.6); box(0.12, 3.7, 3.4, teal, -0.6, 2.3, -2.6); box(0.12, 3.7, 3.4, teal, 4.6, 2.3, -2.6); box(5.2, 3.7, 0.12, white, 2.0, 2.3, -4.3)
+box(5.2, 0.5, 3.4, M(0x1f6e6a), 2.0, 0.25, -2.6)
+for (const x of [0.4, 3.6]) for (const z of [-1.2, -4.0]) { const w = cyl(0.5, 0.5, 0.3, 12, 0x1a1b1f, x, 0.5, z); w.rotation.x = PI / 2 }
+box(3.0, 0.1, 0.6, 0xc9ced6, 2.0, 1.5, -0.65)                       // counter
+for (let i = 0; i < 6; i++) { const a = box(0.52, 0.06, 1.4, i % 2 ? 0xf4f1ea : 0xc8482f, -0.25 + i * 0.5, 3.4, -0.3); a.rotation.x = 0.45 }
+const lights = []; for (let i = 0; i < 9; i++) { const b = mesh(new THREE.SphereGeometry(0.07, 6, 4), basic(0xfff0c0), -0.4 + i * 0.6, 4.3 - Math.sin(i / 8 * PI) * 0.12, -0.78); b.castShadow = false; lights.push(b) }
+const nameC = canvasTex(512, 96); { const x = nameC.x; x.fillStyle = '#2fa7a0'; x.fillRect(0, 0, 512, 96); x.fillStyle = '#fff'; x.font = '800 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('WHEELS & MEALS', 256, 68); nameC.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(4.0, 0.75), basic(0xffffff, { map: nameC.t }), 2.0, 3.72, -0.83); m.castShadow = false }
+const menuC = canvasTex(160, 240); { const x = menuC.x; x.fillStyle = '#15161a'; x.fillRect(0, 0, 160, 240); x.fillStyle = '#f6d36b'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('MENU', 80, 40); x.fillStyle = '#fff'; x.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; ['Tacos', 'Burger', 'Fries', 'Lemonade'].forEach((s, i) => x.fillText(s, 80, 90 + i * 40)); menuC.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(0.8, 1.2), basic(0xffffff, { map: menuC.t }), -0.05, 2.4, -0.83); m.castShadow = false }
+// the handle he paints on the lower panel
+const paintC = canvasTex(1024, 180); const paintM = mesh(new THREE.PlaneGeometry(5.0, 0.86), basic(0xffffff, { map: paintC.t, transparent: true }), 2.0, 0.95, -0.83); paintM.castShadow = false
+function drawPaint(k) { const x = paintC.x; x.clearRect(0, 0, 1024, 180); if (k <= 0) { paintC.t.needsUpdate = true; return } const s = '@WHEELSANDMEALS'; x.font = '800 96px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; const n = Math.ceil(s.length * k); x.fillStyle = '#ffe14a'; x.strokeStyle = '#15161a'; x.lineWidth = 8; const txt = s.slice(0, n), w = x.measureText(s).width, X = 512 - w / 2; x.strokeText(txt, X, 130); x.fillText(txt, X, 130); for (let i = 0; i < n; i += 2) { x.fillRect(X + i * (w / s.length) + 20, 134, 8, 12 + (i * 13) % 30) } paintC.t.needsUpdate = true }
+// inside: a grill, a fryer, the order-ticket rail
+box(2.0, 0.9, 0.8, 0x5a5e66, 1.4, 1.1, -3.8); box(1.9, 0.06, 0.7, 0x15161a, 1.4, 1.58, -3.8); box(0.9, 1.1, 0.8, 0xc9ced6, 3.4, 1.15, -3.8)
+box(3.6, 0.05, 0.05, 0xc9ced6, 2.0, 3.0, -4.2)
+const tickets = []; for (let i = 0; i < 11; i++) { const c = canvasTex(96, 128); c.x.fillStyle = '#fffdf2'; c.x.fillRect(0, 0, 96, 128); c.x.fillStyle = '#c8482f'; c.x.font = '800 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText('HANDLE?', 48, 52); c.x.fillStyle = '#9aa0ad'; for (let j = 0; j < 3; j++) c.x.fillRect(16, 72 + j * 14, 64, 4); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(0.3, 0.4), basic(0xffffff, { map: c.t, side: THREE.DoubleSide }), 0.4 + i * 0.32, 2.78, -4.17); m.castShadow = false; m.visible = false; tickets.push(m) }
+// Jess, at the window for the callback
+const jess = grp(0, -9, 0); { box(0.9, 1.1, 0.5, 0x8b5cf6, 0, 1.7, 0, jess); for (const sx of [-1, 1]) box(0.36, 1.1, 0.4, 0x2a2c33, sx * 0.22, 0.6, 0, jess); const hd = box(0.66, 0.66, 0.6, M(0xe8b896), 0, 2.6, 0, jess); box(0.7, 0.2, 0.64, 0x6a3a1a, 0, 2.95, 0, jess); box(0.24, 0.5, 0.2, 0x6a3a1a, 0, 2.6, -0.38, jess); const tag = canvasTex(128, 64); tag.x.fillStyle = '#fff'; tag.x.fillRect(0, 0, 128, 64); tag.x.fillStyle = '#16161a'; tag.x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; tag.x.textAlign = 'center'; tag.x.fillText('JESS', 64, 30); tag.x.font = '600 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; tag.x.fillText('BRAND', 64, 54); tag.t.needsUpdate = true; const tg = mesh(new THREE.PlaneGeometry(0.32, 0.16), basic(0xffffff, { map: tag.t, side: THREE.DoubleSide }), 0.18, 1.9, 0.26, jess); tg.castShadow = false; for (const sx of [-1, 1]) box(0.24, 0.9, 0.26, 0x8b5cf6, sx * 0.56, 1.75, 0, jess) }
+glow.color.set(0xffd8a0); glow.distance = 9; glow.decay = 1.5
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), sh = M(CONFIG.shirt), ap = M(CONFIG.apron), pant = M(CONFIG.pants), dark = M(0x15161a), band = M(CONFIG.bandana), hair = M(0x2a1a12)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.06, 1.2, 0.62, sh, 0, 0.6, 0, p.torso); box(0.86, 1.06, 0.04, ap, 0, 0.5, 0.32, p.torso); box(0.4, 0.22, 0.05, M(0x3a3c44), 0, 0.36, 0.34, p.torso); box(0.52, 0.2, 0.56, pant, 0, -0.02, 0, p.torso)
+  p.paint = box(0.5, 0.3, 0.05, M(0xffe14a), 0.15, 0.7, 0.35, p.torso); p.paint.visible = false
+  p.head = grp(0, 1.2, 0, p.torso); box(0.8, 0.78, 0.76, skin, 0, 0.44, 0, p.head); box(0.84, 0.18, 0.8, band, 0, 0.78, 0, p.head); box(0.8, 0.1, 0.78, hair, 0, 0.88, 0, p.head); { const kn = box(0.16, 0.3, 0.08, band, 0.1, 0.66, -0.42, p.head); kn.rotation.z = 0.4 }
+  box(0.7, 0.3, 0.06, hair, 0, 0.14, 0.38, p.head); p.paintFace = box(0.16, 0.1, 0.03, M(0xffe14a), 0.22, 0.32, 0.395, p.head); p.paintFace.visible = false
+  p.eyeL = box(0.08, 0.11, 0.04, dark, -0.19, 0.46, 0.39, p.head); p.eyeR = box(0.08, 0.11, 0.04, dark, 0.19, 0.46, 0.39, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.19, 0.66, 0.4, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.19, 0.66, 0.4, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x4a1a22), 0, 0.26, 0.41, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.66, 1.08, 0, p.torso); box(0.36, 0.34, 0.38, sh, 0, -0.12, 0, a.sh); box(0.3, 0.32, 0.32, skin, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.27, 0.36, 0.29, skin, 0, -0.14, 0, a.el); a.hand = box(0.24, 0.22, 0.26, skin, 0, -0.44, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.roller = grp(0, -0.56, 0.1, p.aR.el); box(0.05, 0.5, 0.05, 0x8a5a3a, 0, -0.15, 0, p.roller); { const r = cyl(0.1, 0.1, 0.5, 8, 0xffe14a, 0, -0.42, 0.12, p.roller); r.rotation.z = PI / 2 } p.roller.visible = false
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.42, 0.6, 0.44, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.42, 0.4, 0.44, pant, 0, -0.18, 0, l.knee); box(0.44, 0.2, 0.62, dark, 0, -0.5, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const INSIDE = pose({ x: 2.0, y: 1.1, z: -1.9, ry: 0 })
+const LEAN = { ...INSIDE, tx: 0.2, alx: -0.9, ale: -0.6, alz: 0.2, arx: -0.9, are: -0.6, arz: -0.2 }
+const HOLD = { ...INSIDE, alx: -0.3, ale: -0.5, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.2 }
+const SPOT = { x: 0.3, y: 1.1, z: 1.9 }, STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+const PAINTER = pose({ x: 4.3, y: 1.1, z: 0.2, ry: -0.7, arx: -1.2, are: -0.4, arz: 0.3, alx: 0.1, ale: -0.3, eye: 0.6, brow: 0.2, mw: 1.0, mh: 0.5 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+const badge = (name, col) => { const g2 = grp(0, -9, 0); box(0.9, 0.56, 0.04, col, 0, 0, 0, g2); const c = canvasTex(180, 112); c.x.fillStyle = '#fff'; c.x.fillRect(0, 30, 180, 82); c.x.fillStyle = '#16161a'; c.x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText(name, 90, 90); c.x.fillStyle = '#fff'; c.x.font = '700 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.fillText('HELLO, I AM', 90, 22); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(0.86, 0.52), basic(0xffffff, { map: c.t }), 0, 0, 0.025, g2); m.castShadow = false; return g2 }
+const jessP = badge('JESS', 0xff4d4f), tomP = badge('TOM', 0x2f7cf6)
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function bub(x, X, Y, w, lines, font, k, o = {}) { if (k <= 0) return; const fs = parseInt(font.split(' ')[1]), h = lines.length * fs * 1.22 + 40; x.save(); x.translate(o.right ? X + w : X, Y + h / 2); x.scale(k, k); x.fillStyle = o.col || '#eceef2'; rr(x, o.right ? -w : 0, -h / 2, w, h, 26); x.fill(); x.fillStyle = o.tcol || '#16161a'; x.font = font; x.textAlign = 'left'; lines.forEach((s, i) => x.fillText(s, (o.right ? -w : 0) + 26, -h / 2 + 20 + fs * 0.86 + i * fs * 1.22)); x.restore() }
+const HANDLE = '@wheelsandmeals'
+// 0 Jess · 1 Tom · 2 Brand Inbox · 3 YourBrand new ticket · 4 YourBrand ticket thread
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  const hdr = (title, col, sub, av) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = col; x.beginPath(); x.arc(84, 96, 40, 0, 7); x.fill(); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(av, 84, 109); x.textAlign = 'left'; x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 144, 92); x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 144, 128); x.fillStyle = '#eceef2'; x.fillRect(0, 160, w, 3) }
+  const ask = (lines, t0, hk) => { bub(x, 40, 190, 560, lines, '700 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif', back(seg(t, t0 + 0.15, t0 + 0.35))); if (t >= hk + 0.1) bub(x, 330, 420, 350, [HANDLE], '700 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif', back(seg(t, hk + 0.1, hk + 0.3)), { right: true, col: '#2f7cf6', tcol: '#fff' }) }
+  if (mode === 0) { hdr('Jess', '#ff4d4f', 'Brand · new contact', 'J'); ask(['Hi! I’m your new contact :)', 'What’s your handle?'], T.mon, T.h1) }
+  else if (mode === 1) { hdr('Tom', '#2f7cf6', 'Brand · new contact', 'T'); ask(['Hey, new here!', 'What’s your handle?'], T.wed, T.h2) }
+  else if (mode === 2) { hdr('Brand Inbox', '#8a90a0', 'no-reply', '✉'); ask(['Please resend your handle.'], T.fri, T.h3); if (t >= T.briefHit) bub(x, 40, 540, 560, ['And the brief. Thanks!'], '700 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif', back(seg(t, T.briefHit, T.briefHit + 0.2))) }
+  else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Support tickets', 88, 64)
+    if (mode === 3) {
+      x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Questions about a campaign, a payout or', 32, 122); x.fillText('your account. The team answers here.', 32, 154)
+      x.fillStyle = '#161619'; rr(x, 30, 190, 660, 380, 22); x.fill(); x.fillStyle = '#e4e4e7'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Subject', 60, 240)
+      const subj = 'Brand keeps asking for my handle', typed = subj.slice(0, Math.floor(clamp((t - T.quest - 0.2) / 0.5) * subj.length)); x.fillStyle = '#0f1014'; rr(x, 60, 260, 600, 72, 14); x.fill(); x.strokeStyle = '#8b5cf6'; x.lineWidth = 3; rr(x, 60, 260, 600, 72, 14); x.stroke(); x.fillStyle = '#fff'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(typed, 82, 306)
+      x.fillStyle = '#e4e4e7'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Message', 60, 380); x.fillStyle = '#0f1014'; rr(x, 60, 400, 600, 120, 14); x.fill(); x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('It’s ' + HANDLE + ' on my profile.', 82, 446)
+      const k = back(seg(t, T.ticketHit - 0.1, T.ticketHit + 0.12)); if (k > 0) { x.save(); x.translate(360, 620); x.scale(k, k); x.fillStyle = '#8b5cf6'; rr(x, -170, -36, 340, 72, 18); x.fill(); x.fillStyle = '#fff'; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Ticket opened ✓', 0, 10); x.restore() }
+    } else {
+      x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Brand keeps asking for my handle', 32, 124); x.fillStyle = '#10b981'; rr(x, 32, 140, 100, 34, 17); x.fill(); x.fillStyle = '#06281c'; x.font = '700 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Open', 56, 164)
+      const M2 = [['You · Mon', 'Brand asked for my handle again.', false, T.whole + 0.1], ['You · Wed', 'New contact, same question.', false, T.whole + 0.45], ['You · Fri', 'Brand Inbox asked too. And the brief.', false, T.whole + 0.8], ['YourBrand team', 'Got it. We’ll answer you in this thread.', true, T.teamHit - 0.05]]
+      M2.forEach(([who, msg, team, t0], i) => { const Y = 196 + i * 116, k = back(seg(t, t0, t0 + 0.2)); if (k <= 0) return; x.save(); x.translate(360, Y + 50); x.scale(k, k); x.translate(-360, -Y - 50); x.fillStyle = team ? 'rgba(139,92,246,.2)' : '#161619'; rr(x, team ? 30 : 70, Y, 620, 100, 18); x.fill(); x.fillStyle = team ? '#c4b5fd' : '#a1a1aa'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(who, (team ? 30 : 70) + 24, Y + 36); x.fillStyle = '#fff'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(msg, (team ? 30 : 70) + 24, Y + 74); x.restore() })
+      if (t >= T.threadHit) { const k = back(seg(t, T.threadHit, T.threadHit + 0.2)); x.save(); x.translate(360, 960); x.scale(k, k); x.fillStyle = '#16161a'; rr(x, -260, -40, 520, 80, 40); x.fill(); x.strokeStyle = '#2a2c35'; x.lineWidth = 3; rr(x, -260, -40, 520, 80, 40); x.stroke(); x.fillStyle = '#fff'; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('One thread · 4 messages', 0, 10); x.restore() }
+    }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[6.4, 3.6, 9.0], [1.8, 2.2, -2.0], 46], front: [[2.0, 2.9, 4.8], [2.0, 2.55, -2.0], 34], face: [[2.0, 3.0, 2.2], [2.0, 2.75, -1.9], 34],
+  phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46], rail: [[0.9, 3.0, 0.8], [2.1, 2.75, -4.1], 44],
+  paint: [[2.2, 1.3, 7.4], [2.2, 0.5, -0.9], 64], jess: [[-1.2, 3.0, 6.4], [2.8, 2.2, -0.6], 48],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+let paintK = -1
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = LEAN, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = false, roller = false
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [jessP, tomP, jess]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  // order tickets on the rail: one per ask, eleven by "eleven", gone after the turn
+  const nT = t >= T.found ? 0 : t >= T.elevenHit ? 11 : [T.h1, T.h2, T.h3, T.briefHit].filter(h => t >= h).length; tickets.forEach((m, i) => { m.visible = i < nT; m.rotation.z = Math.sin(t * 3 + i) * 0.05 })
+  const pk = t < T.paintHit - 0.1 ? 0 : eio(seg(t, T.paintHit - 0.1, T.truckHit2 + 0.1)); if (Math.abs(pk - paintK) > 0.001) { drawPaint(pk); paintK = pk }
+
+  if (t < T.part) { q = { ...LEAN, hy: Math.sin(t * 2) * 0.1 }; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.run) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(LEAN, { ...INSIDE, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2 }, k); c = CAM.front; ckk = seg(t, T.part, T.run); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.my) { q = { ...LEAN, mw: 1.5, mh: 1.3 }; c = CAM.wide; ckk = seg(t, T.run, T.my); if (t >= T.truckHit) { v.pills.push(['FOOD TRUCK CHANNEL', 0, back(seg(t, T.truckHit, T.truckHit + 0.2)), 'good']); shake = (1 - seg(t, T.truckHit, T.truckHit + 0.3)) * 0.3 } }
+  else if (t < T.mon) { q = { ...HOLD, eye: 1.1, brow: 0.12 }; inHand = true; c = CAM.face; ckk = seg(t, T.my, T.mon); if (t >= T.contactHit) v.pills.push(['BRAND CONTACT: NEW', 0, back(seg(t, T.contactHit, T.contactHit + 0.2)), 'bad']) }
+  else if (t < T.wed) { c = CAM.phone; ckk = seg(t, T.mon, T.wed); docMode = 0; showDoc(T.mon); if (t >= T.h1) { shake = (1 - seg(t, T.h1, T.h1 + 0.3)) * 0.35; v.pills.push(['HANDLE SENT ×1', 0, back(seg(t, T.h1, T.h1 + 0.2)), 'bad']) } }
+  else if (t < T.fri) { c = CAM.phone; ckk = seg(t, T.wed, T.fri); docMode = 1; showDoc(T.wed); v.pills.push(['HANDLE SENT ×' + (t >= T.h2 ? 2 : 1), 0, t >= T.h2 ? back(seg(t, T.h2, T.h2 + 0.2)) : 1, 'bad']); if (t >= T.h2) shake = (1 - seg(t, T.h2, T.h2 + 0.3)) * 0.35 }
+  else if (t < T.again) { c = CAM.phone; ckk = seg(t, T.fri, T.again); docMode = 2; showDoc(T.fri); v.pills.push(['HANDLE SENT ×' + (t >= T.h3 ? 3 : 2), 0, t >= T.h3 ? back(seg(t, T.h3, T.h3 + 0.2)) : 1, 'bad']); for (const h0 of [T.h3, T.briefHit]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35) }
+  else if (t < T.sent) { q = { ...HOLD, eye: 0.6, brow: 0.22, mw: 1.0, mh: 0.5 }; inHand = true; c = CAM.face; ckk = seg(t, T.again, T.sent); v.stamp = ['AGAIN', seg(t, T.again + 0.05, T.again + 0.25), '#ff4d4f', -0.12, 0.12]; shake = (1 - seg(t, T.again + 0.05, T.again + 0.4)) * 0.5 }
+  else if (t < T.so) { q = { ...INSIDE, ry: PI, hx: 0.1 }; c = CAM.rail; ckk = seg(t, T.sent, T.so); if (t >= T.elevenHit) { v.pills.push(['HANDLE SENT ×11', 0, back(seg(t, T.elevenHit, T.elevenHit + 0.2)), 'bad']); shake = (1 - seg(t, T.elevenHit, T.elevenHit + 0.3)) * 0.4 } }
+  else if (t < T.found) { q = { ...PAINTER, arx: -1.0 + Math.sin(t * 8) * 0.4 * (t < T.truckHit2 + 0.1 ? 1 : 0) }; roller = true; c = CAM.paint; ckk = seg(t, T.so, T.found); if (t >= T.truckHit2) { v.stamp = ['ON THE TRUCK', seg(t, T.truckHit2 + 0.1, T.truckHit2 + 0.3), '#ff4d4f', -0.1, 0.12]; shake = (1 - seg(t, T.truckHit2 + 0.1, T.truckHit2 + 0.45)) * 0.6 } }
+  else if (t < T.quest) {                                                      // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP({ ...INSIDE, eye: 0.6, brow: 0.2 }, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); inHand = k > 0.3; c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; inHand = true; c = CAM.face; ckk = seg(t, T.foundG, T.quest); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.whole) { c = CAM.phone; ckk = seg(t, T.quest, T.whole); docMode = 3; showDoc(T.quest); if (t >= T.ticketHit) { shake = (1 - seg(t, T.ticketHit, T.ticketHit + 0.3)) * 0.4; v.pills.push(['1 TICKET', 0, back(seg(t, T.ticketHit, T.ticketHit + 0.2)), 'good']) } }
+  else if (t < T.nothing) { c = CAM.phone; ckk = seg(t, T.whole, T.nothing); docMode = 4; showDoc(T.whole); for (const h0 of [T.threadHit, T.teamHit]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.4); if (t >= T.threadHit) v.pills.push(['ONE THREAD', 0, back(seg(t, T.threadHit, T.threadHit + 0.2)), 'good']); if (t >= T.teamHit) v.pills.push(['TEAM ANSWERS HERE', 1, back(seg(t, T.teamHit, T.teamHit + 0.2)), 'good']) }
+  else if (t < T.no) { q = { ...INSIDE, alx: -2.6, ale: -1.5, alz: 0.35, arx: -2.6, are: -1.5, arz: -0.35, eye: 0.75, mw: 1.6, mh: 1.0, brow: -0.12 }; c = CAM.front; ckk = seg(t, T.nothing, T.no); if (t >= T.lostHit) { v.pills.push(['RAIL: CLEAR', 0, back(seg(t, T.lostHit, T.lostHit + 0.2)), 'good']); shake = (1 - seg(t, T.lostHit, T.lostHit + 0.3)) * 0.3 } }
+  else if (t < T.back) {                                                       // no Jess, no Tom, no bullshit
+    c = CAM.center; ckk = seg(t, T.no, T.back)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.05 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? tomP : jessP
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['JESS', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['JESS', 0, 1, 'bad']); if (t >= h0) v.pills.push(['TOM', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['JESS', 0, 1, 'bad'], ['TOM', 1, 1, 'bad']) }
+  } else {                                                                     // Jess is back
+    const k = eo(seg(t, T.back - 0.1, T.backHit)); jess.position.set(lerp(7.0, 3.4, k), Math.abs(Math.sin(t * 9)) * 0.04 * (1 - k), 0.5); jess.rotation.y = PI - 0.5
+    q = t < T.h4 ? { ...LEAN, hy: 0.45, eye: 1.2, mw: 1.0, mh: 1.2 } : { ...INSIDE, hy: 0.45, hx: 0.35, arx: -0.6, arz: 0.4, are: -0.2, eye: 0.55, brow: 0.25, mw: 1.0, mh: 0.5 }; c = CAM.jess; ckk = seg(t, T.back, T.end)
+    if (t >= T.backHit) v.pills.push(['JESS: BACK', 0, back(seg(t, T.backHit, T.backHit + 0.2)), 'bad']); if (t >= T.h4) { v.pills.push(['HANDLE?', 1, back(seg(t, T.h4, T.h4 + 0.2)), 'bad']); shake = (1 - seg(t, T.h4, T.h4 + 0.3)) * 0.4 }
+  }
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.phone.visible = inHand; P.roller.visible = roller; P.paintFace.visible = t >= T.truckHit2 && t < T.foundG; P.paint.visible = t >= T.paintHit && t < T.foundG
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: overcast, then golden evening with the string lights on
+  skyMat.color.set(0xa8b0ba).lerp(new THREE.Color(0xffb878), good); scene.background.set(0xa8b0ba).lerp(new THREE.Color(0xf6c088), good); bldMat.color.set(0x8a8f98).lerp(new THREE.Color(0xb08a78), good)
+  sun.color.set(0xdfe6ee).lerp(new THREE.Color(0xffd8a0), good); sun.intensity = lerp(1.25, 1.8, good); hemi.intensity = lerp(1.15, 1.2, good); hemi.color.set(0xe3e9f0).lerp(new THREE.Color(0xffe8d0), good)
+  lights.forEach((b, i) => b.material.color.set(good > 0.5 ? (Math.sin(t * 3 + i) > -0.6 ? 0xfff0a0 : 0xffd060) : 0x8a8a80))
+  glow.position.set(2.0, 2.6, 0.2); glow.intensity = Math.max(glowOn * 1.6, good * 1.4)
+  if (docMode >= 0) { docBody.color.set(docMode >= 3 ? 0x15161a : 0xffffff); drawDoc(docMode, t) }
+}
+
+
+/*SHARED_UI*/
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

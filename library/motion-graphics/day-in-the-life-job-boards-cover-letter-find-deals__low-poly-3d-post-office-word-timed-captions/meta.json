@@ -1,0 +1,57 @@
+{
+  "slug": "day-in-the-life-job-boards-cover-letter-find-deals__low-poly-3d-post-office-word-timed-captions",
+  "visual_name": "Day in the life, part eighteen: a cover letter for a lip balm (low-poly 3D)",
+  "code_name": "three.js post office with a drawn wall of PO boxes, box-built character, job boards / five listings / Find deals / a wax-sealed letter, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 37.3 second 9:16 reel in low-poly 3D: five job boards and five bad listings (412 applicants, a free sample video, a cover letter for a lip balm, closed in 2023, pay to apply); then YourBrand's Find deals: campaigns open right now, press apply, YourBrand reviews it, new campaigns posted there first. He wrote the lip balm letter anyway. It was beautiful.",
+  "aliases": [
+    "job boards",
+    "listings",
+    "applicants",
+    "free sample video",
+    "cover letter",
+    "lip balm",
+    "pay to apply",
+    "find deals",
+    "open to apply",
+    "apply",
+    "in review",
+    "post office",
+    "wax seal",
+    "day in the life 18",
+    "part eighteen",
+    "pt 18",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "find-deals",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 37.3,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 18,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-two-minute-script-scissors-script-generator__low-poly-3d-sewing-room-word-timed-captions"
+  ]
+}

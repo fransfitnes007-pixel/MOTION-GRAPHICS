@@ -1,0 +1,56 @@
+{
+  "slug": "day-in-the-life-sixty-three-slide-brief-deck-brief-in-app__low-poly-3d-cinema-word-timed-captions",
+  "visual_name": "Day in the life, part forty three: slide fifty eight (low-poly 3D)",
+  "code_name": "three.js empty cinema (a big screen with a canvas texture for the slides, curtains, a projector window and beam, four rising rows of red seats, wall sconces, patterned carpet), her own seat whose cushion folds up with her in it, a popcorn bucket whose level drops slide by slide, a torch with a beam, a serum bottle, box-built usher with an afro puff, a burgundy vest, a white shirt, a bow tie and a name badge, phone sheets for the brand's 'did you read slide 58?' chat and the YourBrand campaign brief (numbered chips, folded sections one line each, Rules to follow opening), hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: an usher reads a brand's brief between shows on the big screen of an empty cinema. It is sixty three slides: the logo, a bigger logo, their journey since 1987. She films it and calls the serum cheap, in a good way; the brand asks if she read slide fifty eight: grey text under a sunset, never say cheap, and her seat folds her up. Then YourBrand: the brief in the app, numbered, one line a section, tap Rules and it opens. She still knows the founder's favourite colour. Teal. Nobody has asked.",
+  "aliases": [
+    "brief too long",
+    "slide deck brief",
+    "buried rule",
+    "brand guidelines",
+    "never say",
+    "campaign brief",
+    "numbered sections",
+    "rules to follow",
+    "cinema",
+    "usher",
+    "popcorn",
+    "folding seat",
+    "day in the life 43",
+    "part forty three",
+    "pt 43",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "brief",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.82,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 43,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-same-wall-every-video-style-guide__low-poly-3d-basement-word-timed-captions"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "slug": "day-in-the-life-ugc-creator__low-poly-3d-rooms-word-timed-captions",
+  "visual_name": "Day in the life of a UGC creator (low-poly 3D)",
+  "code_name": "three.js room and box-built character, hard cuts on voiceover word times, 2D caption layer",
+  "category": "motion-graphics",
+  "summary": "A 40 second 9:16 reel in low-poly 3D: a UGC creator's bad day (no replies, new account shadowbanned, nine revisions, ghosted invoice), then YourBrand: account, campaign, four ticks, done, black end card.",
+  "aliases": [
+    "day in the life",
+    "ugc creator",
+    "low poly",
+    "3d skit",
+    "cartoon reel",
+    "semigenius style",
+    "creator story",
+    "pain points"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 1,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": []
+}

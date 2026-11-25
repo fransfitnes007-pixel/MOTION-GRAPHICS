@@ -1,0 +1,56 @@
+{
+  "slug": "day-in-the-life-faking-the-age-group-campaign-fit__low-poly-3d-skate-park-word-timed-captions",
+  "visual_name": "Day in the life, part forty eight: unc (low-poly 3D)",
+  "code_name": "three.js skate park on a sunny afternoon (a concrete halfpipe with curved walls and coping, a ledge, a rail, a chain fence, a back wall of painted shapes, trees, his white work van for a made-up heating firm), three box-built teen skaters (one pumping the halfpipe, one carving behind, one on the ledge), box-built boiler fitter of fifty four with grey hair and beard, navy overalls, a tool belt, a red cap that spins backwards, a wrench, a skateboard that rides the halfpipe surface, phone sheets for deals that all say ages 18-24 / the brand chat (this is for Gen Z) / YourBrand age group (18-24, 25-40, 40+) and Find deals with the real fit line, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 41.0 second 9:16 reel in low-poly 3D: a fifty-four-year-old boiler fitter wants brand deals, but every one says ages 18 to 24. So he wears his cap backwards, says no cap, says a boiler is bussin, and buys a skateboard. The skateboard wins: he drops into the bowl and lands flat at the bottom. The brand says it is for Gen Z. Then YourBrand: his age group set once (40+), and Find deals shows \"Not a fit for your profile (age group)\" before he applies, not after he falls. The skaters call him unc. He doesn't know what it means. He loves it.",
+  "aliases": [
+    "age group",
+    "campaign fit",
+    "not a fit for your profile",
+    "find deals",
+    "pretending to be young",
+    "gen z",
+    "no cap",
+    "skate park",
+    "skateboard fall",
+    "halfpipe",
+    "older creator",
+    "unc",
+    "day in the life 48",
+    "part forty eight",
+    "pt 48",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "campaign-fit",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.98,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 48,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-wrong-audience-niche-hashtags__low-poly-3d-apiary-word-timed-captions"
+  ]
+}

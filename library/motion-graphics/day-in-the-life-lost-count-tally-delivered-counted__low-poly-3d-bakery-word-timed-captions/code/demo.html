@@ -1,0 +1,362 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part twenty three: a baker's dozen</title>
+<!-- A 40.7 s reel (1080x1920) in low-poly 3D, twenty-third in the series. In a bakery before dawn, the contract says twelve
+     videos. She counts what she has sent: eleven. She counts again: thirteen. The brand counts: nine. Some did not count and
+     nobody says which, so she keeps a tally on the wall. Then YourBrand: her campaign page keeps count (Delivered 7 / 12,
+     Days left 9) and every post says Counted or Not counted. It was thirteen, by the way: a baker's dozen, force of habit.
+     Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Your campaign page', 'keeps count.'],
+  skin: 0x7a4a30, shirt: 0xf4f1ea, apron: 0x27365e, pants: 0x3a3f4a, hair: 0x4a4a52, wrap: 0xf2b632,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0,0.24],["in",0.24,0.36],["the",0.36,0.42],["life",0.42,0.62],["of",0.62,0.86],["a",0.86,0.96],["UGC",0.96,1.34],["creator",1.34,1.95],["Part",2.2,2.48],["twenty",2.48,2.8],["three",2.8,3.2],
+  ["The",3.62,3.76],["contract",3.76,4.1],["says",4.1,4.44],["twelve",4.44,4.8],["videos",4.8,5.3],["I",5.76,5.9],["count",5.9,6.08],["what",6.08,6.2],["I've",6.2,6.36],["sent",6.36,6.7],["Eleven",7.22,7.7],
+  ["I",7.9,8.04],["count",8.04,8.2],["again",8.2,8.55],["Thirteen",9.06,9.6],["The",9.9,10.02],["brand",10.02,10.24],["counts",10.24,10.65],["Nine",11.22,11.6],
+  ["That's",11.96,12.22],["three",12.22,12.5],["different",12.5,12.78],["numbers",12.78,13.2],["For",13.48,13.64],["one",13.64,13.9],["job",13.9,14.3],
+  ["Some",14.74,14.94],["didn't",14.94,15.22],["count",15.22,15.6],["Nobody",15.7,16.02],["says",16.02,16.28],["which",16.28,16.7],
+  ["So",17.1,17.34],["now",17.34,17.52],["I",17.52,17.72],["keep",17.72,17.86],["a",17.86,17.98],["tally",17.98,18.35],["On",18.45,18.68],["the",18.68,18.8],["wall",18.8,19.2],
+  ["Then",19.6,19.84],["I",19.84,20.04],["found",20.04,20.28],["YourBrand",20.28,20.8],
+  ["My",21.22,21.34],["campaign",21.34,21.7],["page",21.7,22.0],["keeps",22.0,22.26],["count",22.26,22.65],["Delivered:",23.14,23.6],["seven",23.64,23.96],["of",23.96,24.16],["twelve",24.16,24.6],["Days",24.9,25.08],["left:",25.08,25.32],["nine",25.32,25.75],
+  ["Every",26.54,26.88],["post",26.88,27.16],["says",27.16,27.46],["counted",27.46,27.95],["Or",28.3,28.44],["not",28.44,28.68],["counted",28.68,29.15],
+  ["No",29.4,29.62],["tally",29.62,29.95],["No",30.1,30.36],["recount",30.36,30.8],["No",31.0,31.24],["bullshit",31.24,31.75],
+  ["It",32.4,32.5],["was",32.5,32.6],["thirteen,",32.6,33.0],["by",33.06,33.16],["the",33.16,33.24],["way",33.24,33.5],["A",33.7,33.78],["baker's",33.78,34.1],["dozen",34.1,34.5],["Force",34.8,34.9],["of",34.9,35.04],["habit",35.04,35.45]]
+const GROUPS = [[0,7,3,1],[8,10,-1,1.3],[11,15,13,1.15],[16,20,-1,1.15],[21,21,-1,1.8],[22,24,-1,1.3],[25,25,-1,1.8],[26,28,-1,1.3],[29,29,-1,1.9],[30,33,31,1.15],[34,36,-1,1.4],[37,39,-1,1.3],[40,42,-1,1.3],[43,48,45,1.15],[49,51,-1,1.5],[52,55,54,1.1],[56,60,58,1.1],[61,64,61,1.2],[65,67,-1,1.3],[68,71,69,1.2],[72,74,-1,1.4],[75,76,-1,1.3],[77,78,-1,1.3],[79,80,-1,1.7],[81,86,83,1.1],[87,89,-1,1.3],[90,92,-1,1.3]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.2, con: 3.62, twelveHit: 4.44, cnt: 5.76, cntHit: 5.9, eleven: 7.22, again: 7.9, againHit: 8.04, thirteen: 9.06, brand: 9.9, brandHit: 10.24, nine: 11.22,
+  three: 11.96, threeHit: 12.22, job: 13.48, jobHit: 13.9, some: 14.74, someHit: 15.22, nobody: 15.7, whichHit: 16.28, tally: 17.1, tallyHit: 17.98, wall: 18.45, wallHit: 18.8,
+  found: 19.6, foundG: 20.16, page: 21.22, pageHit: 22.0, deliv: 23.14, sevenHit: 23.64, twelve2: 24.16, days: 24.9, nineHit: 25.32, every: 26.54, cHit: 27.46, or: 28.3, ncHit: 28.68,
+  no: 29.4, n1: 29.62, n2s: 30.1, n2: 30.36, nob: 31.0, nobHit: 31.24, it: 32.4, itHit: 32.6, baker: 33.7, dozenHit: 34.1, force: 34.8, habitHit: 35.04, end: 35.7, dur: 40.7 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- the bakery
+const fl = canvasTex(256, 256); { const x = fl.x; for (let r = 0; r < 4; r++) for (let c2 = 0; c2 < 4; c2++) { x.fillStyle = (r + c2) % 2 ? '#e9dcc4' : '#c9785a'; x.fillRect(c2 * 64, r * 64, 64, 64) } x.strokeStyle = 'rgba(60,40,30,.25)'; x.lineWidth = 2; for (let i = 0; i <= 4; i++) { x.beginPath(); x.moveTo(i * 64, 0); x.lineTo(i * 64, 256); x.moveTo(0, i * 64); x.lineTo(256, i * 64); x.stroke() } fl.t.needsUpdate = true; fl.t.wrapS = fl.t.wrapT = THREE.RepeatWrapping; fl.t.repeat.set(7, 7) }
+const floorMat = M(0xffffff, { map: fl.t }); box(34, 0.2, 34, floorMat, 0, -0.1, -2)
+const wallMat = M(0xf1e6d2), wall2 = M(0xe6d8bf), dadoMat = M(0x8fb7a8)
+box(34, 9, 0.3, wallMat, 0, 4.5, -6.5); box(0.3, 9, 34, wall2, -7.4, 4.5, -2); box(34, 1.8, 0.36, dadoMat, 0, 0.9, -6.46)
+// the chalkboard (menu on the left, her tally on the right), shelves of bread, a window, the oven
+box(3.0, 2.4, 0.12, 0x8a5a2b, 2.1, 4.8, -6.34); const bd = canvasTex(768, 576); { const m = mesh(new THREE.PlaneGeometry(2.8, 2.1), basic(0xffffff, { map: bd.t }), 2.1, 4.8, -6.27); m.castShadow = false } box(3.0, 0.1, 0.2, 0x8a5a2b, 2.1, 3.56, -6.26); box(0.24, 0.06, 0.06, 0xf4f1ea, 2.9, 3.64, -6.24)
+let boardKey = ''
+function drawBoard(marks, open) { const key = marks + '|' + (open ? 1 : 0); if (key === boardKey) return; boardKey = key; const x = bd.x; x.fillStyle = '#26332d'; x.fillRect(0, 0, 768, 576); x.strokeStyle = 'rgba(255,255,255,.07)'; x.lineWidth = 26; x.lineCap = 'round'; for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(40 + i * 150, 500 - i * 30); x.lineTo(180 + i * 150, 440 - i * 40); x.stroke() }
+  x.fillStyle = '#f4f1ea'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('TODAY', 28, 64); x.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; ['sourdough', 'baguettes', 'rolls ×12'].forEach((s, i) => x.fillText(s, 28, 124 + i * 46)); x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(236, 24, 4, 528)
+  if (open) { x.fillStyle = '#ffe14a'; x.font = '800 96px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('FRESH', 290, 220); x.fillText('TODAY', 290, 330); x.strokeStyle = '#ffe14a'; x.lineWidth = 10; x.beginPath(); x.arc(520, 440, 50, 0.15 * PI, 0.85 * PI); x.stroke() }
+  else { x.fillStyle = '#f4f1ea'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('VIDEOS SENT', 274, 70); x.strokeStyle = '#f4f1ea'; x.lineWidth = 13; for (let i = 0; i < Math.floor(marks); i++) { const g5 = Math.floor(i / 5), k = i % 5, X = 290 + g5 * 158, Y = 130; x.beginPath(); if (k < 4) { x.moveTo(X + k * 30 + (k % 2) * 3, Y); x.lineTo(X + k * 30 - (k % 2) * 4, Y + 150) } else { x.moveTo(X - 18, Y + 122); x.lineTo(X + 110, Y + 26) } x.stroke() } if (marks >= 13) { x.fillStyle = '#ff8a7a'; x.font = '800 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('= 13 ??', 290, 400) } }
+  bd.t.needsUpdate = true }
+const bread = (x, y, z, k) => { if (k === 0) { box(0.8, 0.34, 0.4, 0xb9793f, x, y + 0.17, z); const t2 = cyl(0.2, 0.2, 0.8, 8, 0xc98a4a, x, y + 0.34, z); t2.rotation.z = PI / 2; t2.scale.y = 1; } else if (k === 1) { const b = mesh(new THREE.IcosahedronGeometry(0.36, 1), 0xc08040, x, y + 0.24, z); b.scale.y = 0.62 } else { for (let i = 0; i < 3; i++) { const b = cyl(0.09, 0.09, 1.1, 6, i % 2 ? 0xd9a05a : 0xc98a4a, x - 0.2 + i * 0.2, y + 0.1 + (i === 1 ? 0.14 : 0), z); b.rotation.z = PI / 2; b.rotation.y = 0.2 - i * 0.2 } } }
+for (const [sy, items] of [[2.2, [0, 1, 2, 1]], [3.5, [1, 0, 0, 2]], [4.8, [2, 1, 0, 1]]]) { box(5.4, 0.1, 0.7, 0x9a6b3d, -3.4, sy, -6.1); items.forEach((k, i) => bread(-5.4 + i * 1.34, sy + 0.05, -6.1, k)) }
+const winMat = basic(0x2b3a67); { const w = box(2.2, 2.6, 0.1, winMat, 6.0, 4.4, -6.32); w.castShadow = false; box(0.1, 2.7, 0.14, 0xf4f1ea, 6.0, 4.4, -6.3); box(2.3, 0.1, 0.14, 0xf4f1ea, 6.0, 4.4, -6.3); for (const dx of [-1.15, 1.15]) box(0.12, 2.8, 0.16, 0xf4f1ea, 6.0 + dx, 4.4, -6.3); for (const dy of [-1.35, 1.35]) box(2.42, 0.12, 0.16, 0xf4f1ea, 6.0, 4.4 + dy, -6.3) }
+box(2.6, 3.4, 1.5, 0x3a3f4a, -5.6, 1.7, -5.3); box(2.8, 0.2, 1.7, 0x2a2c33, -5.6, 3.5, -5.3); const ovenMat = basic(0x5a3b2a); { const o = box(1.7, 1.1, 0.06, ovenMat, -5.6, 1.9, -4.52); o.castShadow = false; box(1.9, 0.1, 0.1, 0xc9ced6, -5.6, 2.62, -4.48); for (let i = 0; i < 3; i++) cyl(0.08, 0.08, 0.06, 8, 0xc9ced6, -6.2 + i * 0.6, 3.1, -4.52).rotation.x = PI / 2 }
+for (const X of [-3.6, 5.4]) { cyl(0.02, 0.02, 2.6, 4, 0x2a2c33, X, 7.0, -2.2); mesh(new THREE.ConeGeometry(0.55, 0.42, 10, 1, true), M(0xc9623a, { side: THREE.DoubleSide }), X, 5.6, -2.2) }
+{ cyl(0.5, 0.4, 1.1, 10, 0xb98a55, -2.4, 0.55, -2.4); for (let i = 0; i < 5; i++) { const b = cyl(0.1, 0.1, 1.5, 6, i % 2 ? 0xd9a05a : 0xc98a4a, -2.4 + Math.cos(i * 1.26) * 0.24, 1.5, -2.4 + Math.sin(i * 1.26) * 0.24); b.rotation.z = Math.cos(i * 1.26) * 0.14; b.rotation.x = -Math.sin(i * 1.26) * 0.14 } }
+for (const [x, z, ry] of [[5.6, -1.4, 0.2], [6.3, -2.3, -0.3]]) { const s = box(1.0, 1.2, 0.7, 0xe9dfc6, x, 0.6, z); s.rotation.y = ry; const l = box(0.6, 0.4, 0.02, 0xc9623a, x, 0.66, z + 0.36); l.rotation.y = ry }
+// her work table (butcher block), a stool, a rolling pin, a bag of flour, and a tray of twelve rolls
+box(3.4, 0.14, 1.4, 0xd9b98a, 2.0, 1.5, -1.2); for (const [dx, dz] of [[-1.55, -0.55], [1.55, -0.55], [-1.55, 0.55], [1.55, 0.55]]) box(0.14, 1.44, 0.14, 0x9a6b3d, 2.0 + dx, 0.72, -1.2 + dz); box(3.1, 0.08, 1.1, 0x9a6b3d, 2.0, 0.5, -1.2)
+cyl(0.34, 0.34, 0.12, 12, 0x9a6b43, 2.0, 0.94, -2.4); for (let i = 0; i < 3; i++) { const lg = cyl(0.04, 0.04, 1.0, 5, 0x7d5536, 2.0 + Math.cos(i * 2.09) * 0.26, 0.46, -2.4 + Math.sin(i * 2.09) * 0.26); lg.rotation.z = Math.cos(i * 2.09) * 0.2; lg.rotation.x = -Math.sin(i * 2.09) * 0.2 }
+{ const rp = cyl(0.09, 0.09, 0.8, 8, 0xc9a26b, 3.15, 1.67, -0.86); rp.rotation.z = PI / 2; rp.rotation.y = 0.3; box(0.5, 0.66, 0.34, 0xf4f1ea, 3.3, 1.9, -1.62); box(0.3, 0.2, 0.02, 0x27365e, 3.3, 1.92, -1.44); for (const [dx, dz] of [[0.3, 0.4], [-0.2, 0.52], [1.1, 0.5]]) cyl(0.2, 0.2, 0.01, 8, 0xfaf7f0, 2.0 + dx, 1.575, -1.2 + dz) }
+const trayG = grp(0.92, 1.57, -1.1); box(0.98, 0.04, 0.74, 0x6b7080, 0, 0.02, 0, trayG); for (let r = 0; r < 3; r++) for (let c2 = 0; c2 < 4; c2++) { const b = mesh(new THREE.IcosahedronGeometry(0.115, 1), (r + c2) % 2 ? 0xd9a05a : 0xcf9450, -0.33 + c2 * 0.22, 0.12, -0.23 + r * 0.23, trayG); b.scale.y = 0.72 }
+const roll13 = mesh(new THREE.IcosahedronGeometry(0.125, 1), 0xe0aa62, 0, -9, 0); roll13.scale.y = 0.72
+const laptop = grp(2.0, 1.58, -1.3); box(1.15, 0.06, 0.78, 0xc9ced6, 0, 0.03, 0, laptop)
+const lid = grp(0, 0.06, 0.39, laptop); box(1.15, 0.78, 0.05, 0x2b2d33, 0, 0.39, 0, lid)
+const scr = canvasTex(640, 420); const scrMesh = mesh(new THREE.PlaneGeometry(1.05, 0.68), basic(0xffffff, { map: scr.t }), 0, 0.39, -0.03, lid); scrMesh.rotation.y = PI; scrMesh.castShadow = false
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+const lidG = mesh(new THREE.PlaneGeometry(0.36, 0.45), basic(0xffffff, { map: gTex, transparent: true, opacity: 0 }), 0, 0.39, 0.03, lid); lidG.castShadow = false
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), sh = M(CONFIG.shirt), ap = M(CONFIG.apron), pant = M(CONFIG.pants), hair = M(CONFIG.hair), dark = M(0x15161a), wrap = M(CONFIG.wrap), gold = M(0xffd23f)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.04, 1.2, 0.6, sh, 0, 0.6, 0, p.torso); box(0.8, 0.92, 0.04, ap, 0, 0.46, 0.31, p.torso); for (const dx of [-0.24, 0, 0.24]) box(0.05, 0.92, 0.045, M(0xf4f1ea), dx, 0.46, 0.312, p.torso); for (const sx of [-1, 1]) box(0.08, 0.34, 0.04, ap, sx * 0.3, 1.06, 0.31, p.torso); box(0.52, 0.2, 0.56, pant, 0, -0.02, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.8, 0.78, 0.76, skin, 0, 0.44, 0, p.head)
+  box(0.9, 0.36, 0.84, wrap, 0, 0.9, 0, p.head); box(0.88, 0.3, 0.2, wrap, 0, 0.74, -0.36, p.head); box(0.4, 0.3, 0.3, wrap, 0.1, 1.16, 0.12, p.head); box(0.24, 0.2, 0.2, wrap, -0.18, 1.14, 0.2, p.head)
+  for (const sx of [-1, 1]) { box(0.1, 0.3, 0.3, hair, sx * 0.43, 0.56, 0.06, p.head); box(0.04, 0.2, 0.2, gold, sx * 0.46, 0.22, 0.08, p.head) } box(0.5, 0.1, 0.06, hair, 0, 0.74, 0.39, p.head)
+  box(0.16, 0.08, 0.02, M(0xfaf7f0), 0.24, 0.3, 0.385, p.head)
+  p.eyeL = box(0.11, 0.16, 0.04, dark, -0.19, 0.44, 0.39, p.head); p.eyeR = box(0.11, 0.16, 0.04, dark, 0.19, 0.44, 0.39, p.head)
+  const brow = M(0x2a2a30); p.browL = box(0.2, 0.05, 0.04, brow, -0.19, 0.64, 0.4, p.head); p.browR = box(0.2, 0.05, 0.04, brow, 0.19, 0.64, 0.4, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x5a1f2a), 0, 0.2, 0.4, p.head)
+  p.fnote = grp(0, 0, 0, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.66, 1.08, 0, p.torso); box(0.32, 0.56, 0.34, sh, 0, -0.24, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.34, 0.14, 0.36, sh, 0, -0.04, 0, a.el); box(0.3, 0.2, 0.32, sh, 0, -0.16, 0, a.el); box(0.25, 0.24, 0.27, skin, 0, -0.34, 0, a.el); a.hand = box(0.24, 0.2, 0.26, skin, 0, -0.52, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.4, 0.6, 0.42, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.36, 0.3, 0.38, pant, 0, -0.14, 0, l.knee); box(0.42, 0.4, 0.62, M(0xc0392b), 0, -0.44, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.64 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const TYPE = { ...SIT, alx: -0.45, ale: -1.15, arx: -0.45, are: -1.15, tx: 0.1, hx: 0.22 }
+const FLAT = { ...SIT, hx: 0.04, eye: 0.5, brow: 0.2, mw: 1.2, mh: 0.8, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+const ATWALL = pose({ x: 0.95, y: 1.1, z: -5.55, ry: PI })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+// a slate with a tally on it, and an abacus
+const tallyP = grp(0, -9, 0); box(1.3, 0.9, 0.1, 0x8a5a2b, 0, 0, 0, tallyP); const tt = canvasTex(384, 256); { const x = tt.x; x.fillStyle = '#26332d'; x.fillRect(0, 0, 384, 256); x.strokeStyle = '#f4f1ea'; x.lineWidth = 14; x.lineCap = 'round'; for (let g5 = 0; g5 < 2; g5++) { const X = 50 + g5 * 170; for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(X + k * 32, 50); x.lineTo(X + k * 32 - 4, 200); x.stroke() } x.beginPath(); x.moveTo(X - 20, 176); x.lineTo(X + 116, 70); x.stroke() } tt.t.needsUpdate = true } { const m = mesh(new THREE.PlaneGeometry(1.18, 0.78), basic(0xffffff, { map: tt.t }), 0, 0, 0.055, tallyP); m.castShadow = false }
+const abP = grp(0, -9, 0); for (const sx of [-1, 1]) box(0.1, 1.0, 0.12, 0x8a5a2b, sx * 0.6, 0, 0, abP); for (const sy of [-1, 1]) box(1.3, 0.1, 0.12, 0x8a5a2b, 0, sy * 0.46, 0, abP); for (let r = 0; r < 3; r++) { cyl(0.02, 0.02, 1.16, 4, 0x2a2c33, 0, 0.26 - r * 0.26, 0, abP).rotation.z = PI / 2; for (let b = 0; b < 5; b++) mesh(new THREE.IcosahedronGeometry(0.1, 0), [0xe0453a, 0xffd23f, 0x2f7cf6][r], -0.44 + b * 0.17 + (b > 2 - r ? 0.2 : 0), 0.26 - r * 0.26, 0, abP) }
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function chk(x, cx, cy, r, col) { x.fillStyle = col || '#34d399'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.strokeStyle = '#0b0c10'; x.lineWidth = r * 0.26; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(cx - r * 0.42, cy + r * 0.02); x.lineTo(cx - r * 0.1, cy + r * 0.36); x.lineTo(cx + r * 0.46, cy - r * 0.32); x.stroke() }
+const TH = ['#ff8fb3', '#ffd23f', '#5aa9e6', '#34d399', '#b79cf2', '#ff8a3d']
+function thumb(x, X, Y, w, h, i, dashed) { x.fillStyle = dashed ? '#e9ebf0' : TH[i % 6]; rr(x, X, Y, w, h, 12); x.fill(); if (dashed) { x.setLineDash([8, 6]); x.strokeStyle = '#9aa0ad'; x.lineWidth = 3; rr(x, X, Y, w, h, 12); x.stroke(); x.setLineDash([]) } x.fillStyle = dashed ? '#9aa0ad' : 'rgba(255,255,255,.9)'; x.beginPath(); x.moveTo(X + w * 0.38, Y + h * 0.34); x.lineTo(X + w * 0.68, Y + h * 0.5); x.lineTo(X + w * 0.38, Y + h * 0.66); x.fill() }
+function drawLaptop(t) {
+  const x = scr.x, w = 640, h = 420
+  if (t < T.found) { x.fillStyle = '#f4f5f8'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('Sent', 24, 48); for (let i = 0; i < 10; i++) thumb(x, 24 + (i % 5) * 120, 76 + Math.floor(i / 5) * 160, 104, 140, i) }
+  else { x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.textAlign = 'center'; const k = back(seg(t, T.foundG - 0.1, T.foundG + 0.35)); x.save(); x.translate(w / 2, 170); x.scale(k, k); x.drawImage(G_IMG, -84, -105, 168, 210); x.restore(); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand', w / 2, 350) }
+  scr.t.needsUpdate = true
+}
+// 0 the contract · 1 the sent folder, counted twice · 2 the brand's count · 3 which ones? · 4 the campaign page · 5 her posts, counted or not
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  if (mode === 0) {
+    x.fillStyle = '#fffdf6'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Agreement', 48, 92); x.fillStyle = '#9aa0ad'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('between the brand and the creator', 48, 134); x.fillStyle = '#d6d9e0'; for (let i = 0; i < 3; i++) x.fillRect(48, 180 + i * 34, 620 - i * 90, 12)
+    x.fillStyle = '#16161a'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('3. Deliverables', 48, 336); x.font = '600 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('The creator will deliver', 48, 396)
+    const k = back(seg(t, T.twelveHit - 0.08, T.twelveHit + 0.16)); x.save(); x.translate(48, 500); x.scale(Math.max(k, 0.001) > 0 ? 1 + 0.12 * (1 - seg(t, T.twelveHit, T.twelveHit + 0.3)) * (t >= T.twelveHit ? 1 : 0) : 1, 1); if (t >= T.twelveHit - 0.08) { x.fillStyle = '#ffe14a'; rr(x, -12, -82, 470, 112, 14); x.fill() } x.fillStyle = '#16161a'; x.font = '800 92px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('12 videos', 0, 0); x.restore()
+    x.fillStyle = '#d6d9e0'; for (let i = 0; i < 2; i++) x.fillRect(48, 570 + i * 34, 560 - i * 140, 12)
+    return void (dc.t.needsUpdate = true)
+  }
+  if (mode === 1) {
+    x.fillStyle = '#f4f5f8'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Sent', 40, 78); x.fillStyle = '#9aa0ad'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('to the brand', 150, 76)
+    const second = t >= T.again, N = second ? 11 + Math.min(2, Math.floor(seg(t, T.againHit + 0.1, T.thirteen - 0.25) * 2.99)) : 11, cur = second ? Math.min(13, Math.ceil(seg(t, T.againHit, T.thirteen) * 13)) : Math.min(11, Math.ceil(seg(t, T.cntHit, T.eleven) * 11))
+    for (let i = 0; i < N; i++) { const X = 40 + (i % 5) * 131, Y = 122 + Math.floor(i / 5) * 176, extra = i >= 11; thumb(x, X, Y, 116, 152, i, extra); if (extra) { x.fillStyle = '#6b7080'; x.font = '700 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(i === 11 ? 'a copy?' : 'the redo?', X + 58, Y + 136); x.textAlign = 'left' } if (i < cur) { x.fillStyle = '#16161a'; x.beginPath(); x.arc(X + 22, Y + 22, 18, 0, 7); x.fill(); x.fillStyle = '#fff'; x.font = '800 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(String(i + 1), X + 22, Y + 29); x.textAlign = 'left' } if (i === cur - 1) { x.strokeStyle = '#ff4d4f'; x.lineWidth = 6; rr(x, X - 5, Y - 5, 126, 162, 15); x.stroke() } }
+    const hit = second ? T.thirteen : T.eleven, done = t >= hit, pk = done ? 1 + 0.25 * (1 - seg(t, hit, hit + 0.3)) : 1; x.save(); x.translate(600, 62); x.scale(pk, pk); x.fillStyle = done ? '#ff4d4f' : '#16161a'; rr(x, -80, -38, 160, 76, 38); x.fill(); x.fillStyle = '#fff'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(String(Math.max(cur, 0)), 0, 15); x.restore(); x.textAlign = 'left'
+    return void (dc.t.needsUpdate = true)
+  }
+  if (mode === 2) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Re: where are we at?', 40, 78); x.fillStyle = '#e4e6ec'; x.fillRect(40, 104, 640, 3); x.fillStyle = '#9aa0ad'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('From: the brand', 40, 152)
+    const k1 = back(seg(t, T.brandHit - 0.08, T.brandHit + 0.14)); if (k1 > 0) { x.save(); x.translate(40, 250); x.scale(k1, k1); x.fillStyle = '#16161a'; x.font = '700 42px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Hi! By our count', 0, 0); x.fillText('you have delivered', 0, 56); x.restore() }
+    const k2 = back(seg(t, T.nine - 0.06, T.nine + 0.16)); if (k2 > 0) { x.save(); x.translate(200, 500); x.scale(k2, k2); x.fillStyle = '#ffe9e9'; rr(x, -150, -150, 300, 270, 30); x.fill(); x.strokeStyle = '#ff4d4f'; x.lineWidth = 6; rr(x, -150, -150, 300, 270, 30); x.stroke(); x.fillStyle = '#ff4d4f'; x.font = '800 230px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('9', 0, 78); x.restore(); x.textAlign = 'left'; x.fillStyle = '#16161a'; x.font = '700 42px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.globalAlpha = eo(seg(t, T.nine + 0.1, T.nine + 0.3)); x.fillText('videos.', 380, 520); x.fillText(':)', 380, 576); x.globalAlpha = 1 }
+    return void (dc.t.needsUpdate = true)
+  }
+  if (mode === 3) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('What I sent', 40, 78); x.fillStyle = '#e4e6ec'; x.fillRect(40, 104, 640, 3)
+    for (let i = 0; i < 6; i++) { const Y = 124 + i * 88; x.fillStyle = i % 2 ? '#fff' : '#f4f5f8'; x.fillRect(30, Y, 660, 82); thumb(x, 44, Y + 9, 50, 64, i); x.fillStyle = '#16161a'; x.font = '700 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Video ' + (i + 1), 116, Y + 52); const qk = back(seg(t, T.someHit - 0.06 + i * 0.07, T.someHit + 0.12 + i * 0.07)); x.save(); x.translate(590, Y + 41); x.scale(Math.max(qk, 0.001), Math.max(qk, 0.001)); x.fillStyle = qk > 0 ? '#ffb347' : '#e4e6ec'; rr(x, -86, -25, 172, 50, 25); x.fill(); x.fillStyle = '#16161a'; x.font = '800 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('counted?', 0, 9); x.restore(); x.textAlign = 'left' }
+    const wk = back(seg(t, T.whichHit - 0.06, T.whichHit + 0.14)); if (wk > 0) { x.save(); x.translate(360, 380); x.rotate(-0.12); x.scale(wk, wk); x.fillStyle = '#ff4d4f'; rr(x, -270, -70, 540, 140, 24); x.fill(); x.fillStyle = '#fff'; x.font = '800 84px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('WHICH ONES?', 0, 30); x.restore(); x.textAlign = 'left' }
+    return void (dc.t.needsUpdate = true)
+  }
+  x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 20, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('My Campaigns', 88, 60)
+  if (mode === 4) {
+    x.fillStyle = '#fff'; x.font = '800 46px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Sunny Soda', 30, 150); x.fillStyle = '#143d2e'; rr(x, 314, 112, 120, 46, 23); x.fill(); x.fillStyle = '#34d399'; x.font = '800 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Active', 336, 144)
+    ;[['Days left', '9', T.nineHit, '#b79cf2'], ['Delivered', '7 / 12', T.sevenHit, '#5aa9e6']].forEach(([lab, val, th, c], i) => { const k = back(seg(t, T.pageHit - 0.1 + i * 0.1, T.pageHit + 0.12 + i * 0.1)); if (k <= 0) return; const hot = t >= th, pk = hot ? 1 + 0.1 * (1 - seg(t, th, th + 0.3)) : 1; x.save(); x.translate(190 + i * 340, 280); x.scale(k * pk, k * pk); x.fillStyle = '#161619'; rr(x, -160, -92, 320, 184, 22); x.fill(); if (hot) { x.strokeStyle = c; x.lineWidth = 4; rr(x, -160, -92, 320, 184, 22); x.stroke() } x.fillStyle = '#a1a1aa'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(lab, -134, -44); x.fillStyle = hot ? '#fff' : '#5a5e70'; x.font = '800 84px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(hot ? val : '—', -134, 52); x.restore() })
+    const dk = eo(seg(t, T.deliv - 0.1, T.deliv + 0.15)); if (dk > 0) { x.globalAlpha = dk; x.fillStyle = '#161619'; rr(x, 30, 400, 660, 230, 22); x.fill(); x.fillStyle = '#fff'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Deliverables', 56, 448); const n = Math.min(7, Math.floor(seg(t, T.deliv, T.twelve2) * 7.99)); for (let i = 0; i < 12; i++) { const X = 56 + i * 51.5, on = i < n, pk = on && i === n - 1 ? 1 + 0.25 * (1 - seg(t, T.deliv + (i / 7.99) * (T.twelve2 - T.deliv), T.deliv + (i / 7.99) * (T.twelve2 - T.deliv) + 0.2)) : 1; x.save(); x.translate(X + 21, 506); x.scale(pk, pk); x.fillStyle = on ? '#34d399' : '#2a2c35'; rr(x, -21, -21, 42, 42, 10); x.fill(); if (on) { x.strokeStyle = '#0b0c10'; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(-9, 1); x.lineTo(-2, 8); x.lineTo(10, -7); x.stroke() } x.restore() } x.fillStyle = '#a1a1aa'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(n + ' of 12 delivered', 56, 590); x.globalAlpha = 1 }
+    return void (dc.t.needsUpdate = true)
+  }
+  x.fillStyle = '#fff'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Sunny Soda · your posts', 30, 146)
+  ;[['Video 7', 'App A', 1, T.cHit], ['Video 6', 'App B', 1, T.cHit + 0.1], ['Video 5', 'App C', 1, T.cHit + 0.2], ['Video 4', 'video app', 0, T.ncHit]].forEach(([nm, pf, ok, th], i) => { const Y = 176 + i * 118; x.fillStyle = '#161619'; rr(x, 30, Y, 660, 104, 18); x.fill(); thumb(x, 46, Y + 12, 62, 80, 6 - i); x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(nm, 130, Y + 48); x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(pf, 130, Y + 82); const k = back(seg(t, th - 0.06, th + 0.14)); if (k <= 0) return; x.save(); x.translate(560, Y + 52); x.scale(k, k); x.fillStyle = ok ? '#143d2e' : '#4a3413'; rr(x, -116, -28, 232, 56, 28); x.fill(); x.fillStyle = ok ? '#34d399' : '#ffb347'; x.beginPath(); x.arc(-88, 0, 8, 0, 7); x.fill(); x.font = '800 27px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(ok ? 'Counted' : 'Not counted', -68, 10); x.restore() })
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[3.4, 3.6, 7.8], [1.5, 2.6, -3.0], 46], front: [[2.0, 2.95, 4.6], [2.0, 2.3, -2.4], 34], frontR: [[4.0, 2.9, 2.9], [2.0, 2.3, -2.2], 38], face: [[2.0, 3.25, 1.5], [2.0, 2.62, -2.4], 36],
+  shoulder: [[3.75, 3.75, -3.5], [1.8, 1.9, -1.2], 50], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+  board: [[2.3, 3.4, 0.7], [1.9, 4.05, -6.3], 46], tray: [[0.7, 2.75, 1.5], [0.95, 1.5, -1.12], 40],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = STAND, c = CAM.wide, ck = 0, shake = 0, lidA = 0.22, docMode = -1, glowOn = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; tallyP.position.y = -9; abP.position.y = -9; roll13.position.y = -9
+  const breathe = Math.sin(t * 2.2) * 0.012, ty = Math.sin(t * 26)
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const marks = t < T.tally ? 0 : t < T.found ? Math.min(13, seg(t, T.tally + 0.15, T.wallHit) * 13.2) : 13
+
+  if (t < T.part) { q = { ...TYPE, ale: -1.15 + ty * 0.1, are: -1.15 - ty * 0.1 }; c = CAM.wide; ck = seg(t, 0, T.part); glowOn = 0.4 }
+  else if (t < T.con) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(TYPE, { ...SIT, alz: -2.6, ale: -0.3, hx: -0.05, mw: 1.7, mh: 2.2, eye: 1.2, arx: -0.45, are: -1.15 }, k); c = CAM.frontR; ck = seg(t, T.part, T.con); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.cnt) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.con, T.cnt); docMode = 0; showDoc(T.con); if (t >= T.twelveHit) { v.pills.push(['THE DEAL: 12', 0, back(seg(t, T.twelveHit, T.twelveHit + 0.2)), 'good']); shake = (1 - seg(t, T.twelveHit, T.twelveHit + 0.3)) * 0.5 } }
+  else if (t < T.brand) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.cnt, T.brand); docMode = 1; showDoc(T.cnt); for (const h0 of [T.eleven, T.thirteen]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.35)) * 0.8); if (t >= T.eleven && t < T.again) v.pills.push(['COUNT ONE: 11', 0, back(seg(t, T.eleven, T.eleven + 0.2)), 'bad']); if (t >= T.thirteen) v.pills.push(['COUNT TWO: 13', 0, back(seg(t, T.thirteen, T.thirteen + 0.2)), 'bad']) }
+  else if (t < T.three) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.brand, T.three); docMode = 2; showDoc(T.brand); if (t >= T.nine) shake = 1 - seg(t, T.nine, T.nine + 0.4) }
+  else if (t < T.some) {                                                        // three different numbers, for one job
+    const k = eo(seg(t, T.job, T.job + 0.25)); q = mixP(FLAT, { ...FLAT, hz: 0.16, brow: 0.3, eye: 0.42, mw: 1.3, mh: 0.6 }, k); c = CAM.face; ck = seg(t, T.three, T.some)
+    ;[['ME: 11', 0], ['ME AGAIN: 13', 0.14], ['THE BRAND: 9', 0.28]].forEach(([s, d], i) => { if (t >= T.threeHit + d) v.pills.push([s, i, back(seg(t, T.threeHit + d, T.threeHit + d + 0.2)), 'bad']) })
+    if (t >= T.jobHit) shake = (1 - seg(t, T.jobHit, T.jobHit + 0.35)) * 0.7
+  } else if (t < T.tally) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.some, T.tally); docMode = 3; showDoc(T.some); if (t >= T.someHit) shake = (1 - seg(t, T.someHit, T.someHit + 0.3)) * 0.35; if (t >= T.whichHit) shake = Math.max(shake, 1 - seg(t, T.whichHit, T.whichHit + 0.4)) }
+  else if (t < T.found) {                                                       // so now I keep a tally, on the wall
+    const sc2 = Math.sin(marks * PI * 2) * 0.5 + 0.5; q = { ...ATWALL, alz: -2.25 + sc2 * 0.3, alx: -0.55, ale: -0.2, hx: -0.2, hy: -0.2, x: ATWALL.x + Math.min(marks, 13) * 0.045 }; c = CAM.board; ck = seg(t, T.tally, T.found); shake = 0.06
+    if (t >= T.wallHit) { v.pills.push(['TALLY: ON THE WALL', 0, back(seg(t, T.wallHit, T.wallHit + 0.2)), 'bad']); shake = (1 - seg(t, T.wallHit, T.wallHit + 0.35)) * 0.7 }
+  } else if (t < T.page) {                                                      // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP(FLAT, { ...SIT, hx: 0.12, eye: 1.45, mw: 0.8, mh: 2, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }, k); c = CAM.face; ck = seg(t, T.found, T.foundG) }
+    else { q = { ...TYPE, eye: 1.3 }; c = CAM.shoulder; ck = seg(t, T.foundG, T.page); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.every) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.page, T.every); docMode = 4; showDoc(T.page); for (const [h0, a] of [[T.pageHit, 0.4], [T.sevenHit, 0.6], [T.nineHit, 0.6]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.28)) * a); if (t >= T.pageHit + 0.25 && t < T.deliv) v.pills.push(['IT COUNTS FOR ME', 0, back(seg(t, T.pageHit + 0.25, T.pageHit + 0.45)), 'good']) }
+  else if (t < T.no) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.every, T.no); docMode = 5; showDoc(T.every); for (const [h0, a] of [[T.cHit, 0.45], [T.ncHit, 0.6]]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.28)) * a); if (t >= T.ncHit + 0.2) v.pills.push(['IT SAYS WHICH', 0, back(seg(t, T.ncHit + 0.2, T.ncHit + 0.4)), 'good']) }
+  else if (t < T.it) {                                                          // no tally, no recount, no bullshit
+    c = CAM.center; ck = seg(t, T.no, T.it)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.1 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.02 + fly * 6), py = 3.75 + fly * 2.4 + Math.sin(t * 5) * 0.06, spin = fly * 9, o = n ? abP : tallyP
+      o.position.set(px, py, 2.3); o.rotation.set(0, spin * 0.6 + (n ? -0.2 : 0.2), spin + (n ? -0.06 : 0.08)); o.scale.setScalar(Math.max(0.01, inK * 0.9)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['TALLY', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['TALLY', 0, 1, 'bad']); if (t >= h0) v.pills.push(['RECOUNT', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['TALLY', 0, 1, 'bad'], ['RECOUNT', 1, 1, 'bad']) }
+  } else {                                                                      // it was thirteen, by the way: a baker's dozen, force of habit
+    const d = seg(t, T.itHit - 0.05, T.itHit + 0.22), bn = t >= T.itHit + 0.22 ? Math.abs(Math.sin((t - T.itHit - 0.22) * 9)) * 0.09 * (1 - seg(t, T.itHit + 0.22, T.itHit + 0.75)) : 0
+    roll13.position.set(0.92, 1.57 + 0.27 + (1 - d * d) * 1.5 + bn, -1.1)
+    if (t < T.baker) { q = { ...SIT, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9, hy: -0.4, hx: 0.14 }; c = CAM.tray; ck = seg(t, T.it, T.baker); if (t >= T.itHit + 0.22) { v.pills.push(['THIRTEEN', 0, back(seg(t, T.itHit + 0.22, T.itHit + 0.42)), 'good']); shake = (1 - seg(t, T.itHit + 0.22, T.itHit + 0.5)) * 0.6 } }
+    else { const k = back(seg(t, T.baker, T.baker + 0.22)), k2 = back(seg(t, T.force, T.force + 0.2)); q = mixP({ ...SIT, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }, { ...SIT, alx: -0.5, arx: -0.5, ale: -1.5, are: -1.5, alz: -0.5 - k2 * 0.25, arz: 0.5 + k2 * 0.25, hz: 0.1, eye: 0.9, brow: -0.12, mw: 1.6, mh: 1.0, ty: 0, y: DESK.y + k2 * 0.04 }, k); c = CAM.front; ck = seg(t, T.baker, T.end)
+      if (t >= T.dozenHit) { v.pills.push(["A BAKER'S DOZEN", 0, back(seg(t, T.dozenHit, T.dozenHit + 0.2)), 'good']); shake = (1 - seg(t, T.dozenHit, T.dozenHit + 0.3)) * 0.4 } if (t >= T.habitHit) { v.pills.push(['FORCE OF HABIT', 1, back(seg(t, T.habitHit, T.habitHit + 0.2)), 'good']); shake = Math.max(shake, (1 - seg(t, T.habitHit, T.habitHit + 0.35)) * 0.6) } }
+  }
+  applyPose({ ...q, tx: q.tx + breathe })
+  setCam(c[0], c[1], c[2], eo(ck) * 0.6 + ck * 0.4, 0.07, shake)
+  lid.rotation.x = lidA
+  docBody.color.set(docMode >= 4 ? 0x15161a : docMode === 1 ? 0xf4f5f8 : docMode === 0 ? 0xfffdf6 : 0xffffff)
+  drawBoard(Math.floor(marks), good > 0.5)
+  // light and mood: before dawn, oven cold; then morning and the oven on
+  scene.background.set(0x8c93a6).lerp(new THREE.Color(0xf6e3c0), good); wallMat.color.set(0xc6cbd6).lerp(new THREE.Color(0xfff3dc), good); wall2.color.set(0xb4bac6).lerp(new THREE.Color(0xf3dfba), good); dadoMat.color.set(0x7d939a).lerp(new THREE.Color(0x8fc7b0), good); floorMat.color.set(0xc9ccd6).lerp(new THREE.Color(0xffffff), good)
+  winMat.color.set(0x2b3a67).lerp(new THREE.Color(0xffe2a6), good); ovenMat.color.set(0x4a3528).lerp(new THREE.Color(0xffa23f), good)
+  sun.color.set(0xcfd9ee).lerp(new THREE.Color(0xffe2b8), good); sun.intensity = lerp(1.25, 1.95, good); hemi.intensity = lerp(1.2, 1.32, good); hemi.color.set(0xdfe6f3).lerp(new THREE.Color(0xffeed6), good)
+  glow.position.set(2.0, 2.1, -1.55); glow.intensity = glowOn * 2.2
+  lidG.material.opacity = good
+  drawLaptop(t); if (docMode >= 0) drawDoc(docMode, t)
+}
+
+
+// ---------- 2D layer: captions, pills, stamps, list, end card
+const SAFE = CONFIG.safe, CX = (SAFE.left + SAFE.right) / 2
+function pill(text, row, k, kind) {
+  if (k <= 0) return
+  const fs = 44; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; const mark = kind === 'good' ? '✓' : kind === 'bad' ? '✕' : '', tw = g.measureText(text).width, w = tw + (mark ? 124 : 76), h = 92, y = SAFE.top + 60 + row * 112
+  g.save(); g.translate(CX, y); g.scale(k, k); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 30; g.shadowOffsetY = 12
+  g.fillStyle = CONFIG.card; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, h / 2); g.fill(); g.shadowColor = 'transparent'
+  let x = -w / 2 + 38
+  if (mark) { g.fillStyle = kind === 'good' ? CONFIG.good : CONFIG.bad; g.beginPath(); g.arc(x + 16, 0, 26, 0, 7); g.fill(); g.fillStyle = '#0b0c10'; g.font = `800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(mark, x + 16, 2); x += 58 }
+  g.fillStyle = CONFIG.bright; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(text, x, 2); g.restore()
+}
+function stamp(text, k, color, rot, yShare) {
+  if (k <= 0) return
+  const s = lerp(2.6, 1, eo(k)); g.save(); g.translate(CX, H * yShare + SAFE.top); g.rotate(rot); g.scale(s, s); g.globalAlpha = clamp(k * 3)
+  g.font = '800 92px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(text).width + 90; g.fillStyle = color; g.beginPath(); g.roundRect(-w / 2, -80, w, 160, 26); g.fill()
+  g.strokeStyle = '#fff'; g.lineWidth = 8; g.beginPath(); g.roundRect(-w / 2 + 14, -66, w - 28, 132, 16); g.stroke()
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, 6); g.restore()
+}
+function coin(xs, ys, k, t, size = 400) {
+  if (k <= 0) return
+  const sx = Math.cos(t * 3.2), h = size * k, w = h * 0.8 * Math.abs(sx)
+  g.save(); g.translate(W * xs, H * ys); g.shadowColor = 'rgba(255,255,255,.55)'; g.shadowBlur = 70; g.drawImage(G_IMG, -w / 2, -h / 2, Math.max(2, w), h); g.restore()
+}
+function captions(t) {
+  let gi = -1; for (let i = 0; i < GROUPS.length; i++) { if (t >= WORDS[GROUPS[i][0]][1] - 0.04) gi = i }
+  if (gi < 0) return
+  const [a, b, br, mul] = GROUPS[gi]; const endT = gi + 1 < GROUPS.length ? WORDS[GROUPS[gi + 1][0]][1] - 0.04 : WORDS[b][2] + 0.5
+  if (t > Math.min(endT, WORDS[b][2] + 0.9)) return
+  const lines = [[]]; for (let i = a; i <= b; i++) { lines[lines.length - 1].push(i); if (i === br) lines.push([]) }
+  let fs = 118 * mul; const maxW = SAFE.right - SAFE.left - 20
+  const widthOf = (ln) => { g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; return g.measureText(ln.map(i => WORDS[i][0].toUpperCase()).join(' ')).width }
+  while (Math.max(...lines.map(widthOf)) > maxW && fs > 40) fs -= 4
+  g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textBaseline = 'middle'; g.textAlign = 'left'; g.lineJoin = 'round'
+  const lh = fs * 1.1, y0 = H * CONFIG.capY - (lines.length - 1) * lh / 2, sp = g.measureText(' ').width
+  lines.forEach((ln, li) => {
+    let x = CX - widthOf(ln) / 2; const y = y0 + li * lh
+    for (const i of ln) {
+      const txt = WORDS[i][0].toUpperCase(), ww = g.measureText(txt).width, said = t >= WORDS[i][1] - 0.04
+      if (said) { const k = back(seg(t, WORDS[i][1] - 0.04, WORDS[i][1] + 0.1)), cur = t < WORDS[i][2] + 0.06 || i === b
+        g.save(); g.translate(x + ww / 2, y); g.scale(0.7 + 0.3 * k, 0.7 + 0.3 * k); g.textAlign = 'center'
+        g.strokeStyle = '#000'; g.lineWidth = fs * 0.2; g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 0; g.shadowOffsetY = fs * 0.07; g.strokeText(txt, 0, 0); g.shadowColor = 'transparent'
+        g.fillStyle = cur ? CONFIG.capHi : CONFIG.capBase; g.fillText(txt, 0, 0); g.restore() }
+      x += ww + sp
+    }
+  })
+}
+function endCard(t) {
+  const k = seg(t, T.end, T.end + 0.35); if (k <= 0) return
+  g.fillStyle = `rgba(6,6,9,${eo(k)})`; g.fillRect(0, 0, W, H)
+  const a = eo(seg(t, T.end + 0.15, T.end + 0.6)), gh = 340, gy = H * 0.3
+  g.save(); g.globalAlpha = a; g.translate(W / 2, gy); const s = lerp(1.25, 1, eo(seg(t, T.end + 0.15, T.end + 0.8))); g.scale(s, s); g.shadowColor = 'rgba(255,255,255,.35)'; g.shadowBlur = 90; g.drawImage(G_IMG, -gh * 0.4, -gh / 2, gh * 0.8, gh); g.restore()
+  const ww = 540, wh = ww * WORD_IMG.height / WORD_IMG.width, wy = gy + gh / 2 + 10; g.save(); g.globalAlpha = eo(seg(t, T.end + 0.35, T.end + 0.8)); g.drawImage(WORD_IMG, W / 2 - ww / 2, wy, ww, wh); g.restore()
+  g.textAlign = 'center'; g.textBaseline = 'middle'; const ly = wy + wh + 90
+  CONFIG.endLines.forEach((s, i) => { const kk = eo(seg(t, T.end + 0.7 + i * 0.32, T.end + 1.05 + i * 0.32)); g.globalAlpha = kk; g.fillStyle = i === CONFIG.endLines.length - 1 ? '#fff' : '#d4d4d8'; g.font = '700 78px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.fillText(s, W / 2, ly + i * 100 + (1 - kk) * 26) })
+  const kk = back(seg(t, T.end + 1.9, T.end + 2.2)); if (kk > 0) { g.globalAlpha = 1; g.save(); g.translate(W / 2, ly + CONFIG.endLines.length * 100 + 70); g.scale(kk, kk); g.font = '700 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(CONFIG.site).width + 110; g.fillStyle = '#fff'; g.beginPath(); g.roundRect(-w / 2, -60, w, 120, 60); g.fill(); g.fillStyle = '#0b0c10'; g.fillText(CONFIG.site, 0, 3); g.restore() }
+  g.globalAlpha = 1
+}
+
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

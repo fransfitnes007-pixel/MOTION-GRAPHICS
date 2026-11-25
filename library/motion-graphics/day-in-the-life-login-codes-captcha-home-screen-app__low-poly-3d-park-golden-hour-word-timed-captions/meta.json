@@ -1,0 +1,59 @@
+{
+  "slug": "day-in-the-life-login-codes-captcha-home-screen-app__low-poly-3d-park-golden-hour-word-timed-captions",
+  "visual_name": "Day in the life, part fifteen: forty minutes of good light (low-poly 3D)",
+  "code_name": "three.js park with a sky driven by a countdown, box-built character, login / nested code dialogs / CAPTCHA / share sheet / home screen / app opening, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.5 second 9:16 reel in low-poly 3D: forty minutes of good light lost to a wrong password, a reset code behind an email behind another code, and a traffic-light CAPTCHA, while the sun sets and a timer hits zero; then YourBrand: sign in once, add it to the home screen, tap the icon, already signed in. She is still not sure she is human.",
+  "aliases": [
+    "login",
+    "log in",
+    "wrong password",
+    "reset code",
+    "two factor",
+    "captcha",
+    "traffic lights",
+    "the pole",
+    "golden hour",
+    "sunset",
+    "countdown",
+    "home screen",
+    "add to home screen",
+    "signed in",
+    "day in the life 15",
+    "part fifteen",
+    "pt 15",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "day-night",
+    "end-card",
+    "kinetic-type",
+    "login",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 15,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-six-brands-sticky-notes-home__low-poly-3d-office-cubicle-word-timed-captions"
+  ]
+}

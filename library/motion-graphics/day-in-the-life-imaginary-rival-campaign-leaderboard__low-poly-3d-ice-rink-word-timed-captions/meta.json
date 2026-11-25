@@ -1,0 +1,61 @@
+{
+  "slug": "day-in-the-life-imaginary-rival-campaign-leaderboard__low-poly-3d-ice-rink-word-timed-captions",
+  "visual_name": "Day in the life, part forty one: Brenda (low-poly 3D)",
+  "code_name": "three.js ice rink at night (cut away at the front: ice with red and blue lines and a centre circle, white boards with a blue rail, dark stands with seats, overhead lamps, a players' bench), a cardboard cutout rival called Brenda on a stand (drawn on a canvas: sunglasses, pink top, thumbs up), a taped #1 sign, box-built skater with a black ponytail, a red puffer vest over a white turtleneck, black leggings, white skates with blades, phone sheets for her notebook page about Brenda (posts at 5 a.m., never misses, viral in Portugal) / the YourBrand campaign leaderboard (Ranked by counted views, Rank Creator Views Posts, her row with YOU at number four), hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 41.3 second 9:16 reel in low-poly 3D: on an empty ice rink at night she posts alone, no team, nobody to beat, so she invented a rival, Brenda: posts at 5 a.m., never misses, went viral in Portugal. Brenda is a cardboard cutout she made, and Brenda still wins the race. Then YourBrand: the campaign has a leaderboard, real creators ranked by counted views, her row highlighted, fourth; number three is a real person; she posted twice this week. Brenda is still on the ice with a #1 sign. She thinks she is first.",
+  "aliases": [
+    "rival",
+    "imaginary rival",
+    "cardboard cutout",
+    "posting alone",
+    "motivation",
+    "competition",
+    "nobody to beat",
+    "leaderboard",
+    "ranked by views",
+    "your row is highlighted",
+    "rank",
+    "ice rink",
+    "skating",
+    "figure skater",
+    "spin",
+    "notebook",
+    "day in the life 41",
+    "part forty one",
+    "pt 41",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "leaderboard",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 41.28,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 41,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-follower-count-leaderboard-by-views__low-poly-3d-living-room-cat-word-timed-captions",
+    "motion-graphics/day-in-the-life-vague-deadlines-campaign-days-left__low-poly-3d-clock-tower-word-timed-captions"
+  ]
+}

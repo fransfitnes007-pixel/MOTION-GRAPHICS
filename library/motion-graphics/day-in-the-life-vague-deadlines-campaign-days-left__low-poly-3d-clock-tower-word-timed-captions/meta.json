@@ -1,0 +1,60 @@
+{
+  "slug": "day-in-the-life-vague-deadlines-campaign-days-left__low-poly-3d-clock-tower-word-timed-captions",
+  "visual_name": "Day in the life, part forty: end of week (low-poly 3D)",
+  "code_name": "three.js clock-tower room (cut away at the front: brick walls, beams, the giant clock face seen from behind with mirrored numerals and turning hands, wall gears, a big floor gear, a swinging pendulum, a bench and a crate), box-built creator with curly black hair, round glasses, a moustache, a green cardigan and mustard trousers, phone sheets for the brand's chat (end of week, When exactly?, ASAP!!, no rush :), EOD, scrolling) / Posted it! Fri 9:00 AM and 'oh we meant Tuesday' / the YourBrand campaign page (Tock Watches, Fall drop, Active, Nov 24 to Nov 28, 4 days left, Days left 4, Delivered 0 / 3) / the brand today, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: in a clock tower, the brand said the deadline was end of week. Whose week? Which end? Then ASAP, then no rush, then EOD. He lives in a clock tower and still did not know: posted Friday, they meant Tuesday, and he goes limp on the turning floor gear. Then YourBrand: the campaign page has the dates, Days left 4, Delivered 0 / 3, a number that counts down. He posted Monday, early, for the first time ever. The brand still says end of week; he just checks the number.",
+  "aliases": [
+    "deadline",
+    "vague deadline",
+    "end of week",
+    "ASAP",
+    "EOD",
+    "no rush",
+    "late",
+    "days left",
+    "countdown",
+    "campaign page",
+    "delivered",
+    "dates",
+    "clock tower",
+    "clock face",
+    "gears",
+    "pendulum",
+    "day in the life 40",
+    "part forty",
+    "pt 40",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "deadline",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.8,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 40,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-camera-freeze-rambling-script-generator__low-poly-3d-karaoke-booth-word-timed-captions"
+  ]
+}

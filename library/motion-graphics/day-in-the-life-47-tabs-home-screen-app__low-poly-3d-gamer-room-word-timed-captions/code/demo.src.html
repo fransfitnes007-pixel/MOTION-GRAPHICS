@@ -1,0 +1,257 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part thirty six: the recipe tab</title>
+<!-- A 39.6 s reel (1080x1920) in low-poly 3D, thirty-sixth in the series. In his gamer room a creator has forty seven
+     tabs open: the brief, the brand's folder, his upload, three tabs called untitled, a recipe from 2019. The tabs are
+     so small they are just icons; he closes one and it is the upload, at ninety nine percent. He spins in his chair.
+     Then YourBrand: it sits on his home screen like an app; one tap and he is in, still signed in, with the brief, his
+     uploads and his campaigns. He still has forty six tabs. He can't close the recipe. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['One tap. Already signed in.', 'Everything in one place.'],
+  skin: 0xa8704a, hoodie: 0x1f2027, pants: 0x6a6e78, hair: 0x15110e,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day", 0.0, 0.26],["in", 0.26, 0.38],["the", 0.38, 0.46],["life", 0.46, 0.66],["of", 0.66, 0.88],["a", 0.88, 1.0],["UGC", 1.0, 1.46],["creator", 1.46, 1.92],["Part", 2.46, 2.48],["thirty", 2.48, 2.82],["six", 2.82, 3.18],["I", 3.66, 3.82],["have", 3.82, 3.96],["forty", 3.96, 4.32],["seven", 4.32, 4.8],["tabs", 4.8, 5.14],["open", 5.14, 5.46],["The", 5.94, 6.06],["brief", 6.06, 6.32],["The", 6.68, 6.78],["brand's", 6.78, 7.1],["folder", 7.1, 7.36],["My", 7.7, 7.84],["upload", 7.84, 8.16],["Three", 8.64, 8.78],["tabs", 8.78, 9.1],["called", 9.1, 9.44],["untitled", 9.44, 10.1],["A", 10.48, 10.62],["recipe", 10.62, 10.9],["from", 10.9, 11.18],["twenty", 11.18, 11.42],["nineteen", 11.42, 11.72],["The", 12.22, 12.38],["tabs", 12.38, 12.64],["are", 12.64, 12.76],["so", 12.76, 13.06],["small", 13.06, 13.48],["they're", 13.48, 13.66],["just", 13.66, 13.84],["little", 13.84, 14.02],["icons", 14.02, 14.54],["I", 15.04, 15.18],["closed", 15.18, 15.38],["one", 15.38, 15.64],["It", 16.04, 16.12],["was", 16.12, 16.22],["the", 16.22, 16.36],["upload", 16.36, 16.7],["Ninety", 17.26, 17.44],["nine", 17.44, 17.66],["percent", 17.66, 18.0],["Then", 18.56, 18.84],["I", 18.84, 19.08],["found", 19.08, 19.3],["YourBrand", 19.3, 19.78],["It", 20.06, 20.2],["sits", 20.2, 20.34],["on", 20.34, 20.48],["my", 20.48, 20.62],["home", 20.62, 20.76],["screen", 20.76, 21.06],["like", 21.28, 21.38],["an", 21.38, 21.5],["app", 21.5, 21.7],["One", 22.08, 22.22],["tap", 22.22, 22.44],["and", 22.62, 22.66],["I'm", 22.66, 22.84],["in", 22.84, 23.06],["still", 23.38, 23.62],["signed", 23.62, 23.94],["in", 23.94, 24.16],["The", 24.5, 24.62],["brief", 24.62, 24.88],["my", 25.18, 25.26],["uploads", 25.26, 25.84],["my", 25.86, 25.96],["campaigns", 25.96, 26.36],["all", 26.68, 26.86],["in", 26.86, 27.02],["there", 27.02, 27.22],["No", 27.48, 27.68],["tab", 27.68, 27.92],["hunting", 27.92, 28.2],["No", 28.4, 28.6],["ninety", 28.6, 28.9],["nine", 28.9, 29.16],["percent", 29.16, 29.52],["No", 29.88, 30.08],["bullshit", 30.08, 30.64],["I", 31.08, 31.2],["still", 31.2, 31.38],["have", 31.38, 31.54],["forty", 31.54, 31.74],["six", 31.74, 32.04],["tabs", 32.04, 32.34],["open", 32.34, 32.62],["I", 33.02, 33.16],["can't", 33.16, 33.48],["close", 33.48, 33.6],["the", 33.6, 33.76],["recipe", 33.76, 34.18]]
+const GROUPS = [[0,7,6,1],[8,10,-1,1.3],[11,16,14,1.15],[17,18,18,1.5],[19,21,21,1.3],[22,23,23,1.5],[24,27,27,1.2],[28,32,29,1.15],[33,37,37,1.2],[38,41,41,1.2],[42,44,43,1.4],[45,48,48,1.3],[49,51,-1,1.4],[52,55,55,1.1],[56,61,61,1.15],[62,64,64,1.4],[65,69,66,1.25],[70,72,72,1.4],[73,78,78,1.05],[79,81,-1,1.4],[82,84,-1,1.3],[85,88,-1,1.2],[89,90,-1,1.5],[91,97,95,1.05],[98,102,102,1.25]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.46, have: 3.66, fsHit: 4.32, brief: 5.94, folder: 6.68, upload: 7.7, untitled: 8.64, untHit: 9.44, recipe: 10.48, recHit: 10.62,
+  small: 12.22, smallHit: 13.06, iconsHit: 14.02, closed: 15.04, closeHit: 15.18, was: 16.04, uploadHit: 16.36, ninety: 17.26, found: 18.56, foundG: 19.3,
+  sits: 20.06, homeHit: 20.62, appHit: 21.5, tap: 22.08, tapHit: 22.22, signed: 23.38, signedHit: 23.62, brief2: 24.5, upHit: 25.26, campHit: 25.96, all: 26.68,
+  no: 27.48, n1: 27.68, n2s: 28.4, n2: 28.6, nob: 29.88, nobHit: 30.08, still: 31.08, sixHit: 31.74, cant: 33.02, recipeHit: 33.76, end: 34.6, dur: 39.6 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xaab4c2)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xe6edf5, 0x6b6e76, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6edf5, 1.5); sun.position.set(5, 10, 6); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- a gamer room
+const floorMat = M(0x3a3c48); box(20, 0.2, 20, floorMat, 2, -0.1, -2)
+const wallMat = M(0x2a2c3a); box(20, 9, 0.2, wallMat, 2, 4.5, -5.0); box(0.2, 9, 20, wallMat, -4.0, 4.5, -2)
+const rug = box(4.4, 0.03, 3.2, 0x5a3a8a, 2.0, 0.015, -1.6); rug.castShadow = false
+// RGB strips along the wall and desk, posters, a shelf of figurines
+const strips = []; for (const [x, y, z, w, h, d] of [[2, 6.2, -4.88, 10, 0.08, 0.06], [-3.88, 6.2, -1.5, 0.06, 0.08, 7], [2.0, 1.42, -0.48, 3.4, 0.05, 0.05]]) { const s = box(w, h, d, basic(0x8b5cf6), x, y, z); s.castShadow = false; strips.push(s) }
+const poster = (x, y, col, txt) => { const c = canvasTex(160, 220); c.x.fillStyle = col; c.x.fillRect(0, 0, 160, 220); c.x.fillStyle = 'rgba(255,255,255,.9)'; c.x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText(txt, 80, 190); c.x.fillStyle = 'rgba(0,0,0,.25)'; c.x.beginPath(); c.x.arc(80, 90, 50, 0, 7); c.x.fill(); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.1, 1.5), basic(0xffffff, { map: c.t }), x, y, -4.88); m.castShadow = false }
+poster(-1.6, 4.0, '#ec4899', 'LEVEL UP'); poster(5.6, 4.0, '#3b82f6', 'GG')
+box(2.4, 0.08, 0.4, 0x1a1b22, -1.8, 2.4, -4.75); for (let i = 0; i < 4; i++) { box(0.2, 0.36, 0.2, [0xf6d36b, 0x34d399, 0xff4d4f, 0x8b5cf6][i], -2.6 + i * 0.5, 2.62, -4.75); mesh(new THREE.IcosahedronGeometry(0.12, 0), [0xf6d36b, 0x34d399, 0xff4d4f, 0x8b5cf6][i], -2.6 + i * 0.5, 2.92, -4.75) }
+// a window with blinds that open on the turn
+const skyMat = basic(0x2a2a48); { const sk = box(2.4, 2.2, 0.05, skyMat, 6.0, 4.0, -4.92); sk.castShadow = false }
+const slats = []; for (let i = 0; i < 9; i++) { const s = box(2.5, 0.22, 0.04, 0xd8d8d4, 6.0, 5.0 - i * 0.24, -4.84); slats.push(s) }
+// desk, two monitors, keyboard, mouse, a can, the gaming chair
+box(3.6, 0.1, 1.3, 0x15161c, 2.0, 1.5, -1.0); for (const dx of [-1.6, 1.6]) box(0.12, 1.45, 1.1, 0x15161c, 2.0 + dx, 0.725, -1.0)
+const mon = (x, ry, w) => { const g2 = grp(x, 1.55, -0.6); g2.rotation.y = ry; box(0.08, 0.3, 0.08, 0x2a2c33, 0, 0.15, 0.04, g2); box(0.4, 0.04, 0.3, 0x2a2c33, 0, 0.02, 0.04, g2); box(w + 0.08, 0.86, 0.06, 0x0b0c10, 0, 0.62, 0, g2); return g2 }
+const monA = mon(2.0, 0, 1.6), monB = mon(3.65, -0.45, 1.0)
+const scr = canvasTex(800, 420); { const m = mesh(new THREE.PlaneGeometry(1.6, 0.84), basic(0xffffff, { map: scr.t }), 0, 0.62, -0.035, monA); m.rotation.y = PI; m.castShadow = false }
+const scr2 = canvasTex(400, 336); { const x = scr2.x; x.fillStyle = '#0b0c10'; x.fillRect(0, 0, 400, 336); x.fillStyle = '#8b5cf6'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('STREAM', 200, 150); x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('offline', 200, 200); scr2.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.0, 0.84), basic(0xffffff, { map: scr2.t }), 0, 0.62, -0.035, monB); m.rotation.y = PI; m.castShadow = false }
+const kbd = box(1.1, 0.04, 0.34, 0x1a1b22, 2.0, 1.57, -1.25); const kbdGlow = box(1.06, 0.01, 0.3, basic(0x8b5cf6), 2.0, 1.595, -1.25); kbdGlow.castShadow = false
+box(0.14, 0.05, 0.22, 0x1a1b22, 2.85, 1.57, -1.25); { const can = cyl(0.08, 0.08, 0.26, 10, 0x34d399, 0.6, 1.68, -1.1) }
+const chair = grp(2.0, 0, -2.4); { cyl(0.06, 0.06, 0.6, 6, 0x2a2c33, 0, 0.5, 0, chair); for (let i = 0; i < 5; i++) { const l = box(0.5, 0.06, 0.08, 0x2a2c33, Math.cos(i * 1.256) * 0.25, 0.12, Math.sin(i * 1.256) * 0.25, chair); l.rotation.y = -i * 1.256 } box(1.0, 0.16, 0.95, 0x1a1b22, 0, 0.88, 0, chair); box(1.0, 1.8, 0.16, 0x1a1b22, 0, 1.8, -0.5, chair); box(0.6, 1.6, 0.17, 0x8b5cf6, 0, 1.8, -0.49, chair); box(0.7, 0.3, 0.2, 0x1a1b22, 0, 2.6, -0.45, chair) }
+glow.color.set(0xb48ae0); glow.distance = 9; glow.decay = 1.5
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), hd = M(CONFIG.hoodie), pant = M(CONFIG.pants), dark = M(0x15161a), hair = M(CONFIG.hair)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.06, 1.2, 0.62, hd, 0, 0.6, 0, p.torso); box(1.08, 0.08, 0.64, M(0x8b5cf6), 0, 0.12, 0, p.torso); box(0.7, 0.3, 0.06, M(0x2a2c33), 0, 0.3, 0.32, p.torso); box(0.52, 0.2, 0.56, pant, 0, -0.02, 0, p.torso)
+  { const hs = mesh(new THREE.TorusGeometry(0.38, 0.06, 6, 14, PI), M(0x2a2c33), 0, 1.24, 0.05, p.torso); hs.rotation.x = -PI / 2 - 0.3; for (const sx of [-1, 1]) box(0.16, 0.26, 0.26, 0x8b5cf6, sx * 0.4, 1.2, 0.1, p.torso) }
+  p.head = grp(0, 1.2, 0, p.torso); box(0.78, 0.78, 0.74, skin, 0, 0.44, 0, p.head); box(0.82, 0.2, 0.78, hair, 0, 0.82, -0.02, p.head); box(0.6, 0.1, 0.5, M(0x34d3c8), 0, 0.96, 0.04, p.head); box(0.82, 0.3, 0.1, hair, 0, 0.66, -0.37, p.head)
+  p.eyeL = box(0.08, 0.11, 0.04, dark, -0.18, 0.46, 0.38, p.head); p.eyeR = box(0.08, 0.11, 0.04, dark, 0.18, 0.46, 0.38, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.18, 0.66, 0.39, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.18, 0.66, 0.39, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x4a1a22), 0, 0.2, 0.38, p.head); box(0.5, 0.1, 0.05, hair, 0, 0.08, 0.38, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.66, 1.08, 0, p.torso); box(0.36, 0.34, 0.38, hd, 0, -0.12, 0, a.sh); box(0.3, 0.32, 0.32, hd, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.28, 0.36, 0.3, hd, 0, -0.14, 0, a.el); a.hand = box(0.24, 0.22, 0.26, skin, 0, -0.44, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.42, 0.6, 0.44, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.42, 0.4, 0.44, pant, 0, -0.18, 0, l.knee); box(0.44, 0.2, 0.62, M(0xf4f1ea), 0, -0.5, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const TYPE = { ...SIT, alx: -0.45, ale: -1.15, arx: -0.45, are: -1.15, tx: 0.1, hx: 0.05 }
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const LIMP = { ...SIT, rx: -0.15, alx: 0.25, arx: 0.25, alz: -0.5, arz: 0.5, ale: -0.1, are: -0.1, hx: -0.25, eye: 0.45, brow: 0.22, mw: 1.0, mh: 0.5 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+const tabP = grp(0, -9, 0); { const c = canvasTex(240, 80); c.x.fillStyle = '#e4e6ec'; c.x.beginPath(); c.x.roundRect(0, 10, 240, 70, 14); c.x.fill(); c.x.fillStyle = '#16161a'; c.x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.fillText('untitled', 24, 56); c.x.fillText('×', 205, 54); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.2, 0.4), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, tabP); m.castShadow = false }
+const barP = grp(0, -9, 0); box(1.2, 0.3, 0.05, 0x2a2c33, 0, 0, 0, barP); box(1.17, 0.24, 0.06, 0x8b5cf6, -0.01, 0, 0, barP); { const c = canvasTex(120, 40); c.x.fillStyle = '#fff'; c.x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText('99%', 60, 32); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(0.5, 0.18), basic(0xffffff, { map: c.t, transparent: true }), 0, 0, 0.04, barP); m.castShadow = false }
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+const TABS = [['Brief', 'brief', '#2f7cf6'], ['Brand folder', 'folder', '#f59e0b'], ['Upload 99%', 'upload', '#8b5cf6'], ['untitled', 'untitled', '#9aa0ad'], ['untitled', 'untitled', '#9aa0ad'], ['untitled', 'untitled', '#9aa0ad'], ['Recipe (2019)', 'recipe', '#ff4d4f']]
+// the browser on the main monitor (and as a big sheet): tabs that shrink to icons; mode 'pain' / 'gone' / 'left'
+function browser(x, w, h, t, sc) {
+  const shrink = eo(seg(t, T.small, T.iconsHit + 0.2)), gone = t >= T.closeHit + 0.1 && t < T.found, after = t >= T.still
+  x.fillStyle = '#d8dbe2'; x.fillRect(0, 0, w, h); x.fillStyle = '#c4c8d2'; x.fillRect(0, 0, w, 64 * sc)
+  const shown = after ? 46 : t >= T.untHit ? 47 : [T.brief, T.folder, T.upload, T.untitled, T.recipe].filter(v => t >= v).length * 6 + 4
+  const tw = lerp(150, 16, Math.max(shrink, after ? 1 : 0)) * sc; let X = 8 * sc
+  for (let i = 0; i < Math.min(shown, 60); i++) { const tb = TABS[i % 7]; if (gone && i === 2) continue; x.fillStyle = i === 2 && !gone ? '#ffffff' : '#e8eaee'; rr(x, X, 12 * sc, tw - 3 * sc, 48 * sc, 8 * sc); x.fill(); x.fillStyle = tb[2]; x.beginPath(); x.arc(X + Math.min(14 * sc, tw / 2), 36 * sc, 6 * sc, 0, 7); x.fill(); if (tw > 60 * sc) { x.fillStyle = '#16161a'; x.font = `700 ${16 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.fillText(tb[0], X + 26 * sc, 42 * sc) } X += tw; if (X > w) break }
+  x.fillStyle = '#16161a'; x.font = `800 ${22 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.textAlign = 'right'; x.fillText(after ? '46 tabs' : shown + ' tabs', w - 14 * sc, 100 * sc); x.textAlign = 'left'
+  x.fillStyle = '#fff'; x.fillRect(0, 64 * sc, w, h - 64 * sc)
+  if (gone) { x.fillStyle = '#9aa0ad'; x.font = `800 ${40 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.textAlign = 'center'; x.fillText('Upload cancelled', w / 2, h / 2); x.textAlign = 'left' }
+  else if (after) { x.fillStyle = '#ff4d4f'; x.font = `800 ${38 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.fillText('Grandma’s Lasagna', 30 * sc, 150 * sc); x.fillStyle = '#9aa0ad'; x.font = `600 ${20 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.fillText('saved 2019 · never made', 30 * sc, 190 * sc) }
+  else { x.fillStyle = '#16161a'; x.font = `800 ${34 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.fillText('Upload: video_final.mp4', 30 * sc, 150 * sc); x.fillStyle = '#e4e6ec'; rr(x, 30 * sc, 180 * sc, w - 60 * sc, 26 * sc, 13 * sc); x.fill(); x.fillStyle = '#8b5cf6'; rr(x, 30 * sc, 180 * sc, (w - 60 * sc) * 0.99, 26 * sc, 13 * sc); x.fill(); x.fillStyle = '#16161a'; x.font = `800 ${24 * sc}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.fillText('99%', 30 * sc, 240 * sc) }
+}
+function drawMon(t) { const x = scr.x; browser(x, 800, 420, t, 1); scr.t.needsUpdate = true }
+// 0 browser tabs (big) · 1 phone home screen · 2 YourBrand signed in · 3 YourBrand brief / uploads / campaigns
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  if (mode === 0) { x.save(); browser(x, 720, 640, t, 0.9); x.restore(); x.fillStyle = '#d8dbe2'; x.fillRect(0, 640, 720, 400)
+    const k = back(seg(t, T.uploadHit, T.uploadHit + 0.2)); if (k > 0 && t < T.found) { x.save(); x.translate(360, 960); x.scale(k, k); x.rotate(-0.12); x.font = '800 60px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText('CLOSED: 99%').width + 60; x.strokeStyle = '#ff4d4f'; x.lineWidth = 9; rr(x, -tw / 2, -50, tw, 100, 16); x.stroke(); x.fillStyle = '#ff4d4f'; x.textAlign = 'center'; x.fillText('CLOSED: 99%', 0, 21); x.restore() } }
+  else if (mode === 1) {
+    const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#3a2a6a'); gr.addColorStop(1, '#1a1a3a'); x.fillStyle = gr; x.fillRect(0, 0, w, h); x.fillStyle = '#fff'; x.font = '700 60px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('9:41', 360, 90); x.textAlign = 'left'
+    const cols = ['#ff8fb3', '#34d399', '#2f7cf6', '#f59e0b', '#ec4899', '#8b5cf6', '#10b981', '#3b82f6', '#ef4444', '#14b8a6', '#f97316', '#a855f7']
+    for (let i = 0; i < 12; i++) { const X = 60 + (i % 4) * 160, Y = 160 + Math.floor(i / 4) * 190; if (i === 5) continue; x.fillStyle = cols[i]; rr(x, X, Y, 120, 120, 28); x.fill() }
+    const X = 60 + 160, Y = 160 + 190, tapK = t >= T.tapHit - 0.05 ? Math.sin(seg(t, T.tapHit - 0.05, T.tapHit + 0.2) * PI) : 0, sk = 1 - tapK * 0.12, hk = eo(seg(t, T.homeHit - 0.1, T.homeHit + 0.2))
+    x.save(); x.translate(X + 60, Y + 60); x.scale(sk * (0.6 + 0.4 * hk), sk * (0.6 + 0.4 * hk)); x.fillStyle = '#0b0c10'; rr(x, -60, -60, 120, 120, 28); x.fill(); x.drawImage(G_IMG, -34, -42, 68, 84); x.restore(); x.fillStyle = '#fff'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.globalAlpha = hk; x.fillText('YourBrand', X + 60, Y + 152); x.globalAlpha = 1; x.textAlign = 'left'
+    if (t >= T.appHit - 0.05 && t < T.tap) { const k = back(seg(t, T.appHit - 0.05, T.appHit + 0.15)); x.save(); x.translate(360, 960); x.scale(k, k); x.fillStyle = 'rgba(255,255,255,.9)'; rr(x, -220, -40, 440, 80, 40); x.fill(); x.fillStyle = '#16161a'; x.font = '800 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Like an app', 0, 11); x.restore() }
+    if (t >= T.tapHit) { const k = seg(t, T.tapHit, T.tapHit + 0.3); x.fillStyle = `rgba(255,255,255,${0.6 * (1 - k)})`; x.beginPath(); x.arc(X + 60, Y + 60, 40 + k * 120, 0, 7); x.fill() }
+  } else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Home', 88, 64)
+    if (mode === 2) { const k = back(seg(t, T.signed - 0.1, T.signed + 0.15)); x.save(); x.translate(360, 300); x.scale(k, k); x.fillStyle = '#161619'; rr(x, -320, -120, 640, 240, 26); x.fill(); x.fillStyle = '#fff'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Welcome back', 0, -20); x.fillStyle = '#10b981'; rr(x, -130, 20, 260, 60, 30); x.fill(); x.fillStyle = '#06281c'; x.font = '800 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Signed in ✓', 0, 60); x.restore() }
+    else { const L = [['Campaign brief', 'Glow Serum · what to film', '#2f7cf6', T.brief2], ['Content', 'Your uploads and drafts', '#8b5cf6', T.upHit], ['My campaigns', '2 active', '#10b981', T.campHit]]
+      L.forEach(([a, b, col, t0], i) => { const Y = 130 + i * 140, k = back(seg(t, t0 - 0.1, t0 + 0.12)); if (k <= 0) return; x.save(); x.translate(360, Y + 60); x.scale(k, k); x.translate(-360, -Y - 60); x.fillStyle = '#161619'; rr(x, 30, Y, 660, 120, 20); x.fill(); x.fillStyle = col; rr(x, 54, Y + 26, 68, 68, 16); x.fill(); x.fillStyle = '#fff'; x.font = '800 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(a, 144, Y + 58); x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(b, 144, Y + 94); x.restore() }) }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[5.4, 4.0, 7.6], [1.6, 2.4, -2.6], 46], front: [[0.4, 3.9, 3.2], [2.0, 2.8, -2.4], 38], face: [[0.8, 3.7, 1.6], [2.0, 2.85, -2.4], 36],
+  shoulder: [[3.2, 3.2, -3.9], [2.0, 2.15, -0.7], 44], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+  spin: [[4.6, 3.6, 2.4], [2.0, 2.0, -2.4], 44],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = TYPE, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = false, spin = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [tabP, barP]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  const breathe = Math.sin(t * 2.2) * 0.012, ty = Math.sin(t * 9), typing = { ...TYPE, ale: -1.15 + ty * 0.06, are: -1.15 - ty * 0.06 }
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+
+  if (t < T.part) { q = typing; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.have) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(typing, { ...SIT, alz: -2.6, ale: -0.3, arx: -0.45, are: -1.15, mw: 1.7, mh: 2.0, eye: 1.2 }, k); c = CAM.front; ckk = seg(t, T.part, T.have); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.brief) { q = typing; c = CAM.shoulder; ckk = seg(t, T.have, T.brief); if (t >= T.fsHit) { v.pills.push(['TABS: 47', 0, back(seg(t, T.fsHit, T.fsHit + 0.2)), 'bad']); shake = (1 - seg(t, T.fsHit, T.fsHit + 0.3)) * 0.35 } }
+  else if (t < T.closed) { c = CAM.phone; ckk = seg(t, T.brief, T.closed); docMode = 0; showDoc(T.brief); for (const h0 of [T.folder, T.upload, T.untHit, T.recHit, T.smallHit, T.iconsHit]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.3); v.pills.push(['TABS: 47', 0, 1, 'bad']); if (t >= T.iconsHit) v.pills.push(['TAB SIZE: ICON', 1, back(seg(t, T.iconsHit, T.iconsHit + 0.2)), 'bad']) }
+  else if (t < T.was) { q = { ...TYPE, arx: -0.7, are: -0.9, arz: -0.2, hx: 0.1, eye: 1.0 }; c = CAM.shoulder; ckk = seg(t, T.closed, T.was); if (t >= T.closeHit) { shake = (1 - seg(t, T.closeHit, T.closeHit + 0.3)) * 0.3; const k = seg(t, T.closeHit, T.closeHit + 0.7); tabP.position.set(1.6 + k * 0.8, 2.5 + Math.sin(k * PI) * 0.4, -0.55 - k * 0.3); tabP.rotation.set(0, PI, k * 2); tabP.scale.setScalar(1 - k * 0.6) } }
+  else if (t < T.ninety) { c = CAM.phone; ckk = seg(t, T.was, T.ninety); docMode = 0; showDoc(T.was); if (t >= T.uploadHit) shake = (1 - seg(t, T.uploadHit, T.uploadHit + 0.35)) * 0.6 }
+  else if (t < T.found) { const k = eio(seg(t, T.ninety - 0.05, T.ninety + 0.35)); q = mixP({ ...TYPE, eye: 0.6 }, LIMP, k); spin = Math.max(0, t - T.ninety) * 3.2; c = CAM.spin; ckk = seg(t, T.ninety, T.found); v.pills.push(['UPLOAD: 99% → GONE', 0, back(seg(t, T.ninety, T.ninety + 0.2)), 'bad']); if (t >= T.ninety + 0.2) shake = (1 - seg(t, T.ninety + 0.2, T.ninety + 0.6)) * 0.4 }
+  else if (t < T.sits) {                                                      // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k; inHand = k > 0.4
+    if (t < T.foundG) { q = mixP(LIMP, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; c = CAM.face; ckk = seg(t, T.foundG, T.sits); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.signed) { c = CAM.phone; ckk = seg(t, T.sits, T.signed); docMode = 1; showDoc(T.sits); for (const h0 of [T.homeHit, T.appHit, T.tapHit]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35); if (t >= T.homeHit) v.pills.push(['ON MY HOME SCREEN', 0, back(seg(t, T.homeHit, T.homeHit + 0.2)), 'good']); if (t >= T.tapHit) v.pills.push(['1 TAP', 1, back(seg(t, T.tapHit, T.tapHit + 0.2)), 'good']) }
+  else if (t < T.brief2) { c = CAM.phone; ckk = seg(t, T.signed, T.brief2); docMode = 2; showDoc(T.signed); if (t >= T.signedHit) { shake = (1 - seg(t, T.signedHit, T.signedHit + 0.3)) * 0.4; v.pills.push(['STILL SIGNED IN', 0, back(seg(t, T.signedHit, T.signedHit + 0.2)), 'good']) } }
+  else if (t < T.no) { c = CAM.phone; ckk = seg(t, T.brief2, T.no); docMode = 3; showDoc(T.brief2); for (const h0 of [T.upHit, T.campHit]) if (t >= h0) shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35); if (t >= T.all) v.pills.push(['ALL IN ONE PLACE', 0, back(seg(t, T.all, T.all + 0.2)), 'good']) }
+  else if (t < T.still) {                                                      // no tab hunting, no ninety nine percent, no bullshit
+    c = CAM.center; ckk = seg(t, T.no, T.still)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.05 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? barP : tabP
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['TAB HUNTING', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['TAB HUNTING', 0, 1, 'bad']); if (t >= h0) v.pills.push(['99%', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['TAB HUNTING', 0, 1, 'bad'], ['99%', 1, 1, 'bad']) }
+  } else { q = t < T.cant ? typing : { ...TYPE, arx: -0.75, are: -0.85, arz: -0.2, hx: 0.08, eye: 0.6, brow: 0.22, mw: 1.0, mh: 0.5 }; c = CAM.shoulder; ckk = seg(t, T.still, T.end); if (t >= T.sixHit) v.pills.push(['TABS: 46', 0, back(seg(t, T.sixHit, T.sixHit + 0.2)), 'bad']); if (t >= T.recipeHit) { v.pills.push(['RECIPE: STAYS', 1, back(seg(t, T.recipeHit, T.recipeHit + 0.2)), 'good']); shake = (1 - seg(t, T.recipeHit, T.recipeHit + 0.3)) * 0.3 } }
+  applyPose({ ...q, ry: (q.ry || 0) + spin, tx: q.tx + breathe }); chair.rotation.y = spin
+  P.phone.visible = inHand
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: a dim purple night room, then the blinds open on daylight
+  slats.forEach((s, i) => { s.rotation.x = good * 1.3; s.position.y = 5.0 - i * 0.24 * (1 - good * 0.6) + good * 0.4 })
+  skyMat.color.set(0x2a2a48).lerp(new THREE.Color(0x9ccff4), good); scene.background.set(0x1e1f2a).lerp(new THREE.Color(0x6a6e88), good); wallMat.color.set(0x2a2c3a).lerp(new THREE.Color(0x4a4e66), good); floorMat.color.set(0x3a3c48).lerp(new THREE.Color(0x5a5e70), good)
+  const hue = (t * 0.25) % 1; strips.forEach(s => s.material.color.setHSL((hue + 0.75) % 1, 0.8, 0.6)); kbdGlow.material.color.setHSL((hue + 0.75) % 1, 0.8, 0.6)
+  sun.color.set(0xb4a8e0).lerp(new THREE.Color(0xfff0d0), good); sun.intensity = lerp(0.9, 1.8, good); hemi.intensity = lerp(1.0, 1.25, good); hemi.color.set(0xb8b0e0).lerp(new THREE.Color(0xfff4e4), good)
+  glow.position.set(2.0, 2.4, -0.8); glow.intensity = Math.max(glowOn * 1.4, 1.0 - good * 0.4)
+  drawMon(t); if (docMode >= 0) { docBody.color.set(docMode >= 1 ? 0x15161a : 0xd8dbe2); drawDoc(docMode, t) }
+}
+
+
+/*SHARED_UI*/
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

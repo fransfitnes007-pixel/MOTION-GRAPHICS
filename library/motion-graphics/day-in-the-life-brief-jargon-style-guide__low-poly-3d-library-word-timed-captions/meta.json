@@ -1,0 +1,56 @@
+{
+  "slug": "day-in-the-life-brief-jargon-style-guide__low-poly-3d-library-word-timed-captions",
+  "visual_name": "Day in the life, part thirteen: I nodded (low-poly 3D)",
+  "code_name": "three.js library with a drawn wall of books, box-built character, a BREAD book with a live cover, brief / search / style-guide grid / opened style pages, a chat with the brand, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.5 second 9:16 reel in low-poly 3D: a first brief full of jargon (POV, green screen, talking head, B-roll), a nod, zero understanding, search results that disagree, a brand that says 'you know, UGC style', and B-roll mistaken for bread; then YourBrand's Content Style Guide: ten styles, what each is and when to use it. She still thinks B-roll sounds like bread.",
+  "aliases": [
+    "jargon",
+    "first brief",
+    "pov",
+    "green screen",
+    "talking head",
+    "b-roll",
+    "bread",
+    "style guide",
+    "ten styles",
+    "nodding",
+    "library",
+    "ugc style",
+    "day in the life 13",
+    "part thirteen",
+    "pt 13",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "style-guide",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 13,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-hashtag-hour-hashtag-research__low-poly-3d-diner-booth-word-timed-captions"
+  ]
+}

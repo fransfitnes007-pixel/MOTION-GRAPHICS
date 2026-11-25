@@ -1,0 +1,57 @@
+{
+  "slug": "day-in-the-life-six-brands-sticky-notes-home__low-poly-3d-office-cubicle-word-timed-captions",
+  "visual_name": "Day in the life, part fourteen: it's on a sticky note (low-poly 3D)",
+  "code_name": "three.js office cubicle with multiplying then falling sticky notes, box-built character, today list / cork board / Home page / one big note, a lock-screen deadline, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 39.1 second 9:16 reel in low-poly 3D: six brands, each wanting something today, written on sticky notes that take over the cubicle; a change in an unopened email and a missed deadline for a brand he forgot he had; then YourBrand's Home: next step, live campaigns, posts per day on the card. The notes fall. The one he finds says 'check sticky notes'.",
+  "aliases": [
+    "sticky notes",
+    "six brands",
+    "deadline",
+    "missed deadline",
+    "home",
+    "dashboard",
+    "next step",
+    "checklist",
+    "live campaigns",
+    "posts per day",
+    "cubicle",
+    "office",
+    "cork board",
+    "day in the life 14",
+    "part fourteen",
+    "pt 14",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "dashboard",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 39.1,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 14,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-brief-jargon-style-guide__low-poly-3d-library-word-timed-captions"
+  ]
+}

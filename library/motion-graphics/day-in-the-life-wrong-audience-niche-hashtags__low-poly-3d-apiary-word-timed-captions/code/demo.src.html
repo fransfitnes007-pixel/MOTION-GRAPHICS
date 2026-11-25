@@ -1,0 +1,274 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part forty six: the spaceman</title>
+<!-- A 40.96 s reel (1080x1920) in low-poly 3D, forty-sixth in the series. A beekeeper tags every bee video #fyp,
+     #viral and #foryou, and the comments come from everyone but beekeepers: first, is that a spaceman, a grandma who
+     calls him sweetheart. The honey brand asks who his audience is, so he dances in the suit for the algorithm, and
+     the bees do not enjoy it. Then YourBrand: Hashtag Research, beekeeping typed in, fifteen tags in broad, niche and
+     micro, each with a reason; niche is where beekeepers browse. Grandma still comments. She got bees. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Type your niche.', 'Tags your viewers browse.'],
+  skin: 0xa8704a, hoodie: 0xf4f4f0, sweats: 0xe8e8e4, hair: 0x1a1410,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0.0,0.24],["in",0.24,0.36],["the",0.36,0.42],["life",0.42,0.6],["of",0.6,0.84],["a",0.84,0.94],["UGC",0.94,1.36],["creator",1.36,1.84],["Part",2.24,2.38],["forty",2.38,2.66],["six",2.66,3.0],["I",3.36,3.5],["keep",3.5,3.68],["bees",3.68,3.94],["I",4.46,4.54],["make",4.54,4.68],["videos",4.68,4.98],["about",4.98,5.24],["bees",5.24,5.52],["My",5.96,6.06],["hashtags",6.06,6.54],["FYP",6.96,7.6],["Viral",8.16,8.44],["For",8.76,8.84],["you",8.84,9.08],["My",9.5,9.6],["comments",9.6,9.88],["First",10.48,10.62],["Is",11.1,11.18],["that",11.18,11.34],["a",11.34,11.44],["spaceman",11.44,11.96],["A",12.36,12.48],["grandma",12.48,12.74],["who",12.74,12.98],["calls",12.98,13.14],["me",13.14,13.34],["sweetheart",13.34,13.74],["The",14.08,14.18],["honey",14.18,14.34],["brand",14.34,14.54],["asked",14.54,14.8],["who",14.8,14.98],["my",14.98,15.1],["audience",15.1,15.32],["is",15.32,15.74],["So",16.02,16.14],["I",16.14,16.24],["danced",16.24,16.48],["In",16.9,17.04],["the",17.04,17.16],["suit",17.16,17.44],["For",17.76,17.92],["the",17.92,18.08],["algorithm",18.08,18.48],["The",18.88,19.0],["bees",19.0,19.24],["did",19.24,19.5],["not",19.5,19.8],["enjoy",19.8,20.08],["it",20.08,20.4],["Then",20.72,20.88],["I",20.88,21.18],["found",21.18,21.4],["YourBrand",21.4,21.86],["Hashtag",22.32,22.6],["research",22.6,22.96],["I",23.44,23.58],["typed",23.58,23.84],["beekeeping",23.84,24.38],["Fifteen",24.9,25.26],["tags",25.26,25.58],["Broad",25.58,26.3],["niche",26.7,26.78],["micro",27.04,27.38],["Each",27.8,27.92],["with",27.92,28.18],["a",28.18,28.3],["reason",28.3,28.56],["Niche",29.14,29.28],["is",29.28,29.38],["where",29.38,29.52],["beekeepers",29.52,29.9],["actually",29.9,30.36],["browse",30.36,30.64],["No",31.14,31.24],["FYP",31.24,31.78],["No",32.08,32.2],["dancing",32.2,32.5],["No",32.98,33.04],["bullshit",33.04,33.44],["Grandma",33.9,34.1],["still",34.1,34.26],["comments",34.26,34.58],["She",35.02,35.1],["got",35.1,35.24],["bees",35.24,35.46]]
+const GROUPS = [[0, 7, 6, 1], [8, 10, -1, 1.3], [11, 13, 13, 1.4], [14, 18, 16, 1.2], [19, 20, 20, 1.4], [21, 21, 21, 1.7], [22, 22, 22, 1.6], [23, 24, 24, 1.5], [25, 26, 26, 1.4], [27, 27, 27, 1.6], [28, 31, 31, 1.3], [32, 37, 37, 1.1], [38, 45, 44, 1.1], [46, 48, 48, 1.4], [49, 51, 51, 1.5], [52, 54, 54, 1.3], [55, 60, 59, 1.2], [61, 64, 64, 1.1], [65, 66, 66, 1.3], [67, 69, 69, 1.3], [70, 71, 70, 1.4], [72, 74, 73, 1.3], [75, 78, 78, 1.3], [79, 84, 82, 1.1], [85, 86, -1, 1.5], [87, 88, -1, 1.4], [89, 90, -1, 1.5], [91, 93, 91, 1.3], [94, 96, 96, 1.4]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = {part: 2.24, i1: 3.36, bees1: 3.68, i2: 4.46, videos: 4.68, my1: 5.96, fyp: 6.96, viral: 8.16, foryou: 8.76, my2: 9.5, first: 10.48, spaceman: 11.44, grandma: 12.36, sweet: 13.34, the1: 14.08, asked: 14.54, audience: 15.1, so: 16.02, danced: 16.24, suit: 17.16, forA: 17.76, theBees: 18.88, enjoy: 19.8, found: 20.72, foundG: 21.4, hashtag: 22.32, typed: 23.58, beek: 23.84, fifteen: 24.9, broad: 25.58, niche: 26.7, micro: 27.04, reason: 27.8, niche2: 29.14, no: 31.14, n1: 31.24, n2s: 32.08, n2: 32.2, nob: 32.98, nobHit: 33.04, grandma2: 33.9, she: 35.02, gotbees: 35.24, end: 35.96, dur: 40.96}
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2119)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xf0e6d8, 0x5a4a3a, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6e2da, 1.4); sun.position.set(4, 9, 8); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffd8a0, 0, 9, 1.5); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- an apiary in a meadow on a sunny day
+const grassMat = M(0x7ab05a); box(30, 0.1, 30, grassMat, 0, -0.05, 0)
+for (let i = 0; i < 70; i++) { const x = Math.sin(i * 12.9898) * 9, z = -5 + ((i * 7.31) % 12); if (Math.abs(x - 0.4) < 1.6 && z > 0) continue; const f = box(0.12, 0.12, 0.12, [0xffd23a, 0xf4f4f6, 0xc07af0, 0xff7a8a][i % 4], x, 0.22 + (i % 3) * 0.06, z); f.castShadow = false; const s = box(0.03, 0.22, 0.03, 0x4a8a3a, x, 0.1, z); s.castShadow = false }
+for (let i = 0; i < 14; i++) box(1.4, 0.9 + (i % 3) * 0.2, 1.0, M(0x4a8a3a), -9 + i * 1.4, 0.5, -6.0)
+for (let i = 0; i < 12; i++) box(0.12, 1.0, 0.12, 0xc8a878, -8 + i * 1.5, 0.5, -4.6); for (const y of [0.4, 0.85]) box(18, 0.08, 0.06, 0xc8a878, 0, y, -4.6)
+{ const tr = grp(-6.0, 0, -3.2); cyl(0.22, 0.3, 2.2, 6, M(0x6a4a2a), 0, 1.1, 0, tr); mesh(new THREE.ConeGeometry(1.6, 3.2, 7), M(0x3a7a3a), 0, 3.6, 0, tr) }
+{ const sh = grp(6.2, 0, -3.4); box(2.4, 2.2, 1.8, M(0xb8643a), 0, 1.1, 0, sh); const r = box(2.8, 0.14, 2.2, M(0x5a3a2a), 0, 2.4, 0, sh); r.rotation.x = 0.1; box(0.7, 1.4, 0.04, M(0x6a4a2a), -0.4, 0.7, 0.92, sh) }
+// hives: three boxes on a stand under a roof
+const HIVES = [[-2.8, -0.8], [-1.0, -2.6], [2.6, -2.0], [4.4, -0.4]]
+for (const [x, z] of HIVES) { const h = grp(x, 0, z); box(1.1, 0.3, 0.9, 0x6a5038, 0, 0.15, 0, h); for (let i = 0; i < 3; i++) box(1.0, 0.48, 0.8, M(i % 2 ? 0xfff0b8 : 0xf4f4f0), 0, 0.55 + i * 0.5, 0, h); box(1.16, 0.12, 0.96, M(0x8a8e96, { metalness: 0.4 }), 0, 1.86, 0, h); box(0.5, 0.05, 0.02, 0x2a2420, 0, 0.36, 0.41, h) }
+// the crate he sits on
+box(0.9, 0.86, 0.7, M(0xc8a060), 0.6, 0.43, 1.4); for (const y of [0.2, 0.62]) box(0.92, 0.06, 0.72, M(0xa8804a), 0.6, y, 1.4)
+// bees
+const bees = []; const beeBody = M(0xffc21a), beeStripe = M(0x1e1f26), wingMat = basic(0xffffff, { transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+for (let i = 0; i < 46; i++) { const b = grp(0, -9, 0); box(0.1, 0.09, 0.15, beeBody, 0, 0, 0, b); box(0.11, 0.1, 0.03, beeStripe, 0, 0, -0.01, b); box(0.11, 0.1, 0.03, beeStripe, 0, 0, 0.045, b); for (const sx of [-1, 1]) { const wg = mesh(new THREE.PlaneGeometry(0.12, 0.08), wingMat, sx * 0.07, 0.07, 0, b); wg.rotation.x = -PI / 2; wg.castShadow = false } b.children.forEach(c => c.castShadow = false); bees.push({ g: b, h: i % 4, a: i * 2.39, r: 0.45 + (i % 5) * 0.18, y: 0.5 + (i % 7) * 0.22, sp: 1.6 + (i % 3) * 0.7 }) }
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+// the honeycomb frame he shows
+const combTex = canvasTex(256, 160); { const x = combTex.x; x.fillStyle = '#e8a020'; x.fillRect(0, 0, 256, 160); x.strokeStyle = '#b87810'; x.lineWidth = 3; for (let r = 0; r < 9; r++) for (let c = 0; c < 14; c++) { const X = c * 19 + (r % 2) * 9.5, Y = r * 17 + 6; x.beginPath(); for (let k = 0; k < 6; k++) { const a = k * PI / 3 + PI / 6; x.lineTo(X + Math.cos(a) * 9, Y + Math.sin(a) * 9) } x.closePath(); x.stroke() } combTex.t.needsUpdate = true }
+// swatted props: a #fyp chip and a music note
+function chipProp() { const o = grp(0, -9, 0); const c = canvasTex(320, 180); c.x.fillStyle = '#e5484d'; c.x.beginPath(); c.x.roundRect(10, 30, 300, 120, 60); c.x.fill(); c.x.fillStyle = '#fff'; c.x.font = '800 70px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText('#fyp', 160, 114); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.6, 0.9), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, o); m.castShadow = false; return o }
+function noteProp() { const o = grp(0, -9, 0); const c = canvasTex(256, 256); const x = c.x; x.fillStyle = '#a78bfa'; x.beginPath(); x.ellipse(90, 190, 42, 32, -0.4, 0, 7); x.fill(); x.fillRect(122, 40, 16, 150); x.beginPath(); x.moveTo(138, 40); x.quadraticCurveTo(210, 70, 190, 140); x.quadraticCurveTo(190, 95, 138, 90); x.fill(); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.0, 1.0), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, o); m.castShadow = false; return o }
+const chipP = chipProp(), noteP = noteProp()
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), suit = M(CONFIG.hoodie), dark = M(0x15161a), hair = M(CONFIG.hair), glove = M(0xd8b060), boot = M(0xf4f4f0)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.06, 1.22, 0.66, suit, 0, 0.6, 0, p.torso); box(0.04, 1.1, 0.02, 0x8a8e96, 0, 0.6, 0.34, p.torso); box(0.3, 0.24, 0.04, 0xe8e8e4, 0.24, 0.7, 0.34, p.torso); box(1.06, 0.42, 0.64, M(CONFIG.sweats), 0, -0.06, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.76, 0.76, 0.72, skin, 0, 0.44, 0, p.head); box(0.78, 0.12, 0.74, hair, 0, 0.82, 0, p.head)
+  box(0.36, 0.08, 0.05, hair, 0, 0.3, 0.38, p.head)
+  p.hat = grp(0, 0.92, -0.02, p.head); cyl(0.78, 0.78, 0.04, 14, M(0xf4f0e0), 0, 0, 0, p.hat); cyl(0.4, 0.42, 0.3, 12, M(0xf4f0e0), 0, 0.16, 0, p.hat); const veil = box(0.86, 0.7, 0.04, M(0x2a2c33, { transparent: true, opacity: 0.6 }), 0, -0.32, -0.5, p.hat); veil.castShadow = false
+  const gl = M(0x15161a); for (const sx of [-1, 1]) { box(0.24, 0.04, 0.03, gl, sx * 0.17, 0.58, 0.38, p.head); box(0.24, 0.04, 0.03, gl, sx * 0.17, 0.4, 0.38, p.head); box(0.04, 0.2, 0.03, gl, sx * 0.06, 0.49, 0.38, p.head); box(0.04, 0.2, 0.03, gl, sx * 0.28, 0.49, 0.38, p.head) } box(0.1, 0.03, 0.03, gl, 0, 0.52, 0.38, p.head)
+  p.eyeL = box(0.07, 0.1, 0.04, dark, -0.17, 0.49, 0.37, p.head); p.eyeR = box(0.07, 0.1, 0.04, dark, 0.17, 0.49, 0.37, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.17, 0.66, 0.37, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.17, 0.66, 0.37, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x8a3a3a), 0, 0.2, 0.37, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.65, 1.08, 0, p.torso); box(0.36, 0.32, 0.38, suit, 0, -0.1, 0, a.sh); box(0.32, 0.36, 0.34, suit, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.3, 0.32, 0.32, suit, 0, -0.12, 0, a.el); a.hand = box(0.26, 0.24, 0.28, glove, 0, -0.4, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.24, 0, 0, p.root); box(0.42, 0.6, 0.44, suit, 0, -0.3, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.42, 0.42, 0.44, suit, 0, -0.22, 0, l.knee); box(0.44, 0.14, 0.58, boot, 0, -0.5, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const comb = grp(0, -9, 0); box(1.0, 0.66, 0.06, 0x8a6a3a, 0, 0, 0, comb); const cm = mesh(new THREE.PlaneGeometry(0.9, 0.56), basic(0xffffff, { map: combTex.t }), 0, 0, 0.035, comb); cm.castShadow = false
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const SEAT = { x: 0.6, y: 1.2, z: 1.4 }, SPOT = { x: 0.25, y: 1.1, z: 1.9 }
+const SIT = pose({ ...SEAT, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const SHOW = pose({ x: -2.0, y: 1.1, z: 0.6, ry: 0.3, alx: -0.75, ale: -0.9, alz: 0.3, arx: -0.75, are: -0.9, arz: -0.3, mw: 1.3, mh: 1.3 })
+const STAND = pose({ ...SPOT })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+
+// ---------- phone sheets
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function suitPic(x, X, Y, w, h, gran) { const gr = x.createLinearGradient(0, Y, 0, Y + h); gr.addColorStop(0, '#9ad0f0'); gr.addColorStop(0.65, '#cfe8f8'); gr.addColorStop(0.65, '#7ab05a'); gr.addColorStop(1, '#6aa04a'); x.fillStyle = gr; x.fillRect(X, Y, w, h)
+  x.fillStyle = '#f4f4f0'; x.fillRect(X + w * 0.62, Y + h * 0.42, w * 0.2, h * 0.3); x.fillStyle = '#8a8e96'; x.fillRect(X + w * 0.6, Y + h * 0.39, w * 0.24, h * 0.05)
+  const cx = X + w * 0.34; x.fillStyle = '#f4f4f0'; x.fillRect(cx - w * 0.1, Y + h * 0.5, w * 0.2, h * 0.36); x.fillStyle = gran ? '#e8c0a0' : '#a8704a'; x.fillRect(cx - w * 0.07, Y + h * 0.3, w * 0.14, h * 0.18); if (gran) { x.fillStyle = '#d8d8dc'; x.fillRect(cx - w * 0.08, Y + h * 0.27, w * 0.16, h * 0.05) } x.fillStyle = '#f4f0e0'; x.fillRect(cx - w * 0.15, Y + h * 0.26, w * 0.3, h * 0.03); x.fillRect(cx - w * 0.07, Y + h * 0.19, w * 0.14, h * 0.08) }
+const TAGS = { broad: ['#beekeeping', '#honeybees', '#bees', '#honey', '#nature'], niche: ['#beekeeperlife', '#backyardbees', '#savethebees', '#hivelife', '#honeyharvest'], micro: ['#firstyearbeekeeper', '#queenspotting', '#hivecheck', '#urbanbeekeeping', '#swarmseason'] }
+const BUCK = [['broad', 'Broad', 'High-volume tags that tell the platform what the post is about.', '#60a5fa'], ['niche', 'Niche', 'Community tags your target viewers actually browse.', '#a78bfa'], ['micro', 'Micro', 'Small, specific tags where a new post can rank.', '#34d399']]
+// 0 his post: #fyp #viral #foryou · 1 the comments · 2 the honey brand · 3 Hashtag Research · 4 grandma, with bees
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1; x.textBaseline = 'alphabetic'
+  const hdr = (title, col, sub) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 40, 90); if (sub) { x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 40, 130) } x.fillStyle = '#eceef2'; x.fillRect(0, 156, w, 3) }
+  const pop = t0 => t >= t0 ? back(seg(t, t0, t0 + 0.22)) : 0
+  if (mode === 0) {
+    hdr('@hive.henry', '#ffc21a', 'New post'); suitPic(x, 40, 176, 300, 340, false); x.fillStyle = '#16161a'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('checking the hives', 360, 214)
+    const chip = (txt, Y, k) => { if (k <= 0) return; x.save(); x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText(txt).width + 44; x.translate(360 + tw / 2, Y + 30); x.scale(k, k); x.translate(-360 - tw / 2, -Y - 30); x.fillStyle = '#e8f0ff'; rr(x, 360, Y, tw, 60, 30); x.fill(); x.fillStyle = '#2f7cf6'; x.fillText(txt, 382, Y + 44); x.restore() }
+    chip('#fyp', 260, pop(T.fyp)); chip('#viral', 340, pop(T.viral)); chip('#foryou', 420, pop(T.foryou))
+  } else if (mode === 1) {
+    hdr('Comments', '#ffc21a', '@hive.henry')
+    const com = (user, txt, Y, k, gran) => { if (k <= 0) return; x.save(); x.globalAlpha = Math.min(1, k); x.translate(0, (1 - Math.min(1, k)) * 20); x.fillStyle = gran ? '#e8c0a0' : ['#7ac0f0', '#c07af0'][Y % 2]; x.beginPath(); x.arc(80, Y + 34, 30, 0, 7); x.fill(); if (gran) { x.fillStyle = '#d8d8dc'; x.fillRect(56, Y + 6, 48, 14) } x.fillStyle = '#16161a'; x.font = '700 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(user, 128, Y + 26); x.fillStyle = '#3a3e48'; x.font = '600 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(txt, 128, Y + 68); x.restore() }
+    com('xx_gamerkid_xx', 'first', 190, pop(T.first)); com('nova.ultra', 'is that a spaceman', 306, pop(T.spaceman)); com('grandma_june', 'lovely sweetheart x', 422, pop(T.grandma), true)
+  } else if (mode === 2) {
+    hdr('Honeybrook', '#e8a020', 'Partnerships'); const bub = (txt, Y, k) => { if (k <= 0) return; x.save(); x.font = '700 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText(txt).width + 60; x.translate(40 + tw / 2, Y + 40); x.scale(k, k); x.translate(-40 - tw / 2, -Y - 40); x.fillStyle = '#eceef2'; rr(x, 40, Y, tw, 80, 34); x.fill(); x.fillStyle = '#16161a'; x.fillText(txt, 70, Y + 54); x.restore() }
+    bub('Love the bees!', 196, pop(T.the1 + 0.1)); bub('Quick question:', 296, pop(T.asked)); bub('who is your audience?', 386, pop(T.audience))
+  } else if (mode === 3) {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 24, 40, 50); x.fillStyle = '#fff'; x.font = '800 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Hashtag Research', 86, 56); x.fillStyle = '#a1a1aa'; x.font = '600 17px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Fifteen tags in three buckets, broad, niche and micro,', 86, 82); x.fillText('each with a one-line reason.', 86, 102)
+    x.fillStyle = '#a1a1aa'; x.font = '700 17px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Niche', 34, 130); x.fillStyle = '#161619'; rr(x, 30, 136, 660, 48, 12); x.fill(); x.strokeStyle = t >= T.typed && t < T.fifteen ? '#a78bfa' : '#2a2a32'; x.lineWidth = 2; rr(x, 30, 136, 660, 48, 12); x.stroke()
+    const NV = 'beekeeping', nn = t >= T.typed ? Math.floor(clamp(seg(t, T.typed, T.beek + 0.4)) * NV.length) : 0; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; if (nn) { x.fillStyle = '#fff'; x.fillText(NV.slice(0, nn), 48, 169) } else { x.fillStyle = '#5a5a66'; x.fillText('e.g. skincare for men', 48, 169) }
+    if (t >= T.fifteen) {
+      x.globalAlpha = eo(seg(t, T.fifteen, T.fifteen + 0.25)); x.fillStyle = '#fff'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('15 hashtags', 34, 214); x.fillStyle = '#2a2440'; rr(x, 574, 192, 116, 32, 16); x.fill(); x.fillStyle = '#c4b5fd'; x.font = '700 17px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Copy all', 598, 214); x.globalAlpha = 1
+      const hot = t >= T.niche2 ? 1 : t >= T.micro ? 2 : t >= T.niche ? 1 : t >= T.broad ? 0 : -1
+      BUCK.forEach(([key, label, help, col], bi) => { const Y = 226 + bi * 106, k = eo(seg(t, T.fifteen + 0.1 + bi * 0.12, T.fifteen + 0.4 + bi * 0.12)); if (k <= 0) return; x.globalAlpha = k; const on = bi === hot
+        x.fillStyle = on ? '#1d1a2b' : '#161619'; rr(x, 30, Y, 660, 100, 14); x.fill(); if (on) { x.strokeStyle = col; x.lineWidth = 3; rr(x, 30, Y, 660, 100, 14); x.stroke() }
+        x.fillStyle = col; x.font = '800 17px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(label.toUpperCase() + ' (5)', 48, Y + 24); x.fillStyle = '#8a8a96'; x.font = '600 15px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(help, 160, Y + 24)
+        let X = 46, R = 0; x.font = '700 19px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; TAGS[key].forEach(tg => { const tw = x.measureText(tg).width + 22; if (X + tw > 676) { X = 46; R++ } x.fillStyle = on ? '#2a2440' : '#222228'; rr(x, X, Y + 36 + R * 30, tw, 27, 13); x.fill(); x.fillStyle = on ? '#fff' : '#d4d4d8'; x.fillText(tg, X + 11, Y + 56 + R * 30); X += tw + 6 }) })
+      x.globalAlpha = 1
+      if (t >= T.reason) { const k = back(seg(t, T.reason, T.reason + 0.25)); x.save(); x.translate(360, 970); x.scale(k, k); x.translate(-360, -970); x.fillStyle = '#161619'; rr(x, 30, 930, 660, 80, 16); x.fill(); x.strokeStyle = '#a78bfa'; x.lineWidth = 3; rr(x, 30, 930, 660, 80, 16); x.stroke(); x.fillStyle = '#c4b5fd'; x.font = '800 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('#backyardbees', 52, 962); x.fillStyle = '#d4d4d8'; x.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Hobby keepers swap hive checks under this one.', 52, 994); x.restore() }
+    }
+  } else {
+    hdr('Comments', '#ffc21a', '@hive.henry'); x.fillStyle = '#e8c0a0'; x.beginPath(); x.arc(80, 214, 30, 0, 7); x.fill(); x.fillStyle = '#d8d8dc'; x.fillRect(56, 186, 48, 14)
+    x.fillStyle = '#16161a'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('grandma_june', 128, 206); x.fillStyle = '#3a3e48'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('great video sweetheart x', 128, 242)
+    if (t >= T.she) { const k = back(seg(t, T.she, T.she + 0.25)); x.save(); x.translate(360, 400); x.scale(k, k); x.translate(-360, -400); x.fillStyle = '#f4f5f8'; rr(x, 40, 270, 640, 266, 20); x.fill(); suitPic(x, 60, 290, 250, 226, true); x.fillStyle = '#16161a'; x.font = '700 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('grandma_june', 330, 330); x.fillStyle = '#3a3e48'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('got my first hive!!', 330, 372); x.fillText('x', 330, 412); x.restore() }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[5.8, 3.8, 8.4], [-0.2, 1.8, -0.8], 50], front: [[0.6, 3.0, 9.8], [0.6, 2.1, 1.4], 40], face: [[0.6, 3.1, 7.8], [0.6, 2.5, 1.4], 36],
+  show: [[-1.2, 2.8, 7.4], [-2.0, 2.1, 0.2], 42], dance: [[0.25, 2.9, 9.4], [0.25, 2.4, 1.9], 46], swarm: [[0.6, 2.9, 9.4], [0.25, 2.2, 1.6], 48],
+  phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0, notes: 0, sad: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = HOLD, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = true, combOn = false, swarm = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [chipP, noteP]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, p = true) => { doc.visible = true; doc.scale.setScalar(p ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const latest = (list, kind, row = 0) => { const L = list.filter(a => t >= a[0]); if (L.length) { const [h0, lab] = L[L.length - 1]; v.pills.push([lab, row, back(seg(t, h0, h0 + 0.2)), kind]); shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35) } }
+  let sx = 0, sz = 0
+
+  if (t < T.part) { q = { ...HOLD, hx: 0.25 }; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.i2) { if (t < T.i1) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2, arx: -1.15, are: -1.15 }, k); c = CAM.front; ckk = seg(t, T.part, T.i1); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+    else { inHand = false; combOn = true; q = { ...SHOW, mh: 1 + Math.abs(Math.sin(t * 12)) * 0.5, hz: Math.sin(t * 3) * 0.05 }; c = CAM.show; ckk = seg(t, T.i1, T.i2); latest([[T.bees1, 'JOB: BEEKEEPER']], '') } }
+  else if (t < T.my1) { q = { ...HOLD, hx: 0.25 }; c = CAM.front; ckk = seg(t, T.i2, T.my1); latest([[T.videos, 'CONTENT: BEES']], '') }
+  else if (t < T.my2) { c = CAM.phone; ckk = seg(t, T.my1, T.my2); docMode = 0; showDoc(T.my1); latest([[T.fyp, 'HASHTAG: #FYP'], [T.viral, 'HASHTAG: #VIRAL'], [T.foryou, 'HASHTAG: #FORYOU']], 'bad') }
+  else if (t < T.the1) { c = CAM.phone; ckk = seg(t, T.my2, T.the1); docMode = 1; showDoc(T.my2); latest([[T.first, 'COMMENT: FIRST'], [T.spaceman, 'COMMENT: A SPACEMAN?'], [T.sweet, 'COMMENT: A GRANDMA']], 'bad') }
+  else if (t < T.so) { c = CAM.phone; ckk = seg(t, T.the1, T.so); docMode = 2; showDoc(T.the1); latest([[T.audience, 'BRAND: WHO IS YOUR AUDIENCE?']], 'bad') }
+  else if (t < T.theBees) {                                                     // so I danced, in the suit, for the algorithm
+    inHand = false; const d = t * 7; q = { ...STAND, alz: -2.2 + Math.sin(d) * 0.6, arz: 2.2 + Math.sin(d + 1) * 0.6, ale: -0.4, are: -0.4, ry: Math.sin(d * 0.5) * 0.4, rz: Math.sin(d) * 0.08, llh: Math.max(0, Math.sin(d)) * -0.5, lrh: Math.max(0, -Math.sin(d)) * -0.5, y: 1.1 + Math.abs(Math.sin(d)) * 0.12, mw: 1.4, mh: 1.4, brow: -0.2 }; c = CAM.dance; ckk = seg(t, T.so, T.theBees)
+    swarm = seg(t, T.so, T.theBees) * 0.6; sx = 0.25; sz = 1.9; latest([[T.danced, 'DANCING'], [T.suit, 'IN THE SUIT'], [T.forA, 'FOR: THE ALGORITHM']], '')
+  } else if (t < T.found) {                                                     // the bees did not enjoy it
+    inHand = false; const a = (t - T.theBees) * 4.5; sx = 0.25 + Math.cos(a) * 0.55; sz = 1.6 + Math.sin(a) * 0.4; swarm = 1; const f = t * 16
+    q = pose({ x: sx, y: 1.15 + Math.abs(Math.sin(f * 0.5)) * 0.12, z: sz, ry: Math.sin(a * 1.3) * 0.7, alz: -2.4 + Math.sin(f) * 0.5, arz: 2.4 - Math.sin(f) * 0.5, llh: Math.sin(f * 0.5) * 0.8, lrh: -Math.sin(f * 0.5) * 0.8, llk: 0.3, lrk: 0.3, eye: 1.4, mw: 1.4, mh: 2, brow: 0.3 }); c = CAM.swarm; ckk = seg(t, T.theBees, T.found); shake = 0.2
+    if (t >= T.enjoy) { v.stamp = ['BEES: NOT FANS', seg(t, T.enjoy, T.enjoy + 0.2), '#ff4d4f', -0.1, 0.14]; shake = Math.max((1 - seg(t, T.enjoy, T.enjoy + 0.4)) * 0.7, 0.2) }
+  } else if (t < T.hashtag) {                                                   // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP({ ...SIT, eye: 0.6, brow: 0.2 }, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; c = CAM.face; ckk = seg(t, T.foundG, T.hashtag); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.no) { c = CAM.phone; ckk = seg(t, T.hashtag, T.no); docMode = 3; showDoc(T.hashtag); latest([[T.hashtag, 'HASHTAG RESEARCH'], [T.beek, 'NICHE: BEEKEEPING'], [T.fifteen, '15 TAGS'], [T.broad, 'BROAD'], [T.niche, 'NICHE'], [T.micro, 'MICRO'], [T.reason, 'EACH WITH A REASON'], [T.niche2, 'NICHE: WHERE BEEKEEPERS BROWSE']], 'good') }
+  else if (t < T.grandma2) {                                                    // no FYP, no dancing, no bullshit
+    inHand = false; c = CAM.center; ckk = seg(t, T.no, T.grandma2)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.15, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.1 + fly * 6), py = 3.7 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? noteP : chipP
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['#FYP', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['#FYP', 0, 1, 'bad']); if (t >= h0) v.pills.push(['DANCING', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['#FYP', 0, 1, 'bad'], ['DANCING', 1, 1, 'bad']) }
+  } else { c = CAM.phone; ckk = seg(t, T.grandma2, T.end); docMode = 4; showDoc(T.grandma2); latest([[T.grandma2, 'GRANDMA: STILL COMMENTING'], [T.gotbees, 'GRANDMA: GOT BEES']], '') }
+
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.root.visible = docMode < 0; P.phone.visible = inHand
+  if (combOn) { const hl = new THREE.Vector3(), hr = new THREE.Vector3(); P.aL.hand.getWorldPosition(hl); P.aR.hand.getWorldPosition(hr); comb.position.copy(hl).lerp(hr, 0.5); comb.position.y += 0.05; comb.position.z += 0.18; comb.rotation.set(-0.15, q.ry, 0) } else comb.position.set(0, -9, 0)
+  // bees: circling the hives, or a swarm round him
+  bees.forEach((b, i) => { const [hx, hz] = HIVES[b.h], a = b.a + t * b.sp * (1 + swarm * 1.5), r = lerp(b.r, 0.5 + (i % 5) * 0.14, swarm), cx = lerp(hx, sx, swarm), cz = lerp(hz, sz, swarm), y = lerp(b.y + 1.2, 1.4 + (i % 8) * 0.28, swarm)
+    if (docMode >= 0 && i % 2) { b.g.position.set(0, -9, 0); return } b.g.position.set(cx + Math.cos(a) * r, y + Math.sin(t * 6 + i) * 0.08, cz + Math.sin(a) * r); b.g.rotation.y = -a; b.g.children[3].rotation.z = Math.sin(t * 90 + i) * 0.6; b.g.children[4].rotation.z = -Math.sin(t * 90 + i) * 0.6 })
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: hazy morning, then bright noon
+  scene.background.set(0xb8d4e8).lerp(new THREE.Color(0x8ac8f4), good); grassMat.color.set(0x6a9a4e).lerp(new THREE.Color(0x7ab85a), good)
+  sun.color.set(0xf4ecd8).lerp(new THREE.Color(0xfff4e0), good); sun.intensity = lerp(1.3, 1.8, good); hemi.intensity = lerp(1.1, 1.3, good); hemi.color.set(0xe8eef4).lerp(new THREE.Color(0xfff8ec), good)
+  glow.position.set(0.6, 2.6, 2.8); glow.intensity = glowOn * 1.4
+  if (docMode >= 0) { docBody.color.set(docMode === 3 ? 0x15161a : 0xffffff); drawDoc(docMode, t) }
+}
+
+/*SHARED_UI*/
+function notes(t) {
+  const n = view.notes; if (n <= 0) return; g.save(); g.fillStyle = '#ffe14a'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; g.textAlign = 'center'; g.textBaseline = 'middle'
+  for (let i = 0; i < 5; i++) { const sad = view.sad, u = ((t * (sad ? 0.25 : 0.6)) + i * 0.21) % 1, X = CX + (i - 2) * 150 + Math.sin(t * 3 + i) * 30, Y = sad ? 360 + u * 160 : 520 - u * 260; g.globalAlpha = n * Math.sin(u * PI) * (sad ? 0.6 : 1); g.font = `800 ${sad ? 60 : 84}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.fillText(i % 2 ? '♫' : '♪', X, Y) }
+  g.restore(); g.globalAlpha = 1
+}
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    notes(t)
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

@@ -1,0 +1,63 @@
+{
+  "slug": "day-in-the-life-always-too-late-find-deals-spots__low-poly-3d-bus-stop-word-timed-captions",
+  "visual_name": "Day in the life, part thirty four: the driver waves (low-poly 3D)",
+  "code_name": "three.js city street with a bus stop (glass shelter, bench, ad panel, BUS 12 sign), pavement, kerb, road markings, buildings and trees, a red bus that pulls in and drives off with a driver's arm waving out of the window, box-built creator in an orange jacket and backpack who runs along the pavement, phone sheets for a group chat / a newsletter / 3 AM DMs (FULL, CLOSED, FILLED stamps) / YourBrand Find deals with spots left and Apply → Applied, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 39.4 second 9:16 reel in low-poly 3D: a creator who is always late (born two weeks late). A deal in a group chat: full. A deal in a Friday newsletter: it closed on Tuesday. A deal in his DMs at three in the morning: filled by breakfast. This morning he ran for the bus and missed that too. Then YourBrand: Find deals, every open campaign in one place, and the card says how many spots are left. Three spots left; he applies right now. Applied. The bus still leaves without him. The driver waves now.",
+  "aliases": [
+    "always late",
+    "too late",
+    "deal full",
+    "deal closed",
+    "filled",
+    "group chat deals",
+    "newsletter",
+    "3 am dm",
+    "find deals",
+    "spots left",
+    "no spots left",
+    "apply",
+    "applied",
+    "on time",
+    "bus stop",
+    "bus shelter",
+    "missed the bus",
+    "running",
+    "bus driver waving",
+    "day in the life 34",
+    "part thirty four",
+    "pt 34",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "deals",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 39.4,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 34,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-sunday-stats-abacus-analytics__low-poly-3d-balcony-word-timed-captions"
+  ]
+}

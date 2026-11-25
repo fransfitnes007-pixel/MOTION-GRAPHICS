@@ -1,0 +1,53 @@
+{
+  "slug": "day-in-the-life-vendor-portal-gift-card-payout__low-poly-3d-truck-tailgate-word-timed-captions",
+  "visual_name": "Day in the life, part nine: paid, almost (low-poly 3D)",
+  "code_name": "three.js parking lot and pickup tailgate, box-built character, payment app / invoice template / vendor portal / Earnings pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.7 second 9:16 reel in low-poly 3D: four brands pay four ways (an app with a fee, an invoice template, a 14-form vendor portal with a bank letter, a gift card); then YourBrand: bank details added once, a campaign balance unlocks, Request payout, approved, on its way to her bank. The gift card was for dog shampoo.",
+  "aliases": [
+    "getting paid",
+    "payout",
+    "vendor portal",
+    "invoice template",
+    "gift card",
+    "fee",
+    "bank details",
+    "request payout",
+    "earnings",
+    "dog shampoo",
+    "day in the life 9",
+    "part nine",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "payout",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.7,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 9,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-23-page-contract-sign-in-app__low-poly-3d-copy-shop-word-timed-captions"
+  ]
+}

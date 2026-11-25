@@ -1,0 +1,52 @@
+{
+  "slug": "day-in-the-life-23-page-contract-sign-in-app__low-poly-3d-copy-shop-word-timed-captions",
+  "visual_name": "Day in the life, part eight: twenty three pages (low-poly 3D)",
+  "code_name": "three.js copy shop and box-built character, a jamming copier, contract / initials / scan / agreement pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: a 23-page contract to print, sign, scan and send back, a jammed copier, initials on every page, a thumb in every scan, version two; then YourBrand: the agreement on the campaign page, signed there, countersigned, brief unlocked, signed PDF. The pages become coasters.",
+  "aliases": [
+    "contract",
+    "agreement",
+    "23 pages",
+    "print sign scan",
+    "paper jam",
+    "copier",
+    "signature",
+    "countersign",
+    "coasters",
+    "day in the life 8",
+    "part eight",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "contract",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.8,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 8,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-request-access-content-bank__low-poly-3d-rooftop-word-timed-captions"
+  ]
+}

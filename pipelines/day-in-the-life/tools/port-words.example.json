@@ -1,0 +1,18 @@
+{
+ "_note": "Copy to ../reference/port-words.json (git-ignored) and fill in. Each rule is [regex, replacement], applied in order before the generic ones. drop_line removes whole SKILL.md lines that match.",
+ "replace": [
+  ["Acme Studio dot io", "Your Brand dot com"],
+  ["(?i)acmestudio\\.io", "yourbrand.com"],
+  ["ACMESTUDIO", "YOURBRAND"],
+  ["AcmeStudio|Acme Studio", "YourBrand"],
+  ["acmestudio", "yourbrand"],
+  ["ACME_ASSETS\\.LOGO_LIGHT", "BRAND_ASSETS.MARK_LIGHT"],
+  ["ACME_ASSETS\\.WORDMARK", "BRAND_ASSETS.WORD_LIGHT"],
+  ["SomeChatApp", "chat"],
+  ["SomePhotoApp", "socials"],
+  ["Voice \"Narrator One\"", "voice A (women)"],
+  ["Voice \"Narrator Two\"", "voice B (men)"],
+  ["\\bJane Owner\\b", "the owner"]
+ ],
+ "drop_line": "~/|internal-notes/|\\bInternalTeam\\b"
+}

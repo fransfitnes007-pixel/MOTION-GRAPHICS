@@ -1,0 +1,62 @@
+{
+  "slug": "day-in-the-life-deal-in-voice-notes-signed-agreement__low-poly-3d-tennis-court-word-timed-captions",
+  "visual_name": "Day in the life, part thirty seven: mostly the dog (low-poly 3D)",
+  "code_name": "three.js tennis court (blue court with white lines, a net, a see-through fence, trees, a courtside bench), a ball machine that fires the brand's voice notes at her as tennis balls (one oversized for the seven-minute note) and then a barrage that knocks her flat, box-built tennis creator with a green visor, blonde ponytail, polo, pleated skirt and racket, phone sheets for voice notes / scrolling four hundred messages to 'This message was deleted' / a campaign agreement read, signed with a self-drawing signature and countersigned / the campaign with its agreement / an eleven-minute voice note and a dog, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.9 second 9:16 reel in low-poly 3D: on a tennis court, the deal was in a voice note: three videos, he said. Then a second voice note: five videos? Then a third, seven minutes, about his dog. She scrolls up four hundred messages for proof; he'd deleted it, and the ball machine knocks her flat. Then YourBrand: the deal is one agreement in the app; she reads it, signs it, it gets countersigned, every term in writing in the campaign. The brand still sends voice notes. Mostly the dog.",
+  "aliases": [
+    "voice notes",
+    "verbal deal",
+    "terms changed",
+    "three videos five videos",
+    "scrolling for proof",
+    "message deleted",
+    "agreement",
+    "contract",
+    "sign in the app",
+    "countersigned",
+    "in writing",
+    "campaign agreement",
+    "tennis",
+    "tennis court",
+    "ball machine",
+    "knocked down",
+    "racket",
+    "dog",
+    "day in the life 37",
+    "part thirty seven",
+    "pt 37",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "agreement",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.9,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 37,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-47-tabs-home-screen-app__low-poly-3d-gamer-room-word-timed-captions"
+  ]
+}

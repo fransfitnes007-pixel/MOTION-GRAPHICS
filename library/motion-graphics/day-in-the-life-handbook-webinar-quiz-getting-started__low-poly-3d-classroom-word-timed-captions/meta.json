@@ -1,0 +1,57 @@
+{
+  "slug": "day-in-the-life-handbook-webinar-quiz-getting-started__low-poly-3d-classroom-word-timed-captions",
+  "visual_name": "Day in the life, part sixteen: the welcome pack (low-poly 3D)",
+  "code_name": "three.js classroom with a rewritten chalkboard, box-built character, a falling handbook, welcome email / webinar player / quiz paper / Getting started levels / level one opened, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 37.9 second 9:16 reel in low-poly 3D: a welcome pack of a ninety page handbook (it lands on his desk), a two hour webinar with a Tuesdays-only replay, and a quiz he scores 4/20 on; then YourBrand's Getting started: three levels, five minutes each, finish one to unlock the next, every step linking to its page. He fails their quiz again on purpose.",
+  "aliases": [
+    "onboarding",
+    "welcome pack",
+    "handbook",
+    "webinar",
+    "replay",
+    "quiz",
+    "four out of twenty",
+    "getting started",
+    "three levels",
+    "five minute read",
+    "unlock",
+    "classroom",
+    "chalkboard",
+    "day in the life 16",
+    "part sixteen",
+    "pt 16",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "onboarding",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 37.9,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 16,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-login-codes-captcha-home-screen-app__low-poly-3d-park-golden-hour-word-timed-captions"
+  ]
+}

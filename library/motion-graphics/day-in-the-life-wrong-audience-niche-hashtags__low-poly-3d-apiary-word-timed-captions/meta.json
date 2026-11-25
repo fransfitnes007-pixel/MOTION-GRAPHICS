@@ -1,0 +1,55 @@
+{
+  "slug": "day-in-the-life-wrong-audience-niche-hashtags__low-poly-3d-apiary-word-timed-captions",
+  "visual_name": "Day in the life, part forty six: the spaceman (low-poly 3D)",
+  "code_name": "three.js apiary in a meadow on a sunny day (four hives on stands, wildflowers, a hedge, a wooden fence, a tree, a shed, a crate he sits on), forty six bees with flapping wings that circle the hives or swarm round him, a honeycomb frame, box-built beekeeper with square black glasses, a moustache, a white suit, a wide-brimmed hat with the veil pushed back, gloves and white boots, phone sheets for his post tagged #fyp #viral #foryou / the comments (first, is that a spaceman, a grandma) / the honey brand's question / YourBrand Hashtag Research (niche typed, fifteen tags in broad, niche and micro with their real help lines, a reason card) / grandma got bees, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 41.0 second 9:16 reel in low-poly 3D: a beekeeper tags every bee video #fyp, #viral and #foryou, and the comments come from everyone but beekeepers: first, is that a spaceman, a grandma who calls him sweetheart. The honey brand asks who his audience is, so he dances in the suit for the algorithm, and the bees do not enjoy it. Then YourBrand: Hashtag Research, beekeeping typed in, fifteen tags in broad, niche and micro, each with a reason; niche is where beekeepers browse. Grandma still comments. She got bees.",
+  "aliases": [
+    "wrong audience",
+    "fyp hashtags",
+    "niche hashtags",
+    "hashtag research",
+    "broad niche micro",
+    "who is your audience",
+    "beekeeper",
+    "bees",
+    "swarm",
+    "apiary",
+    "grandma comments",
+    "day in the life 46",
+    "part forty six",
+    "pt 46",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "hashtags",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.96,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 46,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-daily-from-scratch-batching-getting-started__low-poly-3d-bike-shop-word-timed-captions"
+  ]
+}

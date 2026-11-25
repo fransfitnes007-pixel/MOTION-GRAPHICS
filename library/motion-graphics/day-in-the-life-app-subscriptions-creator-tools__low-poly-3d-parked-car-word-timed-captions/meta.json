@@ -1,0 +1,63 @@
+{
+  "slug": "day-in-the-life-app-subscriptions-creator-tools__low-poly-3d-parked-car-word-timed-captions",
+  "visual_name": "Day in the life, part thirty: the cancel button (low-poly 3D)",
+  "code_name": "three.js rooftop parking deck (parking lines, parapet walls, a lamp post, block-built parked cars, a city skyline), a box-built hatchback with the driver door swung open, slanted windshield, dashboard, steering wheel, a phone in a dash mount with renewal banners on its lock screen, a seat back that drops flat, box-built creator in a backwards cap and denim jacket, phone sheets for subscriptions / renewal emails / YourBrand creator tools / YourBrand menu / a teleprompter app's account page, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 37.5 second 9:16 reel in low-poly 3D: in his parked car on a rooftop deck, a creator pays for four apps to make one video (a teleprompter, a hashtag app, a script writer, a pitch writer). Four renewal emails in a row; the apps made more from his video than he did, and his seat drops flat. Then YourBrand: the tools are already in it (scripts, hashtags, pitch templates), in the same menu as his campaigns. He cancels three apps. He still pays for the teleprompter: he can't find the cancel button.",
+  "aliases": [
+    "subscriptions",
+    "app subscriptions",
+    "renewed",
+    "renewal emails",
+    "cancel button",
+    "teleprompter",
+    "hashtag app",
+    "script writer",
+    "pitch writer",
+    "creator tools",
+    "tools page",
+    "sidebar menu",
+    "parked car",
+    "car interior",
+    "steering wheel",
+    "dash mount phone",
+    "seat recline",
+    "parking deck",
+    "rooftop parking",
+    "day in the life 30",
+    "part thirty",
+    "pt 30",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "reel",
+    "sfx",
+    "story",
+    "tools",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 37.5,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 30,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-tax-time-shoebox-earnings-invoices__low-poly-3d-attic-word-timed-captions"
+  ]
+}

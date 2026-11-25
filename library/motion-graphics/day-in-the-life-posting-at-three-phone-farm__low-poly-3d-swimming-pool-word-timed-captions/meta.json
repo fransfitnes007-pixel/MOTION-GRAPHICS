@@ -1,0 +1,55 @@
+{
+  "slug": "day-in-the-life-posting-at-three-phone-farm__low-poly-3d-swimming-pool-word-timed-captions",
+  "visual_name": "Day in the life, part fifty: everyone out (low-poly 3D)",
+  "code_name": "three.js indoor swimming pool (blue tiled basin with a floor and lane lines, lane ropes, a translucent water plane, a deck, a tall lifeguard chair with a ring buoy, a diving board, DEEP END painted on the deck, a wall clock whose hands snap to 3:00, high windows), four swimmers that swim lengths and climb out, splash particles and rings, an underwater view with fog, light rays and bubbles, box-built lifeguard with sunglasses pushed up, zinc on his nose, a yellow GUARD tee, red shorts and a whistle on a cord, phone sheets for the brand's 3:00 pm rule / YourBrand's phone rack / the real 'Approved. Upload your final video' pop-up, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: a lifeguard's brand wants a post every day at three, and at three he is in the chair. He posts mid whistle, one-handed, eyes on the pool (mostly), drops the phone in the deep end and goes in after it: the post did not go up, neither did he. Then YourBrand: the phone farm. He films once, uploads the original, and YourBrand posts it from its own phones, not from his chair. At three he still blows the whistle out of habit, and everyone gets out.",
+  "aliases": [
+    "posting at a set time",
+    "post every day at three",
+    "phone farm",
+    "yourbrand posts it",
+    "upload the original",
+    "approved upload your final video",
+    "lifeguard",
+    "swimming pool",
+    "underwater",
+    "whistle",
+    "everyone out",
+    "day in the life 50",
+    "part fifty",
+    "pt 50",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "posting",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.84,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 50,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-wrong-audience-niche-hashtags__low-poly-3d-apiary-word-timed-captions"
+  ]
+}

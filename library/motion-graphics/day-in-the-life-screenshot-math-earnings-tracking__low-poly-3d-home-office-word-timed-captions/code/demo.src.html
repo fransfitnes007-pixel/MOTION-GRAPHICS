@@ -1,0 +1,336 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part five: the accountant</title>
+<!-- A 41.2 s reel (1080x1920) in low-poly 3D, fifth in the series. A veteran creator no longer makes content: she screenshots views,
+     fills tab 31 of a spreadsheet, invoices, gets "our numbers are lower", screenshots again with a timestamp. Then YourBrand: paste the
+     post link once; views are tracked, each post shows what it earned and when it pays out. three.js scene + a 2D canvas for captions,
+     pills and the end card. Every frame is a pure function of time: window.render(t). voice A (women), sped 1.18x. -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Paste the link.', 'We do the math.'],
+  skin: 0xe9b995, blazer: 0x1f8a8a, pants: 0x1c1c22, hair: 0x15110f, visor: 0x2fbf71,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0,0.26],["in",0.26,0.38],["the",0.38,0.46],["life",0.46,0.66],["of",0.66,0.92],["a",0.92,1.04],["UGC",1.04,1.46],["creator",1.46,2.1],["Part",2.5,2.7],["five",2.7,3.2],["Five",3.66,3.9],["years",3.9,4.1],["in",4.1,4.5],["I",5.2,5.4],["don't",5.4,5.5],["make",5.5,5.7],["content",5.7,6.1],["anymore",6.1,6.6],["I",6.94,7.1],["do",7.1,7.24],["math",7.24,7.8],["Screenshot",8.38,8.7],["the",8.7,8.9],["views",8.9,9.35],["Every",9.68,9.94],["post",9.94,10.35],["Every",10.7,10.9],["week",10.9,11.3],["Put",11.64,11.8],["it",11.8,11.9],["in",11.9,12.0],["the",12.0,12.1],["spreadsheet",12.1,12.8],["Tab",13.0,13.14],["thirty",13.14,13.38],["one",13.38,13.75],["Send",14.04,14.28],["the",14.28,14.42],["invoice",14.42,15.0],["The",15.3,15.42],["brand",15.42,15.62],["says",15.62,15.86],["their",15.86,16.1],["numbers",16.1,16.32],["are",16.32,16.56],["lower",16.56,17.0],["So",17.24,17.52],["I",17.52,17.72],["screenshot",17.72,18.08],["it",18.08,18.32],["again",18.32,18.56],["With",18.56,19.1],["a",19.1,19.22],["timestamp",19.22,19.9],["I'm",20.18,20.4],["not",20.4,20.52],["a",20.52,20.66],["creator",20.66,21.2],["I'm",21.46,21.54],["an",21.54,21.64],["accountant",21.64,21.96],["with",21.96,22.2],["a",22.2,22.32],["ring",22.32,22.46],["light",22.46,22.9],["Then",23.24,23.54],["I",23.54,23.82],["found",23.82,24.1],["YourBrand",24.1,24.7],["I",25.1,25.26],["paste",25.26,25.46],["the",25.46,25.64],["link",25.64,25.86],["Once",25.86,26.4],["It",27.06,27.2],["tracks",27.2,27.46],["the",27.46,27.68],["views",27.68,28.1],["It",28.36,28.5],["shows",28.5,28.7],["what",28.7,28.92],["every",28.92,29.24],["post",29.24,29.5],["earned",29.5,29.86],["And",29.86,30.34],["when",30.34,30.54],["it",30.54,30.66],["pays",30.66,30.82],["out",30.82,31.2],["No",31.46,31.68],["screenshots",31.68,32.3],["No",32.5,32.68],["spreadsheets",32.68,33.4],["No",33.56,33.76],["bullshit",33.76,34.3],["I",34.6,34.72],["deleted",34.72,35.1],["tab",35.1,35.38],["thirty",35.38,35.62],["one",35.62,36.05]]
+const GROUPS = [[0,7,3,1],[8,9,-1,1.3],[10,12,-1,1.2],[13,17,15,1],[18,20,-1,1.6],[21,23,-1,1.05],[24,25,-1,1.2],[26,27,-1,1.2],[28,32,30,1],[33,35,-1,1.25],[36,38,-1,1.1],[39,45,41,1],[46,50,48,1],[51,53,-1,1.1],[54,57,-1,1.1],[58,64,60,1],[65,68,67,1.1],[69,72,-1,1.1],[73,73,-1,1.7],[74,77,-1,1.1],[78,83,80,1],[84,88,-1,1],[89,90,-1,1.15],[91,92,-1,1.1],[93,94,-1,1.7],[95,99,96,1.05]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = { part: 2.5, years: 3.66, make: 5.2, math: 6.94, mathHit: 7.24, shot: 8.38, snaps: [8.9, 9.94, 10.9], sheet: 11.64, tab: 13.0, tabHit: 13.38, inv: 14.04, invHit: 14.42, lowerHit: 16.56,
+  again: 17.24, againHit: 17.72, stamp: 18.56, stampHit: 19.22, notc: 20.18, acct: 21.46, acctHit: 21.64, found: 23.24, foundG: 23.9, paste: 25.1, pasteHit: 25.64, once: 25.86,
+  tracks: 27.06, earned: 28.36, earnedHit: 29.5, pays: 29.86, paysHit: 30.66, no: 31.46, n1: 31.68, n2s: 32.5, n2: 32.68, nob: 33.56, nobHit: 33.76, del: 34.6, delHit: 34.9, off: 35.45, end: 36.2, dur: 41.2 }
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1d2836)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 80)
+const hemi = new THREE.HemisphereLight(0xcfdcff, 0x5a6070, 1.0); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xaec4ff, 1.2); sun.position.set(-3.5, 10, 7); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 30 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); scene.add(glow)
+const lamp = new THREE.PointLight(0xffc98a, 5, 7, 1.5); lamp.position.set(0.9, 2.5, -1.4); scene.add(lamp)
+const ring = new THREE.PointLight(0xfff1dc, 0, 7, 1.5); scene.add(ring)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- the home office (late at night)
+const wallMat = M(0x3a4c62), wallMat2 = M(0x34455a)
+box(11, 0.2, 14, 0x4a5262, 0, -0.1, 1)
+box(11, 7.4, 0.2, wallMat, 0, 3.7, -4.1); box(0.2, 7.4, 14, wallMat2, -5.1, 3.7, 1); box(0.2, 7.4, 14, wallMat2, 5.1, 3.7, 1)
+box(10.2, 0.26, 0.08, 0xf4f4f4, 0, 0.13, -3.96)
+const rug = cyl(2.3, 2.3, 0.04, 28, 0xb5532f, 0.6, 0.02, 1.9); rug.castShadow = false
+// corkboard of screenshots and red string, behind the desk
+box(3.2, 2.2, 0.1, 0x8a5a2b, 2.0, 4.2, -3.98); box(3.0, 2.0, 0.11, 0xc99a5b, 2.0, 4.2, -3.975)
+const pins = [[-1.1, 0.6], [-0.3, 0.2], [0.6, 0.65], [1.1, -0.1], [-0.8, -0.5], [0.2, -0.6], [0.95, -0.7], [-1.2, 0.0]]
+pins.forEach(([px, py], i) => { box(0.42, 0.56, 0.02, 0xffffff, 2.0 + px, 4.2 + py, -3.9).rotation.z = (i % 3 - 1) * 0.12; box(0.3, 0.2, 0.025, [0x5fb7ff, 0xff8f3f, 0x34d399, 0xb79cf2][i % 4], 2.0 + px, 4.26 + py, -3.89); box(0.06, 0.06, 0.05, 0xe0453a, 2.0 + px, 4.44 + py, -3.88) })
+for (let i = 0; i < pins.length - 1; i++) { const [ax, ay] = pins[i], [bx, by] = pins[i + 1], len = Math.hypot(bx - ax, by - ay); const s = box(len, 0.025, 0.02, 0xe0453a, 2.0 + (ax + bx) / 2, 4.44 + (ay + by) / 2, -3.87); s.rotation.z = Math.atan2(by - ay, bx - ax); s.castShadow = false }
+// window (night, then dawn), bookshelf of binders, filing cabinet, clock
+box(2.3, 2.5, 0.12, 0xf4f4f4, -2.6, 4.1, -3.98); const paneMat = basic(0x16233f); const pane = mesh(new THREE.BoxGeometry(2.0, 2.2, 0.06), paneMat, -2.6, 4.1, -3.93); pane.castShadow = false; box(0.08, 2.2, 0.1, 0xf4f4f4, -2.6, 4.1, -3.9); box(2.0, 0.08, 0.1, 0xf4f4f4, -2.6, 4.1, -3.9)
+const moon = mesh(new THREE.SphereGeometry(0.2, 10, 8), basic(0xf4efd8), -2.1, 4.7, -3.9); moon.castShadow = false
+box(2.4, 2.6, 0.7, 0x6b4a33, -2.6, 1.3, -3.6); for (let r = 0; r < 2; r++) for (let i = 0; i < 6; i++) box(0.3, 0.9, 0.5, [0xe0453a, 0x2f7cf6, 0xffd23f, 0x34d399, 0xb79cf2, 0xff8f3f][(i + r * 2) % 6], -3.5 + i * 0.36, 0.75 + r * 1.2, -3.5)
+box(1.0, 1.9, 0.9, 0x8d939e, -0.6, 0.95, -3.5); for (let r = 0; r < 3; r++) box(0.5, 0.06, 0.06, 0x3a3f4a, -0.6, 0.45 + r * 0.6, -3.02)
+const clock = grp(-0.6, 4.6, -3.95); const cf = cyl(0.5, 0.5, 0.1, 20, 0x2a2c33, 0, 0, 0, clock); cf.rotation.x = PI / 2; const cf2 = cyl(0.42, 0.42, 0.11, 20, 0xfafafa, 0, 0, 0.01, clock); cf2.rotation.x = PI / 2
+const hand1 = grp(0, 0, 0.08, clock); box(0.05, 0.32, 0.02, 0x222222, 0, 0.16, 0, hand1); const hand2 = grp(0, 0, 0.09, clock); box(0.04, 0.22, 0.02, 0xe0453a, 0, 0.11, 0, hand2)
+// desk, chair, lamp, paper stacks, calculator with its tape, laptop, a small ring light on the desk
+box(3.0, 0.12, 1.3, 0xd8c3a5, 2.0, 1.5, -1.2); for (const [dx, dz] of [[-1.4, -0.55], [1.4, -0.55], [-1.4, 0.55], [1.4, 0.55]]) box(0.12, 1.44, 0.12, 0x3a3f4a, 2.0 + dx, 0.72, -1.2 + dz)
+box(1.0, 0.12, 1.0, 0x2a2c33, 2.0, 0.95, -2.45); box(1.0, 1.4, 0.12, 0x2a2c33, 2.0, 1.7, -2.95); for (const [dx, dz] of [[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]]) box(0.1, 0.9, 0.1, 0x15161a, 2.0 + dx, 0.45, -2.45 + dz)
+cyl(0.2, 0.24, 0.06, 10, 0x15161a, 0.85, 1.59, -1.45); const la = cyl(0.03, 0.03, 0.9, 5, 0x15161a, 0.85, 2.0, -1.45); const shade = mesh(new THREE.ConeGeometry(0.3, 0.34, 10, 1, true), M(0xe0453a, { side: THREE.DoubleSide }), 0.9, 2.5, -1.4); const bulb = mesh(new THREE.SphereGeometry(0.1, 8, 6), basic(0xffe2ad), 0.9, 2.42, -1.4); bulb.castShadow = false
+for (let i = 0; i < 3; i++) box(0.6, 0.12 + i * 0.05, 0.8, 0xfafafa, 3.05, 1.62 + i * 0.13, -1.45 + i * 0.03).rotation.y = (i - 1) * 0.12
+const calc = grp(1.25, 1.6, -0.85); box(0.42, 0.1, 0.56, 0x3a3f4a, 0, 0, 0, calc); box(0.34, 0.04, 0.14, 0xcfe8c9, 0, 0.06, -0.17, calc); for (let i = 0; i < 9; i++) box(0.08, 0.04, 0.08, i === 8 ? 0xe0453a : 0xf4f4f4, -0.12 + (i % 3) * 0.12, 0.06, -0.02 + Math.floor(i / 3) * 0.1, calc)
+const tape = grp(1.25, 1.66, -1.1); for (let i = 0; i < 10; i++) { const s = box(0.2, 0.012, 0.3, 0xffffff, -0.12 * i, -0.02 * i * (i > 3 ? i - 3 : 0) * 0.12, 0.02 * i, tape); s.rotation.z = i > 3 ? 0.35 : 0 }
+const laptop = grp(2.0, 1.56, -1.3); box(1.15, 0.06, 0.78, 0x2b2d33, 0, 0.03, 0, laptop)
+const lid = grp(0, 0.06, 0.39, laptop); box(1.15, 0.78, 0.05, 0x2b2d33, 0, 0.39, 0, lid)
+const scr = canvasTex(640, 420); const scrMesh = mesh(new THREE.PlaneGeometry(1.05, 0.68), basic(0xffffff, { map: scr.t }), 0, 0.39, -0.03, lid); scrMesh.rotation.y = PI; scrMesh.castShadow = false
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+const lidG = mesh(new THREE.PlaneGeometry(0.36, 0.45), basic(0xffffff, { map: gTex, transparent: true, opacity: 0 }), 0, 0.39, 0.03, lid); lidG.castShadow = false
+const dRing = grp(3.25, 1.56, -1.0); cyl(0.14, 0.18, 0.05, 8, 0x15161a, 0, 0.02, 0, dRing); cyl(0.025, 0.025, 0.6, 5, 0x15161a, 0, 0.32, 0, dRing); const dRingMat = basic(0x8d8f96); const dr = mesh(new THREE.TorusGeometry(0.3, 0.05, 6, 16), dRingMat, 0, 0.9, 0, dRing); dr.rotation.y = -0.9; dr.castShadow = false
+// the filming corner she no longer uses: tripod, ring light off, a cobweb
+const tripod = grp(2.0, 0, 1.9)
+for (let i = 0; i < 3; i++) { const l = cyl(0.04, 0.04, 1.7, 5, 0x22242a, Math.cos(i * 2.094) * 0.38, 0.78, Math.sin(i * 2.094) * 0.38, tripod); l.rotation.set(Math.sin(i * 2.094) * 0.46, 0, -Math.cos(i * 2.094) * 0.46) }
+cyl(0.045, 0.045, 1.5, 6, 0x22242a, 0, 2.2, 0, tripod); const ringMesh = mesh(new THREE.TorusGeometry(0.55, 0.09, 6, 18), basic(0x6f737c), 0, 3.05, 0, tripod); ringMesh.rotation.y = PI / 2; ringMesh.castShadow = false
+box(0.07, 0.62, 0.34, 0x111216, -0.02, 3.05, 0, tripod)
+const webMat = basic(0xdfe6ee); for (let i = 0; i < 6; i++) { const a = -0.2 - i * 0.26, len = 1.5 - (i % 2) * 0.3; const s = mesh(new THREE.BoxGeometry(len, 0.012, 0.012), webMat, -Math.cos(a) * len / 2, 2.5 + Math.sin(a) * len / 2, 0.05, tripod); s.rotation.z = -a; s.castShadow = false }
+for (let r = 0; r < 3; r++) for (let i = 0; i < 5; i++) { const a0 = -0.2 - i * 0.26, a1 = a0 - 0.26, rad = 0.4 + r * 0.35, x0 = -Math.cos(a0) * rad, y0 = 2.5 + Math.sin(a0) * rad, x1 = -Math.cos(a1) * rad, y1 = 2.5 + Math.sin(a1) * rad, len = Math.hypot(x1 - x0, y1 - y0); const s = mesh(new THREE.BoxGeometry(len, 0.01, 0.01), webMat, (x0 + x1) / 2, (y0 + y1) / 2, 0.05, tripod); s.rotation.z = Math.atan2(y1 - y0, x1 - x0); s.castShadow = false }
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), blz = M(CONFIG.blazer), pant = M(CONFIG.pants), hair = M(CONFIG.hair), dark = M(0x15161a), white = M(0xfafafa)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.0, 1.15, 0.58, blz, 0, 0.6, 0, p.torso); box(0.34, 0.86, 0.03, white, 0, 0.72, 0.3, p.torso); box(0.14, 0.7, 0.05, blz, -0.2, 0.74, 0.31, p.torso).rotation.z = 0.18; box(0.14, 0.7, 0.05, blz, 0.2, 0.74, 0.31, p.torso).rotation.z = -0.18; box(0.5, 0.26, 0.58, pant, 0, 0.1, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.82, 0.78, 0.76, skin, 0, 0.44, 0, p.head)
+  box(0.92, 0.3, 0.86, hair, 0, 0.82, -0.02, p.head); box(0.92, 0.72, 0.22, hair, 0, 0.44, -0.37, p.head); box(0.14, 0.7, 0.62, hair, -0.45, 0.44, -0.08, p.head); box(0.14, 0.7, 0.62, hair, 0.45, 0.44, -0.08, p.head); box(0.84, 0.18, 0.08, hair, 0, 0.74, 0.39, p.head)   // bob with a fringe
+  p.eyeL = box(0.1, 0.14, 0.04, dark, -0.19, 0.44, 0.39, p.head); p.eyeR = box(0.1, 0.14, 0.04, dark, 0.19, 0.44, 0.39, p.head)
+  for (const sx of [-1, 1]) { box(0.28, 0.03, 0.03, dark, sx * 0.19, 0.55, 0.42, p.head); box(0.28, 0.03, 0.03, dark, sx * 0.19, 0.33, 0.42, p.head); box(0.03, 0.25, 0.03, dark, sx * 0.19 - 0.14, 0.44, 0.42, p.head); box(0.03, 0.25, 0.03, dark, sx * 0.19 + 0.14, 0.44, 0.42, p.head) } box(0.1, 0.03, 0.03, dark, 0, 0.46, 0.42, p.head)   // glasses
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.19, 0.62, 0.4, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.19, 0.62, 0.4, p.head)
+  p.mouth = box(0.2, 0.05, 0.04, M(0x8a3b3b), 0, 0.18, 0.39, p.head)
+  p.visor = grp(0, 0.72, 0, p.head); box(0.94, 0.14, 0.9, M(0x15161a), 0, 0.04, -0.02, p.visor); const vb = mesh(new THREE.BoxGeometry(0.9, 0.04, 0.5), M(CONFIG.visor, { transparent: true, opacity: 0.85 }), 0, -0.02, 0.6, p.visor); vb.rotation.x = 0.18   // the accountant's visor
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.64, 1.08, 0, p.torso); box(0.3, 0.56, 0.32, blz, 0, -0.24, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.28, 0.5, 0.3, blz, 0, -0.25, 0, a.el); a.hand = box(0.24, 0.2, 0.26, skin, 0, -0.6, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.26, 0, 0, p.root); box(0.38, 0.6, 0.4, pant, 0, -0.28, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.34, 0.5, 0.36, pant, 0, -0.25, 0, l.knee); box(0.36, 0.16, 0.5, white, 0, -0.52, 0.07, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  p.phone = box(0.34, 0.6, 0.05, dark, 0, -0.84, 0.12, p.aR.el); p.phoneS = box(0.28, 0.52, 0.02, basic(0xffffff), 0, -0.84, 0.15, p.aR.el)
+  p.clk = grp(0, -0.9, 0.1, p.aL.el); const k1 = cyl(0.34, 0.34, 0.1, 14, 0xe0453a, 0, 0, 0, p.clk); k1.rotation.x = PI / 2; const k2 = cyl(0.28, 0.28, 0.11, 14, 0xfafafa, 0, 0, 0.01, p.clk); k2.rotation.x = PI / 2; box(0.04, 0.2, 0.02, dark, 0, 0.1, 0.08, p.clk); box(0.14, 0.04, 0.02, dark, 0.07, 0, 0.08, p.clk)   // proof of time
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, arx: 0, arz: 0.1, are: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.x = q.ale; P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.x = q.are
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.62 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const TYPE = { ...SIT, alx: -0.45, ale: -1.15, arx: -0.45, are: -1.15, tx: 0.1, hx: 0.22 }
+const FLAT = { ...SIT, hx: 0.04, eye: 0.5, brow: 0.18, mw: 1.2, mh: 0.8, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const hero = grp(0, 3.0, 2.6); hero.visible = false
+box(1.36, 2.7, 0.14, 0x15161a, 0, 0, 0, hero); const ph = canvasTex(540, 1100); const phMesh = mesh(new THREE.PlaneGeometry(1.22, 2.5), basic(0xffffff, { map: ph.t }), 0, 0, 0.075, hero); phMesh.castShadow = false
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+const shotP = grp(0, -9, 0); box(0.7, 1.15, 0.04, 0xffffff, 0, 0, 0, shotP); box(0.58, 0.5, 0.045, 0x5fb7ff, 0, 0.22, 0, shotP); for (let i = 0; i < 3; i++) box(0.5 - i * 0.1, 0.07, 0.045, 0xc9ccd6, -i * 0.05, -0.18 - i * 0.14, 0, shotP)
+const sheetP = grp(0, -9, 0); box(1.0, 0.8, 0.03, 0xffffff, 0, 0, 0, sheetP); box(1.0, 0.12, 0.035, 0x1f9d55, 0, 0.34, 0, sheetP); for (let i = 1; i < 5; i++) box(1.0, 0.012, 0.035, 0xb8bcc6, 0, 0.28 - i * 0.14, 0, sheetP); for (let i = 1; i < 4; i++) box(0.012, 0.68, 0.035, 0xb8bcc6, -0.5 + i * 0.25, -0.06, 0, sheetP)
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function thumb(x, X, Y, w, h, c0) { x.fillStyle = c0 || '#cfe3dc'; rr(x, X, Y, w, h, 14); x.fill(); const s = w / 300; x.fillStyle = hex(CONFIG.skin); x.fillRect(X + w / 2 - 40 * s, Y + h * 0.26, 80 * s, 76 * s); x.fillStyle = hex(CONFIG.hair); x.fillRect(X + w / 2 - 50 * s, Y + h * 0.26 - 22 * s, 100 * s, 44 * s); x.fillStyle = hex(CONFIG.blazer); x.fillRect(X + w / 2 - 64 * s, Y + h * 0.26 + 76 * s, 128 * s, h * 0.74 - 76 * s) }
+const fmt = n => Math.round(n).toLocaleString('en-US')
+function grid(x, w, y0, rows, t, fill) { x.fillStyle = '#1f9d55'; x.fillRect(0, y0, w, 44); x.fillStyle = '#fff'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; ['Post', 'Date', 'Views', 'Proof'].forEach((s, i) => x.fillText(s, 16 + i * w / 4, y0 + 30))
+  for (let r = 0; r < rows; r++) { const y = y0 + 44 + r * 40; x.fillStyle = r % 2 ? '#fff' : '#f3f5f8'; x.fillRect(0, y, w, 40); x.strokeStyle = '#d5d8df'; x.lineWidth = 1; x.strokeRect(0, y, w, 40); for (let c = 1; c < 4; c++) { x.beginPath(); x.moveTo(c * w / 4, y); x.lineTo(c * w / 4, y + 40); x.stroke() }
+    if (r < fill) { x.fillStyle = '#16161a'; x.font = '600 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('post ' + (r + 1), 16, y + 27); x.fillText('wk ' + (1 + r % 9), 16 + w / 4, y + 27); x.fillText(fmt(1200 + (r * 7919) % 46000), 16 + w / 2, y + 27); x.fillStyle = '#2f7cf6'; x.fillText('IMG_' + (4100 + r * 3) + '.png', 16 + 3 * w / 4, y + 27) } } }
+function drawLaptop(t) {
+  const x = scr.x, w = 640, h = 420
+  if (t < T.found) { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('views FINAL (real) v9.xlsx', 14, 34); grid(x, w, 48, 8, t, 8) }
+  else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.textAlign = 'center'
+    if (t < T.paste) { const k = back(seg(t, T.foundG - 0.1, T.foundG + 0.35)); x.save(); x.translate(w / 2, 170); x.scale(k, k); x.drawImage(G_IMG, -84, -105, 168, 210); x.restore(); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand', w / 2, 350) }
+    else { x.drawImage(G_IMG, 26, 20, 40, 50); x.fillStyle = '#fff'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('yourbrand.com', 78, 56); x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Paste the link to your post', 60, 130)
+      const on = t >= T.pasteHit; x.fillStyle = '#161619'; rr(x, 50, 150, 540, 70, 16); x.fill(); if (on) { x.fillStyle = '#d4d4d8'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('video.app/@me/7301…', 72, 194) }
+      const ok = t >= T.pasteHit + 0.12; x.fillStyle = ok ? '#34d399' : '#fff'; rr(x, 130, 260, 380, 84, 42); x.fill(); x.fillStyle = '#0b0c10'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(ok ? 'Link added ✓' : 'Submit', w / 2, 315) }
+  }
+  scr.t.needsUpdate = true
+}
+function drawPhone(mode, t) {
+  const x = ph.x, w = 540, h = 1100; x.textAlign = 'center'
+  if (mode === 'stats') {                                                       // her analytics screen, about to be screenshotted
+    const n = T.snaps.filter(s => t >= s).length, again = t >= T.again
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Video analytics', w / 2, 110); x.fillStyle = '#6b7080'; x.font = '600 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(again ? 'post 1 · again' : 'post ' + Math.max(1, n * 14 + 1) + ' · week ' + Math.max(1, n * 6 + 1), w / 2, 164)
+    x.fillStyle = '#16161a'; x.font = '800 96px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(again ? '48,210' : fmt(48210 - n * 9173), w / 2, 320); x.fillStyle = '#6b7080'; x.font = '600 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('views', w / 2, 372)
+    for (let i = 0; i < 7; i++) { const bh = 60 + ((i * 53 + n * 31) % 240); x.fillStyle = '#5fb7ff'; rr(x, 60 + i * 62, 760 - bh, 44, bh, 10); x.fill() } x.fillStyle = '#e4e6ec'; x.fillRect(50, 762, 440, 4)
+    if (again && t >= T.stampHit - 0.2) { x.fillStyle = '#16161a'; rr(x, 70, 840, 400, 110, 24); x.fill(); x.fillStyle = '#ffe14a'; x.font = '800 54px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('02:47:13 AM', w / 2, 915) }
+  } else {                                                                      // the invoice, and the brand's reply
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#f2f3f6'; x.fillRect(0, 0, w, 150); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Brand', w / 2, 96)
+    const k1 = back(seg(t, T.invHit, T.invHit + 0.22)); if (k1 > 0) { x.save(); x.translate(w - 30, 190); x.scale(k1, k1); x.fillStyle = '#2f7cf6'; rr(x, -380, 0, 380, 250, 34); x.fill(); x.fillStyle = '#fff'; rr(x, -356, 24, 332, 150, 18); x.fill(); x.fillStyle = '#16161a'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('INVOICE #212', -336, 76); x.fillStyle = '#6b7080'; x.font = '600 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('48,210 views', -336, 120); x.fillText('+ 31 screenshots', -336, 156); x.fillStyle = '#fff'; x.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Invoice attached!', -350, 220); x.restore() }
+    const k2 = back(seg(t, T.lowerHit - 0.08, T.lowerHit + 0.18)); if (k2 > 0) { x.save(); x.translate(30, 500); x.scale(k2, k2); x.font = '700 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillStyle = '#e9eaee'; rr(x, 0, 0, 440, 150, 40); x.fill(); x.fillStyle = '#16161a'; x.textAlign = 'left'; x.fillText('hmm, we are seeing', 30, 62); x.fillText('41k on our end', 30, 112); x.restore() }
+  }
+  ph.t.needsUpdate = true
+}
+// mode 0: her spreadsheet (tabs race to 31, later the delete dialog). mode 1: YourBrand's posts page.
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040
+  if (mode === 0) {
+    x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = '#16161a'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('views FINAL (real) v9', 24, 62)
+    grid(x, w, 90, 19, t, t < T.del ? Math.floor(seg(t, T.sheet, T.tab) * 19) : 19)
+    const tabN = t < T.del ? Math.round(lerp(1, 31, eo(seg(t, T.tab, T.tabHit + 0.25)))) : 31; x.fillStyle = '#eceef2'; x.fillRect(0, h - 96, w, 96)
+    for (let i = -2; i <= 1; i++) { const n = tabN + i; if (n < 1) continue; const cur = i === 0, X = 250 + i * 150; x.fillStyle = cur ? '#1f9d55' : '#fff'; rr(x, X, h - 82, 138, 62, 12); x.fill(); x.fillStyle = cur ? '#fff' : '#6b7080'; x.font = `${cur ? 800 : 600} 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; x.textAlign = 'center'; x.fillText('Tab ' + n, X + 69, h - 40) }
+    if (t >= T.del) { const k = back(seg(t, T.del, T.del + 0.2)), hit = t >= T.delHit; x.fillStyle = 'rgba(10,10,16,.45)'; x.fillRect(0, 0, w, h); x.save(); x.translate(w / 2, 380); x.scale(k, k); x.fillStyle = '#fff'; rr(x, -270, -170, 540, 340, 30); x.fill(); x.fillStyle = '#16161a'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Delete Tab 31?', 0, -70); x.fillStyle = '#6b7080'; x.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('and the 30 before it', 0, -18); x.fillStyle = hit ? '#b3261e' : '#ff4d4f'; rr(x, -200, 40, 400, 96, 48); x.fill(); x.fillStyle = '#fff'; x.font = '800 42px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(hit ? 'Deleted' : 'Delete', 0, 102); x.restore() }
+    return void (dc.t.needsUpdate = true)
+  }
+  x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h)
+  const scroll = 300 * eio(seg(t, T.pays - 0.05, T.pays + 0.35))                 // the page moves up so the payout card sits above the caption
+  x.save(); x.beginPath(); x.rect(0, 96, w, h - 96); x.clip(); const live = Math.max(0, t - T.tracks)
+  for (let i = 0; i < 3; i++) { const y = 104 + i * 184 - scroll, k = back(seg(t, T.paste + 1.6 + i * 0.1, T.paste + 1.85 + i * 0.1)); if (k <= 0) continue
+    x.save(); x.globalAlpha = clamp(k); x.fillStyle = '#161619'; rr(x, 26, y, w - 52, 170, 24); x.fill(); thumb(x, 46, y + 16, 110, 138, ['#31456b', '#5b3d6b', '#2f5b4a'][i])
+    x.fillStyle = '#fff'; x.font = '700 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText(['Post 1', 'Post 2', 'Post 3'][i], 180, y + 46)
+    x.fillStyle = '#a1a1aa'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('views', 180, y + 82); x.fillStyle = '#fff'; x.font = '800 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(fmt([18400, 9200, 31750][i] + live * [420, 190, 760][i]), 180, y + 134)
+    const ek = back(seg(t, T.earnedHit - 0.1 + i * 0.1, T.earnedHit + 0.15 + i * 0.1)); if (ek > 0) { x.save(); x.translate(w - 150, y + 85); x.scale(ek, ek); x.fillStyle = '#34d399'; rr(x, -104, -56, 208, 112, 26); x.fill(); x.fillStyle = '#0b0c10'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('earned', 0, -20); x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('$ • • •', 0, 30); x.restore() }
+    x.restore() }
+  const pk = back(seg(t, T.paysHit - 0.12, T.paysHit + 0.14)); if (pk > 0) { x.save(); x.translate(w / 2, 760 - scroll); x.scale(pk, pk); x.fillStyle = '#fff'; rr(x, -334, -78, 668, 156, 30); x.fill(); x.fillStyle = '#0b0c10'; rr(x, -300, -44, 84, 88, 14); x.fill(); x.fillStyle = '#ff4d4f'; x.fillRect(-300, -44, 84, 24); x.fillStyle = '#fff'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('✓', -258, 34); x.fillStyle = '#0b0c10'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('Payout date', -190, -4); x.fillStyle = '#6b7080'; x.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('shown for every post', -190, 42); x.restore() }
+  x.restore(); x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, 96); x.drawImage(G_IMG, 36, 26, 44, 55); x.fillStyle = '#fff'; x.font = '800 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'left'; x.fillText('Your posts', 96, 68)
+  x.fillStyle = '#a1a1aa'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'right'; const tk = back(seg(t, T.tracks + 0.1, T.tracks + 0.35)); if (tk > 0) { x.fillStyle = '#34d399'; x.beginPath(); x.arc(w - 318, 58, 9 * tk, 0, 7); x.fill(); x.fillStyle = '#d4d4d8'; x.fillText('views tracked automatically', w - 30, 68) }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[2.3, 3.4, 6.4], [1.9, 2.45, -2.0], 44], front: [[2.0, 2.95, 4.6], [2.0, 2.3, -2.4], 34], frontR: [[4.0, 2.9, 2.9], [2.0, 2.3, -2.2], 38], face: [[2.0, 2.8, 1.5], [2.0, 2.6, -2.4], 36],
+  shoulder: [[3.75, 3.75, -3.5], [1.8, 1.9, -1.2], 50], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], film: [[1.15, 2.7, 9.8], [1.15, 2.05, 1.9], 46], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+  desk: [[0.2, 3.5, 3.6], [2.1, 2.2, -1.8], 46],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, snaps: null, dim: 0, flash: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.snaps = null; v.dim = 0; v.flash = 0
+  let q = STAND, c = CAM.wide, ck = 0, shake = 0, lidA = 0.22, phoneMode = null, docMode = -1, glowOn = 0, ringOn = 0, visor = 0, visorFly = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  hero.visible = false; doc.visible = false; shotP.position.y = -9; sheetP.position.y = -9
+  P.phone.visible = P.phoneS.visible = P.clk.visible = false; tape.visible = t >= T.math && t < T.found; calc.visible = true
+  const breathe = Math.sin(t * 2.2) * 0.012, ty = Math.sin(t * 26)
+  const showDoc = (t0, sc = 1) => { doc.visible = true; doc.scale.setScalar(Math.max(0.01, back(seg(t, t0, t0 + 0.25)) * sc)); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const showPhone = (t0) => { hero.visible = true; hero.scale.setScalar(Math.max(0.01, back(seg(t, t0, t0 + 0.25)))); hero.rotation.set(-0.06, Math.sin(t * 1.6) * 0.1, 0); hero.position.set(0, 3.0 + Math.sin(t * 2.4) * 0.05, 2.6) }
+  const snapFlash = (t0) => (t >= t0 ? (1 - seg(t, t0, t0 + 0.22)) * 0.9 : 0)
+  if (t >= T.mathHit && t < T.off) visor = back(seg(t, T.mathHit, T.mathHit + 0.25))
+
+  if (t < T.part) { q = { ...TYPE, arx: -0.9, are: -0.9, arz: -0.5, are2: 0, hx: 0.3, hy: -0.3, ale: -1.15 + ty * 0.1 }; c = CAM.wide; ck = seg(t, 0, T.part); glowOn = 0.5 }
+  else if (t < T.years) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(TYPE, { ...SIT, alz: -2.6, ale: -0.3, hx: -0.05, mw: 1.5, mh: 1.6, eye: 0.9 }, k); c = CAM.frontR; ck = seg(t, T.part, T.years); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.make) { q = { ...FLAT, eye: 0.6, hz: 0.06 }; c = CAM.front; ck = seg(t, T.years, T.make); glowOn = 0.5; v.pills.push(['YEAR 5', 0, back(seg(t, T.years, T.years + 0.2)), '']) }          // five years in
+  else if (t < T.math) { q = { ...FLAT }; c = CAM.film; ck = seg(t, T.make, T.math); v.pills.push(['LAST FILMED: ???', 0, back(seg(t, T.make + 0.5, T.make + 0.7)), 'bad']) }                              // I don't make content anymore
+  else if (t < T.shot) {                                                        // I do math
+    const tap = Math.sin(t * 30) * 0.12; q = { ...SIT, hx: 0.12, eye: 0.7, brow: -0.12, mw: 1.1, arx: -0.75, are: -1.0 + tap, arz: -0.45, alx: -0.3, ale: -0.9 }; c = CAM.face; ck = seg(t, T.math, T.shot); glowOn = 0.5
+    if (t >= T.mathHit) shake = (1 - seg(t, T.mathHit, T.mathHit + 0.35)) * 0.8
+  } else if (t < T.sheet) {                                                     // screenshot the views, every post, every week
+    q = { ...SIT }; c = CAM.phone; ck = seg(t, T.shot, T.sheet); phoneMode = 'stats'; showPhone(T.shot); v.snaps = t; v.flash = Math.max(...T.snaps.map(snapFlash))
+    const last = T.snaps.filter(s => t >= s).pop(); if (last) hero.scale.multiplyScalar(1 - 0.06 * (1 - seg(t, last, last + 0.2)))
+  } else if (t < T.inv) {                                                       // put it in the spreadsheet, tab thirty one
+    q = { ...SIT }; c = CAM.phone; ck = seg(t, T.sheet, T.inv); docMode = 0; showDoc(T.sheet); if (t >= T.tabHit) { v.pills.push(['TAB 31', 0, back(seg(t, T.tabHit, T.tabHit + 0.2)), 'bad']); shake = (1 - seg(t, T.tabHit, T.tabHit + 0.3)) * 0.6 }
+  } else if (t < T.again) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.inv, T.again); phoneMode = 'chat'; showPhone(T.inv); if (t >= T.lowerHit) shake = (1 - seg(t, T.lowerHit, T.lowerHit + 0.3)) * 0.5 }   // send the invoice; their numbers are lower
+  else if (t < T.notc) {                                                        // so I screenshot it again, with a timestamp
+    const up = back(seg(t, T.stamp, T.stamp + 0.25)); q = { ...SIT, eye: 0.45, brow: 0.2, mw: 1.2, mh: 0.8, arx: -1.5, are: -1.3, arz: -0.2, alx: lerp(-0.3, -1.5, up), ale: lerp(-0.9, -1.3, up), alz: 0.2 }
+    P.phone.visible = P.phoneS.visible = true; P.clk.visible = t >= T.stamp; P.clk.scale.setScalar(Math.max(0.01, up)); c = CAM.front; ck = seg(t, T.again, T.notc); glowOn = 0.4; v.flash = Math.max(snapFlash(T.againHit), snapFlash(T.stampHit + 0.3))
+    if (t >= T.stampHit) v.pills.push(['PROOF: 2:47 AM', 0, back(seg(t, T.stampHit, T.stampHit + 0.2)), 'bad'])
+  } else if (t < T.acct) { q = { ...FLAT, eye: 0.4, hx: 0.02 }; c = CAM.face; ck = seg(t, T.notc, T.acct); glowOn = 0.5 }                                    // I'm not a creator
+  else if (t < T.found) {                                                       // I'm an accountant with a ring light
+    const tap = Math.sin(t * 30) * 0.12; q = { ...SIT, hx: 0.2, eye: 0.6, arx: -0.75, are: -1.0 + tap, arz: -0.45, alx: -0.5, ale: -1.1 }; c = CAM.desk; ck = seg(t, T.acct, T.found); ringOn = 1; glowOn = 0.5
+    v.pills.push(['ACCOUNTANT', 0, back(seg(t, T.acctHit, T.acctHit + 0.2)), '']); v.pills.push(['WITH A RING LIGHT', 1, back(seg(t, 22.32, 22.52)), ''])
+  } else if (t < T.paste) {                                                     // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.5 + 1.1 * k
+    if (t < T.foundG) { q = mixP({ ...FLAT, eye: 0.4 }, { ...SIT, hx: 0.12, eye: 1.45, mw: 0.8, mh: 2, alx: -0.3, arx: -0.3, ale: -0.9, are: -0.9 }, k); c = CAM.face; ck = seg(t, T.found, T.foundG) }
+    else { q = { ...TYPE, eye: 1.3 }; c = CAM.shoulder; ck = seg(t, T.foundG, T.paste); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.5, 0.33, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.tracks - 0.36) {                                             // I paste the link, once
+    q = { ...TYPE, ale: -1.15 + ty * 0.1, are: -1.15 - ty * 0.1, eye: 1.15, mw: 1.3 }; c = CAM.shoulder; ck = seg(t, T.paste, T.tracks); glowOn = 1.2
+    if (t >= T.once) { v.pills.push(['1 LINK', 0, back(seg(t, T.once, T.once + 0.2)), 'good']); shake = (1 - seg(t, T.once, T.once + 0.3)) * 0.5 }
+  } else if (t < T.no) { q = { ...SIT }; c = CAM.phone; ck = seg(t, T.tracks - 0.36, T.no); docMode = 1; showDoc(T.tracks - 0.36) }                           // tracks the views, what every post earned, when it pays out
+  else if (t < T.del) {                                                         // no screenshots, no spreadsheets, no bullshit
+    c = CAM.center; ck = seg(t, T.no, T.del)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 : T.n1, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (0.98 + fly * 6), py = 3.75 + fly * 2.4 + Math.sin(t * 5) * 0.06, spin = fly * 9, o = n ? sheetP : shotP
+      o.position.set(px, py, 2.3); o.rotation.set(0, spin * 0.8 + 0.2, spin); o.scale.setScalar(Math.max(0.01, 1.05 * inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9 }
+    if (t >= T.n1) v.pills.push(['SCREENSHOTS', 0, back(seg(t, T.n1, T.n1 + 0.2)), 'bad']); if (t >= T.n2) v.pills.push(['SPREADSHEETS', 1, back(seg(t, T.n2, T.n2 + 0.2)), 'bad'])
+  } else if (t < T.off) {                                                       // I deleted tab thirty one
+    q = { ...SIT }; c = CAM.phone; ck = seg(t, T.del, T.off); docMode = 0; showDoc(T.del - 1); const f = seg(t, T.delHit + 0.12, T.off), ff = f * f
+    doc.position.y = 3.0 - ff * 6; doc.rotation.z = ff * 1.4; doc.rotation.x = -0.05 - ff * 1.2; if (t >= T.delHit) shake = (1 - seg(t, T.delHit, T.delHit + 0.25)) * 0.5
+  } else {                                                                      // the visor comes off
+    const k = seg(t, T.off, T.end); visor = 1; visorFly = eo(k); q = { ...SIT, hx: -0.12, eye: 0.5, mw: 1.9, mh: 1.5, brow: -0.1, arz: 2.3 * eo(seg(k, 0, 0.35)), arx: -0.3, are: -0.6, alx: -0.3, ale: -0.9 }; c = CAM.front; ck = k; glowOn = 1; calc.visible = false
+  }
+  applyPose({ ...q, tx: q.tx + breathe })
+  setCam(c[0], c[1], c[2], eo(ck) * 0.6 + ck * 0.4, 0.07, shake)
+  lid.rotation.x = lidA
+  tripod.visible = c === CAM.film
+  P.visor.visible = visor > 0; P.visor.scale.setScalar(Math.max(0.01, visor)); P.visor.position.set(visorFly * 1.6, 0.72 + visorFly * 3.2, -visorFly * 0.6); P.visor.rotation.set(-visorFly * 4, 0, visorFly * 3)
+  docBody.color.set(docMode === 1 ? 0x15161a : 0xffffff)
+  // light and mood: the middle of the night, then morning
+  wallMat.color.set(0x3a4c62).lerp(new THREE.Color(0xe7c9a3), good); wallMat2.color.set(0x34455a).lerp(new THREE.Color(0xdcbd97), good)
+  sun.color.set(0xaec4ff).lerp(new THREE.Color(0xffd9a8), good); sun.intensity = lerp(1.1, 1.9, good); hemi.intensity = lerp(0.9, 1.15, good)
+  paneMat.color.set(0x16233f).lerp(new THREE.Color(0xffe3b0), good); moon.visible = good < 0.5; scene.background.set(0x1d2836)
+  lamp.intensity = lerp(5, 2.5, good)
+  glow.position.set(2.0, 2.1, -1.55); glow.intensity = glowOn * 2.2
+  ring.position.set(3.1, 2.5, -1.2); ring.intensity = ringOn * 4.5; dRingMat.color.set(ringOn > 0.5 ? 0xfff6e6 : 0x8d8f96)
+  lidG.material.opacity = good
+  hand1.rotation.z = -t * 0.2; hand2.rotation.z = -t * 1.5
+  drawLaptop(t); if (phoneMode) drawPhone(phoneMode, t); if (docMode >= 0) drawDoc(docMode, t)
+}
+
+/*SHARED_UI*/
+// The camera roll filling up: a count and a fan of little screenshots.
+function snaps(t) {
+  const hits = T.snaps.filter(s => t >= s), n = hits.length, last = hits[n - 1] || T.shot, count = [0, 1, 87, 312][n] + (n ? Math.floor((t - last) * [0, 0, 60, 140][n]) : 0)
+  pill('SCREENSHOTS  ' + fmt(count), 0, n ? 0.85 + 0.15 * back(seg(t, last, last + 0.2)) : back(seg(t, T.shot + 0.2, T.shot + 0.4)), n >= 2 ? 'bad' : '')
+  const cards = Math.min(9, n * 3), y = SAFE.top + 220
+  for (let i = 0; i < cards; i++) { const t0 = T.snaps[Math.floor(i / 3)] + (i % 3) * 0.06, k = back(seg(t, t0, t0 + 0.2)); if (k <= 0) continue; const x = CX + (i - (cards - 1) / 2) * 84, rot = ((i * 37) % 9 - 4) * 0.05
+    g.save(); g.translate(x, y + ((i * 13) % 5) * 6); g.rotate(rot); g.scale(k, k); g.shadowColor = 'rgba(0,0,0,.4)'; g.shadowBlur = 16; g.shadowOffsetY = 6; g.fillStyle = '#fff'; g.beginPath(); g.roundRect(-44, -70, 88, 140, 10); g.fill(); g.shadowColor = 'transparent'
+    g.fillStyle = '#5fb7ff'; g.fillRect(-34, -58, 68, 56); g.fillStyle = '#c9ccd6'; g.fillRect(-34, 10, 60, 8); g.fillRect(-34, 28, 44, 8); g.fillRect(-34, 46, 52, 8); g.restore() }
+}
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    if (v.snaps != null) snaps(v.snaps)
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

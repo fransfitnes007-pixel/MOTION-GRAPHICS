@@ -1,0 +1,54 @@
+{
+  "slug": "day-in-the-life-checking-email-at-a-wedding-notifications__low-poly-3d-wedding-reception-word-timed-captions",
+  "visual_name": "Day in the life, part forty nine: the cake photo (low-poly 3D)",
+  "code_name": "three.js barn wedding reception at golden hour (an open barn door onto a low sun, string lights sagging under the rafters, four round tables with cloths, flowers, candles and chairs, a flower arch, a dance floor, a three-tier cake on its own table, a cocktail table), box-built bridesmaid in a sage dress with an updo and her phone, the bride in a floor-length dress and veil, the groom in a navy suit with a mic, a photographer with a camera and flash, a bouquet on one world-space arc, a cake that squashes, icing on her face, phone sheets for the brand's last message / YourBrand notifications (bell with a badge, grouped Campaigns and Content, Content approved, a DM card) / her sister's framed photo, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.9 second 9:16 reel in low-poly 3D: a bridesmaid waiting on a brand's answer checks her email through her sister's vows, the speeches, the first dance and every photo. The bride throws the bouquet; she catches it with her face and falls into the cake. Then YourBrand: notifications, one bell, grouped by Campaigns and Content, Content approved, and a DM. It tells her, so she puts the phone face down and dances. Her sister framed the cake photo. It's in her hallway.",
+  "aliases": [
+    "checking email",
+    "can't stop checking",
+    "notifications",
+    "notification bell",
+    "content approved",
+    "wedding",
+    "bridesmaid",
+    "bouquet",
+    "wedding cake",
+    "barn wedding",
+    "day in the life 49",
+    "part forty nine",
+    "pt 49",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "notifications",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.94,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 49,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-wrong-audience-niche-hashtags__low-poly-3d-apiary-word-timed-captions"
+  ]
+}

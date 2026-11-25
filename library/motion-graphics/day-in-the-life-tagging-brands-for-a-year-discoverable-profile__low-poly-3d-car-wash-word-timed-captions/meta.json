@@ -1,0 +1,56 @@
+{
+  "slug": "day-in-the-life-tagging-brands-for-a-year-discoverable-profile__low-poly-3d-car-wash-word-timed-captions",
+  "visual_name": "Day in the life, part forty four: the office chair (low-poly 3D)",
+  "code_name": "three.js car wash on a sunny day (a tunnel cut away at the front with two upright brushes and one overhead brush that spin, a CAR WASH sign, a teal car in the open bay, a blue bucket he sits on, a hose reel, cones, a pay station, puddles), flying foam and foam that stays on his head, box-built attendant with a bald head, a full black beard, a lime polo, navy shorts, yellow rubber boots and orange gloves, a sponge, phone sheets for his post with two hundred tags / their feed with a flame under every post / their office chair, liked / the follow back (a bot) / YourBrand Profile (headline, Discoverable to brands, My top 3 videos) then Browse creators with Invite to campaign / the chair, still, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: a car wash attendant tags brands on every post on his break: two hundred tags, a fire comment on everything they post for a year, a like on a photo of their office chair. One follow back: a bot. So he films in the car wash for attention, and the brushes win. Then YourBrand: his Profile, a headline, his top three videos, one switch, Discoverable to brands; brands browse the directory and invite him. He still comments on the chair. It's a good chair.",
+  "aliases": [
+    "tagging brands",
+    "getting noticed by brands",
+    "commenting on brand posts",
+    "discoverable to brands",
+    "profile",
+    "headline",
+    "top 3 videos",
+    "creator directory",
+    "invite to campaign",
+    "car wash",
+    "brushes",
+    "foam",
+    "day in the life 44",
+    "part forty four",
+    "pt 44",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "profile",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.76,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 44,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-sixty-three-slide-brief-deck-brief-in-app__low-poly-3d-cinema-word-timed-captions"
+  ]
+}

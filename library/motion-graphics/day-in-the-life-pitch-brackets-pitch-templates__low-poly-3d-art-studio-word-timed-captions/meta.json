@@ -1,0 +1,59 @@
+{
+  "slug": "day-in-the-life-pitch-brackets-pitch-templates__low-poly-3d-art-studio-word-timed-captions",
+  "visual_name": "Day in the life, part nineteen: with the brackets (low-poly 3D)",
+  "code_name": "three.js art studio with an easel, box-built character, compose / online template / sent list / pitch templates / personalise form / four outputs / reply pages, hard cuts on voiceover word times",
+  "category": "motion-graphics",
+  "summary": "A 40.8 second 9:16 reel in low-poly 3D: one sentence of pitch in an hour, then an online template sent to eleven brands with [BRAND NAME] still in it; then YourBrand: three pitch templates, or one written from the brand, your stats and the deliverable: subject line, email, DM, follow-up. One brand replied: 'Hi [CREATOR NAME],'.",
+  "aliases": [
+    "pitch",
+    "pitch email",
+    "brand pitch",
+    "template",
+    "brackets",
+    "brand name",
+    "placeholder",
+    "cold pitch",
+    "follow-up",
+    "personalise",
+    "subject line",
+    "dm",
+    "outbox",
+    "art studio",
+    "easel",
+    "day in the life 19",
+    "part nineteen",
+    "pt 19",
+    "low poly"
+  ],
+  "tags": [
+    "3d",
+    "brand",
+    "captions",
+    "character",
+    "day-in-the-life",
+    "end-card",
+    "kinetic-type",
+    "logo",
+    "pitch",
+    "reel",
+    "sfx",
+    "story",
+    "voice"
+  ],
+  "tech": [
+    "three.js",
+    "webgl",
+    "canvas-2d",
+    "word-timed-captions",
+    "tts-voiceover"
+  ],
+  "duration_sec": 40.8,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "series": "day-in-the-life",
+  "part": 19,
+  "credit": "Original code, this repository (MIT). three.js (MIT, three.js authors) bundled as code/three.min.js.",
+  "variants_elsewhere": [
+    "motion-graphics/day-in-the-life-job-boards-cover-letter-find-deals__low-poly-3d-post-office-word-timed-captions"
+  ]
+}

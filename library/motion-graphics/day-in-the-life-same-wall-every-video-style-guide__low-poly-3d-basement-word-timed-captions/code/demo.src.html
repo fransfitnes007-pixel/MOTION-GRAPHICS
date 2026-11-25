@@ -1,0 +1,279 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part forty two: the wall</title>
+<!-- A 40.3 s reel (1080x1920) in low-poly 3D, forty-second in the series. In a basement, every video he makes is the
+     same: him, talking, at the same beige wall, forty one times. The brand asks for something new, so he tries to move
+     the wall; it is load-bearing. Then YourBrand: the Content Style Guide, ten styles and when to use each one; he does
+     a skit, plays both characters, and one of them is the wall. The wall is in every video now. It wants royalties. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Ten styles.', 'When to use each one.'],
+  skin: 0xe8b896, hoodie: 0xe07a2a, sweats: 0x8a8e96, hair: 0xd8b870,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0.0,0.26],["in",0.26,0.38],["the",0.38,0.44],["life",0.44,0.66],["of",0.66,0.88],["a",0.88,0.98],["UGC",0.98,1.4],["creator",1.4,1.9],["Part",2.42,2.48],["forty",2.48,2.78],["two",2.78,3.54],["Every",3.66,3.82],["video",3.82,4.12],["I",4.12,4.3],["make",4.3,4.52],["is",4.52,4.7],["the",4.7,4.86],["same",4.86,5.26],["Me",5.76,5.94],["Talking",6.56,6.72],["At",7.2,7.34],["the",7.34,7.46],["same",7.46,7.8],["wall",7.8,8.12],["Forty",8.72,8.82],["one",8.82,9.08],["videos",9.08,9.46],["One",10.0,10.2],["wall",10.2,10.5],["The",10.98,11.06],["brand",11.06,11.26],["said",11.26,11.54],["try",11.72,11.92],["something",11.92,12.14],["new",12.14,12.42],["So",12.74,12.98],["I",12.98,13.28],["moved",13.28,13.44],["the",13.44,13.58],["wall",13.58,13.8],["Not",14.18,14.42],["literally",14.42,14.7],["I",15.12,15.2],["tried",15.2,15.5],["It's",15.9,16.08],["load-bearing",16.08,16.44],["Then",17.04,17.22],["I",17.22,17.46],["found",17.46,17.74],["YourBrand",17.74,18.26],["The",18.6,18.72],["style",18.72,18.98],["guide",18.98,19.2],["has",19.2,19.44],["ten",19.44,19.72],["styles",19.72,20.1],["and",20.28,20.36],["when",20.36,20.58],["to",20.58,20.76],["use",20.76,20.94],["each",20.94,21.14],["one",21.14,21.44],["POV",22.06,22.12],["Unboxing",22.68,23.06],["Tutorials",23.7,24.18],["Skits",24.52,24.62],["So",25.06,25.28],["I",25.28,25.52],["did",25.52,25.64],["a",25.64,25.78],["skit",25.78,26.04],["I",26.34,26.42],["played",26.42,26.64],["both",26.64,26.9],["characters",26.9,27.32],["One",27.32,27.88],["of",27.88,28.0],["them",28.0,28.14],["was",28.14,28.4],["the",28.4,28.58],["wall",28.58,28.84],["No",29.34,29.44],["talking",29.44,29.72],["head",29.72,30.02],["No",30.22,30.46],["same",30.46,30.72],["wall",30.72,31.06],["No",31.38,31.5],["bullshit",31.5,31.94],["The",32.3,32.4],["wall's",32.4,32.64],["in",32.64,32.76],["every",32.76,33.1],["video",33.1,33.4],["now",33.4,33.72],["It",34.0,34.12],["wants",34.12,34.32],["royalties",34.32,34.8]]
+const GROUPS = [[0, 7, 6, 1], [8, 10, -1, 1.3], [11, 17, 17, 1.15], [18, 18, 18, 1.6], [19, 19, 19, 1.6], [20, 23, 23, 1.3], [24, 26, 24, 1.3], [27, 28, 28, 1.5], [29, 31, 30, 1.3], [32, 34, 34, 1.3], [35, 39, 37, 1.2], [40, 41, 41, 1.4], [42, 43, 43, 1.5], [44, 45, 45, 1.4], [46, 49, 49, 1.1], [50, 55, 55, 1.1], [56, 61, 57, 1.1], [62, 62, 62, 1.6], [63, 63, 63, 1.5], [64, 64, 64, 1.5], [65, 65, 65, 1.6], [66, 70, 70, 1.3], [71, 74, 74, 1.2], [75, 80, 80, 1.2], [81, 83, -1, 1.3], [84, 86, -1, 1.4], [87, 88, -1, 1.5], [89, 94, 90, 1.1], [95, 97, 97, 1.3]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = {part: 2.42, every: 3.66, sameHit: 4.86, talking: 6.56, wallHit1: 7.8, forty: 8.72, videos: 9.08, oneWall: 10.2, brand: 10.98, tryHit: 11.72, newHit: 12.14, so: 12.74, moved: 13.28, notLit: 14.18, tried: 15.2, load: 16.08, found: 17.04, foundG: 17.74, style: 18.6, ten: 19.44, when: 20.36, pov: 22.06, unbox: 22.68, tut: 23.7, skits: 24.52, so2: 25.06, skit: 25.78, chars: 26.9, wallHit: 28.58, no: 29.34, n1: 29.44, n2s: 30.22, n2: 30.46, nob: 31.38, nobHit: 31.5, wallS: 32.3, everyHit: 32.76, it: 34.0, royal: 34.32, end: 35.3, dur: 40.3}
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2119)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xf0e6d8, 0x5a4a3a, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6e2da, 1.4); sun.position.set(4, 9, 8); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffd8a0, 0, 9, 1.5); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- a basement (cut away at the front)
+const floorMat = M(0x8a8a86); box(15, 0.1, 12, floorMat, 0, -0.05, 0)
+for (let i = 0; i < 10; i++) { const l = box(0.02, 0.012, 12, M(0x6a6a66), -6.5 + i * 1.5, 0.006, 0); l.castShadow = false }
+const blockMat = M(0x9a9a96); box(15, 4.4, 0.12, blockMat, 0, 2.2, -3.3); for (const sx of [-1, 1]) box(0.12, 4.4, 7, blockMat, sx * 7.2, 2.2, 0.2)
+{ const bc = canvasTex(256, 256); bc.x.fillStyle = '#9a9a96'; bc.x.fillRect(0, 0, 256, 256); bc.x.strokeStyle = 'rgba(60,60,58,.35)'; bc.x.lineWidth = 3; for (let r = 0; r < 8; r++) { bc.x.beginPath(); bc.x.moveTo(0, r * 32); bc.x.lineTo(256, r * 32); bc.x.stroke(); for (let c = 0; c < 4; c++) { const X = c * 64 + (r % 2) * 32; bc.x.beginPath(); bc.x.moveTo(X, r * 32); bc.x.lineTo(X, r * 32 + 32); bc.x.stroke() } } bc.t.needsUpdate = true; bc.t.wrapS = bc.t.wrapT = THREE.RepeatWrapping; bc.t.repeat.set(5, 2); blockMat.map = bc.t; blockMat.needsUpdate = true }
+// THE wall: one beige painted patch he films in front of
+const WALL = { x: -1.0, y: 1.9, z: -3.2 }
+const wallMat = M(0xd8c8a8); const theWall = box(3.2, 3.8, 0.1, wallMat, WALL.x, WALL.y, -3.2)
+const crack = grp(WALL.x + 0.6, 3.4, -3.14); for (let i = 0; i < 5; i++) { const s = box(0.04, 0.32, 0.01, 0x3a3a36, Math.sin(i * 1.7) * 0.12, -i * 0.28, 0, crack); s.rotation.z = (i % 2 ? 0.5 : -0.4); s.castShadow = false } crack.visible = false
+// eyes and a mouth on the wall, for the skit
+const face = grp(WALL.x, 2.7, -3.12); const pupils = []; for (const sx of [-1, 1]) { mesh(new THREE.SphereGeometry(0.24, 12, 10), M(0xffffff), sx * 0.38, 0, 0, face).scale.z = 0.5; pupils.push(mesh(new THREE.SphereGeometry(0.11, 10, 8), M(0x15161a), sx * 0.38, -0.04, 0.12, face)) } const wMouth = box(0.7, 0.08, 0.04, 0x3a2a20, 0, -0.62, 0.02, face); face.visible = false
+const note = grp(WALL.x + 0.95, 2.1, -3.1); { const c = canvasTex(200, 200); c.x.fillStyle = '#ffe14a'; c.x.fillRect(0, 0, 200, 200); c.x.fillStyle = '#23304a'; c.x.font = 'italic 800 38px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText('I WANT', 100, 80); c.x.fillText('ROYALTIES', 100, 130); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(0.6, 0.6), basic(0xffffff, { map: c.t }), 0, 0, 0, note); m.castShadow = false; note.rotation.z = 0.08 } note.visible = false
+// ceiling beams and pipes, one beam over the wall that sags
+const beams = []; for (let i = 0; i < 6; i++) beams.push(box(0.28, 0.28, 7, M(0x6a5038), -6 + i * 2.4, 4.1, 0.2))
+const sagBeam = grp(WALL.x, 4.05, -2.0); box(4.0, 0.3, 0.3, M(0x6a5038), 0, 0, 0, sagBeam)
+for (const [y, z] of [[3.8, -2.9], [3.7, -2.6]]) { const p = cyl(0.07, 0.07, 14, 8, M(0xa88a5a, { metalness: 0.5, roughness: 0.5 }), 0, y, z); p.rotation.z = PI / 2 }
+const dust = []; for (let i = 0; i < 14; i++) { const d = mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), M(0xd8d0c0), 0, -9, 0); d.castShadow = false; dust.push(d) }
+// a boiler, shelves of boxes, the stairs, a bare bulb, the old couch
+cyl(0.55, 0.55, 2.2, 12, M(0xc8ccd2, { metalness: 0.4, roughness: 0.5 }), -5.4, 1.1, -2.5); box(0.3, 0.3, 0.1, 0x2a2c33, -5.4, 1.4, -1.94)
+box(1.6, 2.2, 0.5, 0x6a5038, 4.8, 1.1, -3.0); for (let r = 0; r < 3; r++) for (let i = 0; i < 2; i++) box(0.6, 0.45, 0.4, [0xc8a06a, 0xb08a50][(r + i) % 2], 4.4 + i * 0.75, 0.45 + r * 0.7, -2.95)
+for (let i = 0; i < 7; i++) box(1.2, 0.12, 0.4, 0x6a5038, 6.4, 0.2 + i * 0.55, -2.8 + i * 0.4)
+cyl(0.01, 0.01, 0.6, 4, 0x2a2c33, 0.8, 3.9, -1.2); const bulb = mesh(new THREE.SphereGeometry(0.13, 8, 6), basic(0xfff0c0), 0.8, 3.55, -1.2); bulb.castShadow = false
+const bulbLight = new THREE.PointLight(0xffe8b0, 1.2, 9, 1.6); bulbLight.position.set(0.8, 3.4, -1.2); scene.add(bulbLight)
+box(3.1, 0.75, 0.95, M(0x6a7a4a), 2.0, 0.375, -2.5); box(3.0, 0.22, 0.9, M(0x7a8a5a), 2.0, 0.86, -2.5); box(3.0, 0.85, 0.22, M(0x7a8a5a), 2.0, 1.42, -2.98); for (const dx of [-1.6, 1.6]) box(0.24, 1.0, 0.95, M(0x6a7a4a), 2.0 + dx, 0.6, -2.5)
+// his tripod, phone pointed at the wall spot
+const rig = grp(-2.6, 0, 0.6); rig.rotation.y = -0.5; for (const r of [0, 2.1, 4.2]) { const l = box(0.04, 1.6, 0.04, 0x2a2c33, Math.sin(r) * 0.3, 0.78, Math.cos(r) * 0.3, rig); l.rotation.set(Math.cos(r) * 0.2, 0, -Math.sin(r) * 0.2) } box(0.36, 0.2, 0.03, 0x15161a, 0, 1.66, 0, rig).rotation.z = PI / 2
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+// swatted props
+function bubbleProp(word, col, fg) { const o = grp(0, -9, 0); const c = canvasTex(360, 180); c.x.fillStyle = col; c.x.beginPath(); c.x.roundRect(10, 10, 340, 120, 44); c.x.fill(); c.x.beginPath(); c.x.moveTo(70, 128); c.x.lineTo(46, 170); c.x.lineTo(118, 128); c.x.fill(); c.x.fillStyle = fg; c.x.font = '800 54px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText(word, 180, 90); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(1.5, 0.75), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, o); m.castShadow = false; return o }
+const blahP = bubbleProp('blah blah', '#ffffff', '#16161a')
+const chunk = grp(0, -9, 0); box(0.8, 0.6, 0.2, M(0xd8c8a8), 0, 0, 0, chunk)
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), hd = M(CONFIG.hoodie), sw = M(CONFIG.sweats), dark = M(0x15161a), hair = M(CONFIG.hair), sock = M(0xf4f4f6), slide = M(0x15161a), frk = M(0xc87a4a)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.04, 1.22, 0.64, hd, 0, 0.6, 0, p.torso); box(0.6, 0.3, 0.06, M(0xc8601a), 0, 0.3, 0.33, p.torso); for (const sx of [-1, 1]) box(0.03, 0.34, 0.03, 0xf4f4f6, sx * 0.12, 1.0, 0.33, p.torso); box(0.9, 0.3, 0.3, hd, 0, 1.14, -0.28, p.torso); box(1.02, 0.42, 0.58, sw, 0, -0.06, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.76, 0.76, 0.72, skin, 0, 0.44, 0, p.head); box(0.78, 0.08, 0.74, hair, 0, 0.83, 0, p.head); box(0.78, 0.3, 0.1, hair, 0, 0.66, -0.34, p.head); for (const sx of [-1, 1]) { box(0.06, 0.22, 0.4, hair, sx * 0.39, 0.68, -0.1, p.head); box(0.1, 0.22, 0.14, skin, sx * 0.43, 0.42, 0, p.head) }
+  for (const [x, y] of [[-0.24, 0.34], [-0.16, 0.31], [-0.28, 0.29], [0.24, 0.34], [0.16, 0.31], [0.28, 0.29]]) box(0.03, 0.03, 0.02, frk, x, y, 0.37, p.head)
+  p.cap = grp(0, 0.86, 0, p.head); box(0.82, 0.18, 0.78, M(0x2f7cf6), 0, 0.06, 0, p.cap); box(0.7, 0.04, 0.36, M(0x2f7cf6), 0, -0.02, 0.52, p.cap); p.cap.visible = false
+  p.eyeL = box(0.08, 0.11, 0.04, dark, -0.17, 0.48, 0.37, p.head); p.eyeR = box(0.08, 0.11, 0.04, dark, 0.17, 0.48, 0.37, p.head)
+  p.browL = box(0.2, 0.05, 0.04, M(0xb09050), -0.17, 0.66, 0.38, p.head); p.browR = box(0.2, 0.05, 0.04, M(0xb09050), 0.17, 0.66, 0.38, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0xa8424a), 0, 0.2, 0.37, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.64, 1.08, 0, p.torso); box(0.36, 0.32, 0.38, hd, 0, -0.1, 0, a.sh); box(0.32, 0.36, 0.34, hd, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.3, 0.32, 0.32, hd, 0, -0.12, 0, a.el); a.hand = box(0.24, 0.2, 0.26, skin, 0, -0.4, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.24, 0, 0, p.root); box(0.4, 0.6, 0.42, sw, 0, -0.3, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.4, 0.38, 0.42, sw, 0, -0.2, 0, l.knee); box(0.34, 0.14, 0.42, sock, 0, -0.44, 0.04, l.knee); box(0.42, 0.08, 0.6, slide, 0, -0.56, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const TALK = pose({ x: -1.0, y: 1.1, z: -2.0, arz: 0.4, are: -1.2, arx: -0.4, alz: -0.3, ale: -0.8, alx: -0.3, mw: 1.2, mh: 1.2 })
+const PUSH = pose({ x: -1.0, y: 1.1, z: -2.15, ry: PI, tx: 0.35, arx: -1.55, alx: -1.55, are: -0.1, ale: -0.1, llh: 0.45, llk: 0.1, lrh: -0.15, lrk: 0.2, hx: -0.2, eye: 0.4, mw: 1.3, mh: 0.4 })
+const HOLDUP = pose({ x: -1.0, y: 0.95, z: -2.0, alz: -2.85, arz: 2.85, ale: 0.2, are: 0.2, llh: -0.3, lrh: -0.3, llk: 0.6, lrk: 0.6, eye: 0.25, brow: 0.25, mw: 1.4, mh: 0.4, hx: -0.15 })
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function thumb(x, X, Y, w, h, bg, label, eyes) { x.fillStyle = bg; x.fillRect(X, Y, w, h); x.fillStyle = '#e07a2a'; x.fillRect(X + w * 0.3, Y + h * 0.55, w * 0.4, h * 0.45); x.fillStyle = '#e8b896'; x.fillRect(X + w * 0.35, Y + h * 0.28, w * 0.3, h * 0.28); x.fillStyle = '#d8b870'; x.fillRect(X + w * 0.35, Y + h * 0.26, w * 0.3, h * 0.04)
+  if (eyes) { x.fillStyle = '#fff'; for (const sx of [0.16, 0.84]) { x.beginPath(); x.arc(X + w * sx, Y + h * 0.18, w * 0.08, 0, 7); x.fill() } x.fillStyle = '#15161a'; for (const sx of [0.16, 0.84]) { x.beginPath(); x.arc(X + w * sx, Y + h * 0.19, w * 0.035, 0, 7); x.fill() } }
+  if (label) { x.fillStyle = 'rgba(0,0,0,.55)'; rr(x, X + 6, Y + h - 34, w - 12, 28, 8); x.fill(); x.fillStyle = '#fff'; x.font = '800 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(label, X + w / 2, Y + h - 14); x.textAlign = 'left' } }
+const STYLES = ['Talking head', 'Green screen', 'Text over screen', 'Slideshow', 'POV', 'Day in the life', 'Unboxing and first try', 'Tutorial / how-to', 'Skit / duet', 'Testimonial / results']
+const WHEN = { 4: 'Emotional or funny angles where the product is the fix.', 6: 'Physical products and new app installs.', 7: 'Anything with a learning curve.', 8: 'Comedy angles and objections. Highest ceiling, most takes.' }
+// 0 his grid: forty one videos, one wall · 1 the brand: try something new · 2 the Content Style Guide · 3 his grid now, the wall in every one
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  const hdr = (title, col, sub) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = '#16161a'; x.font = '800 46px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 40, 92); if (sub) { x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 40, 132) } x.fillStyle = '#eceef2'; x.fillRect(0, 160, w, 3) }
+  if (mode === 0 || mode === 3) {
+    hdr('@wally.reviews', '#e07a2a', mode === 0 ? '41 videos' : 'This week')
+    const LB = ['POV', 'SKIT', 'UNBOXING', 'TUTORIAL', 'SLIDESHOW', 'GREEN SCREEN']
+    for (let i = 0; i < 12; i++) { const c = i % 3, r = Math.floor(i / 3), X = 24 + c * 228, Y = 176 + r * 118; const k = mode === 0 ? clamp(seg(t, T.forty - 0.3 + i * 0.05, T.forty - 0.1 + i * 0.05)) : clamp(seg(t, T.wallsIn + i * 0.04, T.wallsIn + 0.2 + i * 0.04)); if (k <= 0 || r > 2) continue; x.globalAlpha = k
+      if (mode === 0) thumb(x, X, Y, 216, 110, '#d8c8a8', null, false); else thumb(x, X, Y, 216, 110, ['#5ab0f0', '#f0a04a', '#7ac08a', '#c07af0', '#f07a8a', '#4ad0b0'][i % 6], LB[i % 6], true) }
+    x.globalAlpha = 1
+    if (mode === 0 && t >= T.oneWall) { const q = back(seg(t, T.oneWall, T.oneWall + 0.25)); x.save(); x.translate(360, 980); x.scale(q, q); x.fillStyle = '#e5484d'; rr(x, -200, -40, 400, 80, 40); x.fill(); x.fillStyle = '#fff'; x.font = '800 38px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('SAME WALL ×41', 0, 14); x.restore(); x.textAlign = 'left' }
+  } else if (mode === 1) {
+    hdr('Brivo', '#1aa894', 'Chat'); const pop = t0 => t >= t0 ? back(seg(t, t0, t0 + 0.22)) : 0
+    const bub = (txt, Y, k) => { if (k <= 0) return; x.save(); x.font = '700 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText(txt).width + 60; x.translate(40 + tw / 2, Y + 40); x.scale(k, k); x.translate(-40 - tw / 2, -Y - 40); x.fillStyle = '#eceef2'; rr(x, 40, Y, tw, 80, 34); x.fill(); x.fillStyle = '#16161a'; x.fillText(txt, 70, Y + 54); x.restore() }
+    bub('Love your stuff!!', 196, pop(T.brand + 0.1)); bub('Could you try', 296, pop(T.tryHit)); bub('something new? :)', 386, pop(T.newHit))
+  } else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Content Style Guide', 88, 64); x.fillStyle = '#a1a1aa'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Ten styles, and when to use each one', 88, 98)
+    const hot = t >= T.skits ? 8 : t >= T.tut ? 7 : t >= T.unbox ? 6 : t >= T.pov ? 4 : -1
+    STYLES.forEach((s, i) => { const c = i % 2, r = Math.floor(i / 2), X = 30 + c * 336, Y = 132 + r * 100, k = t >= T.ten ? back(seg(t, T.ten + i * 0.05, T.ten + 0.2 + i * 0.05)) : 0; if (k <= 0) return; const on = i === hot
+      x.save(); x.translate(X + 160, Y + 42); x.scale(k * (on ? 1.06 : 1), k * (on ? 1.06 : 1)); x.translate(-X - 160, -Y - 42); x.fillStyle = on ? '#1d1a2b' : '#161619'; rr(x, X, Y, 320, 84, 18); x.fill(); x.strokeStyle = on ? '#a78bfa' : '#26262c'; x.lineWidth = on ? 4 : 2; rr(x, X, Y, 320, 84, 18); x.stroke()
+      x.fillStyle = on ? '#fff' : '#d4d4d8'; x.font = (on ? '800' : '700') + ' ' + (s.length > 18 ? 22 : 26) + 'px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(s, X + 22, Y + 52); x.restore() })
+    if (t >= T.when) { const k = eo(seg(t, T.when, T.when + 0.3)); x.globalAlpha = k; x.fillStyle = '#161619'; rr(x, 30, 912, 660, 104, 18); x.fill(); x.fillStyle = '#a78bfa'; x.font = '800 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('WHEN TO USE IT' + (hot >= 0 ? ' · ' + STYLES[hot].toUpperCase() : ''), 54, 946); x.fillStyle = '#fff'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(hot >= 0 ? WHEN[hot] : 'Every style comes with when to use it.', 54, 990); x.globalAlpha = 1 }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[4.8, 3.4, 7.4], [-0.4, 1.8, -2.0], 52], front: [[2.0, 2.95, 4.6], [2.0, 2.3, -2.4], 34], face: [[2.0, 3.3, 2.2], [2.0, 2.6, -2.4], 34],
+  phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46],
+  tripod: [[-1.0, 2.6, 4.6], [-1.0, 2.2, -2.2], 42], push: [[3.4, 2.9, 2.8], [-1.2, 2.0, -2.6], 48], holdup: [[-0.6, 2.4, 5.2], [-1.0, 2.4, -2.2], 46],
+  skit: [[-0.6, 2.6, 5.6], [-1.0, 2.3, -2.4], 46], wall: [[0.4, 2.5, 3.0], [-0.6, 2.4, -3.0], 44],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0, notes: 0, sad: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = HOLD, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = true, cap = false, talk = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; for (const o of [blahP, chunk]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  dust.forEach(d => d.position.y = -9)
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const latest = (list, kind, row = 0) => { const L = list.filter(a => t >= a[0]); if (L.length) { const [h0, lab] = L[L.length - 1]; v.pills.push([lab, row, back(seg(t, h0, h0 + 0.2)), kind]); shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35) } }
+  const sag = t >= T.load && t < T.found ? eo(seg(t, T.load, T.load + 0.4)) : 0
+  sagBeam.position.y = 4.05 - sag * 0.35; sagBeam.rotation.z = sag * 0.06; crack.visible = t >= T.tried && t < T.found
+  face.visible = t >= T.wallHit; note.visible = t >= T.royal
+
+  if (t < T.part) { q = { ...HOLD, hx: 0.25 }; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.every) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2, arx: -1.15, are: -1.15 }, k); c = CAM.front; ckk = seg(t, T.part, T.every); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.forty) {                                                      // me, talking, at the same wall
+    inHand = false; const g2 = Math.sin(t * 5); q = { ...TALK, arz: TALK.arz + g2 * 0.3, are: TALK.are + g2 * 0.2, mh: 1 + Math.abs(Math.sin(t * 14)) * 0.8, hz: Math.sin(t * 2) * 0.05 }; c = CAM.tripod; ckk = seg(t, T.every, T.forty)
+    latest([[T.sameHit, 'FORMAT: SAME'], [T.talking, 'STYLE: TALKING HEAD'], [T.wallHit1, 'BACKGROUND: WALL']], 'bad')
+  } else if (t < T.brand) { c = CAM.phone; ckk = seg(t, T.forty, T.brand); docMode = 0; showDoc(T.forty); latest([[T.videos, 'VIDEOS: 41'], [T.oneWall, 'WALLS: 1']], 'bad') }
+  else if (t < T.so) { c = CAM.phone; ckk = seg(t, T.brand, T.so); docMode = 1; showDoc(T.brand); latest([[T.newHit, 'BRAND: TRY SOMETHING NEW']], 'bad') }
+  else if (t < T.load) {                                                       // so I moved the wall. Not literally. I tried.
+    inHand = false; const st = Math.sin(t * 11); q = { ...PUSH, tx: PUSH.tx + st * 0.04, llh: PUSH.llh + st * 0.05 }; c = CAM.push; ckk = seg(t, T.so, T.load); shake = t >= T.tried ? 0.12 : 0
+    latest([[T.moved, 'PLAN: MOVE THE WALL'], [T.notLit, 'NOT LITERALLY'], [T.tried, 'TRIED LITERALLY']], 'bad')
+  } else if (t < T.found) {                                                    // it's load-bearing: holding the ceiling up
+    inHand = false; const k = eio(seg(t, T.load, T.load + 0.3)); q = mixP({ ...PUSH, ry: 0 }, { ...HOLDUP, y: HOLDUP.y + Math.sin(t * 20) * 0.02 }, k); c = CAM.holdup; ckk = seg(t, T.load, T.found)
+    dust.forEach((d, i) => { const u = ((t - T.load) * 1.1 + i / 14) % 1; d.position.set(WALL.x - 1.4 + (i * 0.23) % 2.8, 3.9 - u * 3.6, -2.1 + (i % 3) * 0.2); d.rotation.set(u * 5, i, u * 3) })
+    v.stamp = ['LOAD-BEARING', seg(t, T.load, T.load + 0.2), '#ff4d4f', -0.12, 0.13]; shake = Math.max((1 - seg(t, T.load, T.load + 0.4)) * 0.7, 0.12)
+  } else if (t < T.style) {                                                    // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP({ ...SIT, eye: 0.6, brow: 0.2 }, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; c = CAM.face; ckk = seg(t, T.foundG, T.style); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.so2) { c = CAM.phone; ckk = seg(t, T.style, T.so2); docMode = 2; showDoc(T.style); latest([[T.ten, 'TEN STYLES'], [T.when, 'WHEN TO USE EACH'], [T.pov, 'POV'], [T.unbox, 'UNBOXING'], [T.tut, 'TUTORIAL'], [T.skits, 'SKIT']], 'good') }
+  else if (t < T.no) {                                                         // the skit: both characters, and the wall
+    inHand = false; const turn = t >= T.chars ? Math.floor((t - T.chars) / 0.45) % 2 : 0; cap = turn === 1 || (t >= T.so2 && t < T.chars && false)
+    q = { ...TALK, x: 0.25, ry: turn ? -0.5 : 0.5, arz: 0.6 + Math.sin(t * 6) * 0.3, alz: -0.6, mw: 1.4, mh: 1 + Math.abs(Math.sin(t * 12)) * 0.6, brow: turn ? 0.2 : -0.15 }; c = CAM.skit; ckk = seg(t, T.so2, T.no); talk = t >= T.wallHit ? Math.abs(Math.sin(t * 13)) : 0
+    latest([[T.skit, 'STYLE: SKIT'], [T.chars, 'CAST: ME, ME'], [T.wallHit, 'CAST: THE WALL']], 'good')
+  } else if (t < T.wallS) {                                                    // no talking head, no same wall, no bullshit
+    inHand = false; c = CAM.center; ckk = seg(t, T.no, T.wallS)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.05 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? chunk : blahP
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['TALKING HEAD', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['TALKING HEAD', 0, 1, 'bad']); if (t >= h0) v.pills.push(['SAME WALL', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['TALKING HEAD', 0, 1, 'bad'], ['SAME WALL', 1, 1, 'bad']) }
+  } else if (t < T.it) { c = CAM.phone; ckk = seg(t, T.wallS, T.it); docMode = 3; showDoc(T.wallS); latest([[T.everyHit, 'CO-STAR: THE WALL']], 'good') }
+  else {                                                                       // it wants royalties
+    inHand = false; q = { ...TALK, x: 0.6, z: -1.6, ry: -0.7, arz: 0.3, are: -0.3, alz: -0.3, ale: -0.2, alx: 0, arx: 0, hy: -0.4, eye: 0.6, brow: 0.15, mw: 0.9, mh: 0.5, tx: 0.05 }; c = CAM.wall; ckk = seg(t, T.it, T.end); talk = Math.abs(Math.sin(t * 9)) * (t < T.royal + 0.6 ? 1 : 0)
+    latest([[T.royal, 'THE WALL: WANTS ROYALTIES']], 'bad')
+  }
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.phone.visible = inHand; P.cap.visible = cap
+  wMouth.scale.y = 1 + talk * 4; pupils.forEach((p, i) => { p.position.x = (i ? 0.38 : -0.38) + Math.sin(t * 3 + i) * 0.05; p.position.y = -0.04 + Math.cos(t * 2.3) * 0.04 })
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: one dim bulb, then warm
+  bulbLight.intensity = lerp(1.0, 2.0, good) * (t < T.found && t >= T.load ? 0.7 + 0.3 * Math.sin(t * 30) : 1)
+  scene.background.set(0x1a1a1a).lerp(new THREE.Color(0x2a2420), good); wallMat.color.set(0xc8b898).lerp(new THREE.Color(0xe8d8b8), good); floorMat.color.set(0x7a7a76).lerp(new THREE.Color(0x9a948a), good)
+  sun.color.set(0xc8ccd2).lerp(new THREE.Color(0xfff0d8), good); sun.intensity = lerp(1.0, 1.6, good); hemi.intensity = lerp(1.0, 1.3, good); hemi.color.set(0xd8d8d8).lerp(new THREE.Color(0xfff4e4), good)
+  glow.position.set(2.0, 2.4, -1.0); glow.intensity = glowOn * 1.4
+  if (docMode >= 0) { docBody.color.set(docMode === 2 ? 0x15161a : 0xffffff); drawDoc(docMode, t) }
+}
+
+/*SHARED_UI*/
+function notes(t) {
+  const n = view.notes; if (n <= 0) return; g.save(); g.fillStyle = '#ffe14a'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; g.textAlign = 'center'; g.textBaseline = 'middle'
+  for (let i = 0; i < 5; i++) { const sad = view.sad, u = ((t * (sad ? 0.25 : 0.6)) + i * 0.21) % 1, X = CX + (i - 2) * 150 + Math.sin(t * 3 + i) * 30, Y = sad ? 360 + u * 160 : 520 - u * 260; g.globalAlpha = n * Math.sin(u * PI) * (sad ? 0.6 : 1); g.font = `800 ${sad ? 60 : 84}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.fillText(i % 2 ? '♫' : '♪', X, Y) }
+  g.restore(); g.globalAlpha = 1
+}
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    notes(t)
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

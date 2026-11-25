@@ -1,0 +1,331 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part fifty: everyone out</title>
+<!-- A 40.84 s reel (1080x1920) in low-poly 3D, fiftieth in the series. A lifeguard's brand wants a post every day at
+     three, and at three he is in the chair: he posts mid whistle, one-handed, eyes on the pool (mostly), drops the
+     phone in the deep end and goes in after it. The post did not go up; neither did he. Then YourBrand: the phone farm.
+     He films once, uploads the original, YourBrand posts it from its own phones. At three he still blows the whistle,
+     out of habit, and everyone gets out. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['You film it once.', 'YourBrand posts it.'],
+  skin: 0xc8875a, hoodie: 0xffd23a, sweats: 0xd8323a, hair: 0x5a3a20,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0.0,0.26],["in",0.26,0.38],["the",0.38,0.46],["life",0.46,0.66],["of",0.66,0.86],["a",0.86,1.0],["UGC",1.0,1.4],["creator",1.4,1.9],["Part",2.42,2.52],["fifty",2.52,2.86],["I'm",3.38,3.48],["a",3.48,3.52],["lifeguard",3.52,3.9],["The",4.38,4.48],["brand",4.48,4.62],["wants",4.62,4.86],["a",4.86,5.02],["post",5.02,5.18],["every",5.18,5.56],["day",5.56,5.82],["at",5.82,6.02],["three",6.02,6.4],["At",6.82,6.96],["three",6.96,7.26],["I'm",7.48,7.7],["in",7.7,7.78],["the",7.78,7.88],["chair",7.88,8.1],["So",8.66,8.76],["I",8.76,8.94],["posted",8.94,9.26],["mid",9.26,9.56],["whistle",9.56,9.86],["I",10.32,10.42],["posted",10.42,10.62],["with",10.62,10.82],["one",10.82,11.04],["hand",11.04,11.4],["Eyes",11.86,11.96],["on",11.96,12.04],["the",12.04,12.14],["pool",12.14,12.38],["Mostly",12.94,13.04],["Then",13.66,13.82],["I",13.82,14.14],["dropped",14.14,14.32],["the",14.32,14.5],["phone",14.5,14.76],["Deep",15.1,15.32],["end",15.32,15.56],["I",15.92,16.02],["went",16.02,16.18],["in",16.18,16.28],["after",16.28,16.48],["it",16.48,16.72],["The",17.0,17.1],["post",17.1,17.38],["did",17.38,17.66],["not",17.66,17.94],["go",17.94,18.16],["up",18.16,18.44],["Neither",18.82,18.92],["did",18.92,19.1],["I",19.1,19.36],["Then",19.78,19.96],["I",19.96,20.26],["found",20.26,20.52],["YourBrand",20.52,20.94],["The",21.24,21.4],["phone",21.4,21.68],["farm",21.68,22.0],["I",22.36,22.52],["film",22.52,22.7],["it",22.7,22.84],["once",22.84,23.08],["I",23.4,23.48],["upload",23.48,23.78],["the",23.78,23.94],["original",23.94,24.28],["YourBrand",24.82,25.08],["posts",25.08,25.32],["it",25.32,25.6],["From",25.76,25.9],["its",25.9,26.04],["own",26.04,26.36],["phones",26.36,26.82],["Not",27.28,27.38],["from",27.38,27.6],["my",27.6,27.78],["chair",27.78,28.04],["No",28.38,28.58],["alarms",28.58,28.98],["No",29.4,29.5],["posting",29.5,29.78],["mid",29.78,29.98],["whistle",29.98,30.3],["No",30.68,30.84],["bullshit",30.84,31.38],["At",31.78,31.88],["three",31.88,32.18],["I",32.46,32.56],["still",32.56,32.76],["blow",32.76,32.94],["the",32.94,33.06],["whistle",33.06,33.32],["Out",33.68,33.78],["of",33.78,33.84],["habit",33.84,34.12],["Everyone",34.5,34.76],["gets",34.76,35.0],["out",35.0,35.34]]
+const GROUPS = [[0, 7, 6, 1], [8, 9, -1, 1.3], [10, 12, 12, 1.4], [13, 17, 17, 1.2], [18, 21, 21, 1.3], [22, 23, 23, 1.4], [24, 27, 27, 1.4], [28, 32, 32, 1.3], [33, 37, 37, 1.3], [38, 41, 41, 1.3], [42, 42, 42, 1.6], [43, 47, 47, 1.2], [48, 49, 49, 1.6], [50, 54, 51, 1.3], [55, 60, 58, 1.1], [61, 63, 61, 1.4], [64, 67, 67, 1.1], [68, 70, 70, 1.4], [71, 74, 74, 1.4], [75, 78, 78, 1.3], [79, 81, 80, 1.3], [82, 85, 85, 1.3], [86, 89, 89, 1.3], [90, 91, -1, 1.5], [92, 95, -1, 1.2], [96, 97, -1, 1.5], [98, 99, 99, 1.5], [100, 104, 104, 1.2], [105, 107, 107, 1.4], [108, 110, 108, 1.3]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = {part: 2.42, im: 3.38, guard: 3.52, brand: 4.38, post: 5.02, three1: 6.02, at3: 6.82, chair: 7.88, so: 8.66, whistle: 9.56, i2: 10.32, hand: 11.04, eyes: 11.86, pool: 12.14, mostly: 12.94, then1: 13.66, dropped: 14.14, deep: 15.1, went: 15.92, thePost: 17.0, up: 18.16, neither: 18.82, found: 19.78, foundG: 20.52, farm: 21.24, film: 22.36, once: 22.84, upload: 23.4, original: 23.94, gkPosts: 24.82, phones: 26.36, notFrom: 27.28, no: 28.38, n1: 28.58, n2s: 29.4, n2: 29.5, nob: 30.68, nobHit: 30.84, at3b: 31.78, i3: 32.46, whistle2: 33.06, habit: 33.68, everyone: 34.5, out: 35.0, end: 35.84, dur: 40.84}
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2119)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xf0e6d8, 0x5a4a3a, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6e2da, 1.4); sun.position.set(4, 9, 8); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffd8a0, 0, 9, 1.5); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- an indoor swimming pool
+const deckMat = M(0xdfe6ea), tileMat = M(0x5ab8e0), wallMat = M(0xeef2f4)
+// the pool: x -6..6, z -6.5..0, floor at y -3
+box(12, 0.1, 6.5, tileMat, 0, -3.05, -3.25)
+box(0.3, 3.1, 6.5, tileMat, -6.15, -1.5, -3.25); box(0.3, 3.1, 6.5, tileMat, 6.15, -1.5, -3.25)
+box(12.6, 3.1, 0.3, tileMat, 0, -1.5, -6.65); box(12.6, 3.1, 0.3, tileMat, 0, -1.5, 0.15)
+for (const z of [-1.0, -2.6, -4.2, -5.7]) { const l = box(10, 0.02, 0.25, 0x1e5a9a, 0, -2.99, z); l.castShadow = false }
+// deck round it
+box(30, 0.3, 12, deckMat, 0, -0.15, 6.3); box(30, 0.3, 4.2, deckMat, 0, -0.15, -8.9)
+box(8.7, 0.3, 7.1, deckMat, -10.65, -0.15, -3.25); box(8.7, 0.3, 7.1, deckMat, 10.65, -0.15, -3.25)
+const cop = M(0xfafafa); box(12.8, 0.06, 0.3, cop, 0, 0.03, 0.45); box(12.8, 0.06, 0.3, cop, 0, 0.03, -6.95); box(0.3, 0.06, 7.4, cop, -6.45, 0.03, -3.25); box(0.3, 0.06, 7.4, cop, 6.45, 0.03, -3.25)
+// lane ropes
+for (const z of [-1.8, -3.4, -5.0]) for (let i = 0; i < 40; i++) { const b = box(0.24, 0.12, 0.12, i % 4 < 2 ? 0xe5484d : 0xfafafa, -5.85 + i * 0.3, -0.1, z); b.castShadow = false }
+// water
+const waterMat = new THREE.MeshStandardMaterial({ color: 0x3ab0e8, transparent: true, opacity: 0.74, side: THREE.DoubleSide, roughness: 0.15, metalness: 0.1, flatShading: true })
+const water = mesh(new THREE.PlaneGeometry(12, 6.5), waterMat, 0, -0.12, -3.25); water.rotation.x = -PI / 2; water.castShadow = false
+// the room
+box(30, 9, 0.3, wallMat, 0, 4.5, -11); box(30, 1.4, 0.34, M(0x7ac8e8), 0, 0.7, -11)
+box(0.3, 9, 26, wallMat, -12, 4.5, 1); box(0.3, 9, 26, wallMat, 12, 4.5, 1)
+for (let i = 0; i < 5; i++) { const w = box(2.6, 1.7, 0.06, basic(0xf4fbff), -8 + i * 4, 7.0, -10.82); w.castShadow = false; box(0.08, 1.7, 0.08, 0xb8c4cc, -8 + i * 4, 7.0, -10.78) }
+// the wall clock
+const clock = grp(-3.6, 5.0, -10.8); { const f = cyl(0.95, 0.95, 0.08, 24, M(0xffffff), 0, 0, 0.04, clock); f.rotation.x = PI / 2; const r = cyl(1.05, 1.05, 0.06, 24, M(0x2a2c33), 0, 0, 0, clock); r.rotation.x = PI / 2
+  for (let i = 0; i < 12; i++) { const a = i / 12 * 2 * PI; box(i % 3 ? 0.05 : 0.09, i % 3 ? 0.14 : 0.22, 0.03, 0x1e1f26, Math.sin(a) * 0.78, Math.cos(a) * 0.78, 0.1, clock).rotation.z = -a } }
+const hPiv = grp(0, 0, 0.12, clock), mPiv = grp(0, 0, 0.14, clock); box(0.1, 0.5, 0.03, 0x1e1f26, 0, 0.22, 0, hPiv); box(0.06, 0.76, 0.03, 0x1e1f26, 0, 0.34, 0, mPiv); cyl(0.07, 0.07, 0.04, 8, M(0xe5484d), 0, 0, 0.17, clock).rotation.x = PI / 2
+function setClock(h, m) { hPiv.rotation.z = -((h % 12) + m / 60) / 12 * 2 * PI; mPiv.rotation.z = -m / 60 * 2 * PI }
+// diving board
+box(0.6, 0.7, 0.6, M(0xb8c4cc), -3.6, 0.35, -7.6); box(0.7, 0.1, 2.8, M(0x3a9ad8), -3.6, 0.75, -6.3)
+// DEEP END painted on the deck
+const deTex = canvasTex(512, 128); deTex.x.fillStyle = '#1e4a8a'; deTex.x.font = '800 92px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; deTex.x.textAlign = 'center'; deTex.x.fillText('DEEP END', 256, 98); deTex.t.needsUpdate = true
+const deep = mesh(new THREE.PlaneGeometry(2.4, 0.6), basic(0xffffff, { map: deTex.t, transparent: true }), -0.9, 0.04, -7.35); deep.rotation.x = -PI / 2; deep.castShadow = false
+// the lifeguard chair
+{ const ch = grp(1.5, 0, -7.65); const wm = M(0xf4f4f0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(0.12, 2.62, 0.12, wm, sx * 0.48, 1.31, sz * 0.4, ch)
+  box(1.15, 0.12, 0.95, wm, 0, 2.62, 0, ch); box(1.15, 1.0, 0.1, wm, 0, 3.2, -0.45, ch); for (const sx of [-1, 1]) box(0.08, 0.08, 0.9, wm, sx * 0.55, 3.05, 0, ch)
+  box(1.1, 0.08, 0.22, wm, 0, 1.95, 0.62, ch); for (let i = 0; i < 6; i++) box(1.0, 0.06, 0.06, wm, 0, 0.35 + i * 0.4, -0.42, ch)
+  const ring = mesh(new THREE.TorusGeometry(0.36, 0.11, 6, 14), M(0xff6a2a), 0.62, 1.6, 0, ch); ring.rotation.y = PI / 2 }
+// swimmers
+const capCols = [0xe5484d, 0xffd23a, 0xfafafa, 0x34d399], skinCols = [0xe8b890, 0x8a5a3a, 0xd8a070, 0xf0c8a0]
+const swimmers = []
+for (let i = 0; i < 4; i++) { const r = grp(0, -0.1, 0); const sk = M(skinCols[i]); box(0.48, 0.48, 0.46, sk, 0, 0.24, 0, r); box(0.5, 0.18, 0.48, M(capCols[i]), 0, 0.46, 0, r); box(0.08, 0.08, 0.03, 0x15161a, -0.11, 0.3, 0.24, r); box(0.08, 0.08, 0.03, 0x15161a, 0.11, 0.3, 0.24, r)
+  box(0.62, 0.8, 0.4, M([0x1e3a8a, 0x15161a, 0x7a2a8a, 0x0e6a5a][i]), 0, -0.55, 0, r); box(0.22, 0.8, 0.24, sk, -0.16, -1.35, 0, r); box(0.22, 0.8, 0.24, sk, 0.16, -1.35, 0, r)
+  const arms = [-1, 1].map(sx => { const a = grp(sx * 0.4, -0.22, 0, r); box(0.16, 0.7, 0.18, sk, 0, -0.33, 0, a); return a })
+  swimmers.push({ r, arms, z: [-1.0, -2.6, -4.2, -5.7][i], ph: i * 1.7, sp: 0.22 + i * 0.05 }) }
+// splash and bubble particles
+const splashMat = basic(0xffffff, { transparent: true, opacity: 0.9 }); const drops = []; for (let i = 0; i < 70; i++) { const d = box(0.1, 0.1, 0.1, splashMat, 0, -9, 0); d.castShadow = false; drops.push(d) }
+const rings = []; for (let i = 0; i < 3; i++) { const r = mesh(new THREE.RingGeometry(0.5, 0.62, 20), basic(0xffffff, { transparent: true, opacity: 0.7, side: THREE.DoubleSide }), 0, -9, 0); r.rotation.x = -PI / 2; r.castShadow = false; rings.push(r) }
+function splashes(list, t) { let di = 0, ri = 0; drops.forEach(d => d.position.set(0, -9, 0)); rings.forEach(r => r.position.set(0, -9, 0))
+  for (const [cx, cz, t0, big] of list) { const dt = t - t0; if (dt < 0 || dt > 1.1) continue
+    for (let i = 0; i < 18 && di < drops.length; i++, di++) { const a = i * 2.4, sp = (0.8 + (i % 5) * 0.35) * big, vy = (3 + (i % 4) * 1.1) * big; const y = -0.1 + vy * dt - 4.9 * dt * dt; if (y < -0.15) continue; drops[di].position.set(cx + Math.cos(a) * sp * dt, y, cz + Math.sin(a) * sp * dt); drops[di].scale.setScalar(big * (1 - dt * 0.6)) }
+    if (ri < rings.length) { const r = rings[ri++]; r.position.set(cx, -0.09, cz); r.scale.setScalar((0.4 + dt * 2.4) * big); r.material.opacity = 0.7 * (1 - dt / 1.1) } } }
+const bubbles = []; for (let i = 0; i < 18; i++) { const b = box(0.08, 0.08, 0.08, basic(0xdff4ff, { transparent: true, opacity: 0.8 }), 0, -9, 0); b.castShadow = false; bubbles.push(b) }
+const rays = []; for (let i = 0; i < 6; i++) { const r = mesh(new THREE.PlaneGeometry(0.7, 3.4), basic(0xdff6ff, { transparent: true, opacity: 0.12, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }), -2 + i * 1.1, -1.6, -2.4 - (i % 3) * 1.2); r.rotation.z = 0.35; r.castShadow = false; r.visible = false; rays.push(r) }
+const underFog = new THREE.Fog(0x2a7ab0, 1.5, 13)
+// the phone that falls, and the swatted chips
+const fPhone = grp(0, -9, 0); box(0.24, 0.42, 0.05, 0x15161a, 0, 0, 0, fPhone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, fPhone)
+function chipProp(txt, bg) { const o = grp(0, -9, 0); const c = canvasTex(512, 180); c.x.fillStyle = bg; c.x.beginPath(); c.x.roundRect(10, 30, 492, 120, 60); c.x.fill(); c.x.fillStyle = '#fff'; c.x.font = '800 64px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText(txt, 256, 112); c.t.needsUpdate = true; const m = mesh(new THREE.PlaneGeometry(2.2, 0.78), basic(0xffffff, { map: c.t, transparent: true, side: THREE.DoubleSide }), 0, 0, 0, o); m.castShadow = false; return o }
+const chipA = chipProp('ALARM 3:00', '#e5484d'), chipB = chipProp('POSTING...', '#3a3e48')
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), tee = M(CONFIG.hoodie), shorts = M(CONFIG.sweats), dark = M(0x15161a), hair = M(CONFIG.hair), zinc = M(0xffffff), flip = M(0x2a6ad8)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.06, 1.22, 0.66, tee, 0, 0.6, 0, p.torso); box(1.06, 0.42, 0.64, shorts, 0, -0.06, 0, p.torso)
+  const gt = canvasTex(256, 96); gt.x.fillStyle = '#d8323a'; gt.x.font = '800 70px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; gt.x.textAlign = 'center'; gt.x.fillText('GUARD', 128, 74); gt.t.needsUpdate = true
+  const gm = mesh(new THREE.PlaneGeometry(0.8, 0.3), basic(0xffffff, { map: gt.t, transparent: true }), 0, 0.62, 0.335, p.torso); gm.castShadow = false
+  // whistle on a cord
+  for (const sx of [-1, 1]) { const c = box(0.03, 0.62, 0.03, 0xd8323a, sx * 0.16, 0.98, 0.34, p.torso); c.rotation.z = sx * 0.28 }
+  p.whistle = grp(0, 0.7, 0.37, p.torso); box(0.16, 0.1, 0.1, M(0xc8ccd4, { metalness: 0.5 }), 0, 0, 0, p.whistle); box(0.06, 0.06, 0.12, M(0xc8ccd4, { metalness: 0.5 }), 0.07, 0, 0.08, p.whistle)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.76, 0.76, 0.72, skin, 0, 0.44, 0, p.head); box(0.8, 0.16, 0.76, hair, 0, 0.84, -0.02, p.head); box(0.8, 0.34, 0.14, hair, 0, 0.66, -0.33, p.head)
+  // sunglasses pushed up, zinc on the nose
+  box(0.7, 0.09, 0.06, dark, 0, 0.8, 0.36, p.head); for (const sx of [-1, 1]) box(0.26, 0.12, 0.04, M(0x1e3a5a), sx * 0.17, 0.81, 0.39, p.head)
+  box(0.12, 0.14, 0.08, zinc, 0, 0.4, 0.4, p.head)
+  p.eyeL = box(0.07, 0.1, 0.04, dark, -0.17, 0.53, 0.37, p.head); p.eyeR = box(0.07, 0.1, 0.04, dark, 0.17, 0.53, 0.37, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.17, 0.66, 0.37, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.17, 0.66, 0.37, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0x8a3a3a), 0, 0.22, 0.37, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.65, 1.08, 0, p.torso); box(0.38, 0.3, 0.4, tee, 0, -0.08, 0, a.sh); box(0.28, 0.34, 0.3, skin, 0, -0.38, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.27, 0.32, 0.28, skin, 0, -0.12, 0, a.el); a.hand = box(0.26, 0.24, 0.28, skin, 0, -0.4, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.24, 0, 0, p.root); box(0.44, 0.34, 0.46, shorts, 0, -0.17, 0, l.hip); box(0.36, 0.3, 0.38, skin, 0, -0.45, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.34, 0.42, 0.36, skin, 0, -0.22, 0, l.knee); box(0.38, 0.06, 0.56, flip, 0, -0.46, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.66 + Math.abs(q.brow) * 0.04
+}
+const SEAT = { x: 1.5, y: 2.97, z: -7.6 }
+const SIT = pose({ ...SEAT, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const SLUMP = { ...HOLD, tx: 0.22, hx: 0.4, eye: 0.7, brow: 0.15 }
+const BLOW = { arx: -1.35, arz: -0.15, are: -1.75, mw: 0.5, mh: 1.6, eye: 0.75, brow: -0.2 }   // right hand up at the whistle
+const FLOOR = pose({ x: 1.4, y: -2.73, z: -5.4, llh: -1.57, lrh: -1.57, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.32, eye: 0.6, brow: 0.3, mw: 0.6, mh: 0.8 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+
+// ---------- phone sheets
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+function wrapT(x, txt, X, Y, maxW, lh) { const ws = txt.split(' '); let line = ''; for (const w of ws) { const tt = line ? line + ' ' + w : w; if (x.measureText(tt).width > maxW && line) { x.fillText(line, X, Y); Y += lh; line = w } else line = tt } if (line) x.fillText(line, X, Y); return Y + lh }
+function rack(x, t, lit0, lit1) {   // a rack of 18 phones; they light up one by one between lit0 and lit1
+  x.fillStyle = '#16161c'; rr(x, 40, 160, 640, 360, 18); x.fill(); x.strokeStyle = '#2a2a34'; x.lineWidth = 2; rr(x, 40, 160, 640, 360, 18); x.stroke()
+  for (let r = 0; r < 3; r++) { x.fillStyle = '#2a2a34'; x.fillRect(56, 168 + r * 116 + 104, 608, 6)
+    for (let c = 0; c < 6; c++) { const i = r * 6 + c, X = 72 + c * 100, Y = 178 + r * 116, on = lit0 != null && t >= lit0 + (lit1 - lit0) * (i / 18)
+      x.fillStyle = '#0b0b0e'; rr(x, X, Y, 76, 96, 10); x.fill(); x.fillStyle = on ? '#7c5cf0' : '#1e1e26'; rr(x, X + 5, Y + 5, 66, 86, 7); x.fill()
+      if (on) { const k = clamp((t - (lit0 + (lit1 - lit0) * (i / 18))) / 0.2); x.fillStyle = `rgba(255,255,255,${0.9 * k})`; x.beginPath(); x.moveTo(X + 30, Y + 34); x.lineTo(X + 50, Y + 48); x.lineTo(X + 30, Y + 62); x.closePath(); x.fill() } } } }
+// 0 the brand's message · 3 YourBrand: phone farm, then the approved pop-up, then the farm posting
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1; x.textBaseline = 'alphabetic'
+  const hdr = (title, col, sub) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 40, 90); if (sub) { x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 40, 130) } x.fillStyle = '#eceef2'; x.fillRect(0, 156, w, 3) }
+  const pop = t0 => t >= t0 ? back(seg(t, t0, t0 + 0.22)) : 0
+  if (mode === 0) {
+    hdr('Tidewell', '#2f7cf6', 'Partnerships'); const bub = (txt, Y, k, hot) => { if (k <= 0) return; x.save(); x.font = '700 40px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const tw = x.measureText(txt).width + 60; x.translate(40 + tw / 2, Y + 40); x.scale(k, k); x.translate(-40 - tw / 2, -Y - 40); x.fillStyle = hot ? '#ffe9e9' : '#eceef2'; rr(x, 40, Y, tw, 80, 34); x.fill(); x.fillStyle = hot ? '#c0262c' : '#16161a'; x.fillText(txt, 70, Y + 54); x.restore() }
+    bub('Loving the pool videos!', 196, pop(T.brand + 0.1)); bub('Post every day at 3:00 pm.', 296, pop(T.post)); bub('Sharp.', 396, pop(T.three1), true)
+  } else {
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 24, 40, 50); x.fillStyle = '#fff'; x.font = '800 32px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'
+    const modal = t >= T.upload && t < T.gkPosts
+    if (!modal) {
+      x.fillText("YourBrand's phones", 86, 56); x.fillStyle = '#a1a1aa'; x.font = '600 25px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand makes and runs every', 86, 92)
+      x.fillText('campaign account.', 86, 124)
+      rack(x, t, t >= T.gkPosts ? T.gkPosts + 0.2 : null, T.phones + 0.6)
+    } else {
+      const k = back(seg(t, T.upload, T.upload + 0.25)); x.save(); x.translate(360, 280); x.scale(k, k); x.translate(-360, -280)
+      x.fillStyle = '#161619'; rr(x, 24, 20, 672, 510, 20); x.fill(); x.strokeStyle = '#2a2a32'; x.lineWidth = 2; rr(x, 24, 20, 672, 510, 20); x.stroke()
+      x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Approved. Upload your final video', 44, 66)
+      x.fillStyle = '#d4d4d8'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; wrapT(x, 'Day 03 passed the content review. YourBrand posts the file you upload, exactly as it is, so it has to be the original: no watermark, highest quality.', 44, 102, 632, 29)
+      const steps = [['Check the file before you upload', 'Watch it once from your camera roll.'], ['Upload the original', 'Never a screen recording.'], ['Name it', 'Day number, then the hook. One approved video a day.']]
+      steps.forEach(([ti, tx], i) => { const Y = 212 + i * 80; x.fillStyle = 'rgba(52,211,153,.2)'; x.beginPath(); x.arc(64, Y + 4, 16, 0, 7); x.fill(); x.fillStyle = '#6ee7b7'; x.font = '800 18px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText(String(i + 1), 64, Y + 10); x.textAlign = 'left'
+        const hot = i === 1 && t >= T.upload; x.fillStyle = hot ? '#fff' : '#e4e4e7'; x.font = '800 27px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(ti, 94, Y + 12); x.fillStyle = '#a1a1aa'; x.font = '600 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(tx, 94, Y + 44) })
+      x.fillStyle = '#059669'; rr(x, 44, 456, 210, 58, 14); x.fill(); x.fillStyle = '#fff'; x.font = '800 25px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Upload here', 80, 494)
+      const done = t >= T.original; x.strokeStyle = done ? '#34d399' : '#3a3a44'; x.lineWidth = 2; x.fillStyle = done ? 'rgba(52,211,153,.15)' : 'transparent'; rr(x, 270, 456, 236, 58, 14); x.fill(); x.stroke(); x.fillStyle = '#fff'; x.fillText((done ? '✓ ' : '') + 'I uploaded it', done ? 290 : 306, 494)
+      x.restore()
+    }
+    if (t >= T.gkPosts) { const k = back(seg(t, T.gkPosts, T.gkPosts + 0.25)); x.save(); x.translate(360, 970); x.scale(k, k); x.translate(-360, -970); x.fillStyle = '#161619'; rr(x, 30, 932, 660, 76, 16); x.fill(); x.strokeStyle = '#a78bfa'; x.lineWidth = 3; rr(x, 30, 932, 660, 76, 16); x.stroke(); x.fillStyle = '#e4e4e7'; x.font = '700 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('YourBrand posts the file you upload, exactly as it is.', 44, 980); x.restore() }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[7.6, 5.8, 5.4], [0.4, 1.6, -4.6], 52], front: [[1.5, 5.0, 2.2], [1.5, 4.35, -7.6], 40], face: [[1.5, 5.0, -1.2], [1.5, 4.75, -7.6], 38],
+  clock: [[-2.4, 4.6, -5.0], [-3.6, 5.0, -10.8], 40], drop: [[6.5, 3.2, 0.8], [1.5, 1.9, -6.6], 50], dive: [[8.0, 3.2, -2.6], [1.5, 1.4, -5.8], 50],
+  under: [[1.4, -1.25, -0.3], [1.4, -1.6, -5.4], 58], phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[1.5, 5.2, 1.8], [1.5, 4.85, -7.6], 46],
+  back: [[-3.8, 7.6, -9.8], [0.4, -0.3, -1.2], 50],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0, notes: 0, sad: 0 }
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0
+  let q = HOLD, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = true, under = false, whistle = false, flail = -1, exitK = -1
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; fPhone.position.set(0, -9, 0); for (const o of [chipA, chipB]) { o.position.set(0, -9, 0); o.rotation.set(0, 0, 0); o.scale.setScalar(1) }
+  const SPL = []
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, p = true) => { doc.visible = true; doc.scale.setScalar(p ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const latest = (list, kind, row = 0) => { const L = list.filter(a => t >= a[0]); if (L.length) { const [h0, lab] = L[L.length - 1]; v.pills.push([lab, row, back(seg(t, h0, h0 + 0.2)), kind]); shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35) } }
+  // clock: 2:58, snaps to 3:00 on "at three"; again on the callback
+  if (t < T.at3 + 0.15) setClock(2, 58); else if (t < T.at3b) setClock(3, Math.min(59, (t - T.at3) * 0.4)); else if (t < T.at3b + 0.15) setClock(2, 59); else setClock(3, 0)
+
+  if (t < T.part) { q = { ...SLUMP }; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.brand) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2, arx: -1.15, are: -1.15 }, k); c = CAM.front; ckk = seg(t, T.part, T.brand); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5; latest([[T.guard, 'JOB: LIFEGUARD']], '') }
+  else if (t < T.at3) { c = CAM.phone; ckk = seg(t, T.brand, T.at3); docMode = 0; showDoc(T.brand); latest([[T.post, 'DEAL: A POST EVERY DAY'], [T.three1, 'TIME: 3:00 PM SHARP']], 'bad') }
+  else if (t < T.chair) { c = CAM.clock; ckk = seg(t, T.at3, T.chair); q = SLUMP; if (t >= T.at3 + 0.15) shake = (1 - seg(t, T.at3 + 0.15, T.at3 + 0.45)) * 0.6; latest([[T.at3 + 0.15, 'CLOCK: 3:00']], 'bad') }
+  else if (t < T.so) { const k = back(seg(t, T.chair, T.chair + 0.25)); q = mixP(SLUMP, { ...HOLD, hx: -0.05, eye: 1.25, brow: -0.15 }, k); c = CAM.front; ckk = seg(t, T.chair, T.so); latest([[T.chair, 'AT 3:00: IN THE CHAIR']], 'bad') }
+  else if (t < T.i2) { whistle = t >= T.whistle - 0.1; q = { ...HOLD, ...(whistle ? { ...BLOW, alx: -0.6, ale: -1.0 } : {}), hx: 0.25 }; c = CAM.face; ckk = seg(t, T.so, T.i2); if (whistle) shake = 0.25 + (1 - seg(t, T.whistle, T.whistle + 0.3)) * 0.4; latest([[T.so, 'POSTING...'], [T.whistle, 'POSTING: MID WHISTLE']], t >= T.whistle ? 'bad' : '') }
+  else if (t < T.then1) { const look = t >= T.eyes ? (Math.sin((t - T.eyes) * 13) > 0 ? 1 : 0) : 0; q = { ...HOLD, alx: 0.1, ale: -0.2, alz: -0.15, hx: look ? -0.1 : 0.42, hy: look ? 0.12 : 0, eye: look ? 1.3 : 0.9 }; c = CAM.front; ckk = seg(t, T.i2, T.then1)
+    if (t >= T.mostly) flail = 3; latest([[T.hand, 'POSTING: ONE HAND'], [T.eyes, 'EYES: ON THE POOL'], [T.mostly, 'MOSTLY']], t >= T.mostly ? 'bad' : '') }
+  else if (t < T.went) {                                                         // the phone goes in, deep end
+    const td = T.dropped + 0.15, k = seg(t, td, td + 0.6); inHand = t < td; c = CAM.drop; ckk = seg(t, T.then1, T.went)
+    q = t < td ? { ...HOLD, hx: 0.35 } : { ...HOLD, alx: -1.3, ale: -0.2, arx: -1.4, are: -0.2, arz: -0.1, hx: 0.45, eye: 1.5, mw: 1.3, mh: 2.0, brow: 0.3, tx: 0.15 }
+    if (t >= td && k < 1) { fPhone.position.set(1.5, lerp(3.6, -0.12, k * k), lerp(-7.0, -5.7, k)); fPhone.rotation.set(k * 9, k * 4, k * 3) }
+    SPL.push([1.5, -5.7, td + 0.6, 0.8]); latest([[T.dropped + 0.2, 'PHONE: DROPPED'], [T.deep, 'LOCATION: DEEP END']], 'bad'); if (t >= td + 0.6) shake = Math.max(shake, (1 - seg(t, td + 0.6, td + 0.9)) * 0.4)
+  } else if (t < T.thePost) {                                                    // in after it
+    inHand = false; const k = seg(t, T.went + 0.1, T.went + 0.95), e = eio(k); c = CAM.dive; ckk = seg(t, T.went, T.thePost)
+    q = pose({ x: 1.5, y: lerp(SEAT.y, -1.6, e) + Math.sin(k * PI) * 1.3, z: lerp(SEAT.z, -4.6, e), rx: lerp(0, PI * 0.8, e), alz: lerp(-0.1, -3.0, seg(k, 0, 0.3)), arz: lerp(0.1, 3.0, seg(k, 0, 0.3)), llh: lerp(-1.57, 0, seg(k, 0, 0.3)), lrh: lerp(-1.57, 0, seg(k, 0, 0.3)), llk: lerp(1.57, 0, seg(k, 0, 0.3)), lrk: lerp(1.57, 0, seg(k, 0, 0.3)), eye: 0.3, mw: 0.6, mh: 1.4 })
+    SPL.push([1.5, -4.6, T.went + 0.8, 1.3]); latest([[T.went, 'GOING IN']], 'bad')
+  } else if (t < T.found) {                                                      // the post did not go up, neither did I
+    under = true; q = { ...FLOOR, y: FLOOR.y + Math.sin(t * 1.6) * 0.04, hz: Math.sin(t * 1.1) * 0.05, alz: -0.1 + Math.sin(t * 1.3) * 0.05 }; c = CAM.under; ckk = seg(t, T.thePost, T.found)
+    if (t >= T.up) { v.stamp = ['POST: NOT UP', seg(t, T.up, T.up + 0.2), '#ff4d4f', -0.1, 0.14]; shake = (1 - seg(t, T.up, T.up + 0.4)) * 0.7 }
+    if (t >= T.neither) v.pills.push(['ME: NOT UP EITHER', 0, back(seg(t, T.neither, T.neither + 0.2)), 'bad'])
+  } else if (t < T.farm) {                                                       // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP({ ...SLUMP }, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; c = CAM.face; ckk = seg(t, T.foundG, T.farm); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.no) { c = CAM.phone; ckk = seg(t, T.farm, T.no); docMode = 3; showDoc(T.farm); latest([[T.farm, 'THE PHONE FARM'], [T.film, 'FILM ONCE'], [T.upload, 'UPLOAD THE ORIGINAL'], [T.gkPosts, 'YOURBRAND POSTS IT'], [T.phones - 0.4, 'FROM ITS OWN PHONES'], [T.notFrom, 'NOT FROM MY CHAIR']], 'good') }
+  else if (t < T.at3b) {                                                         // no alarms, no posting mid whistle, no bullshit
+    inHand = false; c = CAM.center; ckk = seg(t, T.no, T.at3b)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.15 : T.n1 + 0.15, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...SIT, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = SEAT.x + side * (1.3 + fly * 6), py = SEAT.y + 2.5 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? chipB : chipA
+      o.position.set(px, py, SEAT.z + 0.6); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['ALARMS', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['ALARMS', 0, 1, 'bad']); if (t >= h0) v.pills.push(['POSTING MID WHISTLE', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...SIT }, { ...SIT, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['ALARMS', 0, 1, 'bad'], ['POSTING MID WHISTLE', 1, 1, 'bad']) }
+  } else if (t < T.i3) { c = CAM.clock; ckk = seg(t, T.at3b, T.i3); inHand = false; q = SIT; if (t >= T.at3b + 0.15) shake = (1 - seg(t, T.at3b + 0.15, T.at3b + 0.45)) * 0.6; latest([[T.at3b + 0.15, 'CLOCK: 3:00']], '') }
+  else if (t < T.habit) { inHand = false; whistle = t >= T.whistle2 - 0.15; q = whistle ? { ...SIT, ...BLOW, alz: -0.15 } : { ...SIT, hx: -0.05, eye: 1.1 }; c = CAM.face; ckk = seg(t, T.i3, T.habit); if (whistle) shake = 0.2 + (1 - seg(t, T.whistle2, T.whistle2 + 0.3)) * 0.5; latest([[T.whistle2, '3:00 · WHISTLE']], '') }
+  else { inHand = false; whistle = t < T.habit + 0.5; q = whistle ? { ...SIT, ...BLOW, alz: -0.15 } : { ...SIT, alx: -0.3, ale: -0.4, hx: 0.1 }; c = CAM.back; ckk = seg(t, T.habit, T.end); exitK = t; latest([[T.habit, 'OUT OF HABIT'], [T.everyone, 'EVERYONE: OUT']], '') }
+
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.root.visible = docMode < 0; P.phone.visible = inHand
+  if (whistle) { P.whistle.position.set(0.02, 1.42, 0.5); P.whistle.rotation.set(0, PI / 2, 0) } else { P.whistle.position.set(0, 0.7, 0.37); P.whistle.rotation.set(0, 0, 0) }
+  // swimmers: lengths of the pool; one flails on "mostly"; on the callback they all climb out
+  swimmers.forEach((s, i) => { let x = Math.sin(t * s.sp + s.ph) * 4.6, y = -0.1 + Math.sin(t * 3 + i) * 0.04, z = s.z, ry = Math.cos(t * s.sp + s.ph) > 0 ? PI / 2 : -PI / 2
+    const st = t * 6 + i; s.arms[0].rotation.set(Math.sin(st) * 1.4 - 1.2, 0, -0.3); s.arms[1].rotation.set(-Math.sin(st) * 1.4 - 1.2, 0, 0.3)
+    if (flail === i) { s.arms[0].rotation.set(0, 0, -2.6 + Math.sin(t * 20) * 0.5); s.arms[1].rotation.set(0, 0, 2.6 - Math.sin(t * 20) * 0.5); ry = 0; y += Math.abs(Math.sin(t * 9)) * 0.12; SPL.push([x, z, T.mostly, 0.6], [x, z, T.mostly + 0.5, 0.6]) }
+    if (exitK >= 0) { const ts = T.habit - 0.15 + i * 0.16, a = eio(seg(t, ts, ts + 0.55)), b = eio(seg(t, ts + 0.5, ts + 0.85)), w = seg(t, ts + 0.85, ts + 2.0); x = lerp(x, x, a); z = lerp(s.z, 0.05, a); y = lerp(-0.1, 1.75, b); z += b * 0.75 + w * 4.5; ry = 0
+      if (b > 0 && b < 1) { s.arms[0].rotation.set(-2.4, 0, -0.2); s.arms[1].rotation.set(-2.4, 0, 0.2) } else if (b >= 1) { s.arms[0].rotation.set(Math.sin(t * 8 + i) * 0.4, 0, -0.1); s.arms[1].rotation.set(-Math.sin(t * 8 + i) * 0.4, 0, 0.1); y += Math.abs(Math.sin(t * 8 + i)) * 0.05 }
+      if (a > 0.05 && a < 0.9) SPL.push([x, z, ts, 0.35]) }
+    s.r.position.set(x, y, z); s.r.rotation.y = ry; s.r.visible = !(under && Math.abs(x - 1.4) < 3.2 && z < -1.5) })
+  splashes(SPL, t)
+  // underwater: fog, rays, bubbles
+  scene.fog = under ? underFog : null; rays.forEach(r => r.visible = under)
+  bubbles.forEach((b, i) => { if (!under) { b.position.set(0, -9, 0); return } const u = ((t * 0.45) + i * 0.137) % 1; b.position.set(1.4 + Math.sin(t * 3 + i) * 0.12 + (i % 3 - 1) * 0.15, -1.6 + u * 1.45, -5.1 + (i % 4) * 0.05); b.scale.setScalar(0.6 + (i % 3) * 0.4) })
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: flat afternoon light, brighter after YourBrand; blue when under
+  if (under) { scene.background.set(0x1e6a9a); sun.intensity = 0.9; hemi.intensity = 1.0; hemi.color.set(0x8ad0f4) }
+  else { scene.background.set(0xdfe8ee).lerp(new THREE.Color(0xeef6fa), good); sun.color.set(0xf0f0ec).lerp(new THREE.Color(0xfff6e4), good); sun.intensity = lerp(1.2, 1.6, good); hemi.intensity = lerp(1.15, 1.3, good); hemi.color.set(0xeaf0f4).lerp(new THREE.Color(0xfff8ec), good) }
+  waterMat.color.set(0x3ab0e8).offsetHSL(0, 0, Math.sin(t * 1.7) * 0.015)
+  glow.position.set(SEAT.x, SEAT.y + 1.8, SEAT.z + 1.4); glow.intensity = glowOn * 1.4
+  if (docMode >= 0) { docBody.color.set(docMode === 3 ? 0x15161a : 0xffffff); drawDoc(docMode, t) }
+}
+
+/*SHARED_UI*/
+function notes(t) {
+  const n = view.notes; if (n <= 0) return; g.save(); g.fillStyle = '#ffe14a'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; g.textAlign = 'center'; g.textBaseline = 'middle'
+  for (let i = 0; i < 5; i++) { const sad = view.sad, u = ((t * (sad ? 0.25 : 0.6)) + i * 0.21) % 1, X = CX + (i - 2) * 150 + Math.sin(t * 3 + i) * 30, Y = sad ? 360 + u * 160 : 520 - u * 260; g.globalAlpha = n * Math.sin(u * PI) * (sad ? 0.6 : 1); g.font = `800 ${sad ? 60 : 84}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.fillText(i % 2 ? '♫' : '♪', X, Y) }
+  g.restore(); g.globalAlpha = 1
+}
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    notes(t)
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>

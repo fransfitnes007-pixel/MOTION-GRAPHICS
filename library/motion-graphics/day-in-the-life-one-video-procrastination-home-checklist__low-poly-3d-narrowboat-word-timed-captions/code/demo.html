@@ -1,0 +1,388 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Day in the life of a UGC creator, part thirty eight: three songs, many times</title>
+<!-- A 39.68 s reel (1080x1920) in low-poly 3D, thirty-eighth in the series. On a narrowboat, he got approved for a
+     campaign. Huge. So he descaled the kettle, alphabetized his spices, ironed his socks and learned three songs on the
+     accordion: one video to make and no idea where to start, so he didn't. Then YourBrand: Home shows exactly where he
+     is, two of four steps done, sign the agreement next, one button: Continue. He kept the accordion. The neighbours
+     left a note. Every frame is window.render(t). -->
+<style>
+*{margin:0;padding:0}html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+canvas{position:absolute;left:0;top:0}
+</style></head><body><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas></div>
+<script>window.READY=new Promise(r=>{window.__rdy=r})</script>
+<script src="brand-assets.js"></script>
+<script src="three.min.js"></script>
+<script>
+(async () => {
+'use strict'
+const Q = new URLSearchParams(location.search)
+const W = +Q.get('w') || 1080, H = +Q.get('h') || 1920
+const CONFIG = {
+  site: 'yourbrand.com',
+  capHi: '#ffe14a', capBase: '#ffffff',
+  card: '#161619', bright: '#ffffff', muted: '#a1a1aa', good: '#34d399', bad: '#ff4d4f',
+  endLines: ['Open Home.', 'See where you are.'],
+  skin: 0xc98a64, top: 0xf4f1ea, stripe: 0x1f2a4a, trousers: 0x8a6a40, hair: 0x3a2618, hat: 0xd8452a,
+  capY: 0.64,
+  safe: { left: 70, right: 940, top: 250, bottom: 1480 },
+}
+// Word times of code/voiceover.wav (faster-whisper small.en; a word cannot start before the last one ends).
+const WORDS = [["Day",0.0,0.26],["in",0.26,0.4],["the",0.4,0.46],["life",0.46,0.66],["of",0.66,0.92],["a",0.92,1.04],["UGC",1.04,1.46],["creator",1.46,1.98],["Part",2.54,2.6],["thirty",2.6,2.9],["eight",2.9,3.2],["I",3.62,3.68],["got",3.68,3.76],["approved",3.76,4.02],["for",4.02,4.24],["a",4.24,4.38],["campaign",4.38,4.74],["Huge",5.4,5.58],["So",6.16,6.44],["naturally",6.44,7.02],["I",7.36,7.44],["descaled",7.44,7.92],["the",7.92,8.06],["kettle",8.06,8.22],["I",8.72,8.78],["alphabetized",8.78,9.4],["my",9.4,9.58],["spices",9.58,9.96],["I",10.5,10.56],["ironed",10.56,10.88],["my",10.88,10.94],["socks",10.94,11.16],["I",11.6,11.7],["learned",11.7,11.86],["three",11.86,12.18],["songs",12.18,12.52],["on",12.52,12.72],["the",12.72,12.82],["accordion",12.82,13.26],["I",13.58,13.74],["had",13.74,13.9],["one",13.9,14.22],["video",14.22,14.44],["to",14.44,14.64],["make",14.64,14.84],["and",14.96,15.14],["no",15.14,15.46],["idea",15.46,15.76],["where",15.76,15.94],["to",15.94,16.06],["start",16.06,16.36],["So",16.7,16.98],["I",16.98,17.34],["didn't",17.34,17.7],["Then",18.08,18.3],["I",18.3,18.64],["found",18.64,18.92],["YourBrand",18.92,19.4],["I",19.78,19.92],["open",19.92,20.16],["Home",20.16,20.44],["and",20.6,20.7],["it",20.7,20.8],["shows",20.8,20.94],["me",20.94,21.16],["exactly",21.16,21.6],["where",21.6,21.9],["I",21.9,22.06],["am",22.06,22.32],["Two",22.72,22.78],["of",22.78,22.98],["four",22.98,23.16],["steps",23.16,23.36],["done",23.36,23.64],["Next",24.12,24.4],["sign",24.7,24.88],["the",24.88,25.02],["agreement",25.02,25.28],["One",25.28,25.98],["button",25.98,26.26],["Continue",26.86,26.92],["Turns",27.6,27.66],["out",27.66,27.84],["I",27.84,28.08],["can",28.08,28.36],["press",28.36,28.62],["one",28.62,28.86],["button",28.86,29.16],["No",29.58,29.7],["kettle",29.7,29.94],["No",30.34,30.42],["socks",30.42,30.74],["No",31.18,31.26],["bullshit",31.26,31.72],["I",32.14,32.22],["kept",32.22,32.36],["the",32.36,32.5],["accordion",32.5,32.98],["The",33.32,33.4],["neighbours",33.4,33.56],["left",33.56,33.82],["a",33.82,33.96],["note",33.96,34.18]]
+const GROUPS = [[0, 7, 6, 1], [8, 10, -1, 1.3], [11, 16, 13, 1.1], [17, 17, 17, 1.6], [18, 23, 23, 1.1], [24, 27, 25, 1.2], [28, 31, 31, 1.4], [32, 35, 34, 1.3], [36, 38, 38, 1.3], [39, 44, 41, 1.1], [45, 50, 46, 1.1], [51, 53, 53, 1.4], [54, 57, 57, 1.1], [58, 60, 60, 1.4], [61, 68, 65, 1.05], [69, 73, 69, 1.2], [74, 77, 75, 1.25], [78, 79, 79, 1.5], [80, 80, 80, 1.6], [81, 87, 85, 1.05], [88, 89, -1, 1.4], [90, 91, -1, 1.5], [92, 93, -1, 1.5], [94, 97, 97, 1.3], [98, 102, 99, 1.15]]
+// Beat times (seconds). Change these and code/recipe.py together.
+const T = {part: 2.54, got: 3.62, apprHit: 3.76, huge: 5.4, kettle0: 6.16, kettleHit: 8.06, spice: 8.72, spiceHit: 9.58, sock: 10.5, sockHit: 10.94, acc: 11.6, threeHit: 11.86, accHit: 12.82, had: 13.58, oneHit: 13.9, ideaHit: 15.14, soI: 16.7, didnt: 17.34, found: 18.08, foundG: 18.92, home: 19.78, homeHit: 20.16, exact: 21.16, two: 22.72, next: 24.12, signHit: 24.7, oneB: 25.28, cont: 26.86, turns: 27.6, pressHit: 28.36, no: 29.58, n1: 29.7, n2s: 30.34, n2: 30.42, nob: 31.18, nobHit: 31.26, kept: 32.14, accHit2: 32.5, neigh: 33.32, noteHit: 33.96, end: 34.68, dur: 39.68}
+window.DUR = T.dur
+
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v))
+const lerp = (a, b, k) => a + (b - a) * k
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = k => 1 - Math.pow(1 - clamp(k), 3)
+const eio = k => { k = clamp(k); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2 }
+const back = k => { k = clamp(k); const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2) }
+const PI = Math.PI
+
+const stage = document.getElementById('stage'), glc = document.getElementById('gl'), ui = document.getElementById('ui')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+for (const c of [glc, ui]) { c.width = W; c.height = H }
+const g = ui.getContext('2d')
+const R = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true })
+R.setSize(W, H, false); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a2119)
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 140)
+const hemi = new THREE.HemisphereLight(0xf0e6d8, 0x5a4a3a, 1.2); scene.add(hemi)
+const sun = new THREE.DirectionalLight(0xe6e2da, 1.4); sun.position.set(4, 9, 8); sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 34 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03
+scene.add(sun)
+const glow = new THREE.PointLight(0xffd8a0, 0, 9, 1.5); scene.add(glow)
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.92, metalness: 0, ...o })
+const mesh = (geo, c, x, y, z, parent) => { const m = new THREE.Mesh(geo, c && c.isMaterial ? c : M(c)); m.position.set(x || 0, y || 0, z || 0); m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m }
+const box = (w, h, d, c, x, y, z, parent) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z, parent)
+const cyl = (rt, rb, h, n, c, x, y, z, parent) => mesh(new THREE.CylinderGeometry(rt, rb, h, n), c, x, y, z, parent)
+const grp = (x, y, z, parent) => { const o = new THREE.Group(); o.position.set(x || 0, y || 0, z || 0); (parent || scene).add(o); return o }
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src })
+const G_IMG = await img(window.BRAND_ASSETS.MARK_LIGHT), WORD_IMG = await img(window.BRAND_ASSETS.WORD_LIGHT)
+const canvasTex = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, x: c.getContext('2d'), t } }
+const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o })
+const hex = n => '#' + n.toString(16).padStart(6, '0')
+
+// ---------- a narrowboat cabin (cut away at the front)
+const wood = M(0x9a6a40), woodD = M(0x6a4428)
+const floorMat = M(0x8a5a34); box(15, 0.1, 12, floorMat, 0, -0.05, 0)
+for (let i = 0; i < 12; i++) { const l = box(15, 0.012, 0.02, M(0x5a3a22), 0, 0.006, -5.5 + i * 1.0); l.castShadow = false }
+const wallMat = M(0xe8dcc0); box(15, 4.2, 0.12, wallMat, 0, 2.1, -3.26); box(15, 1.2, 0.06, woodD, 0, 0.6, -3.18); box(15, 0.08, 0.1, wood, 0, 1.22, -3.16)
+for (const sx of [-1, 1]) box(0.12, 4.2, 7, wallMat, sx * 7.2, 2.1, 0.2)
+{ const ceil = box(15, 0.1, 3.0, wood, 0, 3.95, -1.85); ceil.rotation.x = -0.12; for (let i = 0; i < 6; i++) box(0.1, 0.1, 3.0, woodD, -6 + i * 2.4, 3.88, -1.85).rotation.x = -0.12 }
+// portholes: what is outside (rain, then sun) is drawn every frame
+const port = canvasTex(160, 160)
+const portholes = [-5.9, -1.2, 1.2, 2.8, 5.6].map(x => { const o = grp(x, 2.55, -3.18); const r = mesh(new THREE.TorusGeometry(0.4, 0.07, 6, 18), M(0xc89a3a, { metalness: 0.4, roughness: 0.5 }), 0, 0, 0.02, o); const d = mesh(new THREE.CircleGeometry(0.38, 18), basic(0xffffff, { map: port.t }), 0, 0, 0.01, o); d.castShadow = false; return o })
+function drawPort(good, t) {
+  const x = port.x, s = 160; const mix = (a, b) => { const A = new THREE.Color(a), B = new THREE.Color(b); return '#' + A.lerp(B, good).getHexString() }
+  x.fillStyle = mix(0x8e98a2, 0x8cc8f0); x.fillRect(0, 0, s, s); x.fillStyle = mix(0x56704e, 0x4f9a52); x.fillRect(0, 74, s, 22); for (let i = 0; i < 5; i++) { x.beginPath(); x.arc(14 + i * 34, 76, 16, 0, 7); x.fill() }
+  x.fillStyle = mix(0x56666e, 0x3a8ab0); x.fillRect(0, 96, s, 64); x.fillStyle = 'rgba(255,255,255,.25)'; for (let i = 0; i < 6; i++) x.fillRect(((i * 53 + t * 20) % 180) - 20, 108 + (i % 3) * 16, 30, 3)
+  if (good < 0.6) { x.strokeStyle = `rgba(220,230,240,${0.5 * (1 - good / 0.6)})`; x.lineWidth = 2; for (let i = 0; i < 14; i++) { const X = (i * 37 + t * 60) % 180 - 10, Y = (i * 61 + t * 260) % 180 - 20; x.beginPath(); x.moveTo(X, Y); x.lineTo(X - 6, Y + 18); x.stroke() } }
+  if (good > 0.3) { x.fillStyle = `rgba(255,240,170,${(good - 0.3) * 1.2})`; x.beginPath(); x.arc(120, 32, 16, 0, 7); x.fill() }
+  port.t.needsUpdate = true
+}
+// the settee he lives on
+box(3.1, 0.75, 0.95, wood, 2.0, 0.375, -2.5); box(3.0, 0.22, 0.9, M(0x2f6a5a), 2.0, 0.86, -2.5); box(3.0, 0.8, 0.2, M(0x2f6a5a), 2.0, 1.4, -2.98)
+box(0.5, 0.42, 0.14, M(0xe0b040), 0.8, 1.2, -2.8).rotation.z = 0.2
+// the galley: counter, stove, the kettle
+box(2.4, 1.0, 0.8, wood, -2.6, 0.5, -2.75); box(2.5, 0.06, 0.85, 0x3a3a3a, -2.6, 1.03, -2.75); box(0.7, 0.1, 0.6, 0x2a2c33, -2.2, 1.11, -2.75)
+for (const dx of [-0.16, 0.16]) { const r = mesh(new THREE.TorusGeometry(0.1, 0.02, 4, 10), M(0x15161a), -2.2 + dx, 1.17, -2.75); r.rotation.x = PI / 2 }
+box(0.7, 0.5, 0.06, 0xd8d0c0, -3.3, 1.5, -3.14)
+const kettle = grp(-2.2, 1.3, -2.75); { const km = M(0xc8ccd2, { metalness: 0.5, roughness: 0.4 }); cyl(0.2, 0.25, 0.32, 10, km, 0, 0, 0, kettle); cyl(0.08, 0.2, 0.1, 10, km, 0, 0.2, 0, kettle); const sp = cyl(0.03, 0.05, 0.28, 6, km, 0.27, 0.04, 0, kettle); sp.rotation.z = -0.9; box(0.06, 0.05, 0.3, 0x2a2c33, 0, 0.33, 0, kettle); box(0.06, 0.16, 0.05, 0x2a2c33, 0, 0.26, -0.13, kettle); box(0.06, 0.16, 0.05, 0x2a2c33, 0, 0.26, 0.13, kettle) }
+const KETTLE0 = new THREE.Vector3(-2.2, 1.3, -2.75)
+const steam = []; for (let i = 0; i < 7; i++) { const s = mesh(new THREE.IcosahedronGeometry(0.09, 0), M(0xffffff, { transparent: true, opacity: 0.7 }), 0, -9, 0); s.castShadow = false; steam.push(s) }
+// the spice rack: six jars, out of order until he sorts them
+box(1.9, 0.06, 0.32, wood, -4.85, 2.02, -3.04); box(1.9, 0.06, 0.32, wood, -4.85, 2.52, -3.04)
+const SP_ORDER = ['C', 'P', 'B', 'S', 'A', 'G'], SP_SORT = [...SP_ORDER].sort(), SP_COL = { A: 0xd8452a, B: 0x5a8a3a, C: 0xe0a030, G: 0x8a5a2a, P: 0xc83a3a, S: 0x6a6a6a }
+const jars = SP_ORDER.map((L, i) => { const o = grp(-5.6 + i * 0.3, 2.21, -3.0); cyl(0.11, 0.11, 0.3, 8, M(SP_COL[L]), 0, 0, 0, o); cyl(0.115, 0.115, 0.07, 8, 0x2a2c33, 0, 0.18, 0, o); const c = canvasTex(64, 64); c.x.fillStyle = '#f4f1ea'; c.x.fillRect(0, 0, 64, 64); c.x.fillStyle = '#16161a'; c.x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; c.x.textAlign = 'center'; c.x.fillText(L, 32, 50); c.t.needsUpdate = true; const lb = mesh(new THREE.PlaneGeometry(0.17, 0.17), basic(0xffffff, { map: c.t }), 0, 0, 0.115, o); lb.castShadow = false; return { o, L, from: i, to: SP_SORT.indexOf(L) } })
+for (let i = 0; i < 5; i++) cyl(0.09, 0.09, 0.26, 8, [0x3a7a8a, 0xb06a3a, 0x7a8a3a, 0xa03a5a, 0x5a5a8a][i], -5.5 + i * 0.34, 2.68, -3.0)
+// the ironing board, the iron, the sock, the ironed socks
+box(1.8, 0.06, 0.5, M(0xb8c8e8), 4.8, 1.05, -1.4); for (const r of [0.45, -0.45]) { const l = box(0.06, 1.2, 0.06, 0x8a8e96, 4.8, 0.52, -1.4); l.rotation.z = r }
+const iron = grp(4.6, 1.12, -1.4); box(0.36, 0.08, 0.2, 0x5a8ad0, 0, 0, 0, iron); box(0.26, 0.05, 0.06, 0x2a2c33, 0, 0.16, 0, iron); for (const dx of [-0.1, 0.1]) box(0.04, 0.1, 0.04, 0x2a2c33, dx, 0.09, 0, iron)
+const IRON0 = new THREE.Vector3(4.6, 1.12, -1.4)
+const mkSock = (parent, c1, c2) => { const o = grp(0, 0, 0, parent); box(0.14, 0.04, 0.38, c1, 0, 0, 0, o); box(0.14, 0.045, 0.06, c2, 0, 0, -0.12, o); box(0.14, 0.045, 0.06, c2, 0, 0, 0.0, o); box(0.14, 0.04, 0.16, c1, 0, 0, 0.24, o).rotation.y = 0; return o }
+const sock = grp(5.1, 1.1, -1.4); mkSock(sock, 0xe05a5a, 0xf4f1ea); sock.rotation.y = PI / 2
+const SOCK0 = new THREE.Vector3(5.1, 1.1, -1.4)
+const pile = []; for (let i = 0; i < 6; i++) { const o = grp(5.45, 1.1 + i * 0.045, -1.4); mkSock(o, [0x3a7ae0, 0xe0b040, 0x5aaa6a, 0xa05ae0, 0xe05a5a, 0x2a2c33][i], 0xf4f1ea); o.rotation.y = PI / 2 + (i % 2) * 0.1; o.visible = false; pile.push(o) }
+// the accordion
+const acc = grp(3.25, 1.2, -2.5); const accRed = M(0x9a1a2a), accBlk = M(0x1a1a1e)
+const accL = grp(0, 0, 0, acc), accR = grp(0, 0, 0, acc); box(0.12, 0.5, 0.36, accRed, 0, 0, 0, accL); box(0.12, 0.5, 0.36, accRed, 0, 0, 0, accR); for (let i = 0; i < 5; i++) box(0.04, 0.07, 0.3, 0xf4f1ea, 0.07, -0.18 + i * 0.09, 0, accR)
+for (let i = 0; i < 4; i++) { const b = mesh(new THREE.SphereGeometry(0.025, 6, 4), M(0xf4f1ea), -0.07, -0.15 + i * 0.1, 0.08, accL) }
+const bel = []; for (let i = 0; i < 6; i++) bel.push(box(0.05, 0.46, 0.34, i % 2 ? accBlk : M(0xe8e0d0), 0, 0, 0, acc))
+function setAcc(s) { const half = 0.12 + 0.18 * s; accL.position.x = -half; accR.position.x = half; bel.forEach((b, i) => { b.position.x = -half + 0.08 + (i / 5) * (2 * half - 0.16); b.scale.x = 0.6 + s }) }
+setAcc(0)
+const ACC0 = new THREE.Vector3(3.25, 1.2, -2.5)
+// a lamp on the wall
+box(0.14, 0.3, 0.14, 0x2a2c33, 0.3, 2.9, -3.12); const bulb = mesh(new THREE.SphereGeometry(0.12, 8, 6), basic(0xffe2a0), 0.3, 2.68, -3.0); bulb.castShadow = false
+const gTex = new THREE.Texture(G_IMG); gTex.colorSpace = THREE.SRGBColorSpace; gTex.needsUpdate = true
+
+// ---------- the creator (origin at the hips)
+function makePerson() {
+  const p = {}; const skin = M(CONFIG.skin), top = M(CONFIG.top), str = M(CONFIG.stripe), tr = M(CONFIG.trousers), dark = M(0x15161a), hair = M(CONFIG.hair), hat = M(CONFIG.hat), boot = M(0x4a3426)
+  p.root = grp(0, 0, 0); p.root.rotation.order = 'YXZ'
+  p.torso = grp(0, 0, 0, p.root); box(1.0, 1.2, 0.6, top, 0, 0.6, 0, p.torso); for (let i = 0; i < 5; i++) box(1.02, 0.08, 0.62, str, 0, 0.14 + i * 0.22, 0, p.torso); box(1.02, 0.42, 0.58, tr, 0, -0.06, 0, p.torso)
+  p.head = grp(0, 1.2, 0, p.torso); box(0.76, 0.76, 0.72, skin, 0, 0.44, 0, p.head)
+  box(0.8, 0.26, 0.76, hat, 0, 0.9, 0, p.head); box(0.84, 0.14, 0.8, M(0xb0361e), 0, 0.76, 0, p.head); box(0.14, 0.12, 0.14, hat, 0, 1.08, 0, p.head)
+  for (const sx of [-1, 1]) box(0.06, 0.34, 0.42, hair, sx * 0.4, 0.5, -0.06, p.head)
+  box(0.78, 0.22, 0.12, hair, 0, 0.1, 0.33, p.head); for (const sx of [-1, 1]) box(0.1, 0.32, 0.4, hair, sx * 0.35, 0.16, 0.18, p.head); box(0.36, 0.06, 0.06, hair, 0, 0.33, 0.39, p.head)
+  p.eyeL = box(0.08, 0.11, 0.04, dark, -0.17, 0.48, 0.37, p.head); p.eyeR = box(0.08, 0.11, 0.04, dark, 0.17, 0.48, 0.37, p.head)
+  p.browL = box(0.2, 0.05, 0.04, hair, -0.17, 0.62, 0.38, p.head); p.browR = box(0.2, 0.05, 0.04, hair, 0.17, 0.62, 0.38, p.head)
+  p.mouth = box(0.2, 0.05, 0.05, M(0xa8424a), 0, 0.255, 0.41, p.head)
+  const arm = (sx) => { const a = {}; a.sh = grp(sx * 0.62, 1.08, 0, p.torso); box(0.34, 0.3, 0.36, top, 0, -0.1, 0, a.sh); box(0.3, 0.34, 0.32, top, 0, -0.38, 0, a.sh); box(0.31, 0.07, 0.33, str, 0, -0.3, 0, a.sh); a.el = grp(0, -0.5, 0, a.sh); box(0.27, 0.34, 0.29, top, 0, -0.12, 0, a.el); box(0.28, 0.07, 0.3, str, 0, -0.1, 0, a.el); box(0.25, 0.1, 0.27, skin, 0, -0.32, 0, a.el); a.hand = box(0.24, 0.2, 0.26, skin, 0, -0.44, 0, a.el); return a }
+  p.aL = arm(-1); p.aR = arm(1)
+  p.phone = grp(0, -0.6, 0.16, p.aR.el); box(0.24, 0.42, 0.05, dark, 0, 0, 0, p.phone); box(0.2, 0.36, 0.01, basic(0xa8d4ff), 0, 0, 0.03, p.phone); p.phone.rotation.x = -0.25; p.phone.visible = false
+  const leg = (sx) => { const l = {}; l.hip = grp(sx * 0.24, 0, 0, p.root); box(0.38, 0.6, 0.4, tr, 0, -0.3, 0, l.hip); l.knee = grp(0, -0.56, 0, l.hip); box(0.38, 0.42, 0.4, tr, 0, -0.2, 0, l.knee); box(0.42, 0.2, 0.6, boot, 0, -0.5, 0.08, l.knee); return l }
+  p.lL = leg(-1); p.lR = leg(1)
+  return p
+}
+const P = makePerson()
+const P0 = { x: 0, y: 1.1, z: 0, ry: 0, rx: 0, rz: 0, tx: 0, tz: 0, ty: 0, hx: 0, hy: 0, hz: 0, alx: 0, alz: -0.1, ale: 0, alez: 0, arx: 0, arz: 0.1, are: 0, arez: 0, llh: 0, llk: 0, lrh: 0, lrk: 0, eye: 1, mw: 1, mh: 1, brow: 0 }
+const pose = o => ({ ...P0, ...o })
+const mixP = (a, b, k) => { const o = {}; for (const key in P0) o[key] = lerp(a[key], b[key], k); return o }
+function applyPose(q) {
+  P.root.position.set(q.x, q.y, q.z); P.root.rotation.set(q.rx, q.ry, q.rz)
+  P.torso.rotation.set(q.tx, q.ty, q.tz); P.head.rotation.set(q.hx, q.hy, q.hz)
+  P.aL.sh.rotation.set(q.alx, 0, q.alz); P.aL.el.rotation.set(q.ale, 0, q.alez); P.aR.sh.rotation.set(q.arx, 0, q.arz); P.aR.el.rotation.set(q.are, 0, q.arez)
+  P.lL.hip.rotation.x = q.llh; P.lL.knee.rotation.x = q.llk; P.lR.hip.rotation.x = q.lrh; P.lR.knee.rotation.x = q.lrk
+  P.eyeL.scale.y = P.eyeR.scale.y = q.eye; P.mouth.scale.set(q.mw, q.mh, 1)
+  P.browL.rotation.z = -q.brow; P.browR.rotation.z = q.brow; P.browL.position.y = P.browR.position.y = 0.62 + Math.abs(q.brow) * 0.04
+}
+const DESK = { x: 2.0, y: 1.2, z: -2.4 }, SPOT = { x: 0.3, y: 1.1, z: 1.9 }
+const SIT = pose({ ...DESK, llh: -1.57, llk: 1.57, lrh: -1.57, lrk: 1.57 })
+const HOLD = { ...SIT, alx: -0.4, ale: -0.9, arx: -1.15, are: -1.15, arz: -0.25, hx: 0.18 }
+const GALLEY = pose({ x: -2.4, y: 1.1, z: -1.6, alx: -1.1, ale: -0.7, alz: 0.3, arx: -1.1, are: -0.7, arz: -0.3, hx: 0.3 })
+const SPICE = pose({ x: -3.75, y: 1.1, z: -2.3, ry: -1.45, arx: -1.1, are: -0.3, arz: 0.05, hx: -0.05 })
+const IRONP = pose({ x: 4.8, y: 1.1, z: -2.2, tx: 0.25, arx: -0.4, are: -0.6, arz: -0.05, alx: -0.3, ale: -0.5, hx: 0.35 })
+const PLAY = { ...SIT, alz: -0.6, ale: -1.3, alx: -0.3, arz: 0.6, are: -1.3, arx: -0.3, hx: 0.05 }
+const DOWN = pose({ x: 0.0, y: 0.32, z: -0.9, ry: -PI / 2, rx: -PI / 2, alx: -1.3, ale: -0.9, arx: -1.3, are: -0.9, llh: 0.15, lrh: -0.1, eye: 0.3, brow: 0.22, mw: 1.1, mh: 0.5 })
+const STAND = pose({ ...SPOT, ry: 0, x: 0.25 })
+
+// ---------- props that move
+const doc = grp(0, 3.0, 2.6); doc.visible = false; const docBody = M(0xffffff)
+box(1.86, 2.66, 0.06, docBody, 0, 0, 0, doc); const dc = canvasTex(720, 1040); const dcMesh = mesh(new THREE.PlaneGeometry(1.8, 2.6), basic(0xffffff, { map: dc.t }), 0, 0, 0.035, doc); dcMesh.castShadow = false
+
+// ---------- screens
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.roundRect(X, Y, w, h, r) }
+// 0 the brand's welcome email · 1 his notes: the video, no steps · 2 YourBrand Home, the next-step card · 3 the neighbours' note
+function drawDoc(mode, t) {
+  const x = dc.x, w = 720, h = 1040; x.textAlign = 'left'; x.globalAlpha = 1
+  const hdr = (title, col, sub) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = col; x.fillRect(0, 0, w, 10); x.fillStyle = '#16161a'; x.font = '800 46px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(title, 40, 92); if (sub) { x.fillStyle = '#8a90a0'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(sub, 40, 132) } x.fillStyle = '#eceef2'; x.fillRect(0, 160, w, 3) }
+  if (mode === 0) {
+    hdr('Lumo Bars', '#f59e0b', 'Re: your application')
+    x.fillStyle = '#16161a'; x.font = '800 48px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText("You're in!", 40, 236); x.fillStyle = '#5a6070'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Welcome aboard. A few next steps:', 40, 284)
+    const k = eo(seg(t, T.got + 0.3, T.huge)); ['Read the onboarding pack (14 pages)', 'Fill in the forms, see attached', 'Some other bits, TBC', 'Sign at some point?'].forEach((s, i) => { x.globalAlpha = clamp(k * 4 - i); x.fillStyle = '#16161a'; x.font = '600 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('•  ' + s, 50, 344 + i * 50) }); x.globalAlpha = 1
+    ;[['Onboarding_FINAL_v3.pdf', 40], ['forms (2).zip', 40]].forEach(([n], i) => { const Y = 556 + i * 0; const X = 40 + i * 400; x.fillStyle = '#f1f2f5'; rr(x, X, 548, i ? 240 : 370, 60, 14); x.fill(); x.fillStyle = '#e5484d'; rr(x, X + 14, 560, 36, 36, 6); x.fill(); x.fillStyle = '#16161a'; x.font = '700 22px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(n, X + 62, 586) })
+  } else if (mode === 1) {
+    hdr('Notes', '#f5c518', 'Today')
+    x.fillStyle = '#16161a'; x.font = '800 44px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('THE VIDEO', 40, 232)
+    const k = seg(t, T.had + 0.2, T.had + 1.0); ['Step 1:', 'Step 2:', 'Step 3:'].forEach((s, i) => { x.globalAlpha = clamp(k * 3 - i); x.fillStyle = '#16161a'; x.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(s, 40, 310 + i * 70); x.fillStyle = '#c0c4cc'; x.fillText('???', 190, 310 + i * 70) }); x.globalAlpha = 1
+    if (t >= T.ideaHit) { const q = back(seg(t, T.ideaHit, T.ideaHit + 0.25)); x.save(); x.translate(560, 420); x.scale(q, q); x.rotate(0.15); x.fillStyle = '#ff4d4f'; x.font = '800 220px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('?', 0, 80); x.restore() }
+    x.fillStyle = '#f1f2f5'; rr(x, 200, 935, 320, 70, 35); x.fill(); x.fillStyle = '#8a90a0'; x.font = '700 28px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Not started', 360, 980); x.textAlign = 'left'
+  } else if (mode === 2) {
+    const AMB = '245,158,11'
+    x.fillStyle = '#0b0c10'; x.fillRect(0, 0, w, h); x.drawImage(G_IMG, 30, 26, 40, 50); x.fillStyle = '#fff'; x.font = '800 36px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Home', 88, 64)
+    x.fillStyle = '#161619'; rr(x, 30, 106, 660, 900, 26); x.fill(); x.strokeStyle = `rgba(${AMB},.45)`; x.lineWidth = 2; rr(x, 30, 106, 660, 900, 26); x.stroke()
+    x.fillStyle = `rgba(${AMB},.16)`; rr(x, 60, 136, 64, 64, 16); x.fill(); x.fillStyle = `rgb(${AMB})`; rr(x, 76, 158, 32, 26, 4); x.fill(); x.fillRect(84, 150, 16, 10)
+    x.fillStyle = `rgb(${AMB})`; x.font = '800 20px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('Y O U   A R E   A P P R O V E D', 144, 160)
+    x.fillStyle = '#fff'; x.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('You have been approved', 144, 204); x.fillText('for Lumo Bars', 144, 244)
+    x.fillStyle = '#a1a1aa'; x.font = '600 24px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('You are in. A couple of steps left', 60, 300); x.fillText('before the brief unlocks.', 60, 332)
+    const pct = 0.5 * eo(seg(t, T.home + 0.25, T.home + 0.85)); x.fillStyle = 'rgba(255,255,255,.06)'; rr(x, 60, 368, 360, 12, 6); x.fill(); x.fillStyle = `rgb(${AMB})`; if (pct > 0.01) { rr(x, 60, 368, 360 * pct, 12, 6); x.fill() }
+    const two = t >= T.two ? back(seg(t, T.two, T.two + 0.25)) : 1; x.save(); x.translate(440, 382); x.scale(two, two); x.fillStyle = t >= T.two ? '#fff' : 'rgba(255,255,255,.8)'; x.font = (t >= T.two ? '800' : '600') + ' 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText('2 of 4 steps done', 0, 0); x.restore()
+    const steps = [['Agree to the rules', 1], ['Assign your handles', 1], ['Sign the agreement', 0], ['Approved by YourBrand', 0]]
+    steps.forEach(([s, d], i) => { const Y = 440 + i * 54, hot = i === 2 && t >= T.next
+      if (hot) { const k = back(seg(t, T.next, T.next + 0.25)); x.fillStyle = `rgba(${AMB},${0.14 * k})`; rr(x, 50, Y - 34, 520, 50, 14); x.fill(); x.strokeStyle = `rgba(${AMB},${k})`; x.lineWidth = 3; rr(x, 50, Y - 34, 520, 50, 14); x.stroke() }
+      x.strokeStyle = d ? 'rgba(16,185,129,.6)' : '#3a3c46'; x.lineWidth = 2; x.fillStyle = d ? 'rgba(16,185,129,.2)' : 'transparent'; x.beginPath(); x.arc(76, Y - 9, 12, 0, 7); x.fill(); x.stroke()
+      if (d) { x.strokeStyle = '#34d399'; x.lineWidth = 3; x.beginPath(); x.moveTo(70, Y - 9); x.lineTo(75, Y - 4); x.lineTo(83, Y - 14); x.stroke() }
+      x.fillStyle = d ? '#34d399' : hot ? '#fff' : '#8a8e9a'; x.font = (hot ? '800' : '600') + ' 26px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.fillText(s, 102, Y) })
+    // Continue: pulses on "one button", pressed on "Continue"
+    let bs = 1; if (t >= T.oneB && t < T.cont) bs = 1 + Math.sin(seg(t, T.oneB, T.cont) * PI * 3) * 0.05; if (t >= T.cont) bs = 1 - Math.sin(seg(t, T.cont, T.cont + 0.25) * PI) * 0.1
+    x.save(); x.translate(360, 972); x.scale(bs, bs); if (t >= T.oneB) { x.shadowColor = 'rgba(139,92,246,.9)'; x.shadowBlur = 40 } x.fillStyle = '#8b5cf6'; rr(x, -190, -40, 380, 80, 20); x.fill(); x.shadowBlur = 0; x.fillStyle = '#fff'; x.font = '800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.fillText('Continue  ›', 0, 12); x.restore(); x.textAlign = 'left'
+    if (t >= T.cont) { const r = seg(t, T.cont, T.cont + 0.5); x.strokeStyle = `rgba(255,255,255,${0.7 * (1 - r)})`; x.lineWidth = 4; x.beginPath(); x.arc(360, 972, 30 + r * 200, 0, 7); x.stroke() }
+  } else {
+    x.fillStyle = '#fbf3d9'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(200,190,160,.6)'; x.save(); x.translate(360, 40); x.rotate(-0.04); x.fillRect(-110, -26, 220, 52); x.restore()
+    x.strokeStyle = 'rgba(120,150,200,.35)'; x.lineWidth = 2; for (let i = 0; i < 9; i++) { x.beginPath(); x.moveTo(30, 150 + i * 70); x.lineTo(690, 150 + i * 70); x.stroke() }
+    x.fillStyle = '#23304a'; x.font = 'italic 700 50px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const lines = ['Dear boat 12,', 'We heard all', 'three songs.', 'Many times.']; const k = seg(t, T.neigh + 0.1, T.noteHit); lines.forEach((s, i) => { x.globalAlpha = clamp(k * 4 - i); x.fillText(s, 60, 206 + i * 70) }); x.globalAlpha = 1
+    if (t >= T.noteHit - 0.1) { x.globalAlpha = seg(t, T.noteHit - 0.1, T.noteHit + 0.2); x.fillText('Love, boat 14', 300, 556); x.globalAlpha = 1 }
+  }
+  dc.t.needsUpdate = true
+}
+
+// ---------- camera
+const V = (a) => new THREE.Vector3(a[0], a[1], a[2])
+function setCam(p, l, fov, k = 0, push = 0.05, shake = 0) {
+  const pv = V(p), lv = V(l); pv.lerp(lv, push * k)
+  if (shake) { lv.x += Math.sin(shake * 91) * 0.06 * shake; lv.y += Math.cos(shake * 77) * 0.06 * shake }
+  cam.position.copy(pv); cam.fov = fov; cam.updateProjectionMatrix(); cam.lookAt(lv)
+}
+const CAM = {
+  wide: [[5.2, 3.3, 7.2], [0.2, 1.7, -2.2], 50], front: [[2.0, 2.95, 4.6], [2.0, 2.3, -2.4], 34], face: [[2.0, 3.3, 2.2], [2.0, 2.6, -2.4], 34],
+  phone: [[0, 3.0, 9.0], [0, 3.0, 2.6], 36], center: [[0.25, 2.9, 9.4], [0.25, 2.6, 1.9], 46], close: [[0.25, 2.7, 7.0], [0.25, 2.2, 1.9], 44],
+  galley: [[-1.8, 2.8, 3.0], [-2.4, 1.9, -1.6], 40], spice: [[-4.7, 2.6, 3.0], [-4.7, 2.2, -3.0], 40], iron: [[4.3, 3.2, 2.6], [4.8, 1.5, -1.6], 40],
+  acc: [[2.0, 2.6, 3.4], [2.0, 2.0, -2.4], 38], down: [[2.6, 5.0, 3.2], [0.9, 0.5, -0.9], 44],
+}
+
+// ---------- the scene at time t
+const view = { pills: [], stamp: null, coin: null, dim: 0, flash: 0, notes: 0, sad: 0 }
+const _a = new THREE.Vector3()
+const CHORES = [['KETTLE: DESCALED', 'kettleHit'], ['SPICES: A TO Z', 'spiceHit'], ['SOCKS: IRONED', 'sockHit'], ['ACCORDION: 3 SONGS', 'accHit']]
+function state(t) {
+  const v = view; v.pills = []; v.stamp = null; v.coin = null; v.dim = 0; v.flash = 0; v.notes = 0; v.sad = 0
+  let q = HOLD, c = CAM.wide, ckk = 0, shake = 0, docMode = -1, glowOn = 0, inHand = true, squeeze = 0
+  const good = eio(seg(t, T.found + 0.15, T.foundG + 0.5))
+  doc.visible = false; kettle.position.copy(KETTLE0); kettle.rotation.set(0, 0, 0); iron.position.copy(IRON0); sock.position.copy(SOCK0); sock.rotation.set(0, PI / 2, 0); sock.scale.set(1, 1, 1)
+  acc.position.copy(ACC0); acc.rotation.set(0, 0, 0); steam.forEach(s => s.position.y = -9); pile.forEach(p => p.visible = false)
+  const breathe = Math.sin(t * 2.2) * 0.012
+  const showDoc = (t0, pop = true) => { doc.visible = true; doc.scale.setScalar(pop ? Math.max(0.01, back(seg(t, t0, t0 + 0.22))) : 1); doc.rotation.set(-0.05, Math.sin(t * 1.4) * 0.07, Math.sin(t * 1.9) * 0.012); doc.position.set(0, 3.0 + Math.sin(t * 2.2) * 0.04, 2.6) }
+  const chores = (i) => { const [lab, key] = CHORES[i]; if (t >= T[key]) v.pills.push([lab, 0, back(seg(t, T[key], T[key] + 0.2)), 'bad']) }
+  // spices: sorted once he sorts them
+  const sk = eio(seg(t, T.spiceHit - 0.1, T.spiceHit + 0.6)); jars.forEach(j => { const x = -5.6 + lerp(j.from, j.to, sk) * 0.3; j.o.position.set(x, 2.21 + Math.sin(sk * PI) * 0.25 * (j.from !== j.to), -3.0) })
+  // ironed socks pile up
+  const pn = t >= T.sockHit ? Math.min(6, 1 + Math.floor((t - T.sockHit) / 0.18)) : 0; pile.forEach((p, i) => p.visible = i < pn)
+
+  if (t < T.part) { q = { ...HOLD, hx: 0.25 }; c = CAM.wide; ckk = seg(t, 0, T.part) }
+  else if (t < T.got) { const k = back(seg(t, T.part, T.part + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, ale: -0.3, mw: 1.7, mh: 2.0, eye: 1.2, arx: -1.15, are: -1.15 }, k); c = CAM.front; ckk = seg(t, T.part, T.got); shake = (1 - seg(t, T.part, T.part + 0.3)) * 0.5 }
+  else if (t < T.huge) { c = CAM.phone; ckk = seg(t, T.got, T.huge); docMode = 0; showDoc(T.got); if (t >= T.apprHit) { v.pills.push(['APPROVED', 0, back(seg(t, T.apprHit, T.apprHit + 0.2)), 'good']); shake = (1 - seg(t, T.apprHit, T.apprHit + 0.3)) * 0.35 } }
+  else if (t < T.kettle0) { inHand = false; const k = back(seg(t, T.huge, T.huge + 0.2)); q = mixP(HOLD, { ...SIT, alz: -2.6, arz: 2.6, ale: -0.3, are: -0.3, mw: 1.8, mh: 2.0, eye: 1.3, brow: -0.2, hx: -0.1 }, k); c = CAM.face; ckk = seg(t, T.huge, T.kettle0); shake = (1 - seg(t, T.huge, T.huge + 0.4)) * 0.7 }
+  else if (t < T.spice) {                                                     // descaling the kettle
+    inHand = false; const sc = Math.sin(t * 20); q = { ...GALLEY, alz: GALLEY.alz + sc * 0.08, arz: GALLEY.arz + sc * 0.08, eye: 0.9, brow: -0.1, mw: 0.9 }; c = CAM.galley; ckk = seg(t, T.kettle0, T.spice)
+    kettle.position.set(-2.4 + sc * 0.04, 2.0, -0.78); kettle.rotation.set(0.2, 0, sc * 0.2)
+    if (t >= T.kettleHit - 0.3) steam.forEach((s, i) => { const u = ((t - T.kettleHit + 0.3) * 0.9 + i / 7) % 1; s.position.set(-2.4 + Math.sin(i * 2 + t * 3) * 0.12, 2.3 + u * 1.0, -0.78); s.scale.setScalar(0.6 + u * 1.4); s.material.opacity = 0.7 * (1 - u) })
+    chores(0)
+  } else if (t < T.sock) {                                                    // alphabetizing the spices
+    inHand = false; const r = Math.sin(seg(t, T.spice, T.spice + 1.2) * PI * 4) * 0.15; q = { ...SPICE, arx: SPICE.arx + r, eye: 1.1, brow: -0.15 }; c = CAM.spice; ckk = seg(t, T.spice, T.sock); chores(1)
+  } else if (t < T.acc) {                                                     // ironing a sock
+    inHand = false; const sw = Math.sin(t * 6); q = { ...IRONP, arz: IRONP.arz + sw * 0.12, hy: sw * 0.08 }; c = CAM.iron; ckk = seg(t, T.sock, T.acc)
+    iron.position.set(4.95 + sw * 0.28, 1.12, -1.45); sock.position.set(5.0, 1.1, -1.4); sock.scale.set(1, t >= T.sockHit ? 0.5 : 1, 1)
+    if (t >= T.sockHit - 0.2) steam.slice(0, 4).forEach((s, i) => { const u = ((t - T.sockHit + 0.2) * 1.2 + i / 4) % 1; s.position.set(iron.position.x, 1.25 + u * 0.7, -1.45); s.scale.setScalar(0.4 + u); s.material.opacity = 0.6 * (1 - u) })
+    chores(2)
+  } else if (t < T.had) {                                                     // three songs on the accordion
+    inHand = false; squeeze = 0.5 + 0.5 * Math.sin(t * 5); q = { ...PLAY, alz: PLAY.alz - squeeze * 0.25, arz: PLAY.arz + squeeze * 0.25, hz: Math.sin(t * 2.5) * 0.12, eye: 0.6, mw: 1.3, mh: 0.8 }; c = CAM.acc; ckk = seg(t, T.acc, T.had)
+    acc.position.set(2.0, 1.95, -1.92); v.notes = 1; chores(3)
+  } else if (t < T.soI) { c = CAM.phone; ckk = seg(t, T.had, T.soI); docMode = 1; showDoc(T.had); if (t >= T.oneHit) v.pills.push(['VIDEOS TO MAKE: 1', 0, back(seg(t, T.oneHit, T.oneHit + 0.2)), 'bad']); if (t >= T.ideaHit) { v.pills.push(['WHERE TO START: ?', 1, back(seg(t, T.ideaHit, T.ideaHit + 0.2)), 'bad']); shake = (1 - seg(t, T.ideaHit, T.ideaHit + 0.3)) * 0.4 } }
+  else if (t < T.found) {                                                     // so he didn't: on the floor, the accordion wheezing
+    inHand = false; const k = eio(seg(t, T.soI, T.soI + 0.4)); q = mixP({ ...STAND, x: 0.2, z: -0.9, ry: -PI / 2 }, DOWN, k); c = CAM.down; ckk = seg(t, T.soI, T.found)
+    squeeze = 0.3 + 0.3 * Math.sin(t * 1.6); acc.position.set(0.95, 0.62 + k * 0.1, -0.9); acc.rotation.set(0, PI / 2, PI / 2); v.notes = k; v.sad = 1
+    if (t >= T.didnt) { v.stamp = ['NOT STARTED', seg(t, T.didnt, T.didnt + 0.2), '#ff4d4f', -0.12, 0.13]; shake = (1 - seg(t, T.didnt, T.didnt + 0.4)) * 0.6 }
+  } else if (t < T.home) {                                                     // then I found YourBrand
+    const k = eo(seg(t, T.found, T.found + 0.5)); glowOn = 0.4 + 1.2 * k
+    if (t < T.foundG) { q = mixP({ ...SIT, eye: 0.6, brow: 0.2 }, { ...HOLD, hx: 0.1, eye: 1.45, mw: 0.8, mh: 2 }, k); c = CAM.face; ckk = seg(t, T.found, T.foundG) }
+    else { q = { ...HOLD, eye: 1.3, mw: 1.5, mh: 1.3, brow: -0.15 }; c = CAM.face; ckk = seg(t, T.foundG, T.home); v.flash = (1 - seg(t, T.foundG, T.foundG + 0.3)) * 0.85; v.coin = [0.3, 0.21, back(seg(t, T.foundG, T.foundG + 0.4)), t] }
+  } else if (t < T.turns) {                                                    // Home: where he is, the next step, one button
+    c = CAM.phone; ckk = seg(t, T.home, T.turns); docMode = 2; showDoc(T.home)
+    const HP = [[T.homeHit, 'OPEN HOME'], [T.two, '2 OF 4 DONE'], [T.next, 'NEXT: SIGN'], [T.oneB, 'ONE BUTTON']].filter(a => t >= a[0]); if (HP.length) { const [h0, lab] = HP[HP.length - 1]; v.pills.push([lab, 0, back(seg(t, h0, h0 + 0.2)), 'good']); shake = Math.max(shake, (1 - seg(t, h0, h0 + 0.3)) * 0.35) }
+    if (t >= T.cont) shake = Math.max(shake, (1 - seg(t, T.cont, T.cont + 0.3)) * 0.5)
+  } else if (t < T.no) {                                                       // turns out I can press one button
+    const k = back(seg(t, T.pressHit, T.pressHit + 0.25)); q = { ...HOLD, eye: 1.2, mw: 1.3, mh: 1.1, brow: -0.1, alz: lerp(-0.1, -2.5, t >= T.pressHit ? k : 0), ale: lerp(-0.9, -0.6, t >= T.pressHit ? k : 0), alx: lerp(-0.4, 0, t >= T.pressHit ? k : 0) }; c = CAM.face; ckk = seg(t, T.turns, T.no); glowOn = 1.2
+    if (t >= T.pressHit) { v.pills.push(['BUTTONS PRESSED: 1', 0, back(seg(t, T.pressHit, T.pressHit + 0.2)), 'good']); shake = (1 - seg(t, T.pressHit, T.pressHit + 0.3)) * 0.5 }
+  } else if (t < T.kept) {                                                     // no kettle, no socks, no bullshit
+    inHand = false; c = CAM.center; ckk = seg(t, T.no, T.kept)
+    if (t < T.nob) {
+      const n = t < T.n2s ? 0 : 1, h0 = n ? T.n2 + 0.12 : T.n1 + 0.2, st = n ? T.n2s : T.no, side = n ? 1 : -1, sw = seg(t, h0 - 0.1, h0 + 0.08), swing = Math.sin(sw * PI)
+      q = { ...STAND, hy: -side * 0.35, mw: 1.5, mh: 1.4, brow: -0.15 }
+      if (side < 0) { q.alz = -1.2 - swing * 1.2; q.alx = -0.4 * swing; q.ale = -0.6 } else { q.arz = 1.2 + swing * 1.2; q.arx = -0.4 * swing; q.are = -0.6 }
+      const fl0 = seg(t, h0, h0 + 0.5), fly = fl0 * fl0, inK = back(seg(t, st, st + 0.14)), px = 0.25 + side * (1.05 + fly * 6), py = 3.6 + fly * 2.4 + Math.sin(t * 5) * 0.06, sp = fly * 9, o = n ? sock : kettle
+      o.position.set(px, py, 2.3); o.rotation.set(0, sp * 0.6 + (n ? -0.4 : 0.3), sp + 0.1); o.scale.setScalar(Math.max(0.01, inK) * (n ? 2.2 : 1.6)); if (t >= h0) shake = (1 - seg(t, h0, h0 + 0.25)) * 0.5
+      if (t >= h0 && !n) v.pills.push(['KETTLE', 0, back(seg(t, h0, h0 + 0.2)), 'bad']); if (n) { v.pills.push(['KETTLE', 0, 1, 'bad']); if (t >= h0) v.pills.push(['SOCKS', 1, back(seg(t, h0, h0 + 0.2)), 'bad']) }
+    } else { const k = back(seg(t, T.nob, T.nob + 0.2)); q = mixP({ ...STAND }, { ...STAND, alx: -0.85, ale: -1.75, alz: 0.55, arx: -0.85, are: -1.75, arz: -0.55, eye: 0.7, brow: -0.25, mw: 1.3, mh: 0.8, hx: -0.06 }, k); if (t >= T.nobHit) shake = (1 - seg(t, T.nobHit, T.nobHit + 0.4)) * 0.9; v.pills.push(['KETTLE', 0, 1, 'bad'], ['SOCKS', 1, 1, 'bad']) }
+  } else if (t < T.neigh) {                                                    // I kept the accordion
+    inHand = false; squeeze = 0.5 + 0.5 * Math.sin(t * 7); q = { ...STAND, alz: -0.6 - squeeze * 0.25, ale: -1.3, alx: -0.3, arz: 0.6 + squeeze * 0.25, are: -1.3, arx: -0.3, hz: Math.sin(t * 3.5) * 0.15, eye: 0.5, mw: 1.6, mh: 1.0, brow: -0.2, y: 1.1 + Math.abs(Math.sin(t * 3.5)) * 0.08 }; c = CAM.close; ckk = seg(t, T.kept, T.neigh)
+    acc.position.set(0.25, 1.85 + q.y - 1.1, 2.37); v.notes = 1
+    if (t >= T.accHit2) { v.pills.push(['ACCORDION: KEPT', 0, back(seg(t, T.accHit2, T.accHit2 + 0.2)), 'good']); shake = (1 - seg(t, T.accHit2, T.accHit2 + 0.3)) * 0.35 }
+  } else { c = CAM.phone; ckk = seg(t, T.neigh, T.end); docMode = 3; showDoc(T.neigh); if (t >= T.noteHit) { v.pills.push([NEIGH_PILL, 0, back(seg(t, T.noteHit, T.noteHit + 0.2)), 'bad']); shake = (1 - seg(t, T.noteHit, T.noteHit + 0.3)) * 0.35 } }
+  applyPose({ ...q, tx: q.tx + breathe })
+  P.phone.visible = inHand; setAcc(squeeze)
+  setCam(c[0], c[1], c[2], eo(ckk) * 0.6 + ckk * 0.4, 0.07, shake)
+  // light and mood: rain on the canal, then sun
+  drawPort(good, t); scene.background.set(0x2a2119).lerp(new THREE.Color(0x3a2c20), good); wallMat.color.set(0xd8ccb0).lerp(new THREE.Color(0xf0e4c8), good); floorMat.color.set(0x7a5030).lerp(new THREE.Color(0x9a6a3e), good)
+  sun.color.set(0xc8ccd6).lerp(new THREE.Color(0xfff0d0), good); sun.intensity = lerp(1.1, 1.9, good); hemi.intensity = lerp(1.05, 1.3, good); hemi.color.set(0xd8dce4).lerp(new THREE.Color(0xfff4e4), good)
+  glow.position.set(2.0, 2.4, -1.0); glow.intensity = glowOn * 1.4
+  if (docMode >= 0) { docBody.color.set(docMode === 2 ? 0x15161a : docMode === 3 ? 0xfbf3d9 : 0xffffff); drawDoc(docMode, t) }
+}
+const NEIGH_PILL = "NEIGHBOURS: NOT FANS"
+
+// ---------- 2D layer: captions, pills, stamps, list, end card
+const SAFE = CONFIG.safe, CX = (SAFE.left + SAFE.right) / 2
+function pill(text, row, k, kind) {
+  if (k <= 0) return
+  const fs = 44; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; const mark = kind === 'good' ? '✓' : kind === 'bad' ? '✕' : '', tw = g.measureText(text).width, w = tw + (mark ? 124 : 76), h = 92, y = SAFE.top + 60 + row * 112
+  g.save(); g.translate(CX, y); g.scale(k, k); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 30; g.shadowOffsetY = 12
+  g.fillStyle = CONFIG.card; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, h / 2); g.fill(); g.shadowColor = 'transparent'
+  let x = -w / 2 + 38
+  if (mark) { g.fillStyle = kind === 'good' ? CONFIG.good : CONFIG.bad; g.beginPath(); g.arc(x + 16, 0, 26, 0, 7); g.fill(); g.fillStyle = '#0b0c10'; g.font = `800 34px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(mark, x + 16, 2); x += 58 }
+  g.fillStyle = CONFIG.bright; g.font = `700 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(text, x, 2); g.restore()
+}
+function stamp(text, k, color, rot, yShare) {
+  if (k <= 0) return
+  const s = lerp(2.6, 1, eo(k)); g.save(); g.translate(CX, H * yShare + SAFE.top); g.rotate(rot); g.scale(s, s); g.globalAlpha = clamp(k * 3)
+  g.font = '800 92px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(text).width + 90; g.fillStyle = color; g.beginPath(); g.roundRect(-w / 2, -80, w, 160, 26); g.fill()
+  g.strokeStyle = '#fff'; g.lineWidth = 8; g.beginPath(); g.roundRect(-w / 2 + 14, -66, w - 28, 132, 16); g.stroke()
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, 6); g.restore()
+}
+function coin(xs, ys, k, t, size = 400) {
+  if (k <= 0) return
+  const sx = Math.cos(t * 3.2), h = size * k, w = h * 0.8 * Math.abs(sx)
+  g.save(); g.translate(W * xs, H * ys); g.shadowColor = 'rgba(255,255,255,.55)'; g.shadowBlur = 70; g.drawImage(G_IMG, -w / 2, -h / 2, Math.max(2, w), h); g.restore()
+}
+function captions(t) {
+  let gi = -1; for (let i = 0; i < GROUPS.length; i++) { if (t >= WORDS[GROUPS[i][0]][1] - 0.04) gi = i }
+  if (gi < 0) return
+  const [a, b, br, mul] = GROUPS[gi]; const endT = gi + 1 < GROUPS.length ? WORDS[GROUPS[gi + 1][0]][1] - 0.04 : WORDS[b][2] + 0.5
+  if (t > Math.min(endT, WORDS[b][2] + 0.9)) return
+  const lines = [[]]; for (let i = a; i <= b; i++) { lines[lines.length - 1].push(i); if (i === br) lines.push([]) }
+  let fs = 118 * mul; const maxW = SAFE.right - SAFE.left - 20
+  const widthOf = (ln) => { g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; return g.measureText(ln.map(i => WORDS[i][0].toUpperCase()).join(' ')).width }
+  while (Math.max(...lines.map(widthOf)) > maxW && fs > 40) fs -= 4
+  g.font = `800 ${fs}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.textBaseline = 'middle'; g.textAlign = 'left'; g.lineJoin = 'round'
+  const lh = fs * 1.1, y0 = H * CONFIG.capY - (lines.length - 1) * lh / 2, sp = g.measureText(' ').width
+  lines.forEach((ln, li) => {
+    let x = CX - widthOf(ln) / 2; const y = y0 + li * lh
+    for (const i of ln) {
+      const txt = WORDS[i][0].toUpperCase(), ww = g.measureText(txt).width, said = t >= WORDS[i][1] - 0.04
+      if (said) { const k = back(seg(t, WORDS[i][1] - 0.04, WORDS[i][1] + 0.1)), cur = t < WORDS[i][2] + 0.06 || i === b
+        g.save(); g.translate(x + ww / 2, y); g.scale(0.7 + 0.3 * k, 0.7 + 0.3 * k); g.textAlign = 'center'
+        g.strokeStyle = '#000'; g.lineWidth = fs * 0.2; g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 0; g.shadowOffsetY = fs * 0.07; g.strokeText(txt, 0, 0); g.shadowColor = 'transparent'
+        g.fillStyle = cur ? CONFIG.capHi : CONFIG.capBase; g.fillText(txt, 0, 0); g.restore() }
+      x += ww + sp
+    }
+  })
+}
+function endCard(t) {
+  const k = seg(t, T.end, T.end + 0.35); if (k <= 0) return
+  g.fillStyle = `rgba(6,6,9,${eo(k)})`; g.fillRect(0, 0, W, H)
+  const a = eo(seg(t, T.end + 0.15, T.end + 0.6)), gh = 340, gy = H * 0.3
+  g.save(); g.globalAlpha = a; g.translate(W / 2, gy); const s = lerp(1.25, 1, eo(seg(t, T.end + 0.15, T.end + 0.8))); g.scale(s, s); g.shadowColor = 'rgba(255,255,255,.35)'; g.shadowBlur = 90; g.drawImage(G_IMG, -gh * 0.4, -gh / 2, gh * 0.8, gh); g.restore()
+  const ww = 540, wh = ww * WORD_IMG.height / WORD_IMG.width, wy = gy + gh / 2 + 10; g.save(); g.globalAlpha = eo(seg(t, T.end + 0.35, T.end + 0.8)); g.drawImage(WORD_IMG, W / 2 - ww / 2, wy, ww, wh); g.restore()
+  g.textAlign = 'center'; g.textBaseline = 'middle'; const ly = wy + wh + 90
+  CONFIG.endLines.forEach((s, i) => { const kk = eo(seg(t, T.end + 0.7 + i * 0.32, T.end + 1.05 + i * 0.32)); g.globalAlpha = kk; g.fillStyle = i === CONFIG.endLines.length - 1 ? '#fff' : '#d4d4d8'; g.font = '700 78px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.fillText(s, W / 2, ly + i * 100 + (1 - kk) * 26) })
+  const kk = back(seg(t, T.end + 1.9, T.end + 2.2)); if (kk > 0) { g.globalAlpha = 1; g.save(); g.translate(W / 2, ly + CONFIG.endLines.length * 100 + 70); g.scale(kk, kk); g.font = '700 56px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; const w = g.measureText(CONFIG.site).width + 110; g.fillStyle = '#fff'; g.beginPath(); g.roundRect(-w / 2, -60, w, 120, 60); g.fill(); g.fillStyle = '#0b0c10'; g.fillText(CONFIG.site, 0, 3); g.restore() }
+  g.globalAlpha = 1
+}
+
+function notes(t) {
+  const n = view.notes; if (n <= 0) return; g.save(); g.fillStyle = '#ffe14a'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 10; g.textAlign = 'center'; g.textBaseline = 'middle'
+  for (let i = 0; i < 5; i++) { const sad = view.sad, u = ((t * (sad ? 0.25 : 0.6)) + i * 0.21) % 1, X = CX + (i - 2) * 150 + Math.sin(t * 3 + i) * 30, Y = sad ? 360 + u * 160 : 520 - u * 260; g.globalAlpha = n * Math.sin(u * PI) * (sad ? 0.6 : 1); g.font = `800 ${sad ? 60 : 84}px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif`; g.fillText(i % 2 ? '♫' : '♪', X, Y) }
+  g.restore(); g.globalAlpha = 1
+}
+function overlay(t) {
+  g.clearRect(0, 0, W, H); const v = view
+  if (v.dim) { g.fillStyle = `rgba(8,8,16,${v.dim})`; g.fillRect(0, 0, W, H) }
+  if (t < T.end + 0.4) {
+    notes(t)
+    if (v.coin) coin(v.coin[0], v.coin[1], v.coin[2], v.coin[3])
+    for (const p of v.pills) pill(p[0], p[1], p[2], p[3])
+    if (v.stamp) stamp(v.stamp[0], v.stamp[1], v.stamp[2], v.stamp[3], v.stamp[4])
+    captions(t)
+    g.globalAlpha = 0.55; g.fillStyle = '#fff'; g.font = '600 30px system-ui, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText(CONFIG.site.toUpperCase(), CX, H * CONFIG.capY + 190); g.shadowColor = 'transparent'; g.globalAlpha = 1
+  }
+  const fl = Math.max(v.flash, (1 - seg(t, T.end, T.end + 0.3)) * seg(t, T.end - 0.12, T.end)); if (fl > 0) { g.fillStyle = `rgba(255,255,255,${fl})`; g.fillRect(0, 0, W, H) }
+  endCard(t)
+}
+window.render = (t) => { t = clamp(t, 0, T.dur); state(t); R.render(scene, cam); overlay(t) }
+window.render(0); window.__rdy()
+if (!Q.get('render')) { const t0 = performance.now(); const loop = () => { window.render(((performance.now() - t0) / 1000) % T.dur); requestAnimationFrame(loop) }; loop() }
+})()
+</script></body></html>
