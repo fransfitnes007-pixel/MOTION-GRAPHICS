@@ -1,0 +1,35 @@
+{
+  "slug": "truchet-arc-tile-field-radial-recolor__quarter-circle-wave",
+  "visual_name": "Truchet arc tile field with radial recolour",
+  "code_name": "Quarter-circle tiles turned by a wave",
+  "category": "motion-graphics",
+  "summary": "A black field of thick white quarter-circle arcs forms an endless maze; a circular wave from the centre turns each tile 90 degrees and paints it orange, then a second wave turns them back to white.",
+  "aliases": [
+    "truchet",
+    "maze pattern",
+    "arc tiles",
+    "pattern wave",
+    "generative background"
+  ],
+  "tags": [
+    "background",
+    "dark",
+    "pattern",
+    "generative",
+    "showreel"
+  ],
+  "tech": [
+    "canvas-2d"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #1: The showreel that started it",
+    "author": "@stephanlivera",
+    "url": "https://x.com/stephanlivera/status/2103315922098470926",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

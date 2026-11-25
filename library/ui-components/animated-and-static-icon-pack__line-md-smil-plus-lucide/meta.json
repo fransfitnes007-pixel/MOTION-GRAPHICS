@@ -1,0 +1,47 @@
+{
+  "slug": "animated-and-static-icon-pack__line-md-smil-plus-lucide",
+  "visual_name": "Animated and static icon pack",
+  "code_name": "Line-md SMIL plus Lucide",
+  "category": "ui-components",
+  "summary": "A grid of 18 self-animating line icons (check, bell, loader, download, upload, heart, star, gear and more) above 36 clean static Lucide icons, all as SVG you can drop into a video.",
+  "aliases": [
+    "icons",
+    "animated icons",
+    "icon pack",
+    "svg icons",
+    "lucide",
+    "icon grid"
+  ],
+  "tags": [
+    "card",
+    "loader",
+    "dark",
+    "21st",
+    "icons"
+  ],
+  "tech": [
+    "svg",
+    "smil",
+    "vanilla-js"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "variants_elsewhere": [],
+  "credit": [
+    {
+      "idea": "Material Line Icons (line-md, animated)",
+      "author": "Vjacheslav Trushkin",
+      "url": "https://21st.dev/community/icons",
+      "license": "MIT",
+      "note": "Formulas follow the original MIT component; the demo is rewritten as render(t)."
+    },
+    {
+      "idea": "Lucide (static)",
+      "author": "Lucide Contributors",
+      "url": "https://21st.dev/community/icons",
+      "license": "ISC",
+      "note": "Formulas follow the original MIT component; the demo is rewritten as render(t)."
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "slug": "trading-price-ticker-card__eased-price-sparkline-shift",
+  "visual_name": "Trading price ticker card",
+  "code_name": "Eased price, sparkline shift",
+  "category": "ui-components",
+  "summary": "A small market card whose price eases to each tick, whose change chip and line flip between teal and red, and whose 24-point sparkline steps left as each new point arrives.",
+  "aliases": [
+    "price ticker",
+    "stock ticker",
+    "crypto price",
+    "sparkline card",
+    "watchlist",
+    "market card"
+  ],
+  "tags": [
+    "stat-tile",
+    "chart",
+    "card",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "svg"
+  ],
+  "duration_sec": 9.4,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "Trading Number Ticker",
+    "author": "shadcnspace",
+    "url": "https://21st.dev/@shadcnspace/components/number-ticker-07",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

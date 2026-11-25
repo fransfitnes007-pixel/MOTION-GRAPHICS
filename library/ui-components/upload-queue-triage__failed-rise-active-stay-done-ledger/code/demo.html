@@ -1,0 +1,192 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>upload-queue-triage__failed-rise-active-stay-done-ledger</title>
+<!-- Library demo. Every frame is a pure function of time: window.render(t). Open it in a browser and it loops.
+     engine/tools/render_demo.cjs drives it frame by frame (?render=1). URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#eeece6;color:#1b1a17;font-family:Geist,'Hanken Grotesk',ui-sans-serif,system-ui,-apple-system,'SF Pro Text',sans-serif}
+.us{--bg:#fff;--ink:#1b1a17;--muted:#77736b;--line:rgba(27,26,23,.09);--edge:rgba(27,26,23,.14);--field:#faf9f6;--err:#b42318;--ok:#15803d}
+.us svg{display:block;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.us-card{position:absolute;background:var(--bg);border-radius:18px;box-shadow:0 0 0 1px var(--line),0 24px 50px -36px rgba(30,24,12,.4);font-size:13.5px}
+.us-drop{position:absolute;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:var(--field);box-shadow:inset 0 0 0 1px var(--line)}
+.us-drop svg{flex:none;width:20px;height:20px;stroke:var(--muted)}
+.us-drop p{display:flex;flex-direction:column;gap:2px}.us-drop strong{font-weight:500}
+.us-drop p>span:last-child{font-size:12px;color:var(--muted)}
+.us-browse{font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.us-meter{position:absolute;height:2px;border-radius:2px;background:var(--line);overflow:hidden}.us-meter span{display:block;height:100%;background:var(--ink)}
+.us-h{position:absolute;display:flex;align-items:baseline;justify-content:space-between;margin:0 4px;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);height:17px}
+.us-h.err{color:var(--err)}.us-h span{font-weight:500}.us-h i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;display:flex;gap:4px}.us-h i b{font-weight:500;padding:3px 6px}
+.us-row{position:absolute;display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 10px 10px 12px;border-radius:12px;background:var(--bg);box-shadow:0 0 0 1px var(--line),0 6px 14px -10px rgba(0,0,0,.25)}
+.us-row.err{box-shadow:0 0 0 1px rgba(180,35,24,.45),0 10px 20px -14px rgba(180,35,24,.6)}
+.us-row.next{min-height:46px;background:var(--field);box-shadow:0 0 0 1px var(--line)}
+.us-row.next .us-glyph{width:28px;height:28px;opacity:.7}.us-row.next .us-name{font-weight:400;color:var(--muted)}
+.us-row.done{min-height:0;padding:7px 10px;gap:10px;background:none;box-shadow:none;border-radius:8px}
+.us-row.done .us-name{flex:1;font-weight:400}
+.us-glyph{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:9px;font:600 10px ui-monospace,'Geist Mono',monospace;letter-spacing:.02em;background:currentColor}
+.us-glyph span{color:#fff;mix-blend-mode:normal}
+.us-info{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.us-name{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:500}
+.us-meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}.us-meta.err{color:var(--err);white-space:normal}
+.us-bar{display:block;height:3px;margin-top:3px;border-radius:3px;background:var(--line);overflow:hidden}.us-bar span{display:block;height:100%;background:var(--ink);transform-origin:0 50%}
+.us-pct{min-width:3ch;font:500 12px ui-monospace,'Geist Mono',monospace;color:var(--muted);text-align:right}
+.us-act{display:flex;align-items:center;gap:4px;flex:none}
+.us-act b{display:flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.us-row.err .us-act b:first-child{color:var(--ink);box-shadow:inset 0 0 0 1px var(--edge)}
+.us-edge{position:absolute;height:6px;border-radius:0 0 10px 10px;background:var(--field);box-shadow:0 0 0 1px var(--line)}
+.us-wait{position:absolute;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 4px}
+.us-ck{flex:none;width:15px;height:15px;stroke:var(--ok);stroke-width:1.8}
+.us-sz{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+// cubic-bezier(x1,y1,x2,y2) as a function of progress, for the CSS easings read off the source
+const bez = (x1, y1, x2, y2) => { const B = (a, b, t) => 3 * a * (1 - t) * (1 - t) * t + 3 * b * (1 - t) * t * t + t * t * t
+  return (x) => { x = clamp(x); let lo = 0, hi = 1, t = x; for (let i = 0; i < 30; i++) { t = (lo + hi) / 2; B(x1, x2, t) < x ? lo = t : hi = t } return B(y1, y2, t) } }
+// phone-sized virtual canvas: the source previews were read at 540 x 960 CSS px; tall scales that to the frame width, wide shows a 540 column at 760 high
+const SC = TALL ? W / 540 : H / 760, vw = W / SC, vh = H / SC
+const V = el('div', 'abs'); S(V, { left: '0px', top: '0px', width: vw + 'px', height: vh + 'px', transform: `scale(${SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+const CW = Math.min(vw, 540), COL = el('div', 'abs', V); S(COL, { left: px((vw - CW) / 2), top: '0px', width: CW + 'px', height: vh + 'px', overflow: 'hidden' })
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = {
+  files: [
+    { n: 'interview-recording.mov', g: 'VID', c: '#2f6f9f', mb: 48 }, { n: 'campus-wayfinding-v3.png', g: 'IMG', c: '#7c4ddb', mb: 4.2 },
+    { n: 'thesis-draft-v4.pdf', g: 'PDF', c: '#c43d3d', mb: 2.1 }, { n: 'site-photos.zip', g: 'ZIP', c: '#5b5b60', mb: 18 },
+    { n: 'survey-results.csv', g: 'CSV', c: '#2f7d4f', mb: .64 }, { n: 'budget-2026.xlsx', g: 'XLS', c: '#2f7d4f', mb: .41 }, { n: 'q3-roadmap.pdf', g: 'PDF', c: '#c43d3d', mb: 1.4 } ],
+  limit: '25.0 MB', failAt: 62, speed: 2.4, startAt: 1.0 }
+const DUR = 10
+window.DUR = DUR
+// seconds in the original run (it takes 2.7 s there); CONFIG.speed stretches it so a viewer can read it
+const F = CONFIG.files
+const PROG = [null, [[0, 0], [.24, 17], [.42, 47], [.6, 67], [.66, 85], [.84, 100]], [[0, 0], [.24, 38], [.42, 100]],
+  [[.42, 0], [.6, 4], [.66, 8], [.84, 11], [1.02, 17], [1.2, 21], [1.26, 24], [1.44, 28], [1.62, 32], [1.8, 39], [2.04, 46], [2.22, 49], [2.4, 57], [2.6, 62]],
+  [[.84, 0], [1.02, 100]], [[.84, 0], [1.02, 100]], [[1.02, 0], [1.2, 52], [1.44, 100]]]
+// what each file is doing between model times: [kind, from, to]
+const LIFE = [[['err', 0, 99]], [['act', 0, .84], ['done', .84, 99]], [['act', 0, .42], ['done', .42, 99]],
+  [['next', 0, .42], ['act', .42, 2.6], ['fail', 2.6, 99]], [['wait', 0, .42], ['next', .42, .84], ['act', .84, 1.02], ['done', 1.02, 99]],
+  [['wait', 0, .84], ['next', .84, 1.02], ['done', 1.02, 99]], [['wait', 0, 1.02], ['act', 1.02, 1.44], ['done', 1.44, 99]]]
+const EVENTS = [0, .42, .84, 1.02, 1.44, 2.6]
+const kindAt = (i, m) => { const l = LIFE[i].find((x) => m >= x[1] && m < x[2]); return l ? l[0] : 'wait' }
+const pctAt = (i, m) => { const p = PROG[i]; if (!p) return 0; if (m <= p[0][0]) return 0; for (let k = 1; k < p.length; k++) if (m <= p[k][0]) return lerp(p[k - 1][1], p[k][1], (m - p[k - 1][0]) / (p[k][0] - p[k - 1][0])); return p[p.length - 1][1] }
+const IC = { up: '<svg viewBox="0 0 24 24"><path d="M12 15V4M7.500 8.500L12 4l4.500 4.500M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>', ck: '<svg class="us-ck" viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7"/></svg>' }
+const root = el('div', 'us abs', COL); S(root, { left: '0', top: '0', width: '100%', height: vh + 'px' })
+const CWd = CW - 32, cardTop = TALL ? 92 : 24
+const card = el('div', 'us-card', root); S(card, { left: '16px', top: cardTop + 'px', width: CWd + 'px' })
+const IW = CWd - 28
+const drop = el('div', 'us-drop', card, `${IC.up}<p><strong>Drop files here or <span class="us-browse">browse</span></strong><span>Up to ${CONFIG.limit} each</span></p>`); S(drop, { left: '14px', top: '14px', width: IW + 'px' })
+const meter = el('div', 'us-meter', card); const meterF = el('span', '', meter)
+const fmt = (mb) => mb < 1 ? Math.max(1, Math.round(mb * 1024)) + ' KB' : mb.toFixed(1) + ' MB'
+const mkRow = (kind, i) => {
+  const f = F[i], e = el('div', 'us-row ' + kind, card)
+  const g = `<div class="us-glyph" style="color:${f.c}20"><span style="color:${f.c}">${f.g}</span></div>`
+  if (kind === 'act') e.innerHTML = `${g}<div class="us-info"><div class="us-name">${f.n}</div><div class="us-meta">1 KB of 4.2 MB</div><span class="us-bar"><span></span></span></div><div class="us-pct">0%</div><div class="us-act"><b>Cancel</b></div>`
+  else if (kind === 'next') e.innerHTML = `${g}<div class="us-info"><div class="us-name">${f.n}</div><div class="us-meta">Next · ${fmt(f.mb)}</div></div>`
+  else if (kind === 'err') e.innerHTML = `${g}<div class="us-info"><div class="us-name">${f.n}</div><div class="us-meta err">Too large — the limit is ${CONFIG.limit}</div></div><div class="us-act"><b>Remove</b></div>`
+  else if (kind === 'fail') e.innerHTML = `${g}<div class="us-info"><div class="us-name">${f.n}</div><div class="us-meta err">Connection dropped at ${CONFIG.failAt}% — retry to resume</div></div><div class="us-act"><b>Retry</b><b>Remove</b></div>`
+  else if (kind === 'done') e.innerHTML = `${IC.ck}<div class="us-name">${f.n}</div><div class="us-sz">${fmt(f.mb)}</div>`
+  S(e, { width: IW + 'px' }); if (kind === 'done') S(e, { width: IW + 'px' })
+  return { e, kind, i, bar: e.querySelector('.us-bar span'), pct: e.querySelector('.us-pct'), meta: e.querySelector('.us-meta') }
+}
+// every element that ever exists: one per (kind, file)
+const rows = {}; LIFE.forEach((l, i) => l.forEach(([k]) => { if (k !== 'wait') rows[k + i] = mkRow(k, i) }))
+const hdrs = { err: el('div', 'us-h err', card), act: el('div', 'us-h', card), done: el('div', 'us-h', card) }
+const edge = el('div', 'us-edge', card), waitT = el('div', 'us-wait', card)
+const HH = {}; Object.values(rows).forEach((r) => { HH[r.kind] = r.e.offsetHeight })
+HH.drop = drop.offsetHeight; HH.h = 17
+const GAP = 14
+// layout for one moment: y of every element, plus the card height
+function layout(m) {
+  const kinds = F.map((_, i) => kindAt(i, m)), out = { y: {}, text: {} }
+  let y = 14; out.drop = y; y += HH.drop; out.meter = y + GAP - 6 - 14 + 6; y += GAP
+  const grp = (name, list) => { if (!list.length) return; out.y['h' + name] = y; y += HH.h + 6; list.forEach((i) => { out.y[kinds[i] + i] = y; y += HH[kinds[i]] + (kinds[i] === 'done' ? 0 : 6) }); y -= (kinds[list[list.length - 1]] === 'done' ? 0 : 6); y += GAP }
+  const errs = F.map((_, i) => i).filter((i) => kinds[i] === 'err' || kinds[i] === 'fail')
+  grp('err', errs)
+  const acts = F.map((_, i) => i).filter((i) => kinds[i] === 'act'), nxt = F.findIndex((_, i) => kinds[i] === 'next'), waits = F.map((_, i) => i).filter((i) => kinds[i] === 'wait')
+  if (acts.length || nxt >= 0) {
+    out.y.hact = y; y += HH.h + 6; acts.forEach((i) => { out.y['act' + i] = y; y += HH.act + 6 }); y -= 6
+    if (nxt >= 0) { out.y['next' + nxt] = y - HH.next + 12; out.edge = y + 12 - 1; y += 12 + 6 + 2; out.wait = y + 8; y += waits.length ? 8 + 16 : 0; out.waitText = waits.length ? `${waits.length} more waiting: ${waits.map((i) => F[i].n).join(', ')}` : '' }
+    out.act = { n: acts.length, w: waits.length + (nxt >= 0 ? 1 : 0) }
+    y += GAP
+  }
+  const dones = F.map((_, i) => i).filter((i) => kinds[i] === 'done').slice(-3)
+  const doneAll = F.filter((_, i) => kinds[i] === 'done')
+  if (dones.length) { out.y.hdone = y; y += HH.h + 6; dones.forEach((i) => { out.y['done' + i] = y; y += HH.done }); out.done = { n: doneAll.length, mb: doneAll.reduce((a, f) => a + f.mb, 0) }; y += GAP }
+  out.errN = errs.length
+  out.h = y - GAP + 14
+  out.kinds = kinds; out.dones = dones
+  return out
+}
+const LAY = EVENTS.map((m) => layout(m + .001))
+const gE = bez(.2, .8, .2, 1)
+function render(t){
+  const C = CONFIG, m = (t - C.startAt) / C.speed
+  // card pops up
+  const ci = eo(seg(t, .15, .65))
+  S(card, { opacity: String(ci), transform: `translateY(${(1 - ci) * 16}px)` })
+  // which event are we between
+  let k = 0; EVENTS.forEach((e, j) => { if (m >= e) k = j }); if (m < 0) k = 0
+  const A = LAY[Math.max(0, k - 1)], B = LAY[k], p = k === 0 || m < 0 ? 1 : gE(clamp((m - EVENTS[k]) / .16))   // .16 model s = .38 s on screen, the source's FLIP ease
+  const ent = eo(seg(t, C.startAt - .35, C.startAt))
+  // position drop, meter, card
+  S(drop, { top: '14px' })
+  S(meter, { left: '14px', width: IW + 'px', top: px(lerp(A.meter, B.meter, p) + 0) })
+  const tot = F.slice(1).reduce((a, f) => a + f.mb, 0), ld = F.slice(1).reduce((a, f, j) => a + f.mb * pctAt(j + 1, Math.max(0, m)) / 100, 0)
+  meterF.style.width = (m < 0 ? 0 : ld / tot * 100) + '%'
+  S(card, { height: px(lerp(A.h, B.h, p)) })
+  // rows: each (kind,file) element lives while its kind is current; it fades while sliding from where the file was to where it is now
+  Object.values(rows).forEach((r) => {
+    const key = r.kind + r.i, yB = B.y[key], yA = A.y[key]
+    const life = LIFE[r.i].find((x) => x[0] === r.kind), live = m >= life[1] - .001 && m < life[2] + .001
+    let y, op = 0
+    if (m < 0) { y = LAY[0].y[key]; op = y == null ? 0 : ent }
+    else if (yB != null) { const from = yA != null ? yA : prevY(r, k); y = lerp(from, yB, p); op = yA != null ? 1 : p }
+    else if (yA != null && k > 0 && p < 1) { const to = nextY(r, B); y = lerp(yA, to, p); op = 1 - clamp(p * 2.5) }
+    else y = null
+    if (y == null || op <= 0) { vis(r.e, false); return }
+    vis(r.e, true); S(r.e, { top: px(y), opacity: String(op), zIndex: r.kind === 'next' ? '0' : '1' })
+    if (r.kind === 'act') { const pc = pctAt(r.i, Math.max(0, m)); r.bar.style.width = pc + '%'; r.pct.textContent = Math.round(pc) + '%'; r.meta.textContent = `${fmt(Math.max(.001, F[r.i].mb * pc / 100))} of ${fmt(F[r.i].mb)}` }
+  })
+  // headers
+  const setH = (h, key, html) => { const y = B.y[key], ya = A.y[key]; if (y == null && ya == null) { vis(h, false); return } vis(h, true); h.innerHTML = html; S(h, { left: '14px', width: IW - 8 + 'px', top: px(y != null ? lerp(ya != null ? ya : y, y, p) : ya), opacity: String((y == null ? 1 - clamp(p * 2.5) : 1) * (m < 0 ? ent : 1)) }) }
+  setH(hdrs.err, 'herr', `<div>Needs attention · ${B.errN}</div>${B.errN > 1 ? '<i><b>Retry all</b></i>' : ''}`)
+  setH(hdrs.act, 'hact', B.act ? `<div>Uploading · ${B.act.n}${B.act.w ? ` <span>· ${B.act.w} waiting</span>` : ''}</div>` : hdrs.act.innerHTML)
+  setH(hdrs.done, 'hdone', B.done ? `<div>Uploaded · ${B.done.n} <span>· ${B.done.mb.toFixed(1)} MB</span></div><i><b>Show all</b><b>Clear</b></i>` : '')
+  // the peeking edge and the waiting line under the stack
+  vis(edge, B.edge != null); if (B.edge != null) S(edge, { left: '26px', width: IW - 24 + 'px', top: px(B.edge), opacity: String(m < 0 ? ent : 1), zIndex: '0' })
+  vis(waitT, !!B.waitText); if (B.waitText) { waitT.textContent = B.waitText; S(waitT, { left: '14px', width: IW - 8 + 'px', top: px(B.wait), opacity: String(m < 0 ? ent : 1) }) }
+}
+// where a newly appearing element should start / where a vanishing one should go: the spot of the same file's previous / next kind
+function prevY(r, k) { const A = LAY[Math.max(0, k - 1)]; for (const kk of ['act', 'next', 'err', 'fail', 'done']) { const y = A.y[kk + r.i]; if (y != null) return y } return LAY[k].y[r.kind + r.i] }
+function nextY(r, B) { for (const kk of ['done', 'fail', 'act', 'err', 'next']) { const y = B.y[kk + r.i]; if (y != null) return y } return B.h }
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

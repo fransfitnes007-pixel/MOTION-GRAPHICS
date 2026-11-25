@@ -1,0 +1,39 @@
+{
+  "slug": "animated-number__slide-up-down-by-trend",
+  "visual_name": "Animated number",
+  "code_name": "Slide up down by trend",
+  "category": "ui-components",
+  "summary": "A number that swaps as a whole: the old value slides 10px up and fades while the new one comes in from below on an increase, mirrored on a decrease, between a minus and a plus button.",
+  "aliases": [
+    "number swap",
+    "counter",
+    "stepper",
+    "plus minus counter",
+    "quantity",
+    "rolling number"
+  ],
+  "tags": [
+    "counter",
+    "card",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "motion"
+  ],
+  "duration_sec": 8,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [
+    "odometer-number-roll__digit-column-translate",
+    "mechanical-odometer__drum-carry-spring"
+  ],
+  "credit": {
+    "idea": "Animated Number",
+    "author": "ikascom",
+    "url": "https://21st.dev/@ikascom/components/animated-number",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

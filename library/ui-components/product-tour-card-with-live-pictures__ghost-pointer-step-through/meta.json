@@ -1,0 +1,40 @@
+{
+  "slug": "product-tour-card-with-live-pictures__ghost-pointer-step-through",
+  "visual_name": "Product tour card with live pictures",
+  "code_name": "Ghost pointer step-through",
+  "category": "ui-components",
+  "summary": "A white four-step welcome card with a small live picture per step (prompt, files, running log, shortcut), a progress bar, and a ghost pointer that glides to the primary button and presses it to move on.",
+  "aliases": [
+    "product tour",
+    "welcome tour",
+    "onboarding card",
+    "feature tour",
+    "first run",
+    "walkthrough"
+  ],
+  "tags": [
+    "card",
+    "hover",
+    "cursor",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind"
+  ],
+  "duration_sec": 12.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [
+    "onboarding-dialog-step-pager__dot-pagination-next-skip",
+    "spotlight-product-tour__svg-mask-spring-hole"
+  ],
+  "credit": {
+    "idea": "Onboarding",
+    "author": "aadixc0de",
+    "url": "https://21st.dev/@aadixc0de/components/onboarding",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

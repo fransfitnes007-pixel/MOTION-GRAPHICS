@@ -1,0 +1,225 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>stacked-cell-kpi-board__diagonal-wave-flip-spring</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#14161c}
+.cc{position:absolute;left:0;top:0;transform-origin:0 0;width:820px;border-radius:22px;color:#14161c;overflow:hidden;font-family:'Inter Tight','Inter',ui-sans-serif,system-ui,sans-serif;background:#fbf9f4;background-image:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,0) 40%),radial-gradient(120% 80% at 100% 0%,rgba(45,91,255,.09),transparent 60%);box-shadow:0 0 0 1px rgba(20,22,28,.08),0 1px 0 #fff inset,0 2px 4px rgba(20,22,28,.04),0 24px 60px -28px rgba(20,22,28,.28)}
+.cc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 24px 0}
+.cc-title{font-size:17px;font-weight:650;letter-spacing:-.02em}
+.cc-cap{font-size:12.5px;color:rgba(20,22,28,.52);margin-top:3px}
+.cc-badge{font:600 11px/1 'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;padding:6px 9px;border-radius:8px;background:rgba(20,22,28,.05);color:rgba(20,22,28,.6);white-space:nowrap}
+.cc-chart{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 10px;padding:22px 24px 8px}
+.cc-y{position:relative}
+.cc-y>span{position:absolute;right:0;font:500 11px/1 'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;color:rgba(20,22,28,.42)}
+.cc-plot{position:relative;display:flex;gap:3px}
+.cc-grid{position:absolute;left:0;right:0;height:1px;background:repeating-linear-gradient(90deg,rgba(20,22,28,.12) 0 3px,transparent 3px 7px);pointer-events:none}
+.cc-col{position:relative;flex:1;display:flex;flex-direction:column-reverse;gap:3px}
+.cc-cell{flex:1;border-radius:3px;transform-origin:50% 100%}
+.cc-line{position:absolute;top:-6px;bottom:-6px;width:0;border-left:1px dashed rgba(20,22,28,.55);pointer-events:none}
+.cc-tip{position:absolute;z-index:2;pointer-events:none;background:#fff;border-radius:12px;padding:8px 12px;white-space:nowrap;box-shadow:0 0 0 1px rgba(20,22,28,.08),0 12px 28px -10px rgba(20,22,28,.35)}
+.cc-tip-d{font-size:11px;color:rgba(20,22,28,.5)}
+.cc-tip-v{font:650 15px/1.1 'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;margin-top:3px;display:flex;align-items:center;gap:6px}
+.cc-tip-v i{width:8px;height:8px;border-radius:2px;background:#2d5bff}
+.cc-x{position:relative;height:28px;grid-column:2}
+.cc-x>span{position:absolute;top:8px;transform:translateX(-50%);font-size:11px;color:rgba(20,22,28,.42)}
+.cc-pin{position:absolute;top:4px;color:#fff;font:600 10.5px/1 'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;background:#14161c;padding:5px 8px;border-radius:999px;z-index:1;white-space:nowrap}
+.cc-tabs{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid rgba(20,22,28,.08)}
+.cc-ind{position:absolute;top:-1px;left:0;height:2px;width:25%;background:#14161c}
+.cc-tab{position:relative;text-align:left;padding:16px 20px 18px}
+.cc-tab+.cc-tab{box-shadow:-1px 0 0 rgba(20,22,28,.08)}
+.cc-tl{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(20,22,28,.55);font-weight:500}
+.cc-ic{width:22px;height:22px;border-radius:7px;display:grid;place-items:center}
+.cc-tv{font:600 26px/1 'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;letter-spacing:-.04em;margin-top:12px}
+.cc-td{font-size:11.5px;margin-top:8px;color:rgba(20,22,28,.45);font-variant-numeric:tabular-nums}
+.cc-good{color:#0f8a5a;font-weight:600}.cc-bad{color:#d1432f;font-weight:600}
+.cc.m{width:440px}
+.cc.m .cc-head,.cc.m .cc-chart{padding-left:16px;padding-right:16px}
+.cc.m .cc-chart{grid-template-columns:34px minmax(0,1fr);gap:0 6px}
+.cc.m .cc-plot,.cc.m .cc-col{gap:2px}
+.cc.m .cc-cell{border-radius:2px}
+.cc.m .cc-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cc.m .cc-ind{display:none}
+.cc.m .cc-tab{padding:14px 16px}
+.cc.m .cc-tab:nth-child(n+4){border-top:1px solid rgba(20,22,28,.08)}
+.cc.m .cc-tab:nth-child(2n+1){box-shadow:none}
+.cc.m .cc-tv{font-size:21px}
+.cc.m .cc-badge{display:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// KPI tabs flip a board of 52 stacked-cell columns in a diagonal wave. Rebuilt by eye from the live preview; the cell
+// animation (delay = col*11ms + row*16ms, 0.55s spring, scaleY(.15) rotateX(80deg) to rest) was read from the page's CSS.
+const CONFIG = {
+  title: 'Automation health', caption: 'Weekly · Nov 2025 – Oct 2026', accent: [45, 91, 255],
+  metrics: [
+    { name: 'Workflow runs', value: '1.46M', delta: '+18.2%', good: true, top: 80, unit: 'k', icon: 'M4 18l5-6 4 3 7-9',
+      counts: [3,4,3,3,3,4,4,4,4,4,3,4,4,4,4,4,4,4,5,5,5,5,4,5,5,4,5,4,5,5,5,4,4,4,4,4,4,5,4,4,6,6,6,5,6,6,6,5,8,9,9,8] },
+    { name: 'Failure rate', value: '1.92%', delta: '−0.6%', good: true, top: 8, unit: '%', icon: 'M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+      counts: [2,2,3,2,4,3,3,3,3,3,3,4,4,2,3,3,4,3,4,10,7,3,2,2,3,4,3,2,3,3,2,3,2,3,2,3,3,4,3,3,3,3,2,3,3,4,2,4,3,3,3,3] },
+    { name: 'p95 latency', value: '412ms', delta: '−7.4%', good: true, top: 800, unit: 'ms', icon: 'M12 9v4M12 17h.01M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+      counts: [4,4,4,5,5,6,5,4,6,4,5,5,5,4,4,4,4,4,3,10,7,4,4,3,3,3,5,3,5,4,5,5,4,4,4,5,6,4,5,5,5,4,3,3,3,4,3,3,3,4,3,3] },
+    { name: 'Hours saved', value: '3,074h', delta: '+21.5%', good: true, top: 160, unit: 'h', icon: 'M4 7h16M4 12h10M4 17h6',
+      counts: [3,4,4,4,3,4,4,4,4,4,4,4,4,4,5,4,4,4,5,5,5,5,4,5,5,5,5,5,6,5,5,4,4,4,4,4,5,5,4,4,6,7,6,5,6,7,7,6,8,10,10,9] },
+  ],
+  // tab clicks (seconds): metric index, time. Waves start at the same moment.
+  plan: [[0, .35], [1, 4.6], [2, 8.4], [3, 12.2]],
+  // hovers: [start, end, column] ; column changes inside a hover glide the tooltip
+  hovers: [[2.7, 3.45, 39], [3.45, 4.2, 47], [6.7, 8.0, 19], [10.5, 11.8, 30], [14.1, 15.5, 51]],
+  waveStep: { col: .011, row: .016 }, waveDur: .55,
+}
+const DUR = 16
+window.DUR = DUR
+
+// CSS linear() spring easing, parsed from the original string
+const LIN_SRC = '0,0.009,0.035 2.1%,0.141,0.281 6.7%,0.723 12.9%,0.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,0.991,0.977 51%,0.974 53.8%,0.975 57.1%,0.997 69.8%,1.003 76.9%,1'
+const LIN = (() => {
+  const raw = LIN_SRC.split(',').map(s => { const p = s.trim().split(/\s+/); return { v: +p[0], x: p[1] ? parseFloat(p[1]) / 100 : null } })
+  raw[0].x = raw[0].x ?? 0; raw[raw.length - 1].x = raw[raw.length - 1].x ?? 1
+  for (let i = 0; i < raw.length; i++) if (raw[i].x === null) { let j = i; while (raw[j].x === null) j++; const a = raw[i - 1].x, b = raw[j].x; for (let k = i; k < j; k++) raw[k].x = a + (b - a) * (k - i + 1) / (j - i + 1) }
+  return (p) => { if (p <= 0) return 0; if (p >= 1) return 1; let i = 1; while (raw[i].x < p) i++; const a = raw[i - 1], b = raw[i]; return a.v + (b.v - a.v) * (p - a.x) / (b.x - a.x) }
+})()
+
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const weekLabel = (i) => { const d = new Date(Date.UTC(2025, 10, 3) + i * 7 * 864e5); return 'Wk of ' + MON[d.getUTCMonth()] + ' ' + d.getUTCDate() }
+const NC = 52, NR = 12
+const LW = TALL ? 440 : 820, PLOT_H = TALL ? 170 : 234
+const AC = CONFIG.accent
+const rgba = (c, a = 1) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`
+const mixAcc = (p, base = [255, 255, 255]) => [AC[0] * p + base[0] * (1 - p), AC[1] * p + base[1] * (1 - p), AC[2] * p + base[2] * (1 - p)]
+const C_ON = rgba(mixAcc(.82)), C_CAP = rgba(mixAcc(.45)), C_ACT = rgba(AC, 1), C_OFF = 'rgba(20,22,28,.055)', C_OFF_ACT = rgba(AC, .1)
+
+const card = el('div', 'cc' + (TALL ? ' m' : ''))
+card.innerHTML = `<div class="cc-head"><div><div class="cc-title">${CONFIG.title}</div><div class="cc-cap">${CONFIG.caption}</div></div><div class="cc-badge" id="ccBadge"></div></div>
+<div class="cc-chart"><div class="cc-y" id="ccY" style="height:${PLOT_H}px"></div><div class="cc-plot" id="ccPlot" style="height:${PLOT_H}px"></div><div class="cc-x" id="ccX"></div></div>
+<div class="cc-tabs" id="ccTabs"><span class="cc-ind" id="ccInd"></span></div>`
+const plot = card.querySelector('#ccPlot'), yAx = card.querySelector('#ccY'), xAx = card.querySelector('#ccX'), tabsEl = card.querySelector('#ccTabs'), ind = card.querySelector('#ccInd'), badge = card.querySelector('#ccBadge')
+;[0, 25, 50, 75].forEach(p => { const g = el('div', 'cc-grid', plot); g.style.top = p + '%' })
+const cols = [], cells = []
+for (let c = 0; c < NC; c++) { const col = el('div', 'cc-col', plot); cols.push(col); for (let r = 0; r < NR; r++) cells.push({ c, r, e: el('div', 'cc-cell', col), last: '' }) }
+const line = el('div', 'cc-line', plot)
+const tip = el('div', 'cc-tip', plot, '<div class="cc-tip-d"></div><div class="cc-tip-v"><i></i><b></b></div>')
+const tipD = tip.querySelector('.cc-tip-d'), tipV = tip.querySelector('b')
+const pin = el('div', 'cc-pin', xAx)
+for (let i = 0; i < 12; i++) { const s = el('span', '', xAx, MON[(10 + i) % 12]); s.style.left = (4.16667 + 8.33333 * i) + '%' }
+const yLab = [0, 1, 2, 3].map(i => el('span', '', yAx))
+yLab.forEach((s, i) => { s.style.top = (i * 25) + '%' })
+const tabEls = CONFIG.metrics.map((m, i) => {
+  const b = el('div', 'cc-tab', tabsEl)
+  b.innerHTML = `<div class="cc-tl"><span class="cc-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${m.icon}"/></svg></span>${m.name}</div><div class="cc-tv">${m.value}</div><div class="cc-td"><span class="${m.good ? 'cc-good' : 'cc-bad'}">${m.delta}</span> vs last year</div>`
+  return { b, ic: b.querySelector('.cc-ic'), tv: b.querySelector('.cc-tv') }
+})
+const s0 = Math.min(W * (TALL ? .94 : .86) / LW, TALL ? 2.4 : 1.6)
+card.style.transform = `scale(${s0})`
+const cardH = card.offsetHeight
+card.style.left = px((W - LW * s0) / 2); card.style.top = px((H - cardH * s0) / 2)
+const plotW = plot.getBoundingClientRect().width / s0   // logical px
+
+const fmtVal = (m, cnt) => { const v = (cnt - .4) * m.top / NR; return m.unit === 'k' ? v.toFixed(1) + 'k' : m.unit === '%' ? v.toFixed(1) + '%' : Math.round(v) + m.unit }
+const yText = (m) => [0, 1, 2, 3].map(i => { const v = m.top * (1 - i / 4); return m.unit === 'k' ? v + 'k' : m.unit === '%' ? v.toFixed(1) + '%' : v + m.unit })
+const mix = (a, b, p) => a.map((x, i) => x + (b[i] - x) * p)
+const IC_OFF = [20, 22, 28, .06], IC_ON = [20, 22, 28, 1], FG_OFF = [20, 22, 28, .6], FG_ON = [255, 255, 255, 1], TV_OFF = [20, 22, 28, .4], TV_ON = [20, 22, 28, 1]
+const css4 = (c) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${c[3].toFixed(3)})`
+
+function hoverAt(t) {
+  for (const [a, b, col] of CONFIG.hovers) if (t >= a && t < b + .3) return { a, b, col, inside: t < b }
+  return null
+}
+let tipPrevCol = 0
+function render(t) {
+  // current metric and wave start
+  let mi = 0, wt = 0, pk = 0
+  for (let i = 0; i < CONFIG.plan.length; i++) if (t >= CONFIG.plan[i][1]) { pk = mi; mi = CONFIG.plan[i][0]; wt = CONFIG.plan[i][1] }
+  const prevK = mi === 0 ? 0 : mi - 1
+  const m = CONFIG.metrics[mi], first = t < CONFIG.plan[0][1]
+  const hv = hoverAt(t)
+  const hotP = hv ? (hv.inside ? clamp((t - hv.a) / .25) : 1 - clamp((t - hv.b) / .25)) : 0
+  const actCol = hv ? hv.col : -1
+  // board
+  for (const o of cells) {
+    const e = o.e
+    if (first) { e.style.opacity = 0; continue }
+    const local = (t - wt - (o.c * CONFIG.waveStep.col + o.r * CONFIG.waveStep.row)) / CONFIG.waveDur
+    const p = LIN(clamp(local))
+    const n = m.counts[o.c], on = o.r < n, cap = o.r === n - 1
+    const isAct = o.c === actCol && hotP > 0
+    let bg = on ? (isAct ? C_ACT : cap ? C_CAP : C_ON) : (isAct ? C_OFF_ACT : C_OFF)
+    const op = (local <= 0 ? 0 : Math.min(1, p)) * (isAct ? 1 : 1 - .62 * hotP)
+    const tr = local <= 0 ? 'scaleY(.15) rotateX(80deg)' : `scaleY(${(.15 + .85 * p).toFixed(3)}) rotateX(${(80 * (1 - p)).toFixed(2)}deg)`
+    e.style.background = bg; e.style.opacity = op.toFixed(3); e.style.transform = tr
+  }
+  // y axis ticks
+  const yt = yText(m), tp = first ? 0 : LIN(clamp((t - wt) / .6))
+  yLab.forEach((s, i) => { if (s.textContent !== yt[i]) s.textContent = yt[i]; s.style.opacity = clamp(tp); s.style.transform = `translateY(${(-50 * tp).toFixed(2)}%)` })
+  badge.textContent = m.name
+  // tabs
+  const ip = LIN(clamp((t - wt) / .5)), kx = first ? 0 : lerp(prevK, mi, ip)
+  ind.style.transform = `translateX(${(kx * 100).toFixed(2)}%)`
+  tabEls.forEach((tb, i) => {
+    const sel = i === mi ? clamp((t - wt) / .3) : (i === prevK && !first && mi !== 0 ? 1 - clamp((t - wt) / .3) : 0)
+    const active = first ? (i === 0 ? 1 : 0) : sel
+    tb.ic.style.background = css4(mix(IC_OFF, IC_ON, active)); tb.ic.style.color = css4(mix(FG_OFF, FG_ON, active)); tb.tv.style.color = css4(mix(TV_OFF, TV_ON, active))
+    if (TALL) tb.b.style.boxShadow = i === mi ? 'inset 0 2px 0 #14161c' : ''
+  })
+  // tooltip, line, pin
+  if (hv) {
+    const colW = plotW / NC, x = (hv.col + .5) / NC * plotW
+    const flipx = hv.col / NC > .6
+    // glide between two hover columns
+    const prev = CONFIG.hovers.find(h => h[1] === hv.a && h !== undefined)
+    let gx = x
+    if (prev) { const g = LIN(clamp((t - hv.a) / .4)); gx = lerp((prev[2] + .5) / NC * plotW, x, g) }
+    const n = m.counts[hv.col], topY = PLOT_H - n * (PLOT_H / NR)
+    const ty = clamp(topY, 26, PLOT_H - 26)
+    const inP = hv.inside ? clamp((t - hv.a) / .35) : 1 - clamp((t - hv.b) / .2)
+    const sp = LIN(clamp(hv.inside ? (t - hv.a) / .35 : 1))
+    const sc = prev ? 1 : lerp(.92, 1, hv.inside ? sp : 1)
+    tipD.textContent = weekLabel(hv.col); tipV.textContent = fmtVal(m, n)
+    S(tip, { left: px(gx), top: px(ty), opacity: clamp(hv.inside ? (prev ? 1 : (t - hv.a) / .2) : 1 - (t - hv.b) / .2) })
+    tip.style.transform = flipx ? `translate(calc(-100% - 14px),-50%) scale(${sc})` : `translate(14px,-50%) scale(${sc})`
+    tip.style.transformOrigin = flipx ? '100% 50%' : '0 50%'
+    S(line, { left: px(gx), opacity: clamp(hv.inside ? (prev ? 1 : (t - hv.a) / .2) : 1 - (t - hv.b) / .2) })
+    pin.textContent = weekLabel(hv.col)
+    S(pin, { left: px(gx), opacity: clamp(hv.inside ? (prev ? 1 : (t - hv.a) / .2) : 1 - (t - hv.b) / .2), transform: `translateX(-50%) scale(${lerp(.8, 1, sc > 0 ? clamp((sc - .92) / .08) : 0).toFixed(3)})` })
+  } else { tip.style.opacity = 0; line.style.opacity = 0; pin.style.opacity = 0 }
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

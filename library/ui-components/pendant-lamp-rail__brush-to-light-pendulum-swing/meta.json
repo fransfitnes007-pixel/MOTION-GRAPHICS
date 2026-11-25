@@ -1,0 +1,38 @@
+{
+  "slug": "pendant-lamp-rail__brush-to-light-pendulum-swing",
+  "visual_name": "Pendant lamp rail",
+  "code_name": "Brush to light, pendulum swing",
+  "category": "ui-components",
+  "summary": "Eight pendant lamps on a metal ceiling track: the pointer brushes across them, each lights with a warm glow on the wall and swings on its cord like a pendulum, and a caption follows the last lamp lit.",
+  "aliases": [
+    "pendant lamps",
+    "lighting store",
+    "lamp rail",
+    "hanging lights",
+    "pendulum",
+    "switch on lights"
+  ],
+  "tags": [
+    "hero",
+    "hover",
+    "card",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "svg",
+    "spring-physics"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "Pendant Lamp Rail",
+    "author": "dhxwhy",
+    "url": "https://21st.dev/@dhxwhy/components/pendant-lamp-rail",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

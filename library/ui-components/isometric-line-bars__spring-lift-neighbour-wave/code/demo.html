@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>isometric-line-bars__spring-lift-neighbour-wave</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a}
+svg{position:absolute;overflow:visible}
+.edge{fill:#fff;stroke:#737373;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.inner{fill:none;stroke:#e5e5e5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.accent .edge{stroke:#0a0a0a}
+.cap{position:absolute;left:0;right:0;text-align:center;font:600 14px/1 'JetBrains Mono','SF Mono',ui-monospace,Menlo,monospace;letter-spacing:.02em;color:#0a0a0a;white-space:nowrap}
+.cap small{display:block;font:500 11px/1 -apple-system,'SF Pro Display',system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a3a3a3;margin-bottom:.6em}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Isometric line-art bar chart on a slab. Bars grow on one spring, then the bar under the pointer lifts on another,
+// with its two neighbours following. Spring constants and lift sizes were measured from the live preview by watching
+// the SVG path data change frame by frame. Pointer is scripted (CONFIG.hover).
+const CONFIG = {
+  data: [12, 18, 9, 24, 16, 30], labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], unit: ' sales',
+  growAt: .4,
+  hover: [[2.0, 1], [3.1, 3], [4.2, 5], [5.3, 2], [6.4, -1]],          // [time, bar index under the pointer, -1 = none]
+  grow: { k: 120, c: 17 }, lift: { k: 200, c: 22 },                      // spring stiffness / damping, mass 1
+  liftMain: 20.5, liftNeighbour: 7.8,                                    // svg units
+}
+const DUR = 8
+window.DUR = DUR
+
+const SLAB = {
+  edge: 'M89.31 199.88L90.51 196.86L93.93 194.3L127.43 177.55L132.55 175.84L138.59 175.24L144.64 175.84L149.76 177.55L306.07 255.71L309.49 258.27L310.69 261.29L310.69 270.41L309.49 273.43L306.07 275.99L272.57 292.74L267.45 294.45L261.41 295.05L255.36 294.45L250.24 292.74L93.93 214.58L90.51 212.02L89.31 209Z',
+  inner: 'M305.43 261.29L304.63 263.3L302.34 265.01L268.85 281.76L265.43 282.9L261.41 283.3L257.38 282.9L253.96 281.76L97.66 203.61L95.37 201.9L94.57 199.88',
+  lo: 'M138.59 183.14L105.1 199.88M164.64 196.16L131.15 212.91M190.7 209.19L157.2 225.94M216.75 222.21L183.25 238.96M242.8 235.24L209.3 251.99M268.85 248.26L235.36 265.01M294.9 261.29L261.41 278.04',
+}
+const NS = 'http://www.w3.org/2000/svg'
+const mk = (tag, cls, parent) => { const e = document.createElementNS(NS, tag); if (cls) e.setAttribute('class', cls); parent.appendChild(e); return e }
+const svgW = TALL ? W * .98 : Math.min(H * .8 * 1.25, W * .8), svgH = svgW * .8
+const svg = mk('svg', '', stage); svg.setAttribute('viewBox', '0 0 400 320')
+S(svg, { left: px((W - svgW) / 2), top: px(TALL ? H * .24 : (H - svgH) / 2 - 20), width: px(svgW), height: px(svgH) })
+const sw = (.9 * svgW / 450).toFixed(2) + 'px'                          // original draws 0.9px at ~450px wide
+const root = mk('g', '', svg)
+const slab = mk('g', '', root); mk('path', 'edge', slab).setAttribute('d', SLAB.edge); mk('path', 'inner', slab).setAttribute('d', SLAB.inner)
+mk('path', 'inner', root).setAttribute('d', SLAB.lo)
+const bars = CONFIG.data.map((v, i) => { const g = mk('g', '', root); return { g, edge: mk('path', 'edge', g), inner: mk('path', 'inner', g), v, i } })
+svg.querySelectorAll('path').forEach(p => p.style.strokeWidth = sw)
+const cap = el('div', 'cap'); cap.style.fontSize = px(svgW * .034); S(cap, { top: px(TALL ? H * .24 + svgH + svgW * .08 : (H + svgH) / 2 + 10) })
+
+// critically simple spring integrator: state from t=0 every frame, fixed 1/240 s step, so render(t) is repeatable
+const DT = 1 / 240
+function sim(t) {
+  const n = CONFIG.data.length
+  let gp = new Array(n).fill(0), gv = new Array(n).fill(0), lp = new Array(n).fill(0), lv = new Array(n).fill(0)
+  for (let s = 0, tt = 0; tt < t; s++, tt = s * DT) {
+    const gT = tt >= CONFIG.growAt ? 1 : 0
+    let hi = -1; for (const [ht, hb] of CONFIG.hover) if (tt >= ht) hi = hb
+    for (let i = 0; i < n; i++) {
+      const ga = CONFIG.grow.k * (gT - gp[i]) - CONFIG.grow.c * gv[i]; gv[i] += ga * DT; gp[i] += gv[i] * DT
+      const tgt = hi < 0 ? 0 : i === hi ? CONFIG.liftMain : Math.abs(i - hi) === 1 ? CONFIG.liftNeighbour : 0
+      const la = CONFIG.lift.k * (tgt - lp[i]) - CONFIG.lift.c * lv[i]; lv[i] += la * DT; lp[i] += lv[i] * DT
+    }
+  }
+  return { gp, lp }
+}
+const F = (x) => (Math.round(x * 100) / 100)
+function render(t) {
+  const { gp, lp } = sim(t)
+  let hi = -1; for (const [ht, hb] of CONFIG.hover) if (t >= ht) hi = hb
+  for (const b of bars) {
+    const B = 198.02 + 13.026 * b.i - lp[b.i], H_ = gp[b.i] * 5.62 * b.v, yTL = B - H_, x0 = 117.19 + 26.052 * b.i, xm = x0 + 17.68, x1 = x0 + 35.36
+    b.edge.setAttribute('d', `M${F(x0)} ${F(yTL)}L${F(xm)} ${F(yTL - 8.84)}L${F(x1)} ${F(yTL)}L${F(x1)} ${F(B)}L${F(xm)} ${F(B + 8.84)}L${F(x0)} ${F(B)}Z`)
+    b.inner.setAttribute('d', `M${F(x1)} ${F(yTL)}L${F(xm)} ${F(yTL + 8.84)}M${F(xm)} ${F(yTL + 8.84)}L${F(x0)} ${F(yTL)}M${F(xm)} ${F(yTL + 8.84)}L${F(xm)} ${F(B + 8.84)}`)
+    b.g.setAttribute('class', b.i === hi ? 'accent' : '')
+  }
+  const on = hi >= 0 && t > CONFIG.growAt + 1
+  cap.innerHTML = on ? `<small>${CONFIG.labels[hi]}</small>${CONFIG.data[hi]}${CONFIG.unit}` : `<small>&nbsp;</small>&nbsp;`
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

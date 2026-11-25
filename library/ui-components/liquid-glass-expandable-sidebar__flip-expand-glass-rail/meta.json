@@ -1,0 +1,43 @@
+{
+  "slug": "liquid-glass-expandable-sidebar__flip-expand-glass-rail",
+  "visual_name": "Liquid glass expandable sidebar",
+  "code_name": "Flip expand, glass refraction rail",
+  "category": "ui-components",
+  "summary": "A frosted-glass sidebar over a photo that expands from a 68px icon rail to 260px grouped navigation; a glass selection pill glides between pages and labels become tooltips on the rail.",
+  "aliases": [
+    "sidebar",
+    "glass sidebar",
+    "side nav",
+    "expandable nav",
+    "app menu",
+    "nav rail",
+    "liquid glass"
+  ],
+  "tags": [
+    "nav",
+    "3d",
+    "light",
+    "21st",
+    "hover"
+  ],
+  "tech": [
+    "react",
+    "gsap",
+    "gsap-flip",
+    "svg-displacement",
+    "css-backdrop-filter"
+  ],
+  "duration_sec": 7.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "variants_elsewhere": [
+    "bottom-icon-dock__spring-distance-magnify"
+  ],
+  "credit": {
+    "idea": "Liquid Glass Expandable Sidebar",
+    "author": "automateflows (Troy Lorents / Automate Flows)",
+    "url": "https://21st.dev/@automateflows/components/liquid-glass-expandable-sidebar",
+    "license": "MIT",
+    "note": "Rebuilt as render(t) from the published code."
+  }
+}

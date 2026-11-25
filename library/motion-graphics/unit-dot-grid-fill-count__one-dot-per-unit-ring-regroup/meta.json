@@ -1,0 +1,34 @@
+{
+  "slug": "unit-dot-grid-fill-count__one-dot-per-unit-ring-regroup",
+  "visual_name": "Unit dot grid fill with count",
+  "code_name": "One dot per unit, regroup into a ring",
+  "category": "motion-graphics",
+  "summary": "A big number counts up while a grid with one dot per unit lights up orange, then every dot flies into a ring that shows a share with the percentage in the middle.",
+  "aliases": [
+    "dot grid count",
+    "unit chart",
+    "dot matrix number",
+    "percentage ring",
+    "data dots"
+  ],
+  "tags": [
+    "counter",
+    "chart",
+    "dark",
+    "data"
+  ],
+  "tech": [
+    "canvas-2d"
+  ],
+  "duration_sec": 5.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "motionvideo.xyz gallery: Ondefica app motion reel",
+    "author": "@jesscaroline7",
+    "url": "https://x.com/jesscaroline7/status/2104336637752955094",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

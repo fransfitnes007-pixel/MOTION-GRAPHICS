@@ -1,0 +1,151 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>dither-donut-chart__bayer-dot-halftone-spring-morph</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#0a0a0a;color:#fff;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif}
+.dd{position:absolute;left:0;top:0;transform-origin:0 0;width:430px;border-radius:24px;padding:24px;background:#181818;border:1px solid rgba(255,255,255,.05)}
+.dd-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+.dd-hl{display:flex;align-items:center;gap:8px}
+.dd-chip{padding:8px;border-radius:12px;background:rgba(59,130,246,.1);color:#60a5fa;display:grid;place-items:center}
+.dd-t{font-size:14px;font-weight:700;line-height:1.25}
+.dd-s{font-size:11px;color:#a3a3a3;line-height:1.35;margin-top:1px;max-width:150px}
+.dd-pills{display:flex;align-items:center;padding:4px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:#131313;font-size:12px;font-weight:500}
+.dd-pill{padding:4px 10px;border-radius:999px;color:#a3a3a3;white-space:nowrap}
+.dd-b{display:flex;align-items:center;gap:24px}
+.dd.col .dd-b{flex-direction:column}
+.dd-cv{position:relative;width:180px;height:180px;flex:none}
+.dd-lg{flex:1;width:100%;display:flex;flex-direction:column;gap:8px}
+.dd-r{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:12px;border:1px solid transparent}
+.dd-rl{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:500}
+.dd-dot{width:10px;height:10px;border-radius:50%}
+.dd-rr{display:flex;align-items:center;gap:12px;font-size:12px}
+.dd-v{font-weight:600;color:#d4d4d4;font-variant-numeric:tabular-nums}
+.dd-p{font:400 10px/1 ui-monospace,'SF Mono',Menlo,monospace;color:#737373;width:32px;text-align:right}
+
+.dd.col .dd-h{flex-wrap:wrap;row-gap:14px}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Donut drawn on a canvas as a 1-bit dither: a 4px grid of dots switched on or off by a Bayer threshold against each
+// segment's brightness. Segment boundaries ride a critically damped spring (omega 22, measured from the live preview by
+// tracking the gap angles frame by frame after a period change). Hover look and the intro sweep are my additions.
+const CONFIG = {
+  title: 'Plan Distribution', sub: 'Dithered canvas chart with real-time spring physics', periods: ['Week', 'Month', 'Quarter', 'Year'],
+  names: ['Unlimited', '30-day pass', '10-class pack', 'Drop-in', 'Student'],
+  colors: ['#ffffff', '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b'],
+  data: { Week: [510, 481, 223, 150, 148], Month: [1454, 949, 493, 456, 324], Quarter: [3492, 1999, 1617, 1237, 655], Year: [8775, 7302, 6133, 3255, 2028] },
+  // [time, period]; the first entry is the intro. [start,end,segment] hovers.
+  plan: [[.3, 'Month'], [3.4, 'Week'], [6.0, 'Quarter'], [8.6, 'Year']],
+  hovers: [[1.7, 2.8, 0], [10.9, 11.8, 2]],
+  omega: 22, introOmega: 7, ringIn: 48, ringOut: 78, pitch: 4, gap: 5.5,
+}
+const DUR = 12.5
+window.DUR = DUR
+
+const card = el('div', 'dd' + (TALL ? ' col' : ''))
+card.innerHTML = `<div class="dd-h"><div class="dd-hl"><div class="dd-chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="dd-t">${CONFIG.title}</div><div class="dd-s">${CONFIG.sub}</div></div></div><div class="dd-pills"></div></div><div class="dd-b"><div class="dd-cv"><canvas></canvas></div><div class="dd-lg"></div></div>`
+const pills = card.querySelector('.dd-pills'), lg = card.querySelector('.dd-lg')
+const pillEls = CONFIG.periods.map(p => el('div', 'dd-pill', pills, p))
+const rows = CONFIG.names.map((n, i) => { const r = el('div', 'dd-r', lg); r.innerHTML = `<div class="dd-rl"><div class="dd-dot" style="background:${CONFIG.colors[i]}"></div><span>${n}</span></div><div class="dd-rr"><span class="dd-v"></span><span class="dd-p"></span></div>`; return { r, v: r.querySelector('.dd-v'), p: r.querySelector('.dd-p') } })
+if (TALL) card.style.width = '384px'
+const LW = TALL ? 384 : 430
+const s0 = TALL ? W * .9 / LW : Math.min(W * .62 / LW, H * .8 / 340)
+card.style.transform = `scale(${s0})`
+const cardH = card.offsetHeight
+card.style.left = px((W - LW * s0) / 2); card.style.top = px((H - cardH * s0) / 2 - (TALL ? 60 : 0))
+const cv = card.querySelector('canvas'); const CS = 180 * s0; cv.width = Math.round(CS); cv.height = Math.round(CS); cv.style.width = '180px'; cv.style.height = '180px'
+cv.style.transformOrigin = '0 0'; cv.style.transform = `scale(${1 / s0})`; cv.style.width = px(CS); cv.style.height = px(CS)
+const ctx = cv.getContext('2d')
+
+const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+const lum = (hex) => { const n = parseInt(hex.slice(1), 16); return (.299 * (n >> 16) + .587 * ((n >> 8) & 255) + .114 * (n & 255)) / 255 }
+const LUM = CONFIG.colors.map(lum)
+const RGB = CONFIG.colors.map(h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255] })
+const cum = (arr) => { const tot = arr.reduce((a, b) => a + b, 0); let a = 0; return arr.map(v => (a += v) / tot) }
+const bounds = (p) => cum(CONFIG.data[p])
+const fmt = (n) => Math.round(n).toLocaleString('en-US')
+
+// boundary positions (fraction of the circle) at time t: spring from the previous set of targets
+function bpos(t) {
+  let from = [0, 0, 0, 0, 0], to = bounds('Month'), ts = -1, om = CONFIG.introOmega
+  CONFIG.plan.forEach(([pt, p], i) => { if (t >= pt) { from = i === 0 ? [0, 0, 0, 0, 0] : bounds(CONFIG.plan[i - 1][1]); to = bounds(p); ts = pt; om = i === 0 ? CONFIG.introOmega : CONFIG.omega } })
+  if (ts < 0) return { b: from, cur: 'Month' }
+  const x = om * (t - ts), k = (1 + x) * Math.exp(-x)
+  return { b: to.map((v, i) => v + (from[i] - v) * k), cur: CONFIG.plan.filter(([pt]) => t >= pt).slice(-1)[0][1], from, to, k }
+}
+function hoverSeg(t) { for (const [a, b, s] of CONFIG.hovers) if (t >= a - .01 && t < b + .3) { const on = t < b; return { s, p: on ? 1 - Math.exp(-14 * (t - a)) : Math.exp(-14 * (t - b)) } } return null }
+
+function render(t) {
+  const { b, cur } = bpos(t), hv = hoverSeg(t)
+  const cx = CS / 2, sc = s0
+  ctx.clearRect(0, 0, CS, CS)
+  const pitch = CONFIG.pitch * sc, dot = 3 * sc, n = Math.ceil(180 / CONFIG.pitch)
+  const gapF = CONFIG.gap / 360
+  for (let gy = 0; gy < n; gy++) for (let gx = 0; gx < n; gx++) {
+    const px_ = (gx + .5) * CONFIG.pitch, py_ = (gy + .5) * CONFIG.pitch
+    const dx = px_ - 90, dy = py_ - 90, r = Math.hypot(dx, dy)
+    let seg = -1, rIn = CONFIG.ringIn, rOut = CONFIG.ringOut
+    if (r < rIn - 2 || r > rOut + 6) continue
+    let a = Math.atan2(dx, -dy) / (2 * Math.PI); if (a < 0) a += 1
+    for (let i = 0; i < 5; i++) { const lo = (i === 0 ? 0 : b[i - 1]) + gapF / 2, hi = b[i] - gapF / 2; if (a >= lo && a < hi) { seg = i; break } }
+    if (seg < 0) continue
+    let ro = rOut + (hv && hv.s === seg ? 4 * hv.p : 0)
+    if (r < rIn || r > ro) continue
+    const rim = (r - rIn) / (ro - rIn)
+    const bright = clamp(LUM[seg] * (.86 + .3 * rim * rim) + .06 + (hv && hv.s === seg ? .08 * hv.p : 0), 0, 1)
+    if (bright <= (BAYER[gy & 3][gx & 3] + .5) / 16) continue
+    const dim = hv && hv.s !== seg ? 1 - .5 * hv.p : 1
+    const c = RGB[seg]; ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${dim.toFixed(2)})`
+    ctx.fillRect(px_ * sc - dot / 2, py_ * sc - dot / 2, dot, dot)
+  }
+  // legend
+  const data = CONFIG.data[cur], tot = data.reduce((x, y) => x + y, 0)
+  const prevP = bpos(t).from, k = bpos(t).k
+  rows.forEach((o, i) => {
+    o.v.textContent = fmt(data[i]); o.p.textContent = Math.round(data[i] / tot * 100) + '%'
+    const on = hv && hv.s === i
+    o.r.style.background = on ? `rgba(255,255,255,${(.05 * hv.p).toFixed(3)})` : ''
+  })
+  pillEls.forEach((p, i) => { const on = CONFIG.periods[i] === cur; p.style.background = on ? '#2563eb' : 'transparent'; p.style.color = on ? '#fff' : '#a3a3a3' })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

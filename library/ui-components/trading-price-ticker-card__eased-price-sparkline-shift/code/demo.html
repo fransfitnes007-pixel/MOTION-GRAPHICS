@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>trading-price-ticker-card__eased-price-sparkline-shift</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a;font-family:ui-sans-serif,system-ui,sans-serif}
+.card{position:absolute;left:0;top:0;width:220px;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.row{display:flex;align-items:center;justify-content:space-between;width:100%;font-size:14px;line-height:20px}
+.row b{font-weight:600}
+.chip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:16px;font-weight:600;padding:2px 8px;border-radius:999px}
+.price{font-variant-numeric:tabular-nums;letter-spacing:-.025em;font-size:36px;line-height:40px;font-weight:500}
+.spark{width:100%;height:24px;display:block}
+.vol{width:100%;font-size:12px;line-height:16px;color:#737373}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from the live preview of @shadcnspace/number-ticker-07 (21st.dev). Read from the page: a tick every 2.2 s;
+// the price eases (ease-out cubic, ~0.55 s, starting 30 ms after the tick); the change chip is against the day's open
+// (183.50 vs 184.20 = -0.38%) and flips teal #2dd4bf / red #ef4444; the 24-point sparkline drops its first point and
+// appends the new one, y = 20 - (p-min)/(max-min)*18 on a 100x22 box; flat series sit on y=20; volume changes each tick.
+const CONFIG = { name: 'Space', open: 184.20, vol0: '1.5M', ticks: [[.45, 183.50, '1.4M'], [2.65, 183.40, '1.8M'], [4.85, 185.60, '1.3M'], [7.05, 184.20, '1.6M']] }
+const DUR = 9.4
+window.DUR = DUR
+const N = 24, TEAL = '#2dd4bf', RED = '#ef4444'
+const card = el('div', 'card'); const row = el('div', 'row', card); const nm = el('b', '', row); nm.textContent = CONFIG.name
+const chip = el('span', 'chip', row); const price = el('div', 'price', card)
+card.insertAdjacentHTML('beforeend', '<svg class="spark" viewBox="0 0 100 22" preserveAspectRatio="none"><polyline fill="none" stroke-width="1.500"/></svg>')
+const pl = card.querySelector('polyline'); const vol = el('div', 'vol', card)
+const CW = 220, CH = 137, sc = TALL ? W * .72 / CW : Math.min(H * .36 / CH, W * .26 / CW)
+S(card, { transform: `translate(${CX - CW * sc / 2}px,${CY - CH * sc / 2}px) scale(${sc})` })
+const ticks = CONFIG.ticks, series = [Array(N).fill(CONFIG.open)]
+ticks.forEach(([, p]) => { const s = series[series.length - 1].slice(1); s.push(p); series.push(s) })
+const ease3 = (x) => 1 - Math.pow(1 - clamp(x), 3)
+function render(t) {
+  let k = 0; ticks.forEach(([tt], i) => { if (t >= tt) k = i + 1 })
+  const prev = k > 1 ? ticks[k - 2][1] : CONFIG.open, cur = k ? ticks[k - 1][1] : CONFIG.open
+  const p = k ? ease3((t - ticks[k - 1][0] - .03) / .55) : 1
+  price.textContent = '$' + (prev + (cur - prev) * p).toFixed(2)
+  const pct = (cur - CONFIG.open) / CONFIG.open * 100, up = pct >= 0, col = up ? TEAL : RED
+  chip.textContent = (up ? '▲ ' : '▼ ') + Math.abs(pct).toFixed(2) + '%'
+  S(chip, { color: col, background: up ? 'rgba(45,212,191,.1)' : 'rgba(239,68,68,.1)' })
+  const s = series[k], mn = Math.min(...s), mx = Math.max(...s)
+  pl.setAttribute('points', s.map((v, i) => (i * 100 / (N - 1)) + ',' + (mx === mn ? 20 : 20 - (v - mn) / (mx - mn) * 18)).join(' ')); pl.setAttribute('stroke', col)
+  vol.textContent = 'Vol ' + (k ? ticks[k - 1][2] : CONFIG.vol0)
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

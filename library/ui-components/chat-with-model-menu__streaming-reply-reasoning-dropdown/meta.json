@@ -1,0 +1,37 @@
+{
+  "slug": "chat-with-model-menu__streaming-reply-reasoning-dropdown",
+  "visual_name": "Chat with model menu",
+  "code_name": "Streaming reply, reasoning dropdown",
+  "category": "ui-components",
+  "summary": "White full-screen AI chat: a question is typed into the pill composer and sent, \"Thinking...\" shimmers, the answer streams in at about 160 characters a second, then the reasoning-level dropdown opens and a new level is picked.",
+  "aliases": [
+    "ai chat",
+    "chatgpt",
+    "chat screen",
+    "model picker",
+    "streaming answer",
+    "thinking"
+  ],
+  "tags": [
+    "card",
+    "form",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "tailwind",
+    "radix-dropdown"
+  ],
+  "duration_sec": 9.5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "Chat with Model Menu",
+    "author": "ephraimduncan",
+    "url": "https://21st.dev/@ephraimduncan/components/chat-02",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

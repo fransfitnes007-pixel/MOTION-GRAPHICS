@@ -1,0 +1,35 @@
+{
+  "slug": "ball-guided-ui-world-camera__log-zoom-follow-cam",
+  "visual_name": "Ball guided UI world with follow camera",
+  "code_name": "Log-space zoom follow cam",
+  "category": "motion-graphics",
+  "summary": "On a dark dot grid a white ball pops out of a toggle, drives a slider to 100, bounces across three cards as they arrive, then rides home while the camera follows and pulls back.",
+  "aliases": [
+    "bouncing ball ui",
+    "ball guide",
+    "ui world",
+    "follow camera",
+    "white dot"
+  ],
+  "tags": [
+    "dark",
+    "cursor",
+    "card",
+    "transition",
+    "camera"
+  ],
+  "tech": [
+    "canvas-2d"
+  ],
+  "duration_sec": 5.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "motionvideo.xyz gallery: White dot UI motion system",
+    "author": "@rossaxbt",
+    "url": "https://x.com/rossaxbt/status/2108933141406638456",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

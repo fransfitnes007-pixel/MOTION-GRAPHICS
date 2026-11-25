@@ -1,0 +1,148 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>pendant-lamp-rail__brush-to-light-pendulum-swing</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a;font-family:ui-sans-serif,system-ui,-apple-system,'SF Pro Text',sans-serif}
+#cv{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:radial-gradient(62% 48% at 50% 46%,rgba(10,10,10,.04),rgba(0,0,0,0))}
+.eb{position:absolute;width:100%;text-align:center;font-size:11px;letter-spacing:.28em;color:#6b6b6b;font-weight:500}
+.hl{position:absolute;width:100%;text-align:center;font-weight:600;letter-spacing:-.035em;line-height:1.1}
+.rail{position:absolute;height:10px;border-radius:5px;background:linear-gradient(#d7d7d7 0%,#fff 16%,#b0b0b0 36%,#8e8e8e 64%,#4e4e4e 100%);box-shadow:0 6px 10px rgba(0,0,0,.12)}
+.rail:after{content:'';position:absolute;inset:0;border-radius:5px;background:repeating-linear-gradient(90deg,transparent 0 2px,rgba(255,255,255,.4) 2px 3px);mix-blend-mode:overlay;opacity:.4}
+.cap{position:absolute;width:100%;text-align:center}
+.cap b{font-weight:600}.cap .pr{display:inline-block;margin-left:8px;font-size:11px;font-weight:500;padding:1px 8px;border:1px solid #e5e5e5;border-radius:999px;color:#555}
+.cap .ds{margin-top:6px;color:#737373}
+.pill{position:absolute;height:40px;border-radius:999px;font-size:14px;font-weight:600;line-height:40px;text-align:center}
+.glow{position:absolute;border-radius:50%;pointer-events:none}
+.cur{position:absolute;left:0;top:0;width:22px;height:26px;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from the live preview of @dhxwhy/pendant-lamp-rail (21st.dev, MIT). The original uses eight product photos
+// (off and on); here the lamps are drawn in SVG, the motion is what was read from the page: a pendant is a pendulum hung from
+// its track mount (transform-origin 50% 0), a brush past kicks it (peak ~2.7 deg after 0.4 s, period ~1.4 s, halves every ~0.7 s;
+// longer cords swing slower), lit goes 0 -> 1 as the pointer is over it (bloom = blur(10px) saturate(1.35) of the lit photo)
+// and a warm pool sits on the wall under it; the caption below follows the last lamp lit.
+const CONFIG = {
+  eyebrow: 'LIGHTING STUDIO · EIGHT PENDANTS', head: 'Pendant lights you can switch on, right on the page.',
+  lamps: [
+    { kind: 'dome', c: ['#1f6b45', '#0e3b25'], drop: 150, name: 'Enamel dome · Forest', price: '$180', d: 'Glossy forest-green enamel over steel with a white reflector inside.' },
+    { kind: 'globe', c: ['#dfe9ee', '#b9c6cc'], drop: 180, name: 'Glass globe · Clear', price: '$210', d: 'Clear blown glass around a brass socket and a warm filament bulb.' },
+    { kind: 'cone', c: ['#e6c15a', '#a9812a'], drop: 130, name: 'Brass cone · Polished', price: '$240', d: 'A spun brass cone that throws its light straight down.' },
+    { kind: 'wick', c: ['#d6a45f', '#a8763a'], drop: 215, name: 'Rattan dome · Natural', price: '$195', d: 'Hand-woven rattan that breaks the bulb into dappled light.' },
+    { kind: 'paper', c: ['#fbf4e4', '#e8dcc0'], drop: 150, name: 'Paper sphere · Rice', price: '$120', d: 'Ribbed rice paper over a light frame, glowing evenly.' },
+    { kind: 'conc', c: ['#9a9a9a', '#6f6f6f'], drop: 185, name: 'Concrete cone · Grey', price: '$260', d: 'Cast concrete with a bright interior for a crisp pool of light.' },
+    { kind: 'flute', c: ['#fbfbfb', '#dcdcdc'], drop: 120, name: 'Fluted glass · Opal', price: '$190', d: 'Ribbed opal glass that softens the bulb into a column of light.' },
+    { kind: 'dome', c: ['#d98a5c', '#9a4f2c'], drop: 175, name: 'Copper dome · Polished', price: '$230', d: 'Polished copper that warms the room as it lights.' }],
+  rise: .06, fall: .13, swingA: 4.2, swingW: 4.5, swingC: 1.05, cta: 'Shop lighting'
+}
+const DUR = 9
+window.DUR = DUR
+const DW = TALL ? 720 : 1280, DH = TALL ? 1280 : 760
+const cv = el('div'); cv.id = 'cv'; const sc = Math.min(W / DW, H / DH)
+S(cv, { width: DW + 'px', height: DH + 'px', transform: `translate(${(W - DW * sc) / 2}px,${(H - DH * sc) / 2}px) scale(${sc})` })
+const eb = el('div', 'eb', cv); eb.textContent = CONFIG.eyebrow; const hl = el('div', 'hl', cv); hl.textContent = CONFIG.head
+S(eb, { top: TALL ? '110px' : '40px' }); S(hl, { top: TALL ? '146px' : '66px', fontSize: TALL ? '44px' : '34px', padding: TALL ? '0 40px' : '0', left: 0 })
+
+const SHAPES = {
+  dome: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><defs><linearGradient id="d${c[0].slice(1)}" x1="0" x2="1"><stop offset="0" stop-color="${c[1]}"/><stop offset=".35" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient></defs><path d="M72 0h16v10c34 3 58 24 62 50H10C14 34 38 13 72 10z" fill="url(#d${c[0].slice(1)})"/><ellipse cx="80" cy="60" rx="70" ry="9" fill="#f4efe6"/><ellipse class="bulb" cx="80" cy="60" rx="11" ry="11" fill="#e8e0c8"/><path class="on" d="M10 60C14 34 38 13 72 10h16c34 3 58 24 62 50z" fill="rgba(255,232,170,.0)"/></svg>`,
+  globe: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><rect x="72" y="0" width="16" height="22" rx="3" fill="#b9923a"/><circle cx="80" cy="72" r="52" fill="${c[0]}" fill-opacity=".45" stroke="${c[1]}" stroke-width="2"/><ellipse cx="80" cy="64" rx="10" ry="14" class="bulb" fill="#eadfc0"/><circle class="on" cx="80" cy="72" r="52" fill="rgba(255,232,170,0)"/></svg>`,
+  cone: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><defs><linearGradient id="k${c[0].slice(1)}" x1="0" x2="1"><stop offset="0" stop-color="${c[1]}"/><stop offset=".4" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient></defs><path d="M76 0h8l36 100H44z" fill="url(#k${c[0].slice(1)})"/><ellipse cx="80" cy="100" rx="36" ry="6" fill="#f0e4b8"/><ellipse class="bulb" cx="80" cy="98" rx="9" ry="9" fill="#eadfc0"/><path class="on" d="M76 0h8l36 100H44z" fill="rgba(255,232,170,0)"/></svg>`,
+  wick: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><defs><pattern id="wk" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="8" height="8" fill="${c[0]}"/><path d="M0 4h8M4 0v8" stroke="${c[1]}" stroke-width="1.600"/></pattern></defs><path d="M72 0h16v6c34 4 56 26 60 62H12C16 32 38 10 72 6z" fill="url(#wk)"/><ellipse cx="80" cy="68" rx="68" ry="8" fill="${c[1]}"/><ellipse class="bulb" cx="80" cy="66" rx="9" ry="9" fill="#e8dcc0"/><path class="on" d="M12 68C16 32 38 10 72 6h16c34 4 56 26 60 62z" fill="rgba(255,232,170,0)"/></svg>`,
+  paper: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><circle cx="80" cy="64" r="52" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.500"/>${[-36, -18, 0, 18, 36].map((x) => `<ellipse cx="80" cy="64" rx="${Math.abs(52 - Math.abs(x) * .0 - 0) * (1 - Math.abs(x) / 60)}" ry="52" fill="none" stroke="#d4b27a" stroke-width="1.300" opacity=".8"/>`).join('')}<circle class="on" cx="80" cy="64" r="52" fill="rgba(255,232,170,0)"/><ellipse class="bulb" cx="80" cy="70" rx="8" ry="8" fill="#e8dcc0" opacity=".5"/></svg>`,
+  conc: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><defs><linearGradient id="c1" x1="0" x2="1"><stop offset="0" stop-color="${c[1]}"/><stop offset=".4" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient></defs><path d="M76 0h8l66 76H10z" fill="url(#c1)"/><ellipse cx="80" cy="76" rx="70" ry="9" fill="#f1ece2"/><ellipse class="bulb" cx="80" cy="76" rx="10" ry="10" fill="#e8e0c8"/><path class="on" d="M76 0h8l66 76H10z" fill="rgba(255,232,170,0)"/></svg>`,
+  flute: (c) => `<svg viewBox="0 0 160 130" width="160" height="130"><rect x="72" y="0" width="16" height="16" fill="#9a9a9a"/><rect x="38" y="16" width="84" height="82" rx="10" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.500"/>${Array.from({ length: 9 }, (_, i) => `<path d="M${46 + i * 8.600} 20v74" stroke="#cfcfcf" stroke-width="1.600"/>`).join('')}<rect class="on" x="38" y="16" width="84" height="82" rx="10" fill="rgba(255,232,170,0)"/><ellipse class="bulb" cx="80" cy="88" rx="9" ry="8" fill="#e6dcc0" opacity=".7"/></svg>`
+}
+// rails
+const L = CONFIG.lamps, rows = TALL ? [L.slice(0, 4), L.slice(4)] : [L]
+const rowY = TALL ? [290, 690] : [200], spacing = TALL ? 170 : 150, scaleL = TALL ? 1.18 : 1
+const pend = []
+rows.forEach((row, ri) => {
+  const rw = el('div', 'rail', cv); const x0 = (DW - spacing * row.length) / 2; S(rw, { left: (x0 - 20) + 'px', width: (spacing * row.length + 40) + 'px', top: rowY[ri] + 'px' })
+  row.forEach((lp, k) => {
+    const x = x0 + spacing * (k + .5), y = rowY[ri] + 10, drop = lp.drop * scaleL
+    const mount = el('div', '', cv); S(mount, { position: 'absolute', left: (x - 14) + 'px', top: (y - 4) + 'px', width: '28px', height: '16px', borderRadius: '3px', background: 'linear-gradient(#8a8a8a,#5a5a5a)' })
+    const glow = el('div', 'glow', cv); const gw = 300 * scaleL; S(glow, { left: (x - gw / 2) + 'px', top: (y + drop + 20) + 'px', width: gw + 'px', height: (gw * .62) + 'px', background: 'radial-gradient(closest-side,rgba(255,196,96,.62),rgba(255,214,140,.28) 55%,rgba(255,230,180,0))' })
+    const bloom = el('div', 'glow', cv); const bw = 190 * scaleL; S(bloom, { left: (x - bw / 2) + 'px', top: (y + drop - 30) + 'px', width: bw + 'px', height: (bw * .9) + 'px', background: 'radial-gradient(closest-side,rgba(255,222,150,.85),rgba(255,222,150,0))', filter: 'blur(10px)' })
+    const grp = el('div', '', cv); S(grp, { position: 'absolute', left: (x - 80) + 'px', top: y + 'px', width: '160px', height: (drop + 130) + 'px', transformOrigin: '80px 0', transform: 'rotate(0deg)' })
+    const cord = el('div', '', grp); S(cord, { position: 'absolute', left: '79px', top: '0', width: '2px', height: drop + 'px', background: '#1d1d1d' })
+    const sv = SHAPES[lp.kind](lp.c); const wrap = el('div', '', grp); S(wrap, { position: 'absolute', left: 0, top: drop + 'px', width: '160px', height: '130px', transform: `scale(${scaleL})`, transformOrigin: '80px 0' }); wrap.innerHTML = sv
+    pend.push({ x, y, lp, glow, bloom, grp, on: wrap.querySelector('.on'), bulb: wrap.querySelector('.bulb'), L: drop, row: ri, ts: [] })
+  })
+})
+const capEl = el('div', 'cap', cv), cta = el('div', 'pill', cv), dim = el('div', 'pill', cv)
+const capY = TALL ? 1125 : 590
+S(capEl, { top: capY + 'px', fontSize: TALL ? '22px' : '14px' }); S(cta, { background: '#0a0a0a', color: '#fff', width: '128px', left: (DW / 2 - 138) + 'px', top: (capY + (TALL ? 96 : 80)) + 'px' })
+cta.textContent = CONFIG.cta; dim.textContent = '● Lift to dim'; S(dim, { left: (DW / 2 + 10) + 'px', top: (capY + (TALL ? 96 : 80)) + 'px', width: '96px', border: '1px solid #e5e5e5', color: '#737373', fontSize: '12px', height: '30px', lineHeight: '28px', marginTop: '5px', fontWeight: 500 })
+const cur = el('div', 'cur', cv); cur.innerHTML = '<svg viewBox="0 0 22 26"><path d="M3 2l15 9-7 1.800L8 19z" fill="#111" stroke="#fff" stroke-width="1.600" stroke-linejoin="round"/></svg>'
+// pointer path: [t, x, y] in design px; rows are brushed one after the other
+const yA = rowY[0] + 10 + 150 * scaleL, yB = rowY[TALL ? 1 : 0] + 10 + 150 * scaleL
+const left = (DW - spacing * rows[0].length) / 2, right = DW - left
+const PATH = TALL ? [[0, left - 40, yA], [.4, left - 40, yA], [1.5, right + 40, yA], [2.0, right + 40, yB], [3.2, left - 40, yB], [3.6, left + spacing * 1.5, yA + 20], [4.6, left + spacing * 2.5, yA + 20], [6.2, left + spacing * 2.5, yA + 20], [6.8, DW + 60, yA + 20]] : [[0, left - 40, yA], [.4, left - 40, yA], [2.2, right + 40, yA], [3.2, right + 40, yA], [5.0, left - 40, yA], [5.6, left + spacing * 3.5, yA + 20], [7.0, left + spacing * 3.5, yA + 20], [7.6, DW + 60, yA + 20]]
+const ptAt = (t) => { for (let i = 1; i < PATH.length; i++) if (t <= PATH[i][0]) { const [a, x0, y0] = PATH[i - 1], [b, x1, y1] = PATH[i]; const k = clamp((t - a) / (b - a)); return [x0 + (x1 - x0) * k, y0 + (y1 - y0) * k] } return [PATH[PATH.length - 1][1], PATH[PATH.length - 1][2]] }
+// state simulated from t=0 each frame (lit low-pass, swing kicks when the pointer crosses a lamp centre)
+function sim(t) {
+  const dt = 1 / 120, lit = pend.map(() => 0), kicks = pend.map(() => []); let last = -1, prev = ptAt(0)
+  for (let s = 0; s < t; s += dt) {
+    const [x, y] = ptAt(s), vx = (x - prev[0]) / dt
+    pend.forEach((p, i) => {
+      const inside = Math.abs(x - p.x) < spacing * .44 && Math.abs(y - (p.y + p.L)) < 140
+      const tau = inside ? CONFIG.rise : CONFIG.fall; lit[i] += ((inside ? 1 : 0) - lit[i]) * (1 - Math.exp(-dt / tau)); if (inside && lit[i] > .5) last = i
+      if (Math.abs(y - (p.y + p.L)) < 140 && (prev[0] - p.x) * (x - p.x) <= 0 && Math.abs(vx) > 150) kicks[i].push([s, Math.sign(vx) * CONFIG.swingA * Math.min(1, Math.abs(vx) / 700)])
+    })
+    prev = [x, y]
+  }
+  return { lit, kicks, last }
+}
+function render(t) {
+  const { lit, kicks, last } = sim(t), [px_, py_] = ptAt(t)
+  pend.forEach((p, i) => {
+    let th = 0; const w = CONFIG.swingW * Math.sqrt(200 / p.L); kicks[i].forEach(([ts, A]) => { const d = t - ts; if (d >= 0) th += A * Math.exp(-CONFIG.swingC * d) * Math.sin(w * d) })
+    p.grp.style.transform = `rotate(${th}deg)`; const l = lit[i]
+    p.glow.style.opacity = l; p.bloom.style.opacity = l * .55
+    p.on.setAttribute('fill', `rgba(255,226,150,${.78 * l})`); p.bulb.setAttribute('fill', l > .02 ? `rgb(${Math.round(232 + 23 * l)},${Math.round(224 + 20 * l)},${Math.round(200 + 4 * l)})` : '#e8e0c8')
+  })
+  const lp = L[Math.max(0, last)]; capEl.innerHTML = `<b>${lp.name}</b><span class="pr">${lp.price}</span><div class="ds">${lp.d}</div>`
+  capEl.style.opacity = last < 0 ? 0 : 1
+  S(cur, { opacity: seg(t, .2, .5) * (1 - seg(t, DUR - 1.2, DUR - .6)) * (px_ < DW + 20 ? 1 : 0), transform: `translate(${px_}px,${py_}px) scale(${TALL ? 1.2 : 1})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

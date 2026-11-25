@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>liquid-glass-expandable-sidebar__flip-expand-glass-rail</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#d8c3a5}
+.sb{position:absolute;border-radius:26px;overflow:hidden;color:#17181c;font-family:"Manrope","SF Pro Display",system-ui,sans-serif}
+.gl{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(150deg,rgba(255,255,255,.18),rgba(255,255,255,0) 44%),rgba(255,255,255,.34);-webkit-backdrop-filter:blur(8px) saturate(1.3);backdrop-filter:blur(8px) saturate(1.3);box-shadow:inset 0 0 0 .75px rgba(255,255,255,.5),inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.55),0 12px 24px -15px rgba(0,0,0,.5)}
+.sb .a{position:absolute;white-space:nowrap}
+.mk{position:absolute;border-radius:17px;background:rgba(255,255,255,.55);box-shadow:inset 0 1px 1px rgba(255,255,255,.9)}
+.sb svg{width:17px;height:17px;display:block}
+.lb{font-size:13px;font-weight:500}
+.gh{font-size:11px;font-weight:650;color:#4a4d55}
+.tip{position:absolute;background:#fff;border-radius:7px;padding:6px 9px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.18);white-space:nowrap}
+.sea{position:absolute}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+const ICONS = {"house": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"/><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></g></svg>", "bookmark": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z\"/></svg>", "link": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"/><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"/></g></svg>", "users": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3.128a4 4 0 0 1 0 7.744M22 21v-2a4 4 0 0 0-3-3.87\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/></g></svg>", "mail": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7\"/><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/></g></svg>", "calendar": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M8 2v3m8-3v3\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M3 9h18\"/></g></svg>", "settings": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0a2.34 2.34 0 0 0 3.319 1.915a2.34 2.34 0 0 1 2.33 4.033a2.34 2.34 0 0 0 0 3.831a2.34 2.34 0 0 1-2.33 4.033a2.34 2.34 0 0 0-3.319 1.915a2.34 2.34 0 0 1-4.659 0a2.34 2.34 0 0 0-3.32-1.915a2.34 2.34 0 0 1-2.33-4.033a2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></g></svg>", "message-circle": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092a10 10 0 1 0-4.777-4.719\"/></svg>", "user": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/></g></svg>", "sparkles": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594zM20 2v4m2-2h-4\"/><circle cx=\"4\" cy=\"20\" r=\"2\"/></g></svg>"}
+// Sidebar geometry from the original CSS: 260px open, 68px rail, 26px / 32px radius, Flip 0.5s power2.inOut, marker 0.4s power2.out.
+const CONFIG = { groups: [['Workspace', [['home','Home','house'],['projects','Projects','bookmark'],['studio','Studio website','link',1],['portal','Client portal','users',1],['create','Create','plus'],['inbox','Inbox','mail']]], ['More', [['calendar','Calendar','calendar'],['settings','Settings','settings']]]],
+  brand: 'Studio workspace', account: ['SM', 'Studio Member', 'Studio workspace'], timeline: { select: [[0, 'studio'], [1.3, 'inbox']], collapse: [2.5, 5.0], tipAt: 3.7, tipRow: 'calendar' } }
+const DUR = 7.5
+window.DUR = DUR
+const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+const S1 = Math.min(W / 330, H / 760) * (TALL ? 1 : .95)
+// scene: sand, sea and sky blobs drift slowly (placeholder for the photo)
+const scene = el('div', 'abs'); S(scene, { inset: 0 })
+const wrap = el('div', 'abs'); S(wrap, { left: px(W / 2 - 130 * S1), top: px(H / 2 - 320 * S1), width: '260px', height: '640px', transform: `scale(${S1})`, transformOrigin: '0 0' })
+const sb = el('div', 'sb', wrap); const gl = el('div', 'gl', sb)
+const mk = el('div', 'mk', sb)
+const rows = []
+// layout helper: y position of every row in expanded (e) and rail (c) states
+let ye = 12 + 44 + 12 + 44 + 13 + 12, yc = 12 + 44 + 12 + 40
+const brandIcon = el('div', 'a', sb, ICONS.house.replace('<svg', '<svg style="width:20px;height:20px"')); S(brandIcon, { left: '20px', top: '24px' })
+const brand = el('div', 'a', sb); brand.innerHTML = '<b style="font-size:14px">' + CONFIG.brand + '</b>'; S(brand, { left: '57px', top: '24px' })
+const tog = el('div', 'a', sb, '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14M21 12H7M12 7l-5 5 5 5"/></svg>'); S(tog, { top: '24px' })
+const search = el('div', 'a', sb, ICONS.search || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>'); S(search, { left: '12px', top: '80px', width: '236px', height: '44px', border: '1px solid rgba(0,0,0,.14)', borderRadius: '13px', background: 'rgba(255,255,255,.24)', display: 'flex', alignItems: 'center', paddingLeft: '10px', gap: '7px', fontSize: '13px', color: '#4a4d55' })
+search.insertAdjacentHTML('beforeend', 'Find a page')
+for (const [gname, items] of CONFIG.groups){
+  const g = el('div', 'a gh', sb); g.textContent = gname; rows.push({ el: g, kind: 'gh', ye, yc, group: gname }); ye += 20
+  if (gname === 'More') yc += 18
+  for (const [id, label, ic, child] of items){
+    const r = el('div', 'a', sb); const svg = (ic === 'plus' ? PLUS : ICONS[ic])
+    r.innerHTML = `<span class="ic" style="position:absolute;left:${child ? 30 : 10}px;top:13px">${svg}</span><span class="lb" style="position:absolute;left:${child ? 56 : 37}px;top:13px">${label}</span>`
+    const o = { el: r, id, kind: 'row', child: !!child, ye, yc: child ? null : yc, label }
+    if (child) o.yc = null
+    rows.push(o); ye += 44; if (!child) yc += 44
+  }
+  ye += 18
+}
+const rowOf = (id) => rows.find((r) => r.id === id)
+const acc = el('div', 'a', sb); acc.innerHTML = `<span style="position:absolute;left:2px;top:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:750">${CONFIG.account[0]}</span><span class="acl" style="position:absolute;left:46px;top:12px;font-size:13px"><b>${CONFIG.account[1]}</b><br><small style="font-size:11px;color:#4a4d55">${CONFIG.account[2]}</small></span>`
+const accLine = el('div', 'a', sb); S(accLine, { left: '12px', right: '12px', top: '570px', borderTop: '1px solid rgba(0,0,0,.14)' })
+S(acc, { left: '12px', top: '570px', width: '236px', height: '54px' })
+const tip = el('div', 'tip', wrap); tip.style.zIndex = 9
+const pow2io = (x) => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2, pow2o = (x) => 1 - (1 - x) * (1 - x)
+function p(t){ const [a, b] = CONFIG.timeline.collapse; return t < a ? 0 : t < a + .5 ? pow2io((t - a) / .5) : t < b ? 1 : t < b + .5 ? 1 - pow2io((t - b) / .5) : 0 }
+function selAt(t){ const ev = CONFIG.timeline.select; let cur = ev[0][1], prev = cur, at = 0; for (const [tt, id] of ev) if (t >= tt){ prev = cur; cur = id; at = tt } return { cur, prev, at } }
+function rowY(r, k){ // k = 0 open, 1 rail
+  if (r.child) return r.ye
+  return r.ye + (r.yc - r.ye) * k
+}
+function render(t){
+  const k = p(t), wdt = 260 + (68 - 260) * k
+  const bg = Math.sin(t / DUR * Math.PI * 2)
+  scene.style.background = `radial-gradient(60% 40% at ${70 + bg * 6}% 62%,#3d88b8 0%,rgba(61,136,184,0) 70%),radial-gradient(70% 50% at ${30 - bg * 5}% 30%,#f4e9d6 0%,rgba(244,233,214,0) 70%),linear-gradient(180deg,#9ec9e0 0%,#e6d5b8 60%,#c8a878 100%)`
+  S(sb, { width: px(wdt), height: '640px', borderRadius: px(26 + 6 * k) })
+  S(wrap, { width: px(wdt) })
+  const sl = selAt(t), m = pow2o(seg(t - sl.at, 0, .4)) 
+  const target = (id) => { const r = rowOf(id); const rr = r.child && k > .5 ? rowOf('projects') : r; return rowY(rr, k) }
+  const my = sl.prev === sl.cur || t < .1 ? target(sl.cur) : target(sl.prev) + (target(sl.cur) - target(sl.prev)) * m
+  S(mk, { left: '8px', width: px(wdt - 16), height: '44px', top: px(my), opacity: '1' })
+  for (const r of rows){
+    if (r.kind === 'gh'){ S(r.el, { left: '19px', top: px(rowY(r, k) + 3), opacity: String(1 - clamp(k * 3)) }); continue }
+    const hide = r.child && k > .01
+    S(r.el, { left: '8px', width: px(wdt - 16), height: '44px', top: px(rowY(r, k)), opacity: String(r.child ? 1 - clamp(k * 4) : 1) })
+    r.el.querySelector('.lb').style.opacity = String(1 - clamp(k * 6))
+    r.el.querySelector('.ic').style.left = px(r.child ? 30 : 10 + 7.5 * k)
+  }
+  // brand row
+  S(brand, { opacity: String(1 - clamp(k * 3)) }); S(search, { opacity: String(1 - clamp(k * 3)), height: px(44 * (1 - clamp(k * 2))) })
+  S(brandIcon, { left: px(20 + (wdt / 2 - 10 - 20) * k), top: px(24 - 0 * k) }); S(tog, { left: px(wdt - 52 + (wdt / 2 - 8 - (wdt - 52)) * k), top: px(24 + 34 * k) })
+  tog.style.transform = `scaleX(${k > .5 ? -1 : 1})`
+  S(acc, { width: px(wdt - 24) }); acc.querySelector('.acl').style.opacity = String(1 - clamp(k * 3))
+  S(accLine, { width: px(wdt - 24) })
+  // tooltip on the rail
+  const tr = rowOf(CONFIG.timeline.tipRow), on = t > CONFIG.timeline.tipAt && t < CONFIG.timeline.tipAt + 1.1 && k > .95
+  vis(tip, on); if (on){ tip.textContent = tr.label; S(tip, { left: px(wdt + 6), top: px(rowY(tr, 1) + 8 + 0), opacity: String(seg(t - CONFIG.timeline.tipAt, 0, .15)) }) }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

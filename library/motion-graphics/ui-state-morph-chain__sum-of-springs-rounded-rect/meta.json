@@ -1,0 +1,47 @@
+{
+  "slug": "ui-state-morph-chain__sum-of-springs-rounded-rect",
+  "visual_name": "UI state morph chain",
+  "code_name": "Sum of springs on one rounded rect",
+  "category": "motion-graphics",
+  "summary": "One black rounded shape never cuts: a button becomes a loader, a tick, a toast and a tab bar whose indicator stretches between tabs, then the button again.",
+  "aliases": [
+    "shape morph",
+    "button morph",
+    "ui morph",
+    "one shape",
+    "morphing button"
+  ],
+  "tags": [
+    "transition",
+    "cursor",
+    "light",
+    "nav",
+    "cta",
+    "loader"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "closed-form-spring"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": [
+    {
+      "idea": "motionvideo.xyz gallery: Shape morphing through UI states",
+      "author": "@twoclipping",
+      "url": "https://x.com/twoclipping/status/2103273003555402193",
+      "license": "Video belongs to its creator; not included",
+      "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+    },
+    {
+      "idea": "revid.ai Claude Opus 5.5 wall #58: Habitify: a UI micro-animation",
+      "author": "@thednyx",
+      "url": "https://x.com/thednyx/status/2102653181146575329",
+      "license": "Video belongs to its creator; not included",
+      "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+    }
+  ]
+}

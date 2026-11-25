@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Wordmark squeeze into period pill</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.word{white-space:nowrap;font-weight:800;letter-spacing:0;color:#0c0c0d;line-height:1}
+.lt{position:absolute;top:0;transform-origin:0 50%;display:block}
+.tag{text-align:center;color:#8d8c87;font-weight:500;letter-spacing:.01em}
+.lbl{position:absolute;text-align:center;color:#fff;font-weight:600;letter-spacing:-.01em}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from @twoclipping's "Develop" photo-print launch film (revid.ai wall #8, motionvideo.xyz twoclipping-221cab), 0.3s to 2.4s.
+// The wordmark squeezes into its own period like an accordion, the dot stretches into a black pill and a label rises inside it.
+// Then the whole thing plays backwards so the loop's last frame is its first.
+const CONFIG = {
+  word: 'yourbrand',           // letters before the period
+  label: 'YourBrand',          // text that rises inside the pill
+  tagline: 'turn any photo into a print',
+  bg: '#ecede8', ink: '#0c0c0d', grey: '#8d8c87',
+  fontPx: 210,                // wordmark size at 1920 wide
+  pill: { w: 300, h: 92 },    // pill size at 1920 wide
+  t: {                        // schedule in seconds (one beat = .5s at 120 BPM)
+    squeeze: [.55, .95],      // letters fold into the period (ease-in, they accelerate into the dot)
+    stretch: 1.15,            // dot starts growing into the pill (spring)
+    label: 1.75,              // label rises through a mask line
+    labelOut: 3.05,           // label drops back out
+    shrink: 3.3,              // pill springs back into a dot
+    unsqueeze: [3.75, 4.25],  // letters spring back out of the dot
+  },
+  dur: 5,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const Z = TALL ? W / 1080 * .62 : W / 1920          // overall scale
+stage.style.background = C.bg
+
+// one closed-form spring step response: 0 -> 1, zeta < 1 gives a small overshoot
+const sstep = (tau, f = 2.1, z = .72) => { if (tau <= 0) return 0; const w = 2 * Math.PI * f, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * tau) * (Math.cos(wd * tau) + z * w / wd * Math.sin(wd * tau)) }
+
+const wrap = el('div', 'abs'); S(wrap, { left: 0, top: 0, width: W + 'px', height: H + 'px' })
+const wordEl = el('div', 'abs word', wrap)
+S(wordEl, { fontSize: px(C.fontPx * Z), left: 0, top: px(CY - C.fontPx * Z * .62) })
+const letters = [...C.word].map((ch) => el('span', 'lt', wordEl, ch))
+const tag = el('div', 'abs tag', wrap, C.tagline)
+const dot = el('div', 'abs', wrap); S(dot, { background: C.ink, borderRadius: '999px', overflow: 'hidden' })
+const lblBox = el('div', 'abs', dot); S(lblBox, { left: 0, top: 0, width: '100%', height: '100%', overflow: 'hidden' })
+const lbl = el('div', 'abs lbl', lblBox, C.label)
+const cur = el('div', 'abs'); cur.innerHTML = '<svg viewBox="0 0 22 22" width="34" height="34"><path d="M3 2 L3 17 L7 13.5 L10 20 L12.5 19 L9.6 12.6 L15 12.4 Z" fill="#000" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/></svg>'
+
+// measure the natural layout once: each letter's left edge and width, and the period
+let widths = [], total = 0
+letters.forEach((s) => { const w = s.getBoundingClientRect().width; widths.push(w); total += w })
+const dotD = C.fontPx * Z * .2                       // period diameter
+const gap = C.fontPx * Z * .03
+const x0 = CX - (total + gap + dotD) / 2
+const lefts = []; { let x = x0; widths.forEach((w) => { lefts.push(x); x += w }) }
+const dotX = x0 + total + gap + dotD / 2              // period centre
+const baseY = CY + C.fontPx * Z * .19                 // period centre y (sits on the baseline)
+S(tag, { left: 0, width: W + 'px', top: px(CY + C.fontPx * Z * .55), fontSize: px(26 * Z * (TALL ? 1.2 : 1)) })
+
+function render(t) {
+  const T = C.t
+  // f: 1 = full word, 0 = folded into the dot. Every letter moves toward the dot by f and its width follows, so they stay touching.
+  let f = 1
+  if (t < T.unsqueeze[0]) f = 1 - ei(seg(t, T.squeeze[0], T.squeeze[1]))
+  else f = sstep(t - T.unsqueeze[0], 1.6, .62)
+  letters.forEach((s, i) => {
+    const x = dotX - (dotX - lefts[i]) * f
+    S(s, { left: px(x), transform: `scaleX(${Math.max(f, .001)})`, opacity: f < .02 ? 0 : 1 })
+  })
+  S(tag, { opacity: clamp(f * 1.6 - .6) })
+
+  // dot -> pill: two springs, size and position, then the reverse
+  const grow = sstep(t - T.stretch, 1.9, .74) - sstep(t - T.shrink, 1.9, .74)
+  const move = sstep(t - T.stretch + .04, 1.6, .8) - sstep(t - T.shrink - .04, 1.6, .8)
+  const pw = lerp(dotD, C.pill.w * Z, grow), ph = lerp(dotD, C.pill.h * Z, grow)
+  const cx = lerp(dotX, CX, move), cy = lerp(baseY, CY, move)
+  // a short horizontal smear while it travels fast (velocity from the same pure function)
+  const v = Math.abs(lerp(dotX, CX, sstep(t + 1 / 60 - T.stretch + .04, 1.6, .8) - sstep(t + 1 / 60 - T.shrink - .04, 1.6, .8)) - cx) * 60
+  S(dot, { left: px(cx - pw / 2), top: px(cy - ph / 2), width: px(pw), height: px(ph), filter: v > 200 ? `blur(${Math.min(6, v / 600).toFixed(2)}px)` : 'none', opacity: f > .98 && t < T.squeeze[1] ? 1 : 1 })
+
+  // label rises through the pill's own mask line, then drops out before the pill shrinks
+  const up = eo5(seg(t, T.label, T.label + .35)) - ei(seg(t, T.labelOut, T.labelOut + .22))
+  S(lbl, { left: 0, width: '100%', top: px((1 - up) * ph * .9), lineHeight: px(ph), fontSize: px(C.pill.h * Z * .33) })
+
+  // cursor drifts in and presses the pill on the beat after the label lands
+  const press = seg(t, 2.45, 2.55) - seg(t, 2.6, 2.75)
+  const cIn = eio(seg(t, 1.6, 2.4)), cOut = eio(seg(t, 2.8, 3.4))
+  S(cur, { left: px(lerp(CX + 340 * Z, CX + 40 * Z, cIn) + cOut * 300 * Z), top: px(lerp(CY + 260 * Z, CY + 10 * Z, cIn) + cOut * 220 * Z), transform: `scale(${1 - press * .15})`, opacity: cIn > 0 && cOut < 1 ? 1 : 0 })
+  S(dot, { transform: `scale(${1 - press * .05})` })
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

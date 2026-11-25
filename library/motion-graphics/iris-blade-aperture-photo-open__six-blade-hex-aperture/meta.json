@@ -1,0 +1,34 @@
+{
+  "slug": "iris-blade-aperture-photo-open__six-blade-hex-aperture",
+  "visual_name": "Iris blade aperture photo open",
+  "code_name": "Six-blade hexagon aperture",
+  "category": "motion-graphics",
+  "summary": "A dark disc made of six camera iris blades snaps open around a hexagonal hole onto a photo, holds, and closes again.",
+  "aliases": [
+    "camera iris",
+    "aperture",
+    "shutter open",
+    "iris blades",
+    "lens open"
+  ],
+  "tags": [
+    "transition",
+    "photo",
+    "light",
+    "reveal"
+  ],
+  "tech": [
+    "canvas-2d"
+  ],
+  "duration_sec": 3.9,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #8: Develop: a photo print app launch",
+    "author": "@twoclipping",
+    "url": "https://x.com/twoclipping/status/2103835273813496100",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

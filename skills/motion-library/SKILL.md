@@ -5,7 +5,7 @@ description: "Find a motion graphic, transition, kinetic-type beat, UI animation
 
 # Motion library
 
-`KIT` = the repository root, two folders up from this skill. The library is `KIT/library/`: 358 pieces in `motion-graphics/`, `ui-components/`, `dashboards/` and `sound/`. Open `KIT/library/LIBRARY.html` to browse them by eye (live demos).
+`KIT` = the repository root, two folders up from this skill. The library is `KIT/library/`: 390 pieces in `motion-graphics/`, `ui-components/`, `dashboards/` and `sound/`. Open `KIT/library/LIBRARY.html` to browse them by eye (live demos).
 
 ## 1. Find it
 ```bash

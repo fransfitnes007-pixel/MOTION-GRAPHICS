@@ -1,0 +1,37 @@
+{
+  "slug": "wordmark-squeeze-into-period-pill__accordion-letter-collapse",
+  "visual_name": "Wordmark squeeze into period pill",
+  "code_name": "Accordion letter collapse into the dot",
+  "category": "motion-graphics",
+  "summary": "A heavy lowercase wordmark folds letter by letter into its own full stop, the dot stretches into a black pill and a label rises inside it; then it all plays back out.",
+  "aliases": [
+    "wordmark squeeze",
+    "logo into pill",
+    "accordion logo",
+    "dot to button",
+    "period pill"
+  ],
+  "tags": [
+    "logo",
+    "kinetic-type",
+    "cta",
+    "light",
+    "transition"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css",
+    "closed-form-spring"
+  ],
+  "duration_sec": 5,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #8: Develop: a photo print app launch",
+    "author": "@twoclipping",
+    "url": "https://x.com/twoclipping/status/2103835273813496100",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

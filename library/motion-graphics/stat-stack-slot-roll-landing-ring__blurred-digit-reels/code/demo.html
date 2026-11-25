@@ -1,0 +1,130 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Stat stack slot roll landing ring</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from @robj3d3's one-shot launch reel (revid.ai wall #18, 11.2s to 13.5s): three stats stack up one per beat,
+// each number spinning in on slot-machine digit reels with vertical motion blur, landing with a light ring that expands from it,
+// then the whole stack tilts away in 3D.
+const CONFIG = {
+  lines: [ { v: '11,294', label: 'creators' }, { v: '400K', label: 'posts sent' }, { v: '5B', label: 'impressions' } ],
+  plus: '+', accent: '#ff5a3c', ink: '#ffffff', label: 'rgba(255,255,255,.62)',
+  bg: '#110a08', glow: 'rgba(120,36,18,.55)',
+  size: 124, lead: 1.34,                 // number px at 1920 wide, line height as a multiple of size
+  t: { first: .3, every: .42, spin: .55, out: 3.35 },
+  dur: 4.2,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const Z = TALL ? W / 1080 * .82 : W / 1920
+const sstep = (tau, f = 2.1, z = .72) => { if (tau <= 0) return 0; const w = 2 * Math.PI * f, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * tau) * (Math.cos(wd * tau) + z * w / wd * Math.sin(wd * tau)) }
+stage.style.background = `radial-gradient(50% 60% at 40% 45%, ${C.glow}, transparent 75%), ${C.bg}`
+const cv = document.createElement('canvas'); cv.width = W; cv.height = H; stage.appendChild(cv)
+const g = cv.getContext('2d')
+const FONT = (s, w = 800) => `${w} ${s}px -apple-system, 'SF Pro Display', system-ui, sans-serif`
+const fs = C.size * Z, lh = fs * C.lead
+g.font = FONT(fs)
+const dw = g.measureText('0').width                 // tabular digit cell
+const plusW = g.measureText(C.plus).width
+const lines = C.lines.map((L) => {
+  const chars = [...L.v]; let w = 0
+  const cells = chars.map((ch) => { const isD = /\d/.test(ch); const cw = isD ? dw : g.measureText(ch).width; const c = { ch, isD, x: w, w: cw }; w += cw; return c })
+  return { ...L, cells, w }
+})
+const maxW = Math.max(...lines.map((l) => l.w)) + g.measureText(C.plus).width + 300 * Z
+const x0 = CX - maxW / 2, y0 = CY - (lines.length - 1) * lh / 2
+
+function reel(x, y, final, a, j) {   // one digit column: spins (2 + j) turns and settles with a small overshoot
+  const turns = 2 + j, sl = 1 + j * .1                       // later digits spin more turns and settle a little later
+  const u = sstep((t_ - a) / sl, 2.5, .8)
+  const pos = final - 10 * turns * (1 - u)
+  const v = Math.abs(10 * turns * (sstep((t_ + 1 / 60 - a) / sl, 2.5, .8) - u)) * 60   // digits per second
+  const smear = Math.min(v / 60 * fs * .9, fs * .9), N = smear > 2 ? 7 : 1
+  g.save(); g.beginPath(); g.rect(x - 4, y - fs * .8, dw + 8, fs * .93); g.clip()
+  for (let s = 0; s < N; s++) {
+    g.globalAlpha = 1 / N * (N > 1 ? 1.6 : 1)
+    const off = N > 1 ? (s / (N - 1) - .5) * smear : 0
+    const base = Math.floor(pos)
+    for (let k = -1; k <= 1; k++) { const d = ((base + k) % 10 + 10) % 10; g.fillText(String(d), x, y + (pos - (base + k)) * fs * 1.3 + off) }
+  }
+  g.restore()
+}
+let t_ = 0
+function render(t) {
+  t_ = t
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H)
+  g.textBaseline = 'alphabetic'
+  lines.forEach((L, i) => {
+    const a = C.t.first + i * C.t.every
+    if (t < a) return
+    const y = y0 + i * lh + fs * .35
+    // landing ring and soft flash
+    const land = a + C.t.spin * .55, rp = eo(seg(t, land, land + .75))
+    if (rp > 0 && rp < 1) {
+      const cx = x0 + L.w / 2, cy = y - fs * .35
+      g.globalAlpha = .4 * (1 - rp); g.strokeStyle = '#ffd9c8'; g.lineWidth = 3 * Z; g.beginPath(); g.arc(cx, cy, 40 * Z + rp * 620 * Z, 0, 7); g.stroke()
+      const gl = g.createRadialGradient(cx, cy, 0, cx, cy, 380 * Z); gl.addColorStop(0, `rgba(255,170,120,${.22 * (1 - rp)})`); gl.addColorStop(1, 'rgba(255,170,120,0)')
+      g.globalAlpha = 1; g.fillStyle = gl; g.fillRect(cx - 400 * Z, cy - 400 * Z, 800 * Z, 800 * Z)
+    }
+    g.globalAlpha = 1; g.font = FONT(fs); g.fillStyle = C.ink
+    let j = 0
+    L.cells.forEach((c) => {
+      if (c.isD) { reel(x0 + c.x, y, +c.ch, a, j); j++ }
+      else { const p = eo(seg(t, a + .12, a + .4)); g.globalAlpha = p; g.fillText(c.ch, x0 + c.x, y + (1 - p) * fs * .3); g.globalAlpha = 1 }
+    })
+    const pp = sstep(t - a - C.t.spin * .6, 2.4, .5)
+    g.fillStyle = C.accent; g.save(); g.translate(x0 + L.w + 4 * Z, y); g.scale(pp, pp); g.globalAlpha = clamp(pp); g.fillText(C.plus, 0, 0); g.restore()
+    const lp = eo5(seg(t, a + .25, a + .6))
+    g.globalAlpha = lp; g.fillStyle = C.label; g.font = FONT(fs * .3, 600)
+    g.fillText(L.label, x0 + L.w + plusW + 22 * Z + (1 - lp) * 30 * Z, y - fs * .1)
+    g.globalAlpha = 1
+  })
+  // exit: the canvas itself tilts away in 3D with blur
+  const o = ei(seg(t, C.t.out, C.t.out + .5))
+  cv.style.transform = o > 0 ? `perspective(1200px) translateX(${-o * 500 * Z}px) rotateY(${o * 38}deg) rotateX(${o * 14}deg) rotate(${-o * 8}deg)` : ''
+  cv.style.filter = o > 0 ? `blur(${o * 10}px)` : ''
+  cv.style.opacity = 1 - o
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

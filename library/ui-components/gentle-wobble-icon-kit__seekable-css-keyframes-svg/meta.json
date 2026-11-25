@@ -1,0 +1,52 @@
+{
+  "slug": "gentle-wobble-icon-kit__seekable-css-keyframes-svg",
+  "visual_name": "Gentle wobble icon kit",
+  "code_name": "Seekable CSS keyframes SVG",
+  "category": "ui-components",
+  "summary": "30 line icons (camera, star, trophy, gift, gamepad, dumbbell, book, music, thumbs-up, crown, target, megaphone...) on a light page, each looping a small wobble, swing or pulse by itself. Plain SVG plus CSS keyframes, seekable by time.",
+  "aliases": [
+    "wobble icons",
+    "animateicons",
+    "creator icons",
+    "trophy icon",
+    "camera icon animated",
+    "icon kit light"
+  ],
+  "tags": [
+    "card",
+    "hover",
+    "light",
+    "21st",
+    "icons",
+    "nav"
+  ],
+  "tech": [
+    "svg",
+    "css-keyframes",
+    "web-animations-api",
+    "vanilla-js"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "variants_elsewhere": [
+    "spring-draw-wobble-icon-kit__seekable-css-keyframes-svg",
+    "animated-and-static-icon-pack__line-md-smil-plus-lucide"
+  ],
+  "credit": [
+    {
+      "idea": "AnimateIcons / Lucide",
+      "author": "Avijit Dey",
+      "url": "https://21st.dev/community/icons",
+      "license": "MIT",
+      "note": "Rebuilt as render(t) from the published code."
+    },
+    {
+      "idea": "Lucide",
+      "author": "Lucide Contributors",
+      "url": "https://lucide.dev/",
+      "license": "ISC",
+      "note": "Rebuilt as render(t) from the published code."
+    }
+  ]
+}

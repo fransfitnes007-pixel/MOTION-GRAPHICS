@@ -1,0 +1,35 @@
+{
+  "slug": "stat-stack-slot-roll-landing-ring__blurred-digit-reels",
+  "visual_name": "Stat stack slot roll with landing ring",
+  "code_name": "Blurred digit reels",
+  "category": "motion-graphics",
+  "summary": "Three big stats stack up one per beat, each number spinning in on slot-machine digit reels with vertical motion blur and landing with an expanding light ring; then the stack tilts away in 3D.",
+  "aliases": [
+    "stat stack",
+    "slot numbers",
+    "social proof numbers",
+    "big stats",
+    "number roll"
+  ],
+  "tags": [
+    "counter",
+    "dark",
+    "kinetic-type",
+    "stat-tile"
+  ],
+  "tech": [
+    "canvas-2d",
+    "css-3d"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #18: SuperX: a one-shot launch reel",
+    "author": "@robj3d3",
+    "url": "https://x.com/robj3d3/status/2103875898349088830",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>product-tour-card-with-live-pictures__ghost-pointer-step-through</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#171717;font-family:ui-sans-serif,system-ui,-apple-system,'SF Pro Text',sans-serif}
+.card{position:absolute;left:0;top:0;width:448px;height:372px;background:#fff;border-radius:16px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);transform-origin:0 0}
+.pic{position:absolute;left:8px;top:8px;width:432px;height:176px;background:#f7f7f7;border-radius:8px;overflow:hidden}
+.ttl{position:absolute;left:20px;top:204px;width:408px;font-size:18px;line-height:26px;font-weight:600;margin:0}
+.bdy{position:absolute;left:20px;top:236px;width:408px;font-size:14px;line-height:20px;color:#5c5c5c}
+.seg{position:absolute;top:294px;height:4px;width:16px;border-radius:3px}
+.cnt{position:absolute;left:108px;top:288px;font-size:12px;line-height:16px;color:#737373}
+.b{position:absolute;top:320px;height:32px;border-radius:8px;font-size:14px;font-weight:500;line-height:32px;padding:0 12px;white-space:nowrap}
+.skip{left:8px;color:#737373}.back{color:#5c5c5c}.pri{background:#171717;color:#fff}
+.ring{position:absolute;background:#fff;border-radius:12px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.06)}
+.pic .t13{position:absolute;font-size:13px;font-weight:500;line-height:20px;white-space:nowrap}
+.pic .t12{position:absolute;font-size:12px;line-height:16px;white-space:nowrap}
+.g{color:#737373}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.key{position:absolute;width:32px;height:28px;border-radius:7px;background:#ececec;font-size:13px;line-height:28px;text-align:center;color:#444}
+.ptr{position:absolute;left:0;top:0;width:18px;height:20px;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from the live preview of @aadixc0de/onboarding (21st.dev, MIT). Read from the page: a 448x372 card, four steps,
+// a ghost pointer that glides to the primary button (620 ms, cubic-bezier(.4,0,.2,1)), dips to 0.86 for 120 ms, and the
+// step changes 134 ms after the press. Steps change instantly (no slide); only the progress segments tint over 0.15 s.
+const CONFIG = {
+  stepSec: 3.133,
+  steps: [
+    { title: 'Ask in plain words', body: 'Describe the bug or the change you want. The agent reads your code before it answers, so you do not need to paste files.', cta: 'Show me projects', pic: 'prompt' },
+    { title: 'Projects keep the context', body: 'Instructions and files you add to a project apply to every chat in it. Set them once instead of in every message.', cta: 'How the agent works', pic: 'files' },
+    { title: 'Watch it work, step in any time', body: 'Each file it reads and each command it runs shows up as it happens. Edits that touch your code wait for your approval.', cta: 'One last thing', pic: 'run' },
+    { title: 'Everything is one shortcut away', body: 'Press ⌘K to jump to a chat, switch models or start a new project without leaving the keyboard.', cta: 'Start a chat', pic: 'keys' }]
+}
+const STEPS = CONFIG.steps, SS = CONFIG.stepSec, DUR = SS * STEPS.length
+window.DUR = DUR
+const card = el('div', 'card'), pic = el('div', 'pic', card), ttl = el('h2', 'ttl', card), bdy = el('div', 'bdy', card)
+const segs = [0, 1, 2, 3].map((i) => { const s = el('div', 'seg', card); s.style.left = (20 + i * 20) + 'px'; return s }); const cnt = el('div', 'cnt', card)
+const skip = el('div', 'b skip', card); skip.textContent = 'Skip tour'; const back = el('div', 'b back', card); back.textContent = 'Back'; const pri = el('div', 'b pri', card)
+const ptr = el('div', 'ptr', card); ptr.innerHTML = '<svg viewBox="0 0 18 20"><path d="M2 1.500l12.500 8.700-5.400 1.200 3 5.600-2.400 1.200-3-5.600L2 16.500z" fill="#111" stroke="#fff" stroke-width="1.300" stroke-linejoin="round"/></svg>'
+const FILE = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="#737373" stroke-width="1.100" stroke-linecap="round" stroke-linejoin="round"><path d="M3 1.500h5l3 3v8H3z"/><path d="M8 1.500v3h3"/><path d="M5 8h4M5 10.200h4"/></svg>'
+const FOLDER = '<svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="#737373" stroke-width="1.100" stroke-linejoin="round"><path d="M1.500 3.500h4l1 1.200h6v6.800h-11z"/></svg>'
+const PICS = {
+  prompt: `<div class="ring" style="left:56px;top:56px;width:337px;height:64px;border-radius:12px"><div class="t12" style="position:absolute;left:14px;top:12px;width:250px;font-size:13px;line-height:20px;white-space:normal">Why does the checkout test pass locally but fail on CI?</div><div style="position:absolute;right:8px;bottom:8px;width:24px;height:24px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>`,
+  files: `<div class="ring" style="left:48px;top:30px;width:337px;height:116px"><div style="position:absolute;left:8px;top:0;font-size:0">${''}</div><div class="t13" style="left:36px;top:6px">Checkout service</div><div style="position:absolute;left:14px;top:13px">${FOLDER}</div>
+   <div style="position:absolute;left:14px;top:37px">${FILE}</div><div class="t12" style="left:36px;top:36px;color:#171717">Instructions</div><div class="t12 g" style="left:110px;top:36px">Answer in TypeScript, prefer server…</div>
+   <div style="position:absolute;left:14px;top:61px">${FILE}</div><div class="t12" style="left:36px;top:60px;color:#171717">schema.prisma</div><div class="t12 g" style="left:129px;top:60px">14 KB</div>
+   <div style="position:absolute;left:14px;top:85px">${FILE}</div><div class="t12" style="left:36px;top:84px;color:#171717">runbook.md</div><div class="t12 g" style="left:112px;top:84px">6 KB</div></div>`,
+  run: `<div class="t12" style="left:52px;top:38px"><span class="g" style="font-size:13px">✓</span></div><div class="t12 g" style="left:70px;top:38px;font-size:13px">Read</div><div class="t12 mono" style="left:108px;top:38px;font-size:12.500px;color:#171717">src/lib/checkout.ts</div>
+   <div class="t12" style="left:52px;top:66px"><span class="g" style="font-size:13px">✓</span></div><div class="t12 g" style="left:70px;top:66px;font-size:13px">Edited</div><div class="t12 mono" style="left:118px;top:66px;font-size:12.500px;color:#171717">tests/checkout.test.ts</div>
+   <div class="spin" style="position:absolute;left:51px;top:92px;width:12px;height:12px;border-radius:50%;border:1.500px solid #d4d4d4;border-top-color:#737373"></div><div class="t12 g" style="left:70px;top:94px;font-size:13px;color:#171717">Running</div><div class="t12 mono" style="left:128px;top:94px;font-size:12.500px;color:#171717">pnpm test --filter checkout</div>`,
+  keys: `<div class="key" style="left:181px;top:54px">⌘</div><div class="key" style="left:219px;top:54px">K</div>
+   <div class="ring" style="left:104px;top:90px;width:224px;height:56px;border-radius:10px"><div style="position:absolute;left:12px;top:22px"><svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="#8a8a8a" stroke-width="1.200" stroke-linecap="round"><circle cx="5" cy="5" r="3.500"/><path d="M8 8l2.500 2.500"/></svg></div><div class="t12 g" style="left:32px;top:10px;width:180px;font-size:13px;line-height:18px;white-space:normal;color:#6e6e6e">Search chats, actions and models…</div></div>`
+}
+pic.innerHTML = ''
+const picEls = STEPS.map((s) => { const d = el('div', '', pic); d.style.cssText = 'position:absolute;inset:0'; d.innerHTML = PICS[s.pic]; return d })
+const spin = picEls[2].querySelector('.spin')
+const GW = 448, GH = 372, sc = TALL ? W * .9 / GW : Math.min(H * .78 / GH, W * .34 / GW)
+S(card, { left: px(CX - GW * sc / 2), top: px(CY - GH * sc / 2), transform: `scale(${sc})` })
+const bez = (p1x, p1y, p2x, p2y) => (x) => { x = clamp(x); let lo = 0, hi = 1, u = x; for (let i = 0; i < 24; i++) { const bx = 3 * (1 - u) * (1 - u) * u * p1x + 3 * (1 - u) * u * u * p2x + u * u * u; if (bx < x) lo = u; else hi = u; u = (lo + hi) / 2 } return 3 * (1 - u) * (1 - u) * u * p1y + 3 * (1 - u) * u * u * p2y + u * u * u }
+const mat = bez(.4, 0, .2, 1)
+// primary button geometry per step (right-aligned at x=428)
+let btn = STEPS.map((s) => { pri.textContent = s.cta; return { w: pri.offsetWidth } })
+const priC = (k) => { const w = btn[k].w; return { x: 428 - w / 2, y: 320 + 32 * .6 } }
+function render(t) {
+  const k = Math.min(STEPS.length - 1, Math.floor(t / SS)), lt = t - k * SS, st = STEPS[k]
+  picEls.forEach((d, i) => vis(d, i === k))
+  ttl.textContent = st.title; bdy.textContent = st.body; cnt.textContent = (k + 1) + ' of 4'
+  segs.forEach((s, i) => { const on = i <= k; const tt = i === k ? seg(lt, 0, .15) : 1; s.style.background = on ? (i === k ? `rgb(${Math.round(235 - 212 * tt)},${Math.round(235 - 212 * tt)},${Math.round(235 - 212 * tt)})` : '#171717') : '#ebebeb' })
+  pri.textContent = st.cta; const w = btn[k].w; S(pri, { left: px(428 - w), width: px(w) })
+  vis(back, k > 0); S(back, { left: px(428 - w - 8 - back.offsetWidth) })
+  // illustration of step 1 fades in on first mount; the run step's spinner turns 800 ms per turn
+  picEls[0].style.opacity = k === 0 ? seg(lt, 0, .35) : 1
+  spin.style.transform = `rotate(${(t % .8) / .8 * 360}deg)`
+  // pointer: shown from 0.5 s in step 1; each step glides to the button 0.834 s before the swap, presses 0.134 s before
+  let x, y, show = 1, press = 0
+  const tgt = priC(k), gs = SS - .834, ge = SS - .214
+  if (k === 0 && lt < .5 + .22) { show = seg(lt, .5, .72); x = tgt.x + 70; y = tgt.y + 46 }
+  if (k === 0) { const p = mat(seg(lt, .72, 1.34)); x = lerp(tgt.x + 70, tgt.x, p); y = lerp(tgt.y + 46, tgt.y, p) } else {
+    const prev = priC(k - 1)
+    x = tgt.x; y = tgt.y
+    // after the swap the pointer stays where it clicked and eases to the new button centre over 0.62 s starting 0.834 s before the next swap
+    x = prev.x + (tgt.x - prev.x) * mat(seg(lt, 0, .62)); y = tgt.y
+  }
+  if (k === STEPS.length - 1 && lt > SS - .134) show = 1
+  const cl = SS - .134; if (lt >= cl) press = Math.min(1, (lt - cl) / .12)
+  if (k === 0 && lt > 2.999) press = Math.min(1, (lt - 2.999) / .12)
+  S(ptr, { left: px(x - 3), top: px(y - 2), opacity: show, transform: `scale(${1 - .14 * press})` })
+  pri.style.background = press > 0 ? '#000' : '#171717'
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

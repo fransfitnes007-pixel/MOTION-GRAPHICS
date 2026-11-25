@@ -1,0 +1,117 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>progress-button__fill-then-letter-morph-label</title>
+<!-- Library demo. Every frame is a pure function of time: window.render(t). Open it in a browser and it loops.
+     engine/tools/render_demo.cjs drives it frame by frame (?render=1). URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#fff;color:#0a0a0a;font-family:ui-sans-serif,system-ui,-apple-system,'SF Pro Text',sans-serif}
+.pb svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pb-btn{position:absolute;height:40px;border:1px solid #34343a;border-radius:8px;display:flex;align-items:center;padding:0 16px;gap:8px;font-size:14px;font-weight:500;line-height:20px;white-space:nowrap;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.pb-fill{position:absolute;left:0;top:0;bottom:0;background:#0a0a0a}
+.pb-ic{position:relative;width:16px;height:16px;flex:none}.pb-ic svg{position:absolute;left:0;top:0;width:16px;height:16px}
+.pb-lab{position:relative;display:flex;height:20px}
+.pb-s{position:relative;display:block;height:20px;overflow:visible}
+.pb-s i{position:absolute;left:0;top:0;font-style:normal}
+.pb-pct{position:relative;overflow:hidden;height:20px;font-variant-numeric:tabular-nums}
+.pb-cap{position:absolute;left:0;width:100%;text-align:center;font-size:13px;color:#737373}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+// cubic-bezier(x1,y1,x2,y2) as a function of progress, for the CSS easings read off the source
+const bez = (x1, y1, x2, y2) => { const B = (a, b, t) => 3 * a * (1 - t) * (1 - t) * t + 3 * b * (1 - t) * t * t + t * t * t
+  return (x) => { x = clamp(x); let lo = 0, hi = 1, t = x; for (let i = 0; i < 30; i++) { t = (lo + hi) / 2; B(x1, x2, t) < x ? lo = t : hi = t } return B(y1, y2, t) } }
+// phone-sized virtual canvas: the source previews were read at 540 x 960 CSS px; tall scales that to the frame width, wide shows a 540 column at 760 high
+const SC = TALL ? W / 540 : H / 760, vw = W / SC, vh = H / SC
+const V = el('div', 'abs'); S(V, { left: '0px', top: '0px', width: vw + 'px', height: vh + 'px', transform: `scale(${SC})`, transformOrigin: '0 0', overflow: 'hidden' })
+const CW = Math.min(vw, 540), COL = el('div', 'abs', V); S(COL, { left: px((vw - CW) / 2), top: '0px', width: CW + 'px', height: vh + 'px', overflow: 'hidden' })
+
+// ---------- SKILL START: edit from here down ----------
+const CONFIG = { idle: 'Export', working: 'Exporting', done: 'Exported', clickAt: .6,
+  // seconds after the click, read off the live preview
+  grow: .5, fillFrom: 1.05, fillTo: 3.05, doneAt: 3.1, resetAt: 5.0, size: TALL ? 2 : 3 }
+const DUR = 7.4
+window.DUR = DUR
+const FILLP = [[1.05, 0], [1.12, 1], [2.12, 32], [3.05, 100]]     // percent by seconds after the click
+const pctAt = (s) => { if (s <= FILLP[0][0]) return 0; for (let i = 1; i < FILLP.length; i++) if (s <= FILLP[i][0]) return lerp(FILLP[i - 1][1], FILLP[i][1], (s - FILLP[i - 1][0]) / (FILLP[i][0] - FILLP[i - 1][0])); return 100 }
+const DL = '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10.500l5 5 5-5M4 15v4a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-4" transform="translate(-1 0)"/></svg>'
+const CK = '<svg viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7"/></svg>'
+const root = el('div', 'pb abs', COL); S(root, { left: '0', top: '0', width: '100%', height: vh + 'px' })
+const btn = el('div', 'pb-btn', root)
+const fill = el('div', 'pb-fill', btn)
+const ic = el('div', 'pb-ic', btn), icA = el('div', '', ic, DL), icB = el('div', '', ic, CK)
+icA.style.cssText = icB.style.cssText = 'position:absolute;left:0;top:0;width:16px;height:16px'
+const lab = el('div', 'pb-lab', btn)
+const MAXN = 9, slots = []
+for (let i = 0; i < MAXN; i++) { const s = el('span', 'pb-s', lab); slots.push({ s, a: el('i', '', s), b: el('i', '', s) }) }
+const pct = el('div', 'pb-pct', btn, '100%')
+const meas = (ch) => { const m = el('span', '', btn, ch); m.style.cssText = 'position:absolute;visibility:hidden;white-space:pre'; const w = m.getBoundingClientRect().width / SC; m.remove(); return w }
+const cw = {}; ;(CONFIG.idle + CONFIG.working + CONFIG.done).split('').forEach((c) => { if (!cw[c]) cw[c] = meas(c) })
+const PW = pct.offsetWidth
+const E5 = bez(.22, 1, .36, 1)
+const word = (w, i) => (i < w.length ? w[i] : '')
+function render(t){
+  const C = CONFIG, s = t - C.clickAt
+  // stage of the label: idle -> working at the click, working -> done, done -> idle
+  const sw = [[s >= C.resetAt, C.done, C.idle, C.resetAt], [s >= C.doneAt, C.working, C.done, C.doneAt], [s >= 0, C.idle, C.working, 0]].find((x) => x[0]) || [true, C.idle, C.idle, -99]
+  const [, from, to, ts] = sw
+  let tw = 0, sheen = s >= .2 && s < C.doneAt
+  slots.forEach((o, i) => {
+    const a = word(from, i), b = word(to, i), p = a === b ? 1 : clamp((s - ts - i * .035) / .3), e = eo(p)
+    o.a.textContent = a; o.b.textContent = b
+    const wa = a ? cw[a] : 0, wb = b ? cw[b] : 0
+    S(o.s, { width: px2(lerp(wa, wb, a === b ? 1 : e)) })
+    const wave = sheen ? .5 + .5 * Math.sin((t / 1.4 - i * .09) * Math.PI * 2) : 1, base = sheen ? .4 + .6 * wave : 1
+    S(o.a, { opacity: String(a === b ? base : (1 - clamp(p * 2)) * base), transform: a === b ? 'none' : `translateY(${-5 * e}px)`, filter: a === b ? 'none' : `blur(${e * 2}px)` })
+    S(o.b, { opacity: String(a === b ? 0 : clamp(p * 2 - .5) * base), transform: `translateY(${(1 - e) * 6}px)`, filter: `blur(${(1 - e) * 2}px)` })
+  })
+  // percent readout grows in after the click and folds away on reset
+  const pin = E5(clamp(s / C.grow)), pout = E5(clamp((s - C.resetAt) / .5))
+  const pv = Math.round(pctAt(s))
+  pct.textContent = pv + '%'; S(pct, { width: px2(PW * pin * (1 - pout)), opacity: String(pin * (1 - pout)), marginLeft: px2(-8 * (1 - pin * (1 - pout))) })
+  // icon swaps to a tick when it finishes
+  const ci = s >= C.doneAt && s < C.resetAt ? eo(clamp((s - C.doneAt) / .25)) : s >= C.resetAt ? 1 - eo(clamp((s - C.resetAt) / .25)) : 0
+  S(icA, { opacity: String(1 - ci), transform: `scale(${1 - .3 * ci})` }); S(icB, { opacity: String(ci), transform: `scale(${.7 + .3 * ci})` })
+  // the fill is the progress; it fades after reset
+  const fo = s >= C.resetAt ? 1 - E5(clamp((s - C.resetAt) / .5)) : 1
+  const full = btn.offsetWidth - 2
+  S(fill, { width: px2(full * pctAt(s) / 100), opacity: String(.1 * fo + (s >= C.doneAt && s < C.doneAt + .35 ? .06 * Math.sin(Math.PI * (s - C.doneAt) / .35) : 0)) })
+  // button: press, then scale up for the frame
+  const press = Math.sin(Math.PI * clamp((s + .12) / .3))
+  const z = C.size
+  S(btn, { left: '0px', top: '0px', transform: `scale(${z * (1 - .04 * press)})`, transformOrigin: '0 0' })
+  const bw = btn.offsetWidth, bh = btn.offsetHeight
+  S(btn, { left: px2((CW - bw * z) / 2), top: px2(vh * .46 - bh * z / 2) })
+}
+function px2(n) { return Math.round(n * 100) / 100 + 'px' }
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

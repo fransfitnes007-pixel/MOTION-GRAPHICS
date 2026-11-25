@@ -1,0 +1,36 @@
+{
+  "slug": "theme-toggle-dark-flood__clip-circle-from-knob",
+  "visual_name": "Theme toggle dark flood",
+  "code_name": "Clip circle grown from the knob",
+  "category": "motion-graphics",
+  "summary": "A light scene with a headline and a phone; a toggle is clicked, its knob slides, and a dark circle grows from the knob until the same scene is in dark mode; then it flips back.",
+  "aliases": [
+    "dark mode toggle",
+    "theme switch",
+    "light to dark",
+    "colour flood",
+    "night mode"
+  ],
+  "tags": [
+    "transition",
+    "light",
+    "dark",
+    "phone",
+    "cursor"
+  ],
+  "tech": [
+    "vanilla-js",
+    "css-clip-path"
+  ],
+  "duration_sec": 4.6,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #15: Meet Peggy: an app launch made in 20 minutes",
+    "author": "@likithareddy",
+    "url": "https://x.com/likithareddy/status/2104202329805467984",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

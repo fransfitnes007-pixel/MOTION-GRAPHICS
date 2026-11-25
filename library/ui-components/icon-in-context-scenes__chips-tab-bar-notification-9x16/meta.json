@@ -1,0 +1,54 @@
+{
+  "slug": "icon-in-context-scenes__chips-tab-bar-notification-9x16",
+  "visual_name": "Icon in context scenes",
+  "code_name": "Chips, tab bar, notification bubbles at 9:16",
+  "category": "ui-components",
+  "summary": "Three 9:16 scenes that show animated icons in a believable app: lock-screen notification bubbles with a bell and badge, feature label chips that land one by one, and a tab bar whose active icon plays as a pill moves between tabs.",
+  "aliases": [
+    "notification bubble",
+    "tab bar",
+    "label chips",
+    "icon chips",
+    "app nav",
+    "lock screen"
+  ],
+  "tags": [
+    "card",
+    "nav",
+    "cta",
+    "dark",
+    "phone",
+    "hero",
+    "icons",
+    "21st"
+  ],
+  "tech": [
+    "svg",
+    "css-keyframes",
+    "web-animations-api",
+    "vanilla-js"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "original-build",
+  "variants_elsewhere": [
+    "spring-draw-wobble-icon-kit__seekable-css-keyframes-svg",
+    "gentle-wobble-icon-kit__seekable-css-keyframes-svg"
+  ],
+  "credit": [
+    {
+      "idea": "Lucide Animated (icon motion reused from the kit)",
+      "author": "pqoqubbw (shown as dmytro on 21st.dev)",
+      "url": "https://21st.dev/community/icons",
+      "license": "MIT",
+      "note": "Original scenes built with these icons."
+    },
+    {
+      "idea": "Lucide",
+      "author": "Lucide Contributors",
+      "url": "https://lucide.dev/",
+      "license": "ISC",
+      "note": "Original scenes built with these icons."
+    }
+  ]
+}

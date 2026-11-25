@@ -1,0 +1,151 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>mechanical-odometer__drum-carry-spring</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:radial-gradient(120% 80% at 50% 30%,#2a2b30 0%,#101114 70%);color:#e9e2d1;font-family:"Big Shoulders Display","Barlow Condensed","Arial Narrow","Helvetica Neue",sans-serif}
+.plate{position:absolute;border-radius:.3em;background:linear-gradient(160deg,#5e626a 0%,#232427 22%,#232427 70%,#0a0b0d 100%);box-shadow:0 1.2em 2.4em -.8em rgba(0,0,0,.8),inset 0 .04em .04em rgba(255,255,255,.55),inset 0 -.04em .04em rgba(0,0,0,.6)}
+.win{position:absolute;overflow:hidden;background:#1a1b1d;border-radius:.08em;box-shadow:inset 0 0 .12em rgba(0,0,0,.9)}
+.strip{position:absolute;left:0;top:0;width:100%}
+.strip div{text-align:center;font-weight:800;color:#ece4d2}
+.shade{position:absolute;inset:0;pointer-events:none}
+.glass{position:absolute;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,0) 36%,rgba(255,255,255,0) 70%,rgba(255,255,255,.05) 100%)}
+.screw{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e6e9ee,#8a9099 55%,#4b4f55);box-shadow:0 0 0 .02em rgba(0,0,0,.6)}
+.sep{position:absolute;display:flex;align-items:flex-end;justify-content:center;font-weight:800;color:#ece4d2}
+.lab{position:absolute;text-align:center;letter-spacing:.32em;text-transform:uppercase;color:#e9e2d1;font-weight:700;opacity:.85}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Carry rule, spring and light model are copied from the original component (MIT, cipriantitire).
+const CARRY = 0.1
+const clampN = (n, lo, hi) => Math.min(hi, Math.max(lo, n))
+const wrap10 = (p) => ((p % 10) + 10) % 10
+const wrapDelta = (d) => wrap10(d + 5) - 5
+function scaled(value, decimals = 0){ const n = Math.abs(value) * 10 ** decimals; const r = Math.round(n); return Math.abs(n - r) < 1e-6 ? r : n }
+function drumPositions(value, count, decimals = 0, carry = CARRY){
+  const n = scaled(value, decimals), out = new Array(count)
+  let below = n % 10; out[0] = below
+  for (let k = 1; k < count; k += 1){
+    const w = k === 1 ? carry : 1
+    const digit = Math.floor(n / 10 ** k) % 10
+    below = digit + clampN((below - 10 + w) / w, 0, 1)
+    out[k] = below
+  }
+  return out
+}
+function stepSpring(s, target, dt, stiffness = 140, damping = 0.85){
+  const c = 2 * damping * Math.sqrt(stiffness); let left = clampN(dt, 0, 1 / 30)
+  while (left > 1e-6){ const h = Math.min(left, 1 / 120); s.v += (stiffness * (target - s.x) - c * s.v) * h; s.x += s.v * h; left -= h }
+  return s
+}
+const smear = (speed, cap) => { const t = clampN((speed - cap / 3) / (cap - cap / 3), 0, 1); return t * t * (3 - 2 * t) }
+const smoothstep = (a, b, x) => { const t = clampN((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t) }
+const FACE = 1.12, RADIUS = FACE / (2 * Math.tan(Math.PI / 10)), WINDOW = 1.56
+function drumLight(light, gloss = 0.34, samples = 21, radius = RADIUS, half = WINDOW / 2){
+  const t = (light * Math.PI) / 180, lx = Math.sin(t)
+  const E = Math.sin(38 * Math.PI / 180), Z = Math.cos(38 * Math.PI / 180)
+  const L = [lx * E, -Math.cos(t) * E, Z], hy = L[1], hz = L[2] + 1, hl = Math.hypot(hy, hz), side = 1 - 0.45 * Math.abs(lx), out = []
+  for (let i = 0; i < samples; i++){
+    const at = i / (samples - 1), y = (-1 + 2 * at) * half, s = clampN(-y / radius, -1, 1), c = Math.sqrt(1 - s * s), ny = -s
+    const dif = Math.max(0, ny * L[1] + c * L[2]) / Z, spec = gloss * side * Math.max(0, (ny * hy + c * hz) / hl) ** 90
+    const ao = smoothstep(0.42, 1, Math.abs(y) / half) * 0.72, b = dif * (1 - ao)
+    out.push({ at, dark: clampN(1 - b, 0, .94), light: clampN((b - 1) * .45 + spec, 0, 1) })
+  }
+  return out
+}
+
+const CONFIG = { label: 'Views', digits: 5, decimals: 0, stiffness: 140, damping: 0.85, maxSpin: 24, lampAngle: 315,
+  // [time, target value]
+  script: [[0, 0], [0.35, 1099], [3.0, 1100], [4.6, 12480]] }
+const DUR = 7
+window.DUR = DUR
+const N = CONFIG.digits
+const size = Math.min(W / (N * 0.62 + 2.2), TALL ? 190 : 210)   // numeral size in px
+const em = size
+const plate = el('div', 'plate'); const pw = (N * FACE * .62 + 1.1 + .1 * 3) * em, ph = 2.5 * em
+S(plate, { left: px(CX - pw / 2), top: px(CY - ph / 2), width: px(pw), height: px(ph), fontSize: px(em) })
+const lab = el('div', 'lab', plate); lab.textContent = CONFIG.label
+S(lab, { left: 0, width: '100%', top: '.16em', fontSize: '.2em' })
+;[[.12,.12],[1,.12],[.12,2.38],[1,2.38]].forEach(() => 0)
+for (const [fx, fy] of [[.2, .2], [.2, 2.3], [-.2, .2], [-.2, 2.3]]){
+  const sc = el('div', 'screw', plate); S(sc, { width: '.13em', height: '.13em', top: (fy < 1 ? '.16em' : 'auto'), bottom: (fy > 1 ? '.16em' : 'auto'), left: fx > 0 ? '.16em' : 'auto', right: fx < 0 ? '.16em' : 'auto' })
+}
+const drumW = FACE * .62 * em, winH = WINDOW * em, lineH = FACE * em
+const winL = (pw - (N * drumW + (N - 1) * .06 * em + (Math.floor((N - 1) / 3)) * .3 * em)) / 2
+const drums = []
+let x = winL
+const light = drumLight(CONFIG.lampAngle)
+const shadeCss = 'linear-gradient(to bottom,' + light.map((s) => `rgba(${s.light > 0.02 ? '255,248,235' : '0,0,0'},${(s.light > 0.02 ? s.light : s.dark).toFixed(3)}) ${(s.at * 100).toFixed(1)}%`).join(',') + ')'
+for (let k = N - 1; k >= 0; k--){
+  const w = el('div', 'win', plate); S(w, { left: px(x), top: px(.5 * em + (1.7 * em - winH) / 2 + .15 * em), width: px(drumW), height: px(winH) })
+  const strip = el('div', 'strip', w)
+  for (let i = 0; i < 12; i++){ const d = el('div', '', strip); d.textContent = i % 10; S(d, { height: px(lineH), lineHeight: px(lineH), fontSize: px(em * .98) }) }
+  const sh = el('div', 'shade', w); sh.style.background = shadeCss
+  const gl = el('div', 'glass', w); S(gl, { inset: 0 })
+  drums[k] = { w, strip }
+  x += drumW + .06 * em
+  if (k > 0 && k % 3 === 0 && k < N){ const sp = el('div', 'sep', plate, ','); S(sp, { left: px(x - .06 * em), top: px(.5 * em + (1.7 * em - winH) / 2 + .15 * em), width: px(.3 * em), height: px(winH), fontSize: px(em * .8), lineHeight: px(winH), alignItems: 'center' }); x += .3 * em - .06 * em + .06 * em }
+}
+
+// The value is a spring toward the current target; simulate from t=0 so any t is a pure function.
+function valueAt(t){
+  const s = { x: 0, v: 0 }, dt = 1 / 120; let ti = 0, sp = 0
+  while (ti < t - 1e-9){
+    const target = CONFIG.script.filter((p) => p[0] <= ti).pop()[1]
+    stepSpring(s, target, dt, CONFIG.stiffness, CONFIG.damping); ti += dt
+  }
+  return s.x
+}
+function render(t){
+  const v = valueAt(t), v2 = valueAt(t + 1 / 60)
+  const pos = drumPositions(v, N, CONFIG.decimals), pos2 = drumPositions(v2, N, CONFIG.decimals)
+  const shown = Math.round(Math.abs(v))
+  for (let k = 0; k < N; k++){
+    const speed = Math.abs(wrapDelta(pos2[k] - pos[k])) * 60   // digits per second
+    const sm = smear(speed, CONFIG.maxSpin)
+    const d = drums[k]
+    d.strip.style.transform = `translateY(${-(pos[k] * lineH) + (winH - lineH) / 2}px)`
+    d.strip.style.filter = sm > .01 ? `blur(${(sm * .05 * em).toFixed(2)}px)` : 'none'
+    d.w.style.opacity = (k > CONFIG.decimals && shown < 10 ** k) ? .55 : 1   // leading drums sit dark: their zero is blanked
+    d.strip.style.opacity = (k > CONFIG.decimals && shown < 10 ** k && pos[k] < .5) ? 0 : 1
+  }
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

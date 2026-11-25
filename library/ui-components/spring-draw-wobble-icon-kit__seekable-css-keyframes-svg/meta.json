@@ -1,0 +1,53 @@
+{
+  "slug": "spring-draw-wobble-icon-kit__seekable-css-keyframes-svg",
+  "visual_name": "Animated icon kit (draw, spring, wobble)",
+  "code_name": "Seekable CSS keyframes SVG",
+  "category": "ui-components",
+  "summary": "40 line icons (heart, bell, check, send, download, play, sparkles, zap, phone, trending-up, wallet, rocket...) that each loop their own hover motion by themselves: ticks draw in, bells swing, arrows spring, lids shake. Plain SVG plus CSS keyframes, so any frame is reproducible from a time.",
+  "aliases": [
+    "animated icons",
+    "icon kit",
+    "lucide animated",
+    "icon pack",
+    "bell swing",
+    "draw on icons"
+  ],
+  "tags": [
+    "card",
+    "loader",
+    "hover",
+    "dark",
+    "21st",
+    "icons",
+    "nav",
+    "cta"
+  ],
+  "tech": [
+    "svg",
+    "css-keyframes",
+    "web-animations-api",
+    "vanilla-js"
+  ],
+  "duration_sec": 6,
+  "has_sound": false,
+  "demo_kind": "rebuilt",
+  "variants_elsewhere": [
+    "animated-and-static-icon-pack__line-md-smil-plus-lucide"
+  ],
+  "credit": [
+    {
+      "idea": "Lucide Animated",
+      "author": "pqoqubbw (shown as dmytro on 21st.dev)",
+      "url": "https://21st.dev/community/icons",
+      "license": "MIT",
+      "note": "Rebuilt as render(t) from the published code."
+    },
+    {
+      "idea": "Lucide",
+      "author": "Lucide Contributors",
+      "url": "https://lucide.dev/",
+      "license": "ISC",
+      "note": "Rebuilt as render(t) from the published code."
+    }
+  ]
+}

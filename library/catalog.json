@@ -1,5 +1,5 @@
 {
- "count": 358,
+ "count": 390,
  "skills": [
   {
    "slug": "3d-book-open-push-in__css-3d-cover-hinge",
@@ -203,6 +203,40 @@
    "sound": null,
    "demo": "motion-graphics/avatar-stack-glass-pill__back-ease-pop/code/demo.html",
    "skill": "motion-graphics/avatar-stack-glass-pill__back-ease-pop/SKILL.md"
+  },
+  {
+   "slug": "ball-guided-ui-world-camera__log-zoom-follow-cam",
+   "path": "motion-graphics/ball-guided-ui-world-camera__log-zoom-follow-cam",
+   "category": "motion-graphics",
+   "visual_name": "Ball guided UI world with follow camera",
+   "code_name": "Log-space zoom follow cam",
+   "summary": "On a dark dot grid a white ball pops out of a toggle, drives a slider to 100, bounces across three cards as they arrive, then rides home while the camera follows and pulls back.",
+   "aliases": [
+    "bouncing ball ui",
+    "ball guide",
+    "ui world",
+    "follow camera",
+    "white dot"
+   ],
+   "tags": [
+    "dark",
+    "cursor",
+    "card",
+    "transition",
+    "camera"
+   ],
+   "tech": [
+    "canvas-2d"
+   ],
+   "duration_sec": 5.6,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/ball-guided-ui-world-camera__log-zoom-follow-cam/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/ball-guided-ui-world-camera__log-zoom-follow-cam/code/demo.html",
+   "skill": "motion-graphics/ball-guided-ui-world-camera__log-zoom-follow-cam/SKILL.md"
   },
   {
    "slug": "beat-grid-kinetic-type__words-on-eighth-notes",
@@ -1497,6 +1531,40 @@
    "skill": "motion-graphics/dual-panel-slide-money-counter__eased-int-count/SKILL.md"
   },
   {
+   "slug": "easing-lanes-comparison-board__six-curve-ball-race",
+   "path": "motion-graphics/easing-lanes-comparison-board__six-curve-ball-race",
+   "category": "motion-graphics",
+   "visual_name": "Easing lanes comparison board",
+   "code_name": "Six-curve ball race",
+   "summary": "A cream board titled in italic serif shows six easing lanes, each with a tiny curve icon, and six balls racing from A to B on their own easing at the same time.",
+   "aliases": [
+    "easing chart",
+    "ease comparison",
+    "animation principles",
+    "timing curves",
+    "motion showreel"
+   ],
+   "tags": [
+    "chart",
+    "dark",
+    "light",
+    "showreel",
+    "education"
+   ],
+   "tech": [
+    "canvas-2d"
+   ],
+   "duration_sec": 4.2,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/easing-lanes-comparison-board__six-curve-ball-race/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/easing-lanes-comparison-board__six-curve-ball-race/code/demo.html",
+   "skill": "motion-graphics/easing-lanes-comparison-board__six-curve-ball-race/SKILL.md"
+  },
+  {
    "slug": "email-link-strikethrough__scalex-red-bar",
    "path": "motion-graphics/email-link-strikethrough__scalex-red-bar",
    "category": "motion-graphics",
@@ -2015,6 +2083,42 @@
    "skill": "motion-graphics/grain-vignette-fade-to-black__svg-noise-overlay/SKILL.md"
   },
   {
+   "slug": "habit-tile-grid-diagonal-pop-logo__diagonal-wave-spring-scale",
+   "path": "motion-graphics/habit-tile-grid-diagonal-pop-logo__diagonal-wave-spring-scale",
+   "category": "motion-graphics",
+   "visual_name": "Habit tile grid diagonal pop logo",
+   "code_name": "Diagonal wave spring scale",
+   "summary": "A grid of rounded tiles in four colour bands pops in as a diagonal wave from the top-left, some cells left dim, then a two-colour wordmark rises letter by letter beneath it.",
+   "aliases": [
+    "tile grid logo",
+    "habit grid",
+    "contribution grid",
+    "diagonal pop",
+    "app logo intro"
+   ],
+   "tags": [
+    "logo",
+    "dark",
+    "end-card",
+    "hero",
+    "phone"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css",
+    "closed-form-spring"
+   ],
+   "duration_sec": 4.3,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/habit-tile-grid-diagonal-pop-logo__diagonal-wave-spring-scale/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/habit-tile-grid-diagonal-pop-logo__diagonal-wave-spring-scale/code/demo.html",
+   "skill": "motion-graphics/habit-tile-grid-diagonal-pop-logo__diagonal-wave-spring-scale/SKILL.md"
+  },
+  {
    "slug": "handwritten-annotation__clip-wipe-arrow-draw",
    "path": "motion-graphics/handwritten-annotation__clip-wipe-arrow-draw",
    "category": "motion-graphics",
@@ -2181,6 +2285,39 @@
    "sound": null,
    "demo": "motion-graphics/inquiry-chip-fly-to-inbox__lerp-path-badge-pop/code/demo.html",
    "skill": "motion-graphics/inquiry-chip-fly-to-inbox__lerp-path-badge-pop/SKILL.md"
+  },
+  {
+   "slug": "iris-blade-aperture-photo-open__six-blade-hex-aperture",
+   "path": "motion-graphics/iris-blade-aperture-photo-open__six-blade-hex-aperture",
+   "category": "motion-graphics",
+   "visual_name": "Iris blade aperture photo open",
+   "code_name": "Six-blade hexagon aperture",
+   "summary": "A dark disc made of six camera iris blades snaps open around a hexagonal hole onto a photo, holds, and closes again.",
+   "aliases": [
+    "camera iris",
+    "aperture",
+    "shutter open",
+    "iris blades",
+    "lens open"
+   ],
+   "tags": [
+    "transition",
+    "photo",
+    "light",
+    "reveal"
+   ],
+   "tech": [
+    "canvas-2d"
+   ],
+   "duration_sec": 3.9,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/iris-blade-aperture-photo-open__six-blade-hex-aperture/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/iris-blade-aperture-photo-open__six-blade-hex-aperture/code/demo.html",
+   "skill": "motion-graphics/iris-blade-aperture-photo-open__six-blade-hex-aperture/SKILL.md"
   },
   {
    "slug": "iris-transition__circle-mask-open-close",
@@ -2733,6 +2870,41 @@
    "skill": "motion-graphics/notification-card-stack__staggered-spring-rise/SKILL.md"
   },
   {
+   "slug": "notification-storm-then-one-card__accelerating-spawn-3d-fly-in",
+   "path": "motion-graphics/notification-storm-then-one-card__accelerating-spawn-3d-fly-in",
+   "category": "motion-graphics",
+   "visual_name": "Notification storm then one card",
+   "code_name": "Accelerating spawn with 3D fly-in",
+   "summary": "A serif question builds over an app dock while notification cards fly in faster and faster until they bury the frame, blow outward, and leave one card in the centre with the answer line.",
+   "aliases": [
+    "notification overload",
+    "too many apps",
+    "notification storm",
+    "hook",
+    "missed message"
+   ],
+   "tags": [
+    "card",
+    "light",
+    "kinetic-type",
+    "hook",
+    "phone"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css-3d"
+   ],
+   "duration_sec": 5.6,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/notification-storm-then-one-card__accelerating-spawn-3d-fly-in/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/notification-storm-then-one-card__accelerating-spawn-3d-fly-in/code/demo.html",
+   "skill": "motion-graphics/notification-storm-then-one-card__accelerating-spawn-3d-fly-in/SKILL.md"
+  },
+  {
    "slug": "one-composition-four-aspect-ratios__scale-and-tall-factor",
    "path": "motion-graphics/one-composition-four-aspect-ratios__scale-and-tall-factor",
    "category": "motion-graphics",
@@ -3031,6 +3203,41 @@
    "sound": null,
    "demo": "motion-graphics/phone-trio-view-counters__spring-flank-count-up/code/demo.html",
    "skill": "motion-graphics/phone-trio-view-counters__spring-flank-count-up/SKILL.md"
+  },
+  {
+   "slug": "photo-tile-grid-paper-map-unfold__center-plus-corners-hinge",
+   "path": "motion-graphics/photo-tile-grid-paper-map-unfold__center-plus-corners-hinge",
+   "category": "motion-graphics",
+   "visual_name": "Photo tile grid paper map unfold",
+   "code_name": "Centre, plus, corners hinge unfold",
+   "summary": "One big photo shrinks into a tile, then a 3x3 grid unfolds from behind it like a paper map: first up, down, left and right, then the four corners.",
+   "aliases": [
+    "grid unfold",
+    "paper map",
+    "photo grid",
+    "tiles fold out",
+    "gallery reveal"
+   ],
+   "tags": [
+    "card",
+    "photo",
+    "light",
+    "3d",
+    "reveal"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css-3d"
+   ],
+   "duration_sec": 3.8,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/photo-tile-grid-paper-map-unfold__center-plus-corners-hinge/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/photo-tile-grid-paper-map-unfold__center-plus-corners-hinge/code/demo.html",
+   "skill": "motion-graphics/photo-tile-grid-paper-map-unfold__center-plus-corners-hinge/SKILL.md"
   },
   {
    "slug": "platform-badge-tiles-fly-tick__spring-rise-tick-pop",
@@ -3526,6 +3733,40 @@
    "skill": "motion-graphics/stat-cards-lift-from-window__spring-translatez/SKILL.md"
   },
   {
+   "slug": "stat-stack-slot-roll-landing-ring__blurred-digit-reels",
+   "path": "motion-graphics/stat-stack-slot-roll-landing-ring__blurred-digit-reels",
+   "category": "motion-graphics",
+   "visual_name": "Stat stack slot roll with landing ring",
+   "code_name": "Blurred digit reels",
+   "summary": "Three big stats stack up one per beat, each number spinning in on slot-machine digit reels with vertical motion blur and landing with an expanding light ring; then the stack tilts away in 3D.",
+   "aliases": [
+    "stat stack",
+    "slot numbers",
+    "social proof numbers",
+    "big stats",
+    "number roll"
+   ],
+   "tags": [
+    "counter",
+    "dark",
+    "kinetic-type",
+    "stat-tile"
+   ],
+   "tech": [
+    "canvas-2d",
+    "css-3d"
+   ],
+   "duration_sec": 4.2,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/stat-stack-slot-roll-landing-ring__blurred-digit-reels/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/stat-stack-slot-roll-landing-ring__blurred-digit-reels/code/demo.html",
+   "skill": "motion-graphics/stat-stack-slot-roll-landing-ring__blurred-digit-reels/SKILL.md"
+  },
+  {
    "slug": "text-scramble-decode__random-glyphs-settle",
    "path": "motion-graphics/text-scramble-decode__random-glyphs-settle",
    "category": "motion-graphics",
@@ -3559,6 +3800,41 @@
    "skill": "motion-graphics/text-scramble-decode__random-glyphs-settle/SKILL.md"
   },
   {
+   "slug": "theme-toggle-dark-flood__clip-circle-from-knob",
+   "path": "motion-graphics/theme-toggle-dark-flood__clip-circle-from-knob",
+   "category": "motion-graphics",
+   "visual_name": "Theme toggle dark flood",
+   "code_name": "Clip circle grown from the knob",
+   "summary": "A light scene with a headline and a phone; a toggle is clicked, its knob slides, and a dark circle grows from the knob until the same scene is in dark mode; then it flips back.",
+   "aliases": [
+    "dark mode toggle",
+    "theme switch",
+    "light to dark",
+    "colour flood",
+    "night mode"
+   ],
+   "tags": [
+    "transition",
+    "light",
+    "dark",
+    "phone",
+    "cursor"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css-clip-path"
+   ],
+   "duration_sec": 4.6,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/theme-toggle-dark-flood__clip-circle-from-knob/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/theme-toggle-dark-flood__clip-circle-from-knob/code/demo.html",
+   "skill": "motion-graphics/theme-toggle-dark-flood__clip-circle-from-knob/SKILL.md"
+  },
+  {
    "slug": "tilted-3d-poster-wall__preserve3d-translatez-drift",
    "path": "motion-graphics/tilted-3d-poster-wall__preserve3d-translatez-drift",
    "category": "motion-graphics",
@@ -3585,6 +3861,75 @@
    "sound": null,
    "demo": "motion-graphics/tilted-3d-poster-wall__preserve3d-translatez-drift/code/demo.html",
    "skill": "motion-graphics/tilted-3d-poster-wall__preserve3d-translatez-drift/SKILL.md"
+  },
+  {
+   "slug": "truchet-arc-tile-field-radial-recolor__quarter-circle-wave",
+   "path": "motion-graphics/truchet-arc-tile-field-radial-recolor__quarter-circle-wave",
+   "category": "motion-graphics",
+   "visual_name": "Truchet arc tile field with radial recolour",
+   "code_name": "Quarter-circle tiles turned by a wave",
+   "summary": "A black field of thick white quarter-circle arcs forms an endless maze; a circular wave from the centre turns each tile 90 degrees and paints it orange, then a second wave turns them back to white.",
+   "aliases": [
+    "truchet",
+    "maze pattern",
+    "arc tiles",
+    "pattern wave",
+    "generative background"
+   ],
+   "tags": [
+    "background",
+    "dark",
+    "pattern",
+    "generative",
+    "showreel"
+   ],
+   "tech": [
+    "canvas-2d"
+   ],
+   "duration_sec": 4.6,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/truchet-arc-tile-field-radial-recolor__quarter-circle-wave/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/truchet-arc-tile-field-radial-recolor__quarter-circle-wave/code/demo.html",
+   "skill": "motion-graphics/truchet-arc-tile-field-radial-recolor__quarter-circle-wave/SKILL.md"
+  },
+  {
+   "slug": "two-phone-cloud-sync-arc__dotted-arc-travelling-dots",
+   "path": "motion-graphics/two-phone-cloud-sync-arc__dotted-arc-travelling-dots",
+   "category": "motion-graphics",
+   "visual_name": "Two phone cloud sync arc",
+   "code_name": "Dotted arc with travelling dots",
+   "summary": "An old phone and a new phone stand together under a two-line headline; a dotted arc runs between them through a cloud badge, coloured dots ride along it and the badge arrow turns into a tick.",
+   "aliases": [
+    "phone to phone",
+    "sync arc",
+    "backup restore",
+    "transfer dots",
+    "cloud sync"
+   ],
+   "tags": [
+    "phone",
+    "dark",
+    "kinetic-type",
+    "card"
+   ],
+   "tech": [
+    "vanilla-js",
+    "svg",
+    "css"
+   ],
+   "duration_sec": 5.2,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/two-phone-cloud-sync-arc__dotted-arc-travelling-dots/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/two-phone-cloud-sync-arc__dotted-arc-travelling-dots/code/demo.html",
+   "skill": "motion-graphics/two-phone-cloud-sync-arc__dotted-arc-travelling-dots/SKILL.md"
   },
   {
    "slug": "ui-callout-leader-line__lerp-line-draw-label",
@@ -3614,6 +3959,76 @@
    "sound": null,
    "demo": "motion-graphics/ui-callout-leader-line__lerp-line-draw-label/code/demo.html",
    "skill": "motion-graphics/ui-callout-leader-line__lerp-line-draw-label/SKILL.md"
+  },
+  {
+   "slug": "ui-state-morph-chain__sum-of-springs-rounded-rect",
+   "path": "motion-graphics/ui-state-morph-chain__sum-of-springs-rounded-rect",
+   "category": "motion-graphics",
+   "visual_name": "UI state morph chain",
+   "code_name": "Sum of springs on one rounded rect",
+   "summary": "One black rounded shape never cuts: a button becomes a loader, a tick, a toast and a tab bar whose indicator stretches between tabs, then the button again.",
+   "aliases": [
+    "shape morph",
+    "button morph",
+    "ui morph",
+    "one shape",
+    "morphing button"
+   ],
+   "tags": [
+    "transition",
+    "cursor",
+    "light",
+    "nav",
+    "cta",
+    "loader"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css",
+    "closed-form-spring"
+   ],
+   "duration_sec": 5,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/ui-state-morph-chain__sum-of-springs-rounded-rect/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/ui-state-morph-chain__sum-of-springs-rounded-rect/code/demo.html",
+   "skill": "motion-graphics/ui-state-morph-chain__sum-of-springs-rounded-rect/SKILL.md"
+  },
+  {
+   "slug": "unit-dot-grid-fill-count__one-dot-per-unit-ring-regroup",
+   "path": "motion-graphics/unit-dot-grid-fill-count__one-dot-per-unit-ring-regroup",
+   "category": "motion-graphics",
+   "visual_name": "Unit dot grid fill with count",
+   "code_name": "One dot per unit, regroup into a ring",
+   "summary": "A big number counts up while a grid with one dot per unit lights up orange, then every dot flies into a ring that shows a share with the percentage in the middle.",
+   "aliases": [
+    "dot grid count",
+    "unit chart",
+    "dot matrix number",
+    "percentage ring",
+    "data dots"
+   ],
+   "tags": [
+    "counter",
+    "chart",
+    "dark",
+    "data"
+   ],
+   "tech": [
+    "canvas-2d"
+   ],
+   "duration_sec": 5.2,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/unit-dot-grid-fill-count__one-dot-per-unit-ring-regroup/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/unit-dot-grid-fill-count__one-dot-per-unit-ring-regroup/code/demo.html",
+   "skill": "motion-graphics/unit-dot-grid-fill-count__one-dot-per-unit-ring-regroup/SKILL.md"
   },
   {
    "slug": "url-pill-typewriter-caret__substring-blink",
@@ -3929,6 +4344,42 @@
    "skill": "motion-graphics/wordmark-slam-shock-ring__spring-scale-shake/SKILL.md"
   },
   {
+   "slug": "wordmark-squeeze-into-period-pill__accordion-letter-collapse",
+   "path": "motion-graphics/wordmark-squeeze-into-period-pill__accordion-letter-collapse",
+   "category": "motion-graphics",
+   "visual_name": "Wordmark squeeze into period pill",
+   "code_name": "Accordion letter collapse into the dot",
+   "summary": "A heavy lowercase wordmark folds letter by letter into its own full stop, the dot stretches into a black pill and a label rises inside it; then it all plays back out.",
+   "aliases": [
+    "wordmark squeeze",
+    "logo into pill",
+    "accordion logo",
+    "dot to button",
+    "period pill"
+   ],
+   "tags": [
+    "logo",
+    "kinetic-type",
+    "cta",
+    "light",
+    "transition"
+   ],
+   "tech": [
+    "vanilla-js",
+    "css",
+    "closed-form-spring"
+   ],
+   "duration_sec": 5,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "motion-graphics/wordmark-squeeze-into-period-pill__accordion-letter-collapse/media/poster.jpg",
+   "sound": null,
+   "demo": "motion-graphics/wordmark-squeeze-into-period-pill__accordion-letter-collapse/code/demo.html",
+   "skill": "motion-graphics/wordmark-squeeze-into-period-pill__accordion-letter-collapse/SKILL.md"
+  },
+  {
    "slug": "accordion-listing-row-copy-fields__caret-rotate-copy-flash",
    "path": "ui-components/accordion-listing-row-copy-fields__caret-rotate-copy-flash",
    "category": "ui-components",
@@ -4159,6 +4610,112 @@
    "sound": null,
    "demo": "ui-components/ai-prompt-box-with-colour-border-beam__conic-ring-mask-plus-haze/code/demo.html",
    "skill": "ui-components/ai-prompt-box-with-colour-border-beam__conic-ring-mask-plus-haze/SKILL.md"
+  },
+  {
+   "slug": "animated-and-static-icon-pack__line-md-smil-plus-lucide",
+   "path": "ui-components/animated-and-static-icon-pack__line-md-smil-plus-lucide",
+   "category": "ui-components",
+   "visual_name": "Animated and static icon pack",
+   "code_name": "Line-md SMIL plus Lucide",
+   "summary": "A grid of 18 self-animating line icons (check, bell, loader, download, upload, heart, star, gear and more) above 36 clean static Lucide icons, all as SVG you can drop into a video.",
+   "aliases": [
+    "icons",
+    "animated icons",
+    "icon pack",
+    "svg icons",
+    "lucide",
+    "icon grid"
+   ],
+   "tags": [
+    "card",
+    "loader",
+    "dark",
+    "21st",
+    "icons"
+   ],
+   "tech": [
+    "svg",
+    "smil",
+    "vanilla-js"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "exact-formula",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/animated-and-static-icon-pack__line-md-smil-plus-lucide/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/animated-and-static-icon-pack__line-md-smil-plus-lucide/code/demo.html",
+   "skill": "ui-components/animated-and-static-icon-pack__line-md-smil-plus-lucide/SKILL.md"
+  },
+  {
+   "slug": "animated-number__slide-up-down-by-trend",
+   "path": "ui-components/animated-number__slide-up-down-by-trend",
+   "category": "ui-components",
+   "visual_name": "Animated number",
+   "code_name": "Slide up down by trend",
+   "summary": "A number that swaps as a whole: the old value slides 10px up and fades while the new one comes in from below on an increase, mirrored on a decrease, between a minus and a plus button.",
+   "aliases": [
+    "number swap",
+    "counter",
+    "stepper",
+    "plus minus counter",
+    "quantity",
+    "rolling number"
+   ],
+   "tags": [
+    "counter",
+    "card",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "motion"
+   ],
+   "duration_sec": 8,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/animated-number__slide-up-down-by-trend/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/animated-number__slide-up-down-by-trend/code/demo.html",
+   "skill": "ui-components/animated-number__slide-up-down-by-trend/SKILL.md"
+  },
+  {
+   "slug": "ask-bar-greeting-composer__word-blur-in-dock-drop",
+   "path": "ui-components/ask-bar-greeting-composer__word-blur-in-dock-drop",
+   "category": "ui-components",
+   "visual_name": "Ask bar greeting composer",
+   "code_name": "Word blur-in, dock drop",
+   "summary": "Dark navy page with a breathing blue glow: a greeting blurs in word by word above a pill ask bar; picking a model, typing and sending drops the bar to the bottom and an answer arrives under a spinning sparkle.",
+   "aliases": [
+    "ai search bar",
+    "prompt bar",
+    "ask ai",
+    "gemini style",
+    "chat input",
+    "greeting"
+   ],
+   "tags": [
+    "form",
+    "dark",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "css-keyframes"
+   ],
+   "duration_sec": 11,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/ask-bar-greeting-composer__word-blur-in-dock-drop/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/ask-bar-greeting-composer__word-blur-in-dock-drop/code/demo.html",
+   "skill": "ui-components/ask-bar-greeting-composer__word-blur-in-dock-drop/SKILL.md"
   },
   {
    "slug": "audience-toggle-hero__presence-swap",
@@ -4840,6 +5397,42 @@
    "sound": null,
    "demo": "ui-components/chat-message-bubbles-avatar-name-delivered__start-end-alignment/code/demo.html",
    "skill": "ui-components/chat-message-bubbles-avatar-name-delivered__start-end-alignment/SKILL.md"
+  },
+  {
+   "slug": "chat-with-model-menu__streaming-reply-reasoning-dropdown",
+   "path": "ui-components/chat-with-model-menu__streaming-reply-reasoning-dropdown",
+   "category": "ui-components",
+   "visual_name": "Chat with model menu",
+   "code_name": "Streaming reply, reasoning dropdown",
+   "summary": "White full-screen AI chat: a question is typed into the pill composer and sent, \"Thinking...\" shimmers, the answer streams in at about 160 characters a second, then the reasoning-level dropdown opens and a new level is picked.",
+   "aliases": [
+    "ai chat",
+    "chatgpt",
+    "chat screen",
+    "model picker",
+    "streaming answer",
+    "thinking"
+   ],
+   "tags": [
+    "card",
+    "form",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "tailwind",
+    "radix-dropdown"
+   ],
+   "duration_sec": 9.5,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/chat-with-model-menu__streaming-reply-reasoning-dropdown/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/chat-with-model-menu__streaming-reply-reasoning-dropdown/code/demo.html",
+   "skill": "ui-components/chat-with-model-menu__streaming-reply-reasoning-dropdown/SKILL.md"
   },
   {
    "slug": "circuit-board-node-diagram__right-angle-traces-travelling-pulse",
@@ -5657,6 +6250,81 @@
    "skill": "ui-components/distance-wheel-drag-fill__dial-rotate-arc-progress/SKILL.md"
   },
   {
+   "slug": "dither-donut-chart__bayer-dot-halftone-spring-morph",
+   "path": "ui-components/dither-donut-chart__bayer-dot-halftone-spring-morph",
+   "category": "ui-components",
+   "visual_name": "Dither donut chart",
+   "code_name": "Bayer dot halftone, spring morph",
+   "summary": "A dark card with a donut drawn as a 1-bit dither of square dots; period tabs (Week, Month, Quarter, Year) make the segments spring to new sizes while the legend counts swap.",
+   "aliases": [
+    "donut chart",
+    "pie chart",
+    "dither chart",
+    "halftone chart",
+    "plan distribution",
+    "share chart"
+   ],
+   "tags": [
+    "chart",
+    "donut",
+    "dark",
+    "canvas",
+    "21st",
+    "dither"
+   ],
+   "tech": [
+    "react",
+    "canvas",
+    "spring-physics"
+   ],
+   "duration_sec": 12.5,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/dither-donut-chart__bayer-dot-halftone-spring-morph/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/dither-donut-chart__bayer-dot-halftone-spring-morph/code/demo.html",
+   "skill": "ui-components/dither-donut-chart__bayer-dot-halftone-spring-morph/SKILL.md"
+  },
+  {
+   "slug": "dot-matrix-revenue-card__counter-ease-dots-pop-in",
+   "path": "ui-components/dot-matrix-revenue-card__counter-ease-dots-pop-in",
+   "category": "ui-components",
+   "visual_name": "Dot-matrix revenue card",
+   "code_name": "Counter ease, dots pop in",
+   "summary": "A minimal grey card with a light-weight +326% counter that eases up while a chart made only of 4px dots pops in column by column; Daily, Weekly and Monthly tabs re-pop it and re-count the number.",
+   "aliases": [
+    "revenue card",
+    "dot chart",
+    "stats card",
+    "percentage counter",
+    "dot matrix chart",
+    "growth card"
+   ],
+   "tags": [
+    "chart",
+    "stats",
+    "light",
+    "card",
+    "21st",
+    "counter"
+   ],
+   "tech": [
+    "react",
+    "css-keyframes"
+   ],
+   "duration_sec": 12,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/dot-matrix-revenue-card__counter-ease-dots-pop-in/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/dot-matrix-revenue-card__counter-ease-dots-pop-in/code/demo.html",
+   "skill": "ui-components/dot-matrix-revenue-card__counter-ease-dots-pop-in/SKILL.md"
+  },
+  {
    "slug": "dot-sphere-thinking-pill__scatter-to-grid-latlong-rotation",
    "path": "ui-components/dot-sphere-thinking-pill__scatter-to-grid-latlong-rotation",
    "category": "ui-components",
@@ -6280,6 +6948,45 @@
    "skill": "ui-components/frosted-stat-tiles-over-photo__tilted-glass-float/SKILL.md"
   },
   {
+   "slug": "gentle-wobble-icon-kit__seekable-css-keyframes-svg",
+   "path": "ui-components/gentle-wobble-icon-kit__seekable-css-keyframes-svg",
+   "category": "ui-components",
+   "visual_name": "Gentle wobble icon kit",
+   "code_name": "Seekable CSS keyframes SVG",
+   "summary": "30 line icons (camera, star, trophy, gift, gamepad, dumbbell, book, music, thumbs-up, crown, target, megaphone...) on a light page, each looping a small wobble, swing or pulse by itself. Plain SVG plus CSS keyframes, seekable by time.",
+   "aliases": [
+    "wobble icons",
+    "animateicons",
+    "creator icons",
+    "trophy icon",
+    "camera icon animated",
+    "icon kit light"
+   ],
+   "tags": [
+    "card",
+    "hover",
+    "light",
+    "21st",
+    "icons",
+    "nav"
+   ],
+   "tech": [
+    "svg",
+    "css-keyframes",
+    "web-animations-api",
+    "vanilla-js"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "rebuilt",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/gentle-wobble-icon-kit__seekable-css-keyframes-svg/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/gentle-wobble-icon-kit__seekable-css-keyframes-svg/code/demo.html",
+   "skill": "ui-components/gentle-wobble-icon-kit__seekable-css-keyframes-svg/SKILL.md"
+  },
+  {
    "slug": "glass-folder-fan-out-icons__path-clip-pocket",
    "path": "ui-components/glass-folder-fan-out-icons__path-clip-pocket",
    "category": "ui-components",
@@ -6691,6 +7398,44 @@
    "skill": "ui-components/hold-to-commit-button__press-fill-progress-release/SKILL.md"
   },
   {
+   "slug": "holographic-business-card__pointer-tilt-shard-foil-flip",
+   "path": "ui-components/holographic-business-card__pointer-tilt-shard-foil-flip",
+   "category": "ui-components",
+   "visual_name": "Holographic business card",
+   "code_name": "Pointer tilt, shard foil, flip",
+   "summary": "A sky-blue business card that tilts to the pointer on a spring, lights a pastel shard foil and glare, and flips on click to a white back with a QR code.",
+   "aliases": [
+    "business card",
+    "holographic card",
+    "tilt card",
+    "flip card",
+    "foil card",
+    "intro card"
+   ],
+   "tags": [
+    "card",
+    "hover",
+    "3d",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "motion",
+    "css-3d",
+    "canvas-mask"
+   ],
+   "duration_sec": 9,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/holographic-business-card__pointer-tilt-shard-foil-flip/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/holographic-business-card__pointer-tilt-shard-foil-flip/code/demo.html",
+   "skill": "ui-components/holographic-business-card__pointer-tilt-shard-foil-flip/SKILL.md"
+  },
+  {
    "slug": "hover-expand-icon-sidebar__width-collapse-label-fade",
    "path": "ui-components/hover-expand-icon-sidebar__width-collapse-label-fade",
    "category": "ui-components",
@@ -6837,6 +7582,47 @@
    "skill": "ui-components/icon-folder-tiles-pop-out__hover-lift-spring-stagger/SKILL.md"
   },
   {
+   "slug": "icon-in-context-scenes__chips-tab-bar-notification-9x16",
+   "path": "ui-components/icon-in-context-scenes__chips-tab-bar-notification-9x16",
+   "category": "ui-components",
+   "visual_name": "Icon in context scenes",
+   "code_name": "Chips, tab bar, notification bubbles at 9:16",
+   "summary": "Three 9:16 scenes that show animated icons in a believable app: lock-screen notification bubbles with a bell and badge, feature label chips that land one by one, and a tab bar whose active icon plays as a pill moves between tabs.",
+   "aliases": [
+    "notification bubble",
+    "tab bar",
+    "label chips",
+    "icon chips",
+    "app nav",
+    "lock screen"
+   ],
+   "tags": [
+    "card",
+    "nav",
+    "cta",
+    "dark",
+    "phone",
+    "hero",
+    "icons",
+    "21st"
+   ],
+   "tech": [
+    "svg",
+    "css-keyframes",
+    "web-animations-api",
+    "vanilla-js"
+   ],
+   "duration_sec": 12,
+   "demo_kind": "original-build",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/icon-in-context-scenes__chips-tab-bar-notification-9x16/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/icon-in-context-scenes__chips-tab-bar-notification-9x16/code/demo.html",
+   "skill": "ui-components/icon-in-context-scenes__chips-tab-bar-notification-9x16/SKILL.md"
+  },
+  {
    "slug": "icon-promo-card-with-link__rounded-surface-card",
    "path": "ui-components/icon-promo-card-with-link__rounded-surface-card",
    "category": "ui-components",
@@ -6936,6 +7722,43 @@
    "skill": "ui-components/imessage-typing-bubbles__spring-pop-in-dots/SKILL.md"
   },
   {
+   "slug": "isometric-line-bars__spring-lift-neighbour-wave",
+   "path": "ui-components/isometric-line-bars__spring-lift-neighbour-wave",
+   "category": "ui-components",
+   "visual_name": "Isometric line bars",
+   "code_name": "Spring lift, neighbour wave",
+   "summary": "Six white isometric bars drawn in thin grey line art on a rounded slab: they spring up together, then the bar under the pointer lifts with its two neighbours following and a caption names its value.",
+   "aliases": [
+    "isometric chart",
+    "3d bars",
+    "line art bar chart",
+    "skyline bars",
+    "stats bars"
+   ],
+   "tags": [
+    "chart",
+    "isometric",
+    "light",
+    "line-art",
+    "21st",
+    "svg"
+   ],
+   "tech": [
+    "react",
+    "svg",
+    "spring-physics"
+   ],
+   "duration_sec": 8,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/isometric-line-bars__spring-lift-neighbour-wave/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/isometric-line-bars__spring-lift-neighbour-wave/code/demo.html",
+   "skill": "ui-components/isometric-line-bars__spring-lift-neighbour-wave/SKILL.md"
+  },
+  {
    "slug": "link-in-bio-stack__staggered-glass-rows",
    "path": "ui-components/link-in-bio-stack__staggered-glass-rows",
    "category": "ui-components",
@@ -6964,6 +7787,46 @@
    "sound": null,
    "demo": "ui-components/link-in-bio-stack__staggered-glass-rows/code/demo.html",
    "skill": "ui-components/link-in-bio-stack__staggered-glass-rows/SKILL.md"
+  },
+  {
+   "slug": "liquid-glass-expandable-sidebar__flip-expand-glass-rail",
+   "path": "ui-components/liquid-glass-expandable-sidebar__flip-expand-glass-rail",
+   "category": "ui-components",
+   "visual_name": "Liquid glass expandable sidebar",
+   "code_name": "Flip expand, glass refraction rail",
+   "summary": "A frosted-glass sidebar over a photo that expands from a 68px icon rail to 260px grouped navigation; a glass selection pill glides between pages and labels become tooltips on the rail.",
+   "aliases": [
+    "sidebar",
+    "glass sidebar",
+    "side nav",
+    "expandable nav",
+    "app menu",
+    "nav rail",
+    "liquid glass"
+   ],
+   "tags": [
+    "nav",
+    "3d",
+    "light",
+    "21st",
+    "hover"
+   ],
+   "tech": [
+    "react",
+    "gsap",
+    "gsap-flip",
+    "svg-displacement",
+    "css-backdrop-filter"
+   ],
+   "duration_sec": 7.5,
+   "demo_kind": "rebuilt",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/liquid-glass-expandable-sidebar__flip-expand-glass-rail/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/liquid-glass-expandable-sidebar__flip-expand-glass-rail/code/demo.html",
+   "skill": "ui-components/liquid-glass-expandable-sidebar__flip-expand-glass-rail/SKILL.md"
   },
   {
    "slug": "liquid-metal-cta-button__registered-angle-conic-rim",
@@ -7052,6 +7915,44 @@
    "sound": null,
    "demo": "ui-components/logo-y-spin-and-swing__css-preserve-3d-keyframes/code/demo.html",
    "skill": "ui-components/logo-y-spin-and-swing__css-preserve-3d-keyframes/SKILL.md"
+  },
+  {
+   "slug": "mechanical-odometer__drum-carry-spring",
+   "path": "ui-components/mechanical-odometer__drum-carry-spring",
+   "category": "ui-components",
+   "visual_name": "Mechanical odometer",
+   "code_name": "Drum carry spring",
+   "summary": "A black anodised plate with a window of numeral drums that roll like a real odometer; 1,099 to 1,100 turns the tens and hundreds over together at the very end of the units' turn.",
+   "aliases": [
+    "odometer",
+    "counter",
+    "view count",
+    "money counter",
+    "drum counter",
+    "number roll",
+    "mechanical counter"
+   ],
+   "tags": [
+    "counter",
+    "3d",
+    "dark",
+    "21st",
+    "card"
+   ],
+   "tech": [
+    "react",
+    "css-3d",
+    "spring-physics"
+   ],
+   "duration_sec": 7,
+   "demo_kind": "exact-formula",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/mechanical-odometer__drum-carry-spring/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/mechanical-odometer__drum-carry-spring/code/demo.html",
+   "skill": "ui-components/mechanical-odometer__drum-carry-spring/SKILL.md"
   },
   {
    "slug": "message-bubble-heart-icon__hover-heart-squash-spring",
@@ -7561,6 +8462,43 @@
    "skill": "ui-components/overlapping-avatar-stack-plus-count__negative-margin-circles/SKILL.md"
   },
   {
+   "slug": "pendant-lamp-rail__brush-to-light-pendulum-swing",
+   "path": "ui-components/pendant-lamp-rail__brush-to-light-pendulum-swing",
+   "category": "ui-components",
+   "visual_name": "Pendant lamp rail",
+   "code_name": "Brush to light, pendulum swing",
+   "summary": "Eight pendant lamps on a metal ceiling track: the pointer brushes across them, each lights with a warm glow on the wall and swings on its cord like a pendulum, and a caption follows the last lamp lit.",
+   "aliases": [
+    "pendant lamps",
+    "lighting store",
+    "lamp rail",
+    "hanging lights",
+    "pendulum",
+    "switch on lights"
+   ],
+   "tags": [
+    "hero",
+    "hover",
+    "card",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "svg",
+    "spring-physics"
+   ],
+   "duration_sec": 9,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/pendant-lamp-rail__brush-to-light-pendulum-swing/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/pendant-lamp-rail__brush-to-light-pendulum-swing/code/demo.html",
+   "skill": "ui-components/pendant-lamp-rail__brush-to-light-pendulum-swing/SKILL.md"
+  },
+  {
    "slug": "pendulum-flip-chrome-wordmark__two-faced-rotatey",
    "path": "ui-components/pendulum-flip-chrome-wordmark__two-faced-rotatey",
    "category": "ui-components",
@@ -7968,6 +8906,78 @@
    "sound": null,
    "demo": "ui-components/portrait-video-reel__opposed-rows-tall-cards/code/demo.html",
    "skill": "ui-components/portrait-video-reel__opposed-rows-tall-cards/SKILL.md"
+  },
+  {
+   "slug": "product-tour-card-with-live-pictures__ghost-pointer-step-through",
+   "path": "ui-components/product-tour-card-with-live-pictures__ghost-pointer-step-through",
+   "category": "ui-components",
+   "visual_name": "Product tour card with live pictures",
+   "code_name": "Ghost pointer step-through",
+   "summary": "A white four-step welcome card with a small live picture per step (prompt, files, running log, shortcut), a progress bar, and a ghost pointer that glides to the primary button and presses it to move on.",
+   "aliases": [
+    "product tour",
+    "welcome tour",
+    "onboarding card",
+    "feature tour",
+    "first run",
+    "walkthrough"
+   ],
+   "tags": [
+    "card",
+    "hover",
+    "cursor",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "tailwind"
+   ],
+   "duration_sec": 12.5,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/product-tour-card-with-live-pictures__ghost-pointer-step-through/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/product-tour-card-with-live-pictures__ghost-pointer-step-through/code/demo.html",
+   "skill": "ui-components/product-tour-card-with-live-pictures__ghost-pointer-step-through/SKILL.md"
+  },
+  {
+   "slug": "progress-button__fill-then-letter-morph-label",
+   "path": "ui-components/progress-button__fill-then-letter-morph-label",
+   "category": "ui-components",
+   "visual_name": "Progress button",
+   "code_name": "Fill, then letter-morph label",
+   "summary": "An outlined Export button grows into its own progress bar: it widens, shows a percentage, a light fill sweeps left to right under a shimmering \"Exporting\", then the label morphs letter by letter into \"Exported\" with a tick, and it shrinks back to \"Export\".",
+   "aliases": [
+    "export button",
+    "download button",
+    "progress button",
+    "loading button",
+    "save button",
+    "submit button"
+   ],
+   "tags": [
+    "cta",
+    "loader",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "tailwind",
+    "css-mask"
+   ],
+   "duration_sec": 7.4,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/progress-button__fill-then-letter-morph-label/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/progress-button__fill-then-letter-morph-label/code/demo.html",
+   "skill": "ui-components/progress-button__fill-then-letter-morph-label/SKILL.md"
   },
   {
    "slug": "qr-popover-collapsible-panel__height-fade-chevron-flip",
@@ -8661,6 +9671,85 @@
    "skill": "ui-components/spotlight-product-tour__svg-mask-spring-hole/SKILL.md"
   },
   {
+   "slug": "spring-draw-wobble-icon-kit__seekable-css-keyframes-svg",
+   "path": "ui-components/spring-draw-wobble-icon-kit__seekable-css-keyframes-svg",
+   "category": "ui-components",
+   "visual_name": "Animated icon kit (draw, spring, wobble)",
+   "code_name": "Seekable CSS keyframes SVG",
+   "summary": "40 line icons (heart, bell, check, send, download, play, sparkles, zap, phone, trending-up, wallet, rocket...) that each loop their own hover motion by themselves: ticks draw in, bells swing, arrows spring, lids shake. Plain SVG plus CSS keyframes, so any frame is reproducible from a time.",
+   "aliases": [
+    "animated icons",
+    "icon kit",
+    "lucide animated",
+    "icon pack",
+    "bell swing",
+    "draw on icons"
+   ],
+   "tags": [
+    "card",
+    "loader",
+    "hover",
+    "dark",
+    "21st",
+    "icons",
+    "nav",
+    "cta"
+   ],
+   "tech": [
+    "svg",
+    "css-keyframes",
+    "web-animations-api",
+    "vanilla-js"
+   ],
+   "duration_sec": 6,
+   "demo_kind": "rebuilt",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/spring-draw-wobble-icon-kit__seekable-css-keyframes-svg/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/spring-draw-wobble-icon-kit__seekable-css-keyframes-svg/code/demo.html",
+   "skill": "ui-components/spring-draw-wobble-icon-kit__seekable-css-keyframes-svg/SKILL.md"
+  },
+  {
+   "slug": "stacked-cell-kpi-board__diagonal-wave-flip-spring",
+   "path": "ui-components/stacked-cell-kpi-board__diagonal-wave-flip-spring",
+   "category": "ui-components",
+   "visual_name": "Stacked-cell KPI board",
+   "code_name": "Diagonal wave flip, spring",
+   "summary": "A card of 52 columns of stacked rounded cells; tapping a KPI tab flips the whole board to the new metric in a diagonal wave while the axis labels roll to their new scale, and a hover shows a dashed line, tooltip and pin.",
+   "aliases": [
+    "kpi tabs",
+    "stats board",
+    "growth chart",
+    "analytics dashboard",
+    "cell chart",
+    "bar chart dashboard",
+    "metric switch"
+   ],
+   "tags": [
+    "chart",
+    "dashboard",
+    "light",
+    "21st",
+    "kpi"
+   ],
+   "tech": [
+    "react",
+    "css-keyframes",
+    "css-linear-easing"
+   ],
+   "duration_sec": 16,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/stacked-cell-kpi-board__diagonal-wave-flip-spring/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/stacked-cell-kpi-board__diagonal-wave-flip-spring/code/demo.html",
+   "skill": "ui-components/stacked-cell-kpi-board__diagonal-wave-flip-spring/SKILL.md"
+  },
+  {
    "slug": "stat-tile-band__stagger-count-up",
    "path": "ui-components/stat-tile-band__stagger-count-up",
    "category": "ui-components",
@@ -9066,6 +10155,77 @@
    "sound": null,
    "demo": "ui-components/toy-factory-diorama-with-belt-loop__css-3d-camera-orbit-tooltips/code/demo.html",
    "skill": "ui-components/toy-factory-diorama-with-belt-loop__css-3d-camera-orbit-tooltips/SKILL.md"
+  },
+  {
+   "slug": "trading-price-ticker-card__eased-price-sparkline-shift",
+   "path": "ui-components/trading-price-ticker-card__eased-price-sparkline-shift",
+   "category": "ui-components",
+   "visual_name": "Trading price ticker card",
+   "code_name": "Eased price, sparkline shift",
+   "summary": "A small market card whose price eases to each tick, whose change chip and line flip between teal and red, and whose 24-point sparkline steps left as each new point arrives.",
+   "aliases": [
+    "price ticker",
+    "stock ticker",
+    "crypto price",
+    "sparkline card",
+    "watchlist",
+    "market card"
+   ],
+   "tags": [
+    "stat-tile",
+    "chart",
+    "card",
+    "light",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "svg"
+   ],
+   "duration_sec": 9.4,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/trading-price-ticker-card__eased-price-sparkline-shift/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/trading-price-ticker-card__eased-price-sparkline-shift/code/demo.html",
+   "skill": "ui-components/trading-price-ticker-card__eased-price-sparkline-shift/SKILL.md"
+  },
+  {
+   "slug": "upload-queue-triage__failed-rise-active-stay-done-ledger",
+   "path": "ui-components/upload-queue-triage__failed-rise-active-stay-done-ledger",
+   "category": "ui-components",
+   "visual_name": "Upload queue triage",
+   "code_name": "Failed rise, active stay, done ledger",
+   "summary": "A white file-upload card sorts seven files into groups as they go: the too-large one is red at the top, two uploads run with a third peeking behind them, finished ones drop into a green-ticked ledger, and the slow one fails at 62% and rises to the top with Retry.",
+   "aliases": [
+    "file upload",
+    "upload list",
+    "upload queue",
+    "progress list",
+    "drag and drop",
+    "file manager"
+   ],
+   "tags": [
+    "card",
+    "light",
+    "loader",
+    "21st"
+   ],
+   "tech": [
+    "react",
+    "css-transitions"
+   ],
+   "duration_sec": 10,
+   "demo_kind": "rebuilt-by-eye",
+   "projects": [],
+   "clips": [],
+   "clip": null,
+   "poster": "ui-components/upload-queue-triage__failed-rise-active-stay-done-ledger/media/poster.jpg",
+   "sound": null,
+   "demo": "ui-components/upload-queue-triage__failed-rise-active-stay-done-ledger/code/demo.html",
+   "skill": "ui-components/upload-queue-triage__failed-rise-active-stay-done-ledger/SKILL.md"
   },
   {
    "slug": "upvote-downvote-card-green-red__digit-roll-colour-fade",

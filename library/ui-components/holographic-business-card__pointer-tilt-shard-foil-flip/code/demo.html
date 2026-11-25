@@ -1,0 +1,138 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>holographic-business-card__pointer-tilt-shard-foil-flip</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+#stage{background:#dce9f8;color:#0b1b33;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'SF Pro Text',sans-serif}
+#rig{position:absolute;left:0;top:0;width:480px;height:290px;transform-origin:0 0;perspective:1200px}
+#tilt{position:absolute;inset:0;transform-style:preserve-3d;border-radius:18.46px}
+#flip{position:absolute;inset:0;transform-style:preserve-3d}
+.face{position:absolute;inset:0;border-radius:18.46px;background:#fff;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 30px 60px -12px rgba(38,70,120,.38),0 10px 20px -8px rgba(38,70,120,.25)}
+.face.bk{transform:rotateY(180deg)}
+.sky{position:absolute;left:0;top:0;width:480px;height:237px;background:linear-gradient(180deg,#3a7fdc 0%,#4a8fe4 55%,#6aaaee 100%)}
+.cl{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.85),rgba(255,255,255,0));filter:blur(3px)}
+.fade{position:absolute;left:0;top:207px;width:480px;height:32px;background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,.55) 60%,#fff)}
+.hi{position:absolute;left:34px;top:26px;font-size:16px;font-weight:600;color:#fff;line-height:22px}
+.big{position:absolute;left:32px;top:70px;font-size:66px;font-weight:500;letter-spacing:-.045em;color:#fff;line-height:70px}
+.scr{position:absolute;left:42px;top:128px;font-family:'Caveat','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-style:italic;font-weight:700;font-size:34px;color:#fff;line-height:40px;white-space:nowrap}
+.av{position:absolute;left:352px;top:76px;width:100px;height:100px}
+.foot{position:absolute;left:0;top:237px;width:480px;height:53px;font-size:12px;font-weight:600;line-height:18px}
+.foot .l{position:absolute;left:34px;top:18px;color:#6b7280;font-weight:500;letter-spacing:.02em;white-space:nowrap}.foot .l b{color:#111;font-weight:700}
+.foot .r{position:absolute;right:34px;top:18px;color:#387fd9}
+.bar{position:absolute;left:0;top:0;width:480px;height:8px;background:linear-gradient(90deg,#387fd9,#6db0ec,#387fd9)}
+.nm{position:absolute;left:34px;top:46px;font-size:30px;font-weight:700;letter-spacing:-.03em;color:#0b1b33;line-height:36px}
+.sub{position:absolute;left:34px;color:#6b7280;font-size:13px;line-height:18px}
+.tg{position:absolute;left:34px;top:112px;color:#387fd9;font-weight:600;font-size:14px;line-height:19px;width:240px}
+.lk{position:absolute;left:34px;font-size:12px;font-weight:500;color:#0b1b33;line-height:16px;display:flex;align-items:center;gap:8px}
+.qr{position:absolute;left:288px;top:48px;width:158px;height:194px;border-radius:21px;background:#f3f7fd}
+.qr small{position:absolute;left:0;width:100%;text-align:center;font-size:9px;color:#8a97ab;line-height:12px}
+.fx{position:absolute;inset:0;border-radius:18.46px;pointer-events:none;overflow:hidden}
+.fx i{position:absolute;inset:0}
+.cur{position:absolute;left:0;top:0;width:22px;height:26px;pointer-events:none}
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from the live preview of @aakashmehra/holographic-business-card (21st.dev, MIT). Read from the page:
+// perspective 1200px; the card tilts to the pointer (about 16 deg at the edge) on a critically damped spring (omega 20/s,
+// settles in ~0.3 s) and lifts to scale 1.03; the foil layer goes from opacity 0.036 to 0.30 and the glare from 0.06 to 0.50;
+// the foil gradient slides with background-position = 50% + n*50% (n = pointer -1..1); click flips about Y in ~0.35 s
+// with a small overshoot (sampled below). The author's photo, name and QR are replaced by drawn placeholders.
+const CONFIG = { name: 'Alex Morgan', greeting: "Hey, I'm Alex", big: 'product', script: 'designer & developer', based: 'REMOTE', link: 'alexmorgan.dev', tag: 'Thoughtful apps and websites', maxTilt: 16, lift: 1.03, omega: 20,
+  // pointer path in card px: [time, x, y] (x -1000 = off the card), flips at the listed times
+  path: [[0, -100, 150], [.5, -100, 150], [.7, 60, 50], [1.9, 420, 240], [3.0, 90, 230], [3.5, 240, 150], [5.6, 380, 90], [6.6, 120, 120], [7.0, 120, 120], [7.4, -140, 80]], flips: [3.6, 5.8] }
+const DUR = 9
+window.DUR = DUR
+const FLIP = [[0, 0], [82, 34.8], [149, 95.6], [215, 143.1], [282, 170], [349, 181.5], [415, 184.5], [482, 183.8], [549, 182.3], [615, 181.1], [682, 180.3], [749, 180]]
+const flipAng = (ms) => { if (ms <= 0) return 0; if (ms >= 749) return 180; for (let i = 1; i < FLIP.length; i++) if (ms <= FLIP[i][0]) { const [a, p] = FLIP[i - 1], [b, q] = FLIP[i]; return p + (q - p) * (ms - a) / (b - a) } return 180 }
+const rig = el('div'); rig.id = 'rig'; const tilt = el('div', '', rig); tilt.id = 'tilt'; const flip = el('div', '', tilt); flip.id = 'flip'
+const sc = TALL ? W * .86 / 480 : Math.min(H * .5 / 290, W * .4 / 480)
+S(rig, { transform: `translate(${CX - 240 * sc}px,${CY - 145 * sc}px) scale(${sc})` })
+// shard mask: a seeded Voronoi of ~90 cells, each with its own brightness, thin dark seams (built once, no randomness at render time)
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+const mk = document.createElement('canvas'); mk.width = 480; mk.height = 290; const mc = mk.getContext('2d'), im = mc.createImageData(480, 290)
+const pts = Array.from({ length: 90 }, () => ({ x: rnd() * 480, y: rnd() * 290, a: .25 + rnd() * .75 }))
+for (let y = 0; y < 290; y++) for (let x = 0; x < 480; x++) { let d1 = 1e9, d2 = 1e9, c = 0; for (let k = 0; k < pts.length; k++) { const dx = pts[k].x - x, dy = pts[k].y - y, d = dx * dx + dy * dy; if (d < d1) { d2 = d1; d1 = d; c = k } else if (d < d2) d2 = d } const seam = Math.sqrt(d2) - Math.sqrt(d1) < 1.2 ? .15 : 1; const i = (y * 480 + x) * 4; im.data[i] = im.data[i + 1] = im.data[i + 2] = 255; im.data[i + 3] = Math.round(255 * pts[c].a * seam) }
+mc.putImageData(im, 0, 0); const MASK = `url(${mk.toDataURL()})`
+const RAINBOW = 'repeating-linear-gradient(125deg,#99f7ff 0%,#9efacc 5%,#d9f99d 10%,#ffe08a 15%,#ffb3c8 20%,#d3a8ff 25%,#9bb8ff 30%,#99f7ff 35%)'
+const sky = `<div class="sky"></div><div class="cl" style="left:300px;top:-6px;width:150px;height:70px"></div><div class="cl" style="left:340px;top:110px;width:190px;height:70px"></div><div class="cl" style="left:-30px;top:170px;width:240px;height:80px"></div><div class="cl" style="left:150px;top:190px;width:260px;height:60px"></div><div class="fade"></div>`
+const avatar = `<svg class="av" viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="#f1c7a2"/><path d="M16 46C16 20 40 12 58 16c16 3 26 14 26 30-8-10-20-12-30-10-14 2-26 6-38 10z" fill="#5b3a29"/><circle cx="39" cy="54" r="3.600" fill="#2b1b12"/><circle cx="61" cy="54" r="3.600" fill="#2b1b12"/><path d="M38 66q12 10 24 0" fill="none" stroke="#7a3b2e" stroke-width="3" stroke-linecap="round"/></svg>`
+const front = el('div', 'face', flip); front.innerHTML = `${sky}<div class="hi">👋 ${CONFIG.greeting}</div><div class="big">${CONFIG.big}</div><div class="scr">${CONFIG.script}</div>${avatar}<div class="foot"><div class="l">BASED IN <svg width="11" height="11" viewBox="0 0 24 24" fill="#111" style="vertical-align:-1px"><path d="M12 22s-7-6.500-7-12a7 7 0 0 1 14 0c0 5.500-7 12-7 12z"/><circle cx="12" cy="10" r="2.600" fill="#fff"/></svg> <b>${CONFIG.based}</b></div><div class="r">${CONFIG.link} ↗</div></div>`
+const back = el('div', 'face bk', flip)
+let qr = '', q = 21; seed = 11; for (let y = 0; y < q; y++) for (let x = 0; x < q; x++) { const fin = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13); let on; if (fin) { const lx = x % 14 > 6 ? x - 14 : x, ly = y > 13 ? y - 14 : y; on = lx === 0 || lx === 6 || ly === 0 || ly === 6 || (lx >= 2 && lx <= 4 && ly >= 2 && ly <= 4) } else on = rnd() > .52; if (on) qr += `<rect x="${x}" y="${y}" width="1" height="1"/>` }
+back.innerHTML = `<div class="bar"></div><div class="nm">${CONFIG.name}</div><div class="sub" style="top:90px">Product designer and developer</div><div class="tg">${CONFIG.tag}</div>
+ <div class="lk" style="top:186px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#387fd9" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>${CONFIG.link}</div>
+ <div class="lk" style="top:210px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#387fd9" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>hello@${CONFIG.link}</div>
+ <div class="qr"><svg viewBox="0 0 21 21" width="130" height="130" style="position:absolute;left:14px;top:20px" fill="#0b1b33">${qr}</svg><small style="top:158px">Scan to see my work</small></div>`
+const fxs = [front, back].map((f) => { const fx = el('div', 'fx', f); const h = el('i', '', fx), g = el('i', '', fx); S(h, { backgroundImage: RAINBOW, backgroundSize: '300% 300%', webkitMaskImage: MASK, maskImage: MASK, webkitMaskSize: '100% 100%', maskSize: '100% 100%' }); return { h, g } })
+const cur = el('div', 'cur'); cur.innerHTML = '<svg viewBox="0 0 22 26"><path d="M3 2l15 9-7 1.800L8 19z" fill="#111" stroke="#fff" stroke-width="1.600" stroke-linejoin="round"/></svg>'
+const P = CONFIG.path
+const ptAt = (t) => { for (let i = 1; i < P.length; i++) if (t <= P[i][0]) { const [a, x0, y0] = P[i - 1], [b, x1, y1] = P[i]; const k = eio(clamp((t - a) / (b - a))); return [x0 + (x1 - x0) * k, y0 + (y1 - y0) * k] } return [P[P.length - 1][1], P[P.length - 1][2]] }
+// critically damped spring simulated from t=0 each call, so render(t) is repeatable
+const W0 = CONFIG.omega
+function sim(t) {
+  let rx = 0, ry = 0, h = 0, vx = 0, vy = 0, vh = 0, gx = .5, gy = .5, gvx = 0, gvy = 0; const dt = 1 / 240
+  for (let s = 0; s < t; s += dt) {
+    const [x, y] = ptAt(s), on = x > 0 && x < 480 && y > 0 && y < 290
+    const nx = on ? clamp(x / 240 - 1, -1, 1) : 0, ny = on ? clamp(y / 145 - 1, -1, 1) : 0
+    const tx = nx * CONFIG.maxTilt, ty = -ny * CONFIG.maxTilt, th = on ? 1 : 0
+    vy += (W0 * W0 * (tx - ry) - 2 * W0 * vy) * dt; ry += vy * dt   // rotateY follows pointer x
+    vx += (W0 * W0 * (ty - rx) - 2 * W0 * vx) * dt; rx += vx * dt   // rotateX follows pointer y
+    vh += (W0 * W0 * (th - h) - 2 * W0 * vh) * dt; h += vh * dt
+    const tgx = on ? x / 480 : .5, tgy = on ? y / 290 : .5
+    gvx += (W0 * W0 * (tgx - gx) - 2 * W0 * gvx) * dt; gx += gvx * dt; gvy += (W0 * W0 * (tgy - gy) - 2 * W0 * gvy) * dt; gy += gvy * dt
+  }
+  return { rx, ry, h, gx, gy }
+}
+function render(t) {
+  const { rx, ry, h, gx, gy } = sim(t)
+  tilt.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) scale(${1 + (CONFIG.lift - 1) * h})`
+  let ang = 0; CONFIG.flips.forEach((ft, i) => { const a = flipAng((t - ft) * 1000); if (t >= ft) ang = i % 2 === 0 ? a : 180 - flipAng((t - ft) * 1000) + 0 })
+  CONFIG.flips.forEach((ft, i) => { if (t >= ft && i % 2 === 1) ang = 180 - flipAng((t - ft) * 1000) })
+  flip.style.transform = `rotateY(${ang}deg)`
+  const fo = .036 + (.3 - .036) * h, go = .06 + (.5 - .06) * h
+  const px_ = ((gx - .5) * 2), py_ = ((gy - .5) * 2)
+  fxs.forEach(({ h: hh, g }, i) => { hh.style.opacity = fo; hh.style.backgroundPosition = `${50 + (i ? -px_ : px_) * 50}% ${50 + py_ * 50}%`; g.style.opacity = go
+    g.style.background = `radial-gradient(circle at ${(i ? 1 - gx : gx) * 100}% ${gy * 100}%,rgba(255,255,255,.28) 0%,rgba(255,255,255,.06) 30%,rgba(255,255,255,0) 60%)`; g.style.backgroundSize = '100% 100%' })
+  const [x, y] = ptAt(t), on = x > -50, ccx = CX - 240 * sc + x * sc, ccy = CY - 145 * sc + y * sc
+  S(cur, { opacity: x > 0 ? 1 : 0, transform: `translate(${ccx}px,${ccy}px) scale(${sc * .8})` })
+}
+
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

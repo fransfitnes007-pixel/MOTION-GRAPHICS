@@ -1,0 +1,35 @@
+{
+  "slug": "easing-lanes-comparison-board__six-curve-ball-race",
+  "visual_name": "Easing lanes comparison board",
+  "code_name": "Six-curve ball race",
+  "category": "motion-graphics",
+  "summary": "A cream board titled in italic serif shows six easing lanes, each with a tiny curve icon, and six balls racing from A to B on their own easing at the same time.",
+  "aliases": [
+    "easing chart",
+    "ease comparison",
+    "animation principles",
+    "timing curves",
+    "motion showreel"
+  ],
+  "tags": [
+    "chart",
+    "dark",
+    "light",
+    "showreel",
+    "education"
+  ],
+  "tech": [
+    "canvas-2d"
+  ],
+  "duration_sec": 4.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #1: The showreel that started it",
+    "author": "@stephanlivera",
+    "url": "https://x.com/stephanlivera/status/2103315922098470926",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

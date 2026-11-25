@@ -1,0 +1,36 @@
+{
+  "slug": "two-phone-cloud-sync-arc__dotted-arc-travelling-dots",
+  "visual_name": "Two phone cloud sync arc",
+  "code_name": "Dotted arc with travelling dots",
+  "category": "motion-graphics",
+  "summary": "An old phone and a new phone stand together under a two-line headline; a dotted arc runs between them through a cloud badge, coloured dots ride along it and the badge arrow turns into a tick.",
+  "aliases": [
+    "phone to phone",
+    "sync arc",
+    "backup restore",
+    "transfer dots",
+    "cloud sync"
+  ],
+  "tags": [
+    "phone",
+    "dark",
+    "kinetic-type",
+    "card"
+  ],
+  "tech": [
+    "vanilla-js",
+    "svg",
+    "css"
+  ],
+  "duration_sec": 5.2,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "revid.ai Claude Opus 5.5 wall #31: HabitKit: a vertical app update",
+    "author": "@sebastianroehl",
+    "url": "https://x.com/sebastianroehl/status/2103912457836323096",
+    "license": "Video belongs to its creator; not included",
+    "note": "Recreated by eye from watching the public video; this demo is original code and contains none of the video."
+  }
+}

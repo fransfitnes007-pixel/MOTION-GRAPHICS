@@ -1,0 +1,133 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Two phone cloud sync arc</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+.head{text-align:center;color:#fff;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.w{display:inline-block}
+.phone{background:#2a2b31;box-shadow:0 40px 90px -30px rgba(0,0,0,.8),inset 0 0 0 2px rgba(255,255,255,.08)}
+.scr{position:relative;width:100%;height:100%;background:#15161b;overflow:hidden}
+.isl{position:absolute;left:50%;transform:translateX(-50%);background:#000}
+.row{background:#1f2027;display:flex;align-items:center;padding-left:14px}
+.rdot{border-radius:50%}
+.badge{border-radius:50%;box-shadow:0 0 0 10px rgba(139,124,246,.18),0 20px 40px -10px rgba(0,0,0,.6)}
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from @SebastianRoehl's vertical app-update reel (revid.ai wall #31, 9.9s to 13s): a two-line headline types
+// in word by word, an old phone and a new phone stand side by side, a dotted arc runs from one to the other through a cloud
+// badge, coloured dots travel along it, and the badge's arrow turns into a tick.
+const CONFIG = {
+  words: ['New', 'phone?', '|', 'Welcome', 'back.'],    // '|' = line break; a word ending in ? or . gets the accent on that mark
+  accent: '#8b7cf6',
+  bg: '#0d0e13',
+  dots: ['#a6e05b', '#b28cf6', '#5fd38b', '#f2735a', '#8b7cf6'],
+  phone: { w: 390, h: 810 },                             // at 1080 wide
+  t: { words: .15, perWord: .13, phones: .55, arc: 1.05, travel: 1.45, travelDur: 1.5, tick: 3.0, out: 4.6 },
+  dur: 5.2,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const Z = TALL ? W / 1080 : H / 1920 * 1.15
+const sstep = (tau, f = 2.1, z = .72) => { if (tau <= 0) return 0; const w = 2 * Math.PI * f, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * tau) * (Math.cos(wd * tau) + z * w / wd * Math.sin(wd * tau)) }
+stage.style.background = `radial-gradient(70% 45% at 50% 30%, rgba(110,90,200,.16), transparent 70%), ${C.bg}`
+const grid = el('div', 'abs'); S(grid, { left: 0, top: 0, width: W + 'px', height: H + 'px', backgroundImage: 'linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)', backgroundSize: `${px(54 * Z)} ${px(54 * Z)}` })
+
+// headline
+const PX = TALL ? CX : W * .66                          // centre of the phone pair (wide: headline left, phones right)
+const head = el('div', 'abs head'); if (TALL) S(head, { left: 0, width: W + 'px', top: px(CY - 640 * Z), fontSize: px(78 * Z) }); else S(head, { left: px(W * .07), width: px(W * .4), top: px(CY - 110 * Z * 1.7), fontSize: px(78 * Z * 1.7), textAlign: 'left' })
+const wordEls = []; let line = el('div', '', head)
+C.words.forEach((w) => {
+  if (w === '|') { line = el('div', '', head); return }
+  const m = w.match(/^(.*?)([?.!]?)$/)
+  const s = el('span', 'w', line, `${m[1]}<span style="color:${C.accent}">${m[2]}</span>`); wordEls.push(s); line.appendChild(document.createTextNode(' '))
+})
+
+// phones: placeholder dark app screens
+function phone(x, y, sc, z) {
+  const p = el('div', 'abs phone'); S(p, { width: px(C.phone.w * Z), height: px(C.phone.h * Z), left: px(x - C.phone.w * Z / 2), top: px(y), zIndex: z, borderRadius: px(46 * Z), padding: px(10 * Z) })
+  const scr = el('div', 'scr', p); S(scr, { borderRadius: px(38 * Z), padding: `${px(54 * Z)} ${px(18 * Z)} 0` })
+  el('div', 'isl', scr).style.cssText += `;width:${px(86 * Z)};height:${px(24 * Z)};top:${px(12 * Z)};border-radius:${px(12 * Z)}`
+  for (let i = 0; i < 6; i++) { const r = el('div', 'row', scr); S(r, { height: px(66 * Z), marginBottom: px(10 * Z), borderRadius: px(14 * Z) }); const d = el('div', 'rdot', r); S(d, { width: px(22 * Z), height: px(22 * Z), background: C.dots[i % C.dots.length] }) }
+  const btn = el('div', 'pbtn', scr); S(btn, { height: px(46 * Z), borderRadius: px(23 * Z), marginTop: px(16 * Z), background: C.accent })
+  return p
+}
+const py = TALL ? CY - 170 * Z : CY - 230 * Z
+const oldP = phone(PX - 175 * Z, py + 50 * Z, .92, 1), newP = phone(PX + 150 * Z, py, 1, 2)
+
+// arc + badge, drawn in one svg over everything
+const NS = 'http://www.w3.org/2000/svg'
+const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.style.cssText = 'position:absolute;left:0;top:0;z-index:5;overflow:visible'; stage.appendChild(svg)
+const A = [PX - 175 * Z, py + 50 * Z], B = [PX + 150 * Z, py - 6 * Z], M = [PX - 12 * Z, py - 230 * Z]   // from old phone top, through the badge, to new phone top
+const q = (p0, c, p1, u) => [(1 - u) * (1 - u) * p0[0] + 2 * (1 - u) * u * c[0] + u * u * p1[0], (1 - u) * (1 - u) * p0[1] + 2 * (1 - u) * u * c[1] + u * u * p1[1]]
+const C1 = [A[0] - 10 * Z, M[1] + 10 * Z], C2 = [B[0] + 10 * Z, M[1] + 10 * Z]
+const pathD = `M${A[0]},${A[1]} Q${C1[0]},${C1[1]} ${M[0]},${M[1]} Q${C2[0]},${C2[1]} ${B[0]},${B[1]}`
+const arc = document.createElementNS(NS, 'path'); arc.setAttribute('d', pathD); arc.setAttribute('fill', 'none'); arc.setAttribute('stroke', 'rgba(255,255,255,.4)'); arc.setAttribute('stroke-width', 2.2 * Z); arc.setAttribute('stroke-dasharray', `${2 * Z} ${9 * Z}`); arc.setAttribute('stroke-linecap', 'round'); svg.appendChild(arc)
+const L = arc.getTotalLength ? arc.getTotalLength() : 1000
+const dotEls = C.dots.map((c) => { const d = document.createElementNS(NS, 'circle'); d.setAttribute('r', 7 * Z); d.setAttribute('fill', c); svg.appendChild(d); return d })
+const badge = el('div', 'abs badge'); S(badge, { width: px(112 * Z), height: px(112 * Z), left: px(M[0] - 56 * Z), top: px(M[1] - 56 * Z), zIndex: 6, background: C.accent })
+badge.innerHTML = `<svg viewBox="0 0 48 48" width="100%" height="100%"><path d="M15 31a7 7 0 0 1 .8-13.9 9 9 0 0 1 17.3 2.4A6 6 0 0 1 33 31z" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/><path class="arw" d="M24 21v8m-3.5-3.5L24 29l3.5-3.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path class="tck" d="M19 25.5l3.6 3.4 6.4-7" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1"/></svg>`
+const arw = badge.querySelector('.arw'), tck = badge.querySelector('.tck')
+
+function render(t) {
+  const out = eo(seg(t, C.t.out, C.t.out + .4))
+  wordEls.forEach((s, i) => { const a = C.t.words + i * C.t.perWord, p = eo5(seg(t, a, a + .4)); S(s, { opacity: p * (1 - out), filter: `blur(${(1 - p) * 10}px)`, transform: `translateY(${(1 - p) * 30}px)` }) })
+  const pin = sstep(t - C.t.phones, 1.6, .8), pin2 = sstep(t - C.t.phones - .1, 1.6, .8)
+  S(oldP, { transform: `translateY(${(1 - pin) * 900 * Z + out * 60 * Z}px) scale(.9) rotate(${-4 * pin}deg)`, opacity: 1 - out })
+  S(newP, { transform: `translateY(${(1 - pin2) * 900 * Z + out * 60 * Z}px) rotate(${2 * pin2}deg)`, opacity: 1 - out })
+  const draw = eio(seg(t, C.t.arc, C.t.arc + .5))
+  // the arc runs left to right, so a left-to-right clip reads as the dotted line drawing itself from the old phone
+  arc.setAttribute('stroke-opacity', 1 - out); arc.style.opacity = draw > 0 ? 1 : 0
+  const xr = A[0] - 20 * Z + draw * (B[0] - A[0] + 40 * Z)
+  svg.style.clipPath = draw < 1 ? `inset(0 ${W - xr}px 0 0)` : 'none'
+  // dots: each leaves the old phone, rides to the badge (first half), then to the new phone (second half)
+  dotEls.forEach((d, i) => {
+    const a = C.t.travel + i * .14, u = eio(seg(t, a, a + C.t.travelDur))
+    const p = u < .5 ? q(A, C1, M, u * 2) : q(M, C2, B, u * 2 - 1)
+    const vis = u > 0 && u < 1
+    d.setAttribute('cx', p[0]); d.setAttribute('cy', p[1]); d.setAttribute('opacity', vis ? 1 : 0)
+  })
+  const tk = eo(seg(t, C.t.tick, C.t.tick + .35))
+  arw.setAttribute('opacity', 1 - clamp(tk * 3)); tck.setAttribute('stroke-dashoffset', 1 - tk); tck.setAttribute('opacity', tk > 0 ? 1 : 0)
+  const pop = Math.sin(Math.PI * seg(t, C.t.tick, C.t.tick + .3)) * .14
+  badge.style.transform = `scale(${(sstep(t - C.t.arc - .25, 2.2, .55) + pop) * (1 - out)})`
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

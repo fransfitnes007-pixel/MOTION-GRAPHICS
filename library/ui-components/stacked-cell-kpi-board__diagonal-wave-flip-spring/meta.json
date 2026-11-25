@@ -1,0 +1,39 @@
+{
+  "slug": "stacked-cell-kpi-board__diagonal-wave-flip-spring",
+  "visual_name": "Stacked-cell KPI board",
+  "code_name": "Diagonal wave flip, spring",
+  "category": "ui-components",
+  "summary": "A card of 52 columns of stacked rounded cells; tapping a KPI tab flips the whole board to the new metric in a diagonal wave while the axis labels roll to their new scale, and a hover shows a dashed line, tooltip and pin.",
+  "aliases": [
+    "kpi tabs",
+    "stats board",
+    "growth chart",
+    "analytics dashboard",
+    "cell chart",
+    "bar chart dashboard",
+    "metric switch"
+  ],
+  "tags": [
+    "chart",
+    "dashboard",
+    "light",
+    "21st",
+    "kpi"
+  ],
+  "tech": [
+    "react",
+    "css-keyframes",
+    "css-linear-easing"
+  ],
+  "duration_sec": 16,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "Animated Bar Chart Dashboard (cell-column-trend)",
+    "author": "kedhareswer",
+    "url": "https://21st.dev/@kedhareswer/components/cell-column-trend",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

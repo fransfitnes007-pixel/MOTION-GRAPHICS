@@ -1,0 +1,38 @@
+{
+  "slug": "dot-matrix-revenue-card__counter-ease-dots-pop-in",
+  "visual_name": "Dot-matrix revenue card",
+  "code_name": "Counter ease, dots pop in",
+  "category": "ui-components",
+  "summary": "A minimal grey card with a light-weight +326% counter that eases up while a chart made only of 4px dots pops in column by column; Daily, Weekly and Monthly tabs re-pop it and re-count the number.",
+  "aliases": [
+    "revenue card",
+    "dot chart",
+    "stats card",
+    "percentage counter",
+    "dot matrix chart",
+    "growth card"
+  ],
+  "tags": [
+    "chart",
+    "stats",
+    "light",
+    "card",
+    "21st",
+    "counter"
+  ],
+  "tech": [
+    "react",
+    "css-keyframes"
+  ],
+  "duration_sec": 12,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "Dot Graph Card (cue-dot-graph-card)",
+    "author": "aloksivastava1025",
+    "url": "https://21st.dev/@aloksivastava1025/components/cue-dot-graph-card",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

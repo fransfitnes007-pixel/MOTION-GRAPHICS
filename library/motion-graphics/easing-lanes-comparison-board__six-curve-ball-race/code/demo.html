@@ -1,0 +1,106 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Easing lanes comparison board</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from @stephanlivera's 15-second showreel (revid.ai wall #1, 3.9s to 5.2s): a cream board titled in italic serif,
+// six lanes, each with its easing name and a tiny curve, and a ball per lane racing from A to B on that curve at the same time.
+// Doubles as a reference card: the six formulas are the ones the library uses.
+const CONFIG = {
+  title: 'Easings from A to B',
+  lanes: [   // name, function of x in 0..1, ball colour
+    ['linear', (x) => x, '#111111'],
+    ['ease in', (x) => x * x * x, '#2f5bea'],
+    ['ease out', (x) => 1 - Math.pow(1 - x, 3), '#111111'],
+    ['ease in out', (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, '#ed4938'],
+    ['back out', (x) => { const s = 1.9, c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2) }, '#111111'],
+    ['spring', (x) => x >= 1 ? 1 : 1 - Math.exp(-6 * x) * Math.cos(13 * x), '#ed4938'],
+  ],
+  paper: '#ece8df', ink: '#141414', rule: 'rgba(20,20,20,.18)', frame: '#0d0d10',
+  t: { go: .5, travel: 1.4, back: 2.6 },
+  dur: 4.2,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const Z = TALL ? W / 1080 * .92 : W / 1920
+stage.style.background = C.frame
+const cv = document.createElement('canvas'); cv.width = W; cv.height = H; stage.appendChild(cv)
+const g = cv.getContext('2d')
+const bw = TALL ? W * .9 : W * .8, bh = TALL ? H * .62 : H * .78, bx = CX - bw / 2, by = CY - bh / 2
+const lane0 = by + 200 * Z, lh = (bh - 260 * Z) / C.lanes.length
+const tx0 = bx + (TALL ? 330 : 420) * Z, tx1 = bx + bw - 90 * Z
+function corners() {   // the thin HUD corner marks the showreel keeps on every scene
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; const m = 26 * Z, L = 22 * Z
+  ;[[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([x, y, sx, sy]) => { g.beginPath(); g.moveTo(x, y + sy * L); g.lineTo(x, y); g.lineTo(x + sx * L, y); g.stroke() })
+}
+function render(t) {
+  g.clearRect(0, 0, W, H)
+  corners()
+  const pin = eo5(seg(t, 0, .4)), pout = ei(seg(t, DUR - .35, DUR))
+  g.save(); g.translate(0, (1 - pin) * 60 * Z + pout * 60 * Z); g.globalAlpha = pin * (1 - pout)
+  g.fillStyle = C.paper; g.beginPath(); g.roundRect(bx, by, bw, bh, 18 * Z); g.fill()
+  g.fillStyle = C.ink; g.font = `italic 400 ${64 * Z}px 'New York','Iowan Old Style',Georgia,serif`; g.textAlign = 'left'
+  g.fillText(C.title, bx + 60 * Z, by + 110 * Z)
+  g.font = `500 ${18 * Z}px ui-monospace,'SF Mono',Menlo,monospace`; g.fillStyle = 'rgba(20,20,20,.5)'
+  g.fillText('A', tx0 - 6 * Z, lane0 - 26 * Z); g.fillText('B', tx1 - 6 * Z, lane0 - 26 * Z)
+  const go = seg(t, C.t.go, C.t.go + C.t.travel), back = seg(t, C.t.back, C.t.back + C.t.travel * .7)
+  C.lanes.forEach(([name, f, col], i) => {
+    const y = lane0 + i * lh + lh / 2
+    g.fillStyle = C.ink; g.font = `500 ${24 * Z}px -apple-system,system-ui,sans-serif`; g.fillText(name, bx + 60 * Z, y + 8 * Z)
+    // tiny curve icon
+    const ix = bx + (TALL ? 230 : 300) * Z, iy = y + 18 * Z, is = 36 * Z
+    g.strokeStyle = C.ink; g.lineWidth = 2 * Z; g.beginPath()
+    for (let k = 0; k <= 30; k++) { const x = k / 30, v = f(x); k ? g.lineTo(ix + x * is, iy - v * is) : g.moveTo(ix, iy) }
+    g.stroke()
+    // track
+    g.strokeStyle = C.rule; g.lineWidth = 2 * Z; g.beginPath(); g.moveTo(tx0, y); g.lineTo(tx1, y); g.stroke()
+    // ball: out on the curve, home on ease in out (so all six return together)
+    const v = t < C.t.back ? f(go) : 1 - C.lanes[3][1](back)
+    const x = lerp(tx0, tx1, v)
+    g.fillStyle = col; g.beginPath(); g.arc(x, y, 15 * Z, 0, 7); g.fill()
+  })
+  g.restore()
+}
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>

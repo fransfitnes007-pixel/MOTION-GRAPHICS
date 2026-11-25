@@ -1,0 +1,39 @@
+{
+  "slug": "holographic-business-card__pointer-tilt-shard-foil-flip",
+  "visual_name": "Holographic business card",
+  "code_name": "Pointer tilt, shard foil, flip",
+  "category": "ui-components",
+  "summary": "A sky-blue business card that tilts to the pointer on a spring, lights a pastel shard foil and glare, and flips on click to a white back with a QR code.",
+  "aliases": [
+    "business card",
+    "holographic card",
+    "tilt card",
+    "flip card",
+    "foil card",
+    "intro card"
+  ],
+  "tags": [
+    "card",
+    "hover",
+    "3d",
+    "light",
+    "21st"
+  ],
+  "tech": [
+    "react",
+    "motion",
+    "css-3d",
+    "canvas-mask"
+  ],
+  "duration_sec": 9,
+  "has_sound": false,
+  "demo_kind": "rebuilt-by-eye",
+  "variants_elsewhere": [],
+  "credit": {
+    "idea": "Holographic Business Card",
+    "author": "aakashmehra",
+    "url": "https://21st.dev/@aakashmehra/components/holographic-business-card",
+    "license": "MIT",
+    "note": "Recreated by eye from the public preview; this demo is original code."
+  }
+}

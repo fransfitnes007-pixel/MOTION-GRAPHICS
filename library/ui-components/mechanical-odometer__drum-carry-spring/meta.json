@@ -1,0 +1,43 @@
+{
+  "slug": "mechanical-odometer__drum-carry-spring",
+  "visual_name": "Mechanical odometer",
+  "code_name": "Drum carry spring",
+  "category": "ui-components",
+  "summary": "A black anodised plate with a window of numeral drums that roll like a real odometer; 1,099 to 1,100 turns the tens and hundreds over together at the very end of the units' turn.",
+  "aliases": [
+    "odometer",
+    "counter",
+    "view count",
+    "money counter",
+    "drum counter",
+    "number roll",
+    "mechanical counter"
+  ],
+  "tags": [
+    "counter",
+    "3d",
+    "dark",
+    "21st",
+    "card"
+  ],
+  "tech": [
+    "react",
+    "css-3d",
+    "spring-physics"
+  ],
+  "duration_sec": 7,
+  "has_sound": false,
+  "demo_kind": "exact-formula",
+  "variants_elsewhere": [
+    "odometer-number-roll__digit-column-translate",
+    "add-to-cart-list-with-live-cart-panel__odometer-total"
+  ],
+  "credit": {
+    "idea": "Mechanical Odometer",
+    "author": "cipriantitire",
+    "url": "https://21st.dev/@cipriantitire/components/mechanical-odometer",
+    "license": "MIT",
+    "note": "Formulas follow the original MIT component; the demo is rewritten as render(t).",
+    "font": "Big Shoulders Display (SIL OFL 1.1), not bundled; the demo falls back to system condensed fonts"
+  }
+}

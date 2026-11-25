@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Truchet arc tile field radial recolor</title>
+<!-- Library demo template. Every frame is a pure function of time: window.render(t).
+     Open it in a browser and it loops. engine/tools/render_demo.cjs drives it frame by frame (?render=1).
+     URL params: ?w=1920&h=1080&layout=wide|tall -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#f2f2f4;color:#0b0b10;font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+/* SKILL CSS START */
+
+/* SKILL CSS END */
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+const Q = new URLSearchParams(location.search)
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080), TALL = (Q.get('layout') || (H > W ? 'tall' : 'wide')) === 'tall'
+const stage = document.getElementById('stage')
+stage.style.width = W + 'px'; stage.style.height = H + 'px'
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px'
+const CX = W / 2, CY = H / 2, K = TALL ? .74 : 1          // K: type scale for the narrow layout
+
+// easing + helpers, the same set the films use
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const eo = (x) => 1 - Math.pow(1 - x, 3)
+const eo5 = (x) => 1 - Math.pow(1 - x, 5)
+const ei = (x) => x * x * x
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
+const spring = (x, k = 7, f = 11) => x >= 1 ? 1 : x <= 0 ? 0 : 1 - Math.exp(-k * x) * Math.cos(f * x)
+const lerp = (a, b, x) => a + (b - a) * x
+const el = (tag, cls, parent = stage, html = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; parent.appendChild(e); return e }
+const S = (e, o) => { for (const k in o) e.style[k] = o[k] }
+const vis = (e, on) => { const d = on ? '' : 'none'; if (e.style.display !== d) e.style.display = d }
+const px = (n) => Math.round(n) + 'px'
+
+// ---------- SKILL START: edit from here down ----------
+// Rebuilt by eye from @stephanlivera's 15-second showreel (revid.ai wall #1, 7.4s to 9.8s): a black field of thick white
+// quarter-circle arcs (Truchet tiles, two arcs per cell at opposite corners, seeded orientation) forms an endless maze; a circular
+// wave spreads from the centre, turning every tile it passes 90 degrees and painting it orange, then a second wave turns them back.
+const CONFIG = {
+  cell: 96, stroke: .26,                 // cell size at 1920 wide, stroke width as a share of the cell
+  bg: '#0b0b0c', line: '#f3f1ec', accent: '#ed4938',
+  wave1: [.5, 1.9], wave2: [2.5, 3.9],   // start and end of each wave (radius 0 -> past the corners)
+  turn: .35,                             // seconds each tile takes to turn
+  seed: 7,
+  dur: 4.6,
+}
+const C = CONFIG
+const DUR = C.dur
+window.DUR = DUR
+const Z = TALL ? W / 1080 : W / 1920
+const hsh = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7 + C.seed * 17.3) * 43758.5453; return x - Math.floor(x) }
+stage.style.background = C.bg
+const cv = document.createElement('canvas'); cv.width = W; cv.height = H; stage.appendChild(cv)
+const g = cv.getContext('2d')
+const s = C.cell * Z, cols = Math.ceil(W / s) + 1, rows = Math.ceil(H / s) + 1
+const ox = CX - cols * s / 2, oy = CY - rows * s / 2
+const Rmax = Math.hypot(W, H) / 2 + s
+function tile(x, y, flip, rot, col) {
+  g.save(); g.translate(x + s / 2, y + s / 2); g.rotate(rot + (flip ? Math.PI / 2 : 0))
+  g.strokeStyle = col; g.lineWidth = s * C.stroke; g.lineCap = 'butt'
+  g.beginPath(); g.arc(-s / 2, -s / 2, s / 2, 0, Math.PI / 2); g.stroke()
+  g.beginPath(); g.arc(s / 2, s / 2, s / 2, Math.PI, Math.PI * 1.5); g.stroke()
+  g.restore()
+}
+function render(t) {
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H)
+  const r1 = lerp(0, Rmax, eio(seg(t, ...C.wave1))), r2 = lerp(0, Rmax, eio(seg(t, ...C.wave2)))
+  const t1 = (d) => C.wave1[0] + (C.wave1[1] - C.wave1[0]) * clamp(d / Rmax)   // rough time the wave front passed (for colour fade)
+  for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+    const x = ox + i * s, y = oy + j * s, d = Math.hypot(x + s / 2 - CX, y + s / 2 - CY)
+    // a tile turns when the front passes it; turn progress from how far inside the front it is
+    const p1 = eo(clamp((r1 - d) / (s * 2.2))), p2 = eo(clamp((r2 - d) / (s * 2.2)))
+    const rot = (p1 + p2) * Math.PI / 2
+    const hot = p1 * (1 - p2)
+    const col = hot > .02 ? mix(C.line, C.accent, hot) : C.line
+    tile(x, y, hsh(i, j) > .5, rot, col)
+  }
+}
+function mix(a, b, u) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); const c = (sh) => Math.round(lerp((A >> sh) & 255, (B >> sh) & 255, u)); return `rgb(${c(16)},${c(8)},${c(0)})` }
+// ---------- SKILL END ----------
+
+window.render = render
+window.READY = document.fonts.ready.then(() => { render(0); return true })
+// Plays on a loop when opened by hand; the render tool passes ?render=1 and steps frames itself.
+if (!Q.get('render')) { const t0 = performance.now(); const loop = (n) => { render(((n - t0) / 1000) % DUR); requestAnimationFrame(loop) }; requestAnimationFrame(loop) }
+</script>
+</body></html>
