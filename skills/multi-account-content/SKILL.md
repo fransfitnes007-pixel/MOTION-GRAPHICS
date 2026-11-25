@@ -11,13 +11,19 @@ description: "Run several social accounts from the kit: one session per account,
 ## In an account session
 1. Read `P/accounts/<account>.md` (FORMAT LOCK and Log). If it does not exist, copy `P/accounts/_TEMPLATE.md` and fill
    it in with the owner. `P/bin/account-info.sh <account>` prints the account's facts as JSON.
-2. **No FORMAT LOCK yet:** read the reference video with eyes and scrapey (`KIT/docs/EYES-AND-SCRAPEY.md`), make ONE test
-   video (PLAYBOOK section 4), take corrections until the owner approves, then write the lock.
+2. **No FORMAT LOCK yet:** read the reference video with eyes and scrapey (`KIT/docs/EYES-AND-SCRAPEY.md`) and write it up
+   with `P/templates/BREAKDOWN.md` into `P/research/<account>/`. Pick a look and a story device no other account uses
+   (`KIT/docs/FACELESS-EXPLAINER-STYLES.md`, `KIT/docs/FORMATS.md` formats 25 to 28) and this account's own store-CTA
+   staging (FORMATS.md section L). Make ONE test video (PLAYBOOK section 4), take corrections until the owner approves,
+   then write the lock (look, voice id and settings, loudness, hold rule, CTA staging, claim rules).
 3. **GO:** follow PLAYBOOK section 7: scripts in the main session, voices, one subagent per video on a cheaper model
    (at most one per sub niche, 2 or 3 full renders at once per machine), check every contact sheet yourself, drop
    with `P/bin/drop.sh`, log, report, end with `Say "GO" for the next batch.`
 
 ## Rules
+- Scripts pass `P/tools/claim_check.py` before any voice (add `--hold` where the product is held to the last line).
+- Product facts only from the brand's `PRODUCT-FACTS.md`; store name and numbers from `P/tools/store_lookup.sh` that day.
+- Shared pieces (caption engine, prompt box, rigs, store CTA): check `SHARED-PIECES.md`, claim, build once.
 - Voices: `P/bin/tts.sh` reads the key from the OS keychain or the environment inside the command. Never write a key to
   a file, prompt, commit or log; never print it. Local voices first when the owner has not chosen a cloud voice.
 - Never post directly, never touch accounts' logins or devices. Being in the drop folder is the approval.

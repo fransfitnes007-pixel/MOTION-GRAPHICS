@@ -107,3 +107,35 @@ light UI demo cut per product.
   floating notification chips, a theme toggle that floods the scene dark.
 - **One-shape film** (about 11 s): one shape on light grey becomes icon, button, toast, menu, tab bar, widget, tick.
 - **Keynote reveal** (about 20 s, white): one word at a time, slow pushes, no hard cuts.
+
+## 6. Faceless explainers: what nine measured reels share
+From a frame-by-frame study of nine high-performing faceless motion reels in nine niches, 24 to 25 Nov 2026. Full
+numbers, the nine looks and seven caption variants: [`FACELESS-EXPLAINER-STYLES.md`](FACELESS-EXPLAINER-STYLES.md).
+
+| Measure | Value |
+|---|---|
+| Hard cuts | 0 to 1 per reel in 7 of 9 (ffmpeg scene threshold 0.3); the others 2 to 7, or one every 8.2 s |
+| New idea / set | every 2 to 4 s (diagram redraws every 4 to 8 s at the slowest) |
+| New small element | every 0.4 to 2 s; nothing still longer than ~3.5 s |
+| Voice | 155 to 205 wpm (2.4 to 3.4 words/s), from frame 0, gaps 0.3 to 0.6 s at most |
+| Music | none audible by level in most: the level drops to silence between phrases; effects on the hits |
+| Loudness | mean -16.9 to -17.7 dB on the references; master -14 to -16 LUFS |
+| Spring pop | scale 0.8 or 0.85 to 1.05 to 1, 6 to 9 frames, 4 to 8 % overshoot |
+| Stamp slam | 1.6x to 1x with 2 to 6 deg tilt, then hold |
+| Slide-in | 0.3 to 0.4 s ease-out (fast slides get motion blur) |
+| Caption word in | fade + 6 px rise + blur-in over ~0.15 s, or a colour sweep on the word's start time |
+| Calm diagram style | ease-in-out 0.3 to 0.8 s, no overshoot |
+| Stagger | 70 to 100 ms between list rows |
+| Counter | ease-out over 1 to 3 s; exponential for "racing" money-style counters |
+| Bottom of frame | the lowest 30 to 35 % stays empty for the platform UI |
+
+Rules: the hook is complete on frame 0 (no logo, no fade); change the picture, not the shot (springs, morphs,
+redraws, circle wipes, colour floods); one accent colour and emphasis by dimming the rest; a number that moves from
+start to end; the ending loops into the first frame or lands on one line. A new account changes the story device,
+narrator and camera, not only the palette (FORMATS.md format 26).
+
+## 7. Low-poly 3D series numbers (50 parts)
+39 to 41.5 s (35 s of voice + a 5 s end card), 1080x1920 at 30 fps, hard cuts on word times,
+captions at 64 % of the height with a 0.2 x size black stroke, punch words at 1.5 to 1.6x, stamps at y 960 to 975
+or above 650, sheet content out of y 660 to 900, mean -19.5 to -20.5 dB and max about -2 dB after
+`loudnorm=I=-16:TP=-2` plus `alimiter=limit=0.8:level=false`. Details: [`../pipelines/day-in-the-life/`](../pipelines/day-in-the-life/).

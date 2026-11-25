@@ -7,6 +7,17 @@ root. `P` is this folder (`KIT/pipelines/multi-account-content`).
 Each account's own facts (platforms, niche, five sub niches, drop folders, FORMAT LOCK, log) are in
 `P/accounts/<account>.md`. Live values: `P/bin/account-info.sh <account>`.
 
+Per brand, also keep (templates in `P/templates/`, filled copies stay local in `P/research/`, which git ignores):
+- **A look file** for the brand's accounts: which house rules apply and each account's look at a glance. For faceless
+  explainer accounts start from `KIT/docs/FACELESS-EXPLAINER-STYLES.md` (ten house rules, nine measured looks).
+- **`research/<account>/BREAKDOWN.md`** per account: its reference read frame by frame (`templates/BREAKDOWN.md`).
+- **`PRODUCT-FACTS.md`**: every product fact a video may show, with its source. Not in the file = not on screen
+  (`templates/PRODUCT-FACTS.md`).
+- **`SHARED-PIECES.md`**: pieces several accounts need (caption engine, prompt box, rigs, store CTA); claim one before
+  building it, build it once (`templates/SHARED-PIECES.md`).
+The look file and the FORMAT LOCK win over section 1 for the look; keep section 1's pipeline (render, word-timed
+captions, sound recipe, checks, hand-off).
+
 ---
 
 ## 1. The proven format (an example of a FORMAT LOCK, not a rule)
@@ -47,6 +58,15 @@ Each account's own facts (platforms, niche, five sub niches, drop folders, FORMA
 - Some brands hold back the product until the last line (organic content). Then the turn at beat 4 becomes a tip, and
   the product name, site or App Store CTA lands only at the end. Decide which per account in its FORMAT LOCK.
 - Leave at least 1.4 s after the last word so the CTA can be read.
+- **Organic accounts:** no product words ("app", "build", "made it", the brand) before the last line, and never a price,
+  "free", a money promise or a disclaimer line. `P/tools/claim_check.py script.txt --hold --brand "<name>" --chars <min> <max>`
+  must print `clean` before any voice is made.
+- **A new account changes the format, not only the skin**: who tells the story, where the camera is, the story device
+  and its retention device (`KIT/docs/FORMATS.md` formats 25 and 26). Accounts that shared one skeleton (narrator,
+  centred karaoke caption, corner counter, phone, the same outro) read as one creator and two were rejected as ad-like.
+- **Store CTA:** read the listing that day (`P/tools/store_lookup.sh <app id>`) and pass the live name and numbers in;
+  each account has its own staging and closing tag (`KIT/docs/FORMATS.md` section L). Keep the table of stagings taken
+  in `PRODUCT-FACTS.md`.
 
 ---
 
@@ -62,6 +82,10 @@ Each account's own facts (platforms, niche, five sub niches, drop folders, FORMA
 | Fill a build | `P/tools/fill_beats.py` |
 | Stills sheet | `P/tools/sheet.py` |
 | Checks | `P/tools/check_video.sh` |
+| Claim rules | `P/tools/claim_check.py` (hold rule, bans, character count) |
+| Store listing facts | `P/tools/store_lookup.sh <app id>` (public lookup, no key) |
+| Templates | `P/templates/` (BREAKDOWN, PRODUCT-FACTS, SHARED-PIECES) |
+| Looks and rules | `KIT/docs/FACELESS-EXPLAINER-STYLES.md`, `KIT/docs/MOTION-RULES.md`, `KIT/docs/FORMATS.md` |
 | Hand-off | `P/bin/drop.sh` |
 | Builds | `P/builds/<account>/<MMDD>-<n>-<sub-niche-slug>/` (git-ignored), same `code/` + `media/` layout as a library piece |
 
@@ -88,7 +112,12 @@ Script length and speed (learned over 40+ videos):
 - Speed = raw seconds / 37, kept between 1.1 and 1.3. If a take is too long even at 1.3x, cap the pauses at 0.3 s first.
   `ffmpeg -i take.mp3 -af atempo=1.13 -ar 48000 -ac 1 take.wav`
 - Spell for the voice: "P O V", "dot net", brand names split the way they are said.
-- Make two takes, keep the better one. Only use a cloned voice of a person who gave permission.
+- Make two takes, keep the better one. Only use a cloned voice of a person who gave permission (an instant clone of a
+  TV character was flagged as a legal and endorsement risk and not used).
+- Spell letters with spaces ("F Y P", "U S B", "D Ms"); write years as words for the voice and digits in the caption;
+  merge a spaced initialism back into one caption word.
+- Stock (premade) voices can be retired by the provider: before a long series, check, and prefer a voice-library voice
+  id; write the id and settings into the FORMAT LOCK.
 
 If the only way to a voice is a web app shared by several sessions, take a lock before using it
 (`mkdir <shared>/.voice.lock`, `rmdir` after), save and restore whatever text and voice were in the box, and do script
@@ -103,7 +132,8 @@ P=KIT/pipelines/multi-account-content; B=$P/builds/<account>/<MMDD>-<n>-<slug>; 
 mkdir -p "$B/code/voice" "$B/media" && cp -R "$PREV"/code/{fonts,*.js} "$B/code/" 2>/dev/null
 ```
 1. **Story check.** Read the FORMAT LOCK and the Log. Pick a topic, setting, gag, payoff and callback not used yet.
-   Write `script.txt`; check the character count and the account's claim rules (a regex check per line is cheap).
+   Write `script.txt`; run `python3 $P/tools/claim_check.py script.txt --chars <min> <max>` (add `--hold --brand <name>`
+   for accounts that hold the product back) until it prints `clean`.
 2. **Voice:** two takes into `$B/code/voice/`, then `atempo` to wav (section 3).
 3. **Word times:** `python3 $P/tools/word_times.py take1.wav script.txt words.json --drop-last 2` until it prints
    `mismatch: []` (drop the trailing words the end card shows instead).
@@ -149,7 +179,10 @@ finished, checked videos.
 - Length 39 to 41.5 s (or the FORMAT LOCK's); at least 1.4 s after the last word when the CTA must be read.
 - `mean_volume` about -19.5 to -20.5 dB, `max_volume` about -2 dB, never 0.0 dB.
 - `mismatch: []` from word times; captions match the voice in a few stills.
-- Every product feature or fact shown was checked that day.
+- Every product feature or fact shown was checked that day and is in `PRODUCT-FACTS.md`; store name and numbers come
+  from `store_lookup.sh` that day.
+- The outro frame read at full size: nothing cut off at the edges, no label over the phone, a split-flap or counter
+  landed on its final value.
 - Say in the report that nobody has listened to the mix.
 
 ---
@@ -160,7 +193,7 @@ The owner dials in one test video with the account's agent until it is right; th
 LOCK. After that "GO" is the whole prompt.
 
 1. **Read** the account file (FORMAT LOCK + Log), `bin/account-info.sh <account>` if anything may have changed, and the
-   listing facts the end card shows. Count unused videos already waiting in each drop folder.
+   listing facts the end card shows (`P/tools/store_lookup.sh`). Count unused videos already waiting in each drop folder.
 2. **Write the scripts** in the main session, one per sub niche, each a topic not in the Log. Run the claim check and
    the character count for the locked voice.
 3. **Voices.** With the API they run in parallel. Through a shared web app they run one after another under a lock.
@@ -198,3 +231,14 @@ Ask only when truly blocked (a sign-in, a claim you cannot verify, a format choi
   video is never posted twice on an account.
 - **Shared voice web app:** restore the exact text that was there, not a habitual default.
 - **Library hygiene:** never edit a library piece in place; copy it.
+- **Whisper tail:** a take's transcript can end with a hallucinated "Thanks for watching"; check the last words and drop
+  it, or use the other take.
+- **Browser extension drops mid-Generate** (web-app voice route): reconnect once to the same tab; the takes usually
+  finished and can still be downloaded. Open a dialog and act in one batch when it closes between calls; confirm the
+  chosen voice before Generate.
+- **Hard-coded listing facts go stale:** a store name changed between two batches and the CTA kit still showed the old
+  one. Pass live facts in as parameters.
+- **Sparse scenes:** a small character on an empty stage with the bottom third empty read as cheap; fill the frame like
+  the references do (an element at least every 1.5 s, the stage used edge to edge above the platform UI).
+- **Loudness:** faceless explainer references sit at -14 to -16 LUFS; the low-poly series masters at -16. Pick one per
+  account and write it into the FORMAT LOCK.

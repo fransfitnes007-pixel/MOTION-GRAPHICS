@@ -35,8 +35,12 @@ Conventions used below:
 22. Short-form creator formats (talking head, text-hook reaction, split screen, slideshow, POV, AI character)
 23. Product listing videos from phone footage (batch ffmpeg)
 24. "Day in the life" pain-point-to-solution reel (script template)
+25. Faceless continuous-stage explainer (no cuts, one accent colour, frame-0 hook): nine measured looks
+26. Story-device formats: change the format, not the skin (receipt printer, quest log, field guide and seven more)
+27. 3D studio with a mascot (Blender, word-keyed choreography, store product-page CTA)
+28. Low-poly 3D first-person "day in the life" series (a 50-part house series)
 
-Then: cross-cutting lessons and gotchas (pipeline, rendering, ffmpeg, colour, TTS and voices, sound synthesis, captions, safe zones, posting specs, hooks and scripting, review, review patterns).
+Then: cross-cutting lessons and gotchas (pipeline, rendering, ffmpeg, colour, TTS and voices, sound synthesis, captions, safe zones, posting specs, hooks and scripting, review, review patterns, store-native CTA staging).
 
 ---
 
@@ -649,6 +653,8 @@ Extra formats: cheat-sheet or list talking head (numbered items pop next to the 
 
 A short script structure for a faceless or pictogram reel: **title line; three pain points; discovery of the product; a four-step win; a kicker; the domain read aloud.**
 
+This template grew into a full house series: a low-poly 3D first-person version with one fresh pain per part, one real product feature at the midpoint and a callback at the end. See format 28 and [`pipelines/day-in-the-life/`](../pipelines/day-in-the-life/).
+
 > "Day in the life of a [role]. Wake up. Fifty pitches sent. Zero replies. One [client] finally says yes. But they want [expensive requirement]. So I [do it]. [Weeks of grind]. [Failure]. I film it anyway. Revision one. Revision two. Revision nine. Then they ghost me on the invoice. [Expletive]. Then I found YOURBRAND. I made an account. Joined a campaign. No pitching. No new accounts. No chasing invoices. I read the brief. Make the video. Get approved. Upload the raw video. And I'm done. No [expletive]. That's the whole job now. yourbrand dot com."
 
 Rules: three pains (pitching, setup and warm-up, revisions and unpaid invoice), then relief in four verbs, then one kicker. Spell numbers as words; spell the domain as it should be read ("yourbrand dot com"). Written for a young conversational female library voice; ~2.3 words/s raw, 1.18x speed-up.
@@ -656,6 +662,96 @@ Rules: three pains (pitching, setup and warm-up, revisions and unpaid invoice), 
 **Short prompt:** "Make a 'day in the life of a [role]' reel for YOURBRAND: three pain points, then discovering the product, a four-step win and a kicker, young conversational female voice sped 1.18x, domain read aloud."
 
 **Detailed prompt:** "Write the script in the template above (numbers as words, domain as 'yourbrand dot com'), generate one voice take (stability 50, similarity 75), speed it 1.18x, transcribe word times, then build the reel in whichever look fits (pictogram parable, pawn stage or pixel runner) with a pill per pain point, a counter for the failed attempts ('Fifty pitches. Zero replies.'), a stamped REJECTED or GHOSTED on each failure, a four-step checklist animating on the four verbs, and the standard end card."
+
+---
+
+## 25. Faceless continuous-stage explainer (no cuts, one accent colour, frame-0 hook)
+
+Measured from nine high-performing faceless reels in nine niches (full numbers, nine looks and seven caption variants in [`FACELESS-EXPLAINER-STYLES.md`](FACELESS-EXPLAINER-STYLES.md)). One stage that never cuts, a voice at 155 to 205 wpm from frame 0, word-timed captions with one accent word per phrase, a number that moves, flat line art.
+
+**Beat sheet (36 to 45 s, product held back until the end, for organic accounts):**
+1. 0 s: the hook is already complete on frame 0: a claim, a contrast or a counter that is moving. No logo, no fade.
+2. 0 to ~12 s: the problem grows: a counter counts it, X-ed tiles, stamps, a label flip. A new small element every 0.5 to 1.5 s.
+3. ~12 to 18 s: the idea, typed as one plain sentence into a neutral prompt box (no brand on it yet).
+4. ~18 to 25 s: it builds: chat step rows tick, then the result appears on a phone.
+5. ~25 to 33 s: using it: the sub niche's payoff, the counter resets or reverses.
+6. Last 4 to 6 s: one plain line with the name, then the store-native CTA (section L). At least 1.4 s after the last word.
+
+**Look:** dark stage (near-black, navy or plum), white line art, one accent colour; emphasis by dimming everything else. Characters are symbols (stick figure, glowing silhouette, wireframe skeleton). Changes are springs, morphs, redraws, circle wipes or colour floods, never cuts. Bottom 35 % of the frame stays clear.
+
+**Sound:** voice plus short effects on the hits (pop on every element, slam on stamps, tick on counters); no music bed in most of the references (the level falls to silence between phrases); -14 to -16 LUFS.
+
+**Lessons:**
+- The first frame and the moving number matter more than the skin: on one account the flat-vector reel did ~67x the median, but the topic may explain that as much as the look.
+- Product words ("app", "build", "made it", the brand) before the last line made organic reels read as ads; check every line but the last with a regex (`pipelines/multi-account-content/tools/claim_check.py`).
+- Show the sentence the person typed in their own plain words (8 to 22 words); avoid "AI-powered", "revolutionary", "prompt", "model", "agent", "deploy", "code".
+- Count the problem, never money earned; never promise money, a business or a health result.
+
+**Short prompt:** "Make a 40 s faceless explainer for [sub niche] in look [1-9 from FACELESS-EXPLAINER-STYLES.md]: hook complete on frame 0, no cuts, one accent colour, word-timed captions with one accent word per phrase, the problem counted, the idea typed into a neutral prompt box, the result on a phone, then the YOURBRAND store CTA."
+
+**Detailed prompt:** "Read docs/FACELESS-EXPLAINER-STYLES.md and pick one look. Write a 36 to 40 s first-person script (about 120 to 130 words at 190 wpm) with no product words before the last line; run tools/claim_check.py. Voice it, take word times, then build one render(t) page: dark stage, one accent colour, a counter that moves from frame 0, a new element every 0.5 to 1.5 s, transitions by spring, morph, redraw or circle wipe only (zero cuts), captions in the chosen variant's band with the said word lit, unsaid words dim and one accent word per phrase. Beats: hook on frame 0, problem grows, the idea typed into an unbranded prompt box, chat step rows then the result on a phone, the payoff, the name and the store-native CTA staged for this account, 1.4 s after the last word. Voice plus synthesised hits, no music, -14 to -16 LUFS. Show me a stills sheet before the full render."
+
+---
+
+## 26. Story-device formats: change the format, not the skin
+
+Nine accounts made with one skeleton (narrator, centred one-word karaoke caption, corner counter, phone mock-up, the same store outro) read as one creator on a feed even with nine palettes; two of them were rejected as "ad-like". The fix is to change **who tells the story, where the camera is and the story device**, each with its own retention device. Ten devices, written for code-drawn visuals (no product UI until the end, no AI images, no third-party logos):
+
+| Device | Story told as | Look | Retention device | Outro staging |
+|---|---|---|---|---|
+| Invisible receipt | a thermal printer prints every invisible job as a $0.00 line item | thermal paper, dot-matrix mono, perforated tear, red PAID stamp | running "ITEMS: n"; TOTAL prints only at the end | the receipt tears off, the last line is the product |
+| Quest log | an original 16-bit RPG: main quest, side quests, a boss | own pixel sprites, typewriter dialogue box | boss HP drains, QUEST COMPLETE chime | the product drops as loot |
+| Field guide | a nature documentary about one person in their habitat (a generic narrator, never an impression) | engraved plates, specimen labels, binocular vignette, slow zoom | "SPECIES LOGGED: 3/7", the worst one saved for last | a final plate shows the phone |
+| Night-shift monitor | an ECG trace draws the beats, vitals track the mood | black monitor, green/cyan/yellow traces, scan lines | shift clock 19:00 to 07:00 | the line flatlines and comes back as the app |
+| Roll for it | every beat is a d20 roll on a parchment map | ink map, wax seals, candle flicker, original art | the die keeps rolling; the last roll is a 20 | the crit is the CTA |
+| Rack and tag | a price-tag gun shoots tags that carry the story, top down | kraft table, garment tags, barcode wipes | a running total goes negative, then recovers | the tag gun fires the store card |
+| Speaks fluent | kinetic type only, Swiss poster grid, two phrases fight | three primaries, huge type, no characters | a streak counter against "phrases I can use: 3" climbing | the type collapses into a phrase card |
+| Flour and orders | overhead counter; piped icing writes keywords; order tickets on a rail | marble, piping text, sprinkles, flour-dust wipes | an oven timer, "ding" on the reveal | the last ticket is the store card |
+| Glovebox | the dashboard is the screen; warning lights carry the beats | dark gauges, orange needles, LCD trip computer for captions | the fuel gauge empties, or "NEXT SERVICE IN" | the trip computer reads the closing line |
+| Plant obituaries | a funeral programme for every plant lost | engraved botanicals, cream card, black ribbon | headstones "LOST: 7", then "ALIVE: 12" | the last programme page is the app |
+
+Earlier devices in the same family: a dog's point of view from the floor (giant legs, bowl at eye level, "breakfasts today: 0, 1, 2"), a scrapbook of polaroids and washi tape with a ribbon that unties ("opens in Xs"), a kitchen security cam with a verdict countdown, a whiteboard with a bell timer, a museum case with brass plaques, a two-colour risograph zine, an airport split-flap board with a boarding pass.
+
+**Rules:** the first ~85 % is the niche's real life: a named feeling, a funny specific detail, one tip that actually helps; no product words until the last line; every line acted out on screen; one retention device per reel, on theme; at least 25 s; no pause over 0.3 s; a ~190 wpm conversational read; a new account = new format, palette, font, motion language and voice; each account's outro staged in its own world with its own closing words (the same outro line on nine accounts gets pattern-matched fast).
+
+**What worked best:** the warm, personal devices (scrapbook gift reels; a "wall of awful" where labelled bricks stack while "days unanswered" counts 1 to 21, then drops to 0) and a device that is a real format, not a skin (the dog's point of view). **What failed:** sparse scenes (a small character on an empty stage, the bottom third empty), outro stickers cut off at the frame edge or overlapping the phone, a split-flap row caught mid-flip in a still (check it lands on the final value).
+
+**Short prompt:** "Make a 30 to 40 s organic reel for [niche] as the [device] format: the story device is the whole picture, one retention device ([counter]), a real tip, no product words until the last line, and the YOURBRAND store CTA staged inside the device's world."
+
+**Detailed prompt:** "Pick a story device from FORMATS.md format 26 that no other account of ours uses. Write a first-person script: a named feeling, a specific funny detail, one tip that helps, the product only in the last line (run tools/claim_check.py). Draw everything in code inside the device's world (paper, monitor, map, dashboard) with one on-theme retention device that moves from frame 0 to the end, every line acted out, no pause over 0.3 s, a new element at least every 1.5 s, the bottom third of the frame used, nothing cut off at the edges. End with the store-native CTA (FORMATS.md section L) staged as part of the device (torn receipt, loot drop, final plate) with this account's own closing tag. Stills sheet first, then render, then check the outro frame at full size."
+
+---
+
+## 27. 3D studio with a mascot (Blender, word-keyed choreography, store product-page CTA)
+
+A first-person story for one niche told in a dark 3D studio around an original mascot, ending on a store product page. About 135 to 150 words at ~170 wpm, ~50 s.
+
+**Beat sheet:** pain first, on a crash zoom into a number; the story acted around the mascot on a truss-lit stage with monitors, pop-ups, a notepad and pedestal cards; one real tip; a money or count beat on a split-flap board; "Simple." on a light leak; a colour flood into the product-page CTA; the last line names the product.
+
+**Look:** Blender EEVEE, dark studio, graphite props, one accent; 2D assets (phone screens, monitors, pop-ups, a notification, notepad frames, pedestal cards) drawn in one HTML page and rendered to textures; original art and fictional product names only; film grain and a vignette in the composite.
+
+**Moves vocabulary (keep it fixed so the series is recognisable):** crash zoom on a number; whip pan with motion blur on every cut; split-flap board for money; modal spring-in for pop-ups; camera shake on a knock; zoom-through into the phone; light leak on the hook and on "Simple."; colour flood into the CTA. Every move is keyed to a spoken word (`W(line, 'word')`) from the voice's word times.
+
+**Sound:** an original synthesised bed at 100 BPM (a breath on "Simple.", a riser into the CTA) plus effects from the scene's cue list; composite at -14 LUFS.
+
+**Lessons:**
+- EEVEE crashes on long renders: render 120-frame chunks in fresh Blender processes and redo any missing frames; the crash dialogs can be ignored.
+- The store product page (hero header with a rippling wordmark, glass buttons, Get to ring to Open with a click ripple, ratings / age / category / developer strip, screenshots) is a second native CTA layout next to the search sequence; it needs the live listing facts that day (section L).
+- Use a stock or library voice: an instant clone of a TV character was flagged as a legal and endorsement risk.
+
+**Short prompt:** "Make a 50 s 3D-studio reel for [niche]: an original mascot on a dark truss-lit stage, crash zoom, whip pans, a split-flap money board, a light leak on 'Simple.', a colour flood into the YOURBRAND store product page."
+
+**Detailed prompt:** "Write a 135 to 150 word first-person script (pain first, one real tip, the product only in the last line). Draw the 2D assets (phone screens, monitors, pop-ups, notepad, pedestal cards) in one HTML page and render them to textures. Build the Blender scene with an original mascot and key every camera move and prop to word times from the voice (crash zoom, whip pan with blur, split-flap board, modal spring, shake, zoom-through, light leak, colour flood). Render in 120-frame chunks in fresh processes, composite with grain and vignette, synthesise a 100 BPM bed with a riser into the CTA, master at -14 LUFS, and end on the store product page with the live listing facts."
+
+---
+
+## 28. Low-poly 3D first-person "day in the life" series
+
+A 50-part house series: ~40 s vertical, a three.js low-poly room cut away at the front, a box-built character, first-person dry humour, hard cuts on word times, word-timed stroke captions with the spoken word in yellow, synthesised effects and a chrome end card. Each part has a new creator with a different day and a fresh pain, one real product feature around the midpoint that answers it, and a callback at the end. Voices alternate between a female and a male library voice by part. The pipeline, scene kit, episode log and the episodes as runnable pages are in [`pipelines/day-in-the-life/`](../pipelines/day-in-the-life/); format 24 is its script ancestor; section 1 of the multi-account PLAYBOOK lists its proven numbers.
+
+**Short prompt:** "Make the next part of the low-poly day-in-the-life series for YOURBRAND: a new creator, a new setting, a fresh pain, one real feature at the midpoint, a callback, about 40 s."
+
+**Detailed prompt:** "Read pipelines/day-in-the-life/ (playbook and episode log) and pick a pain, setting, gag, payoff feature and callback no earlier part used (a new name and outfit on the same story counts as a repeat). Write ~540 characters for the female voice or ~580 for the male one, voice it, take word times, fill the previous part's page with the new words, caption groups and beats, write the new room, outfit, props, product sheets and camera shots, check a stills sheet, write the sound recipe, render, mux at -16 LUFS with the level=false limiter, and check the 1 fps contact sheet before calling it done."
 
 ---
 
@@ -717,6 +813,9 @@ Rules: three pains (pitching, setup and warm-up, revisions and unpaid invoice), 
 - **Local engines used:** a small fast stock-voice model (Kokoro, ~4 s per voiceover, flatter), an expressive 1.7B model with preset speakers plus an instruction field and a VoiceDesign mode, a cloned-from-reference mode (Base) for identical output each reel, free neural cloud voices via `edge-tts`, OpenVoice for re-colouring toward a consenting speaker. Pronunciation: write brand names as the TTS should say them (a compound brand as two words, a domain as "yourbrand dot com", initialisms as spaced letters "H Q", "shadow banned" as two words, "U G C", "D M"); spell numbers as words; always run whisper on the take and check brand words.
 - **Hosted TTS (ElevenLabs-style):** model v4, stability 50, similarity 75, speed 100%; two takes per script, pick the cleaner by word timing; about one credit per character (a 330-character script cost ~330 credits; a 52 s video ~800); prefer the API with your own key over driving the web app; check you downloaded the newest take (an old take is easy to grab by mistake); the "search with audio sample" feature returns a similar library voice, useful for matching a reference.
 - **Local model downloads:** a VPN can slow multi-GB downloads to a crawl; download over a direct connection, and keep large downloads off any machine that serves a live site.
+- **Lessons from a 50-part series on two library voices:** script length sets the pace more than any setting: ~510 to 540 characters for a calm female voice and ~570 to 590 for an energetic male one land near 37 s of voice after a 1.1x to 1.3x speed-up (`speed = raw seconds / 37`, clamped). Short one-word sentences ("Eleven." "Thirteen.") make a calm voice slower: 93 words ran 46 s raw. When a take is too long even at 1.3x, cut every pause over 0.3 s to 0.3 s first. Spell letters with spaces ("F Y P", "U S B", "P D F", "D Ms") and write years as words for the voice while the caption shows digits; a spaced initialism comes back from whisper as separate letters, so merge it into one caption word. Whisper can add a hallucinated "Thanks for watching" tail on a take: check the transcript end and drop it, or use the other take.
+- **Stock voices can be retired by the provider:** before building a long-running series on a stock (premade) voice, check whether it is scheduled to be removed, and prefer a voice-library voice id you can keep; write the voice id and settings into the account's format lock.
+- **Shared web-app voice box:** if several sessions share one browser text box, read and save the text and voice already in it, take a directory lock, and restore both exactly when done (restore what was there, not a habitual default). If the browser extension drops during Generate, reconnect once to the same tab: the takes usually finished and can still be downloaded.
 - Dubbed lines: splice a re-recorded line into the same slot (trim, same tempo) so no other timing changes; if tone jumps, regenerate in one take.
 
 ## E. Captions and on-screen text
@@ -790,3 +889,12 @@ Rules: three pains (pitching, setup and warm-up, revisions and unpaid invoice), 
 ## K. Tool notes (public tools used; swap for your own)
 
 A headless Chromium via Playwright for rendering and capture; ffmpeg (no ffprobe needed); faster-whisper or mlx-whisper for word timestamps; yt-dlp for references; numpy, scipy and soundfile for synthesis; a React video framework for AI-generated-plate reels and templated batches (render stills from one bundle for speed); a free local TTS stack (Kokoro, an expressive 1.7B model, edge-tts, OpenVoice) plus an optional hosted TTS; a component library MCP for 3D book, device-frame, glass and border-beam references (copy the source exactly when told, then re-implement in CSS or canvas); a prompt library site for motion references (read it in a browser); an iOS simulator for clean app recordings; a screen-recording tool for demo clips; a posting server for real phones; a local image model and a local image-to-video model for AI plates; hosted video and image models (Kling-class, Seedance-class, image models) for generated UGC recipes; a gittrend-style repo-trending page for finding existing tools before building one (read the code for safety before running anything).
+
+## L. Store-native CTA, staged per account
+
+- **Two native layouts:** the store search sequence (a phone enters, the product name is typed into the search field, the result row appears with the real icon, name, subtitle, stars and GET, a tap, GET becomes a download ring becomes OPEN, then the rating / price / age row and the listing's own screenshots) or the store product page (hero header, Get to ring to Open with a click ripple, ratings / age / category / developer strip, screenshots).
+- **Live facts only:** read the listing that day (`pipelines/multi-account-content/tools/store_lookup.sh <app id>`) and pass name, rating, ratings count and price row in as parameters; never hard-code them (a listing name changed between two batches and a CTA kit kept showing the old one). Leave out any listing screenshot that contains the store owner's own logo, and never draw that logo.
+- **Every account stages it differently**, and a table of stagings already taken is kept: light or dark mode; entrance (rises from behind a prop, pops in like a pinned specimen, lowered on two wires, dropped as loot); frame and shadow; a small label ("what I made it with ->"); a closing tag in the account's own words. Never reuse another account's staging or closing tag.
+- **Positioning for organic accounts:** the person made their own thing for their exact problem by describing it; the product is never sold as "an app to download". No disclaimer lines ("Dramatization."); the only small print is the site, bottom-left. No price or "free" on camera.
+- **CTA lines that fit organic posts:** "It's called YOURBRAND. Try one sentence."; "Made it in YOURBRAND. What should I make next?"; "Comment the next idea. I'll make the best one."; "You can make whatever you want now." On platforms with no link in the bio, the in-video store search is the CTA. Never "download", "link in bio", a price or the product name in the first 4 s.
+- **Timing:** at least 1.4 s after the last word so OPEN and the closing tag can be read; check the outro frame at full size (stickers cut off at the right edge and labels overlapping the phone were the usual faults).

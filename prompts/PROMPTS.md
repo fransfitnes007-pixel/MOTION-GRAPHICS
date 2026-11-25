@@ -237,3 +237,42 @@ Copy a prompt into Claude Code with this plugin installed. **Short** prompts ass
 
 "Write the script in the template above (numbers as words, domain as 'yourbrand dot com'), generate one voice take (stability 50, similarity 75), speed it 1.18x, transcribe word times, then build the reel in whichever look fits (pictogram parable, pawn stage or pixel runner) with a pill per pain point, a counter for the failed attempts ('Fifty pitches. Zero replies.'), a stamped REJECTED or GHOSTED on each failure, a four-step checklist animating on the four verbs, and the standard end card."
 
+## 25. Faceless continuous-stage explainer (no cuts, one accent colour, frame-0 hook)
+
+**Short:**
+
+"Make a 40 s faceless explainer for [sub niche] in look [1-9 from FACELESS-EXPLAINER-STYLES.md]: hook complete on frame 0, no cuts, one accent colour, word-timed captions with one accent word per phrase, the problem counted, the idea typed into a neutral prompt box, the result on a phone, then the YOURBRAND store CTA."
+
+**Detailed:**
+
+"Read docs/FACELESS-EXPLAINER-STYLES.md and pick one look. Write a 36 to 40 s first-person script (about 120 to 130 words at 190 wpm) with no product words before the last line; run tools/claim_check.py. Voice it, take word times, then build one render(t) page: dark stage, one accent colour, a counter that moves from frame 0, a new element every 0.5 to 1.5 s, transitions by spring, morph, redraw or circle wipe only (zero cuts), captions in the chosen variant's band with the said word lit, unsaid words dim and one accent word per phrase. Beats: hook on frame 0, problem grows, the idea typed into an unbranded prompt box, chat step rows then the result on a phone, the payoff, the name and the store-native CTA staged for this account, 1.4 s after the last word. Voice plus synthesised hits, no music, -14 to -16 LUFS. Show me a stills sheet before the full render."
+
+## 26. Story-device formats: change the format, not the skin
+
+**Short:**
+
+"Make a 30 to 40 s organic reel for [niche] as the [device] format: the story device is the whole picture, one retention device ([counter]), a real tip, no product words until the last line, and the YOURBRAND store CTA staged inside the device's world."
+
+**Detailed:**
+
+"Pick a story device from FORMATS.md format 26 that no other account of ours uses. Write a first-person script: a named feeling, a specific funny detail, one tip that helps, the product only in the last line (run tools/claim_check.py). Draw everything in code inside the device's world (paper, monitor, map, dashboard) with one on-theme retention device that moves from frame 0 to the end, every line acted out, no pause over 0.3 s, a new element at least every 1.5 s, the bottom third of the frame used, nothing cut off at the edges. End with the store-native CTA (FORMATS.md section L) staged as part of the device (torn receipt, loot drop, final plate) with this account's own closing tag. Stills sheet first, then render, then check the outro frame at full size."
+
+## 27. 3D studio with a mascot (Blender, word-keyed choreography, store product-page CTA)
+
+**Short:**
+
+"Make a 50 s 3D-studio reel for [niche]: an original mascot on a dark truss-lit stage, crash zoom, whip pans, a split-flap money board, a light leak on 'Simple.', a colour flood into the YOURBRAND store product page."
+
+**Detailed:**
+
+"Write a 135 to 150 word first-person script (pain first, one real tip, the product only in the last line). Draw the 2D assets (phone screens, monitors, pop-ups, notepad, pedestal cards) in one HTML page and render them to textures. Build the Blender scene with an original mascot and key every camera move and prop to word times from the voice (crash zoom, whip pan with blur, split-flap board, modal spring, shake, zoom-through, light leak, colour flood). Render in 120-frame chunks in fresh processes, composite with grain and vignette, synthesise a 100 BPM bed with a riser into the CTA, master at -14 LUFS, and end on the store product page with the live listing facts."
+
+## 28. Low-poly 3D first-person "day in the life" series
+
+**Short:**
+
+"Make the next part of the low-poly day-in-the-life series for YOURBRAND: a new creator, a new setting, a fresh pain, one real feature at the midpoint, a callback, about 40 s."
+
+**Detailed:**
+
+"Read pipelines/day-in-the-life/ (playbook and episode log) and pick a pain, setting, gag, payoff feature and callback no earlier part used (a new name and outfit on the same story counts as a repeat). Write ~540 characters for the female voice or ~580 for the male one, voice it, take word times, fill the previous part's page with the new words, caption groups and beats, write the new room, outfit, props, product sheets and camera shots, check a stills sheet, write the sound recipe, render, mux at -16 LUFS with the level=false limiter, and check the 1 fps contact sheet before calling it done."

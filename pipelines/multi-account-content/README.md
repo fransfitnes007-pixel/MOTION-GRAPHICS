@@ -7,7 +7,8 @@ account. Your accounts, voices and folders stay in git-ignored local files.
 
 ## How it works
 1. **One session per account.** Name the session after the account. It reads `PLAYBOOK.md`, its own
-   `accounts/<account>.md`, `KIT/docs/MOTION-RULES.md`, and the library index.
+   `accounts/<account>.md`, its reference breakdown, the brand's `PRODUCT-FACTS.md` and `SHARED-PIECES.md`,
+   `KIT/docs/MOTION-RULES.md`, `KIT/docs/FACELESS-EXPLAINER-STYLES.md` and the library index.
 2. **Dial in one test video.** Give it the specifics: the reference video, the voice, the formats, each sub niche's idea
    and hook. It reads the reference with eyes and scrapey (`KIT/docs/EYES-AND-SCRAPEY.md`), makes ONE test video, and
    you correct it until it is right.
@@ -30,6 +31,11 @@ account. Your accounts, voices and folders stay in git-ignored local files.
 | `tools/fill_beats.py` | Pin a scene page to a new take: words, caption groups, beat times, scene, end lines |
 | `tools/sheet.py` | Tile render stills into one sheet to look at |
 | `tools/check_video.sh` | Duration, loudness, black frames, 1 fps contact sheets |
+| `tools/claim_check.py` | Script check before the voice: character count, "no product words before the last line", bans (prices, "free", money promises, disclaimers) |
+| `tools/store_lookup.sh` | The app's live store listing facts (name, rating, count, price row, age, screenshots) for the CTA, from the public lookup |
+| `templates/BREAKDOWN.md` | How to write up a reference video frame by frame (keep filled copies in the ignored `research/`) |
+| `templates/PRODUCT-FACTS.md` | Every product fact a video may show, with its source; CTA lines and the stagings already taken |
+| `templates/SHARED-PIECES.md` | Pieces several accounts need, who builds each, status |
 
 ## Set up
 ```bash
@@ -46,6 +52,7 @@ tools. The cloud voice is optional; `KIT/pipelines/voice` is the free local rout
 In the account's session: `/go my-account` (or just "GO" once the FORMAT LOCK is filled in).
 
 ## Privacy
-`accounts/*.md` (except the template), `voices.local.json` and `builds/` are git-ignored. Keep logins, device ids,
+`accounts/*.md` (except the template), `voices.local.json`, `builds/` and `research/` (reference breakdowns, downloaded
+references, your filled-in product facts) are git-ignored. Keep logins, device ids,
 phone numbers, keys and folder ids out of every committed file. `bin/account-info.sh` output is read by agents, so
 it must never contain credentials.

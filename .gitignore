@@ -37,4 +37,5 @@ pipelines/multi-account-content/accounts/*
 !pipelines/multi-account-content/accounts/order.example.json
 pipelines/multi-account-content/voices.local.json
 pipelines/multi-account-content/builds/
+pipelines/multi-account-content/research/
 **/.voice.lock/

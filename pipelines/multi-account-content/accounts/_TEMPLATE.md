@@ -30,14 +30,16 @@ this account reads it first on every turn. Never put passwords, session cookies,
 ## FORMAT LOCK
 Write here only what the owner approved on the test video. This is what makes video N+1 match video N; keep it current.
 - Reference look (what to copy one to one, read with eyes and scrapey that day):
-- Voice (alias from voices.local.json, model, stability, similarity, speed-up):
+- Voice (voice-library id or alias from voices.local.json, model, stability, similarity, speed-up, script characters):
 - Length / aspect / fps:
 - Beat structure with timings (hook, problem, turn, proof, callback, CTA/end card):
 - Captions (font, weight, size, position, highlight colour):
 - Colours, type, motion rules, library pieces used (slugs):
 - Sound (effects only / bed / loudness target):
 - Per sub niche: the idea shown, the hook line:
-- End card / CTA:
+- End card / CTA (store staging: mode, entrance, frame, label, closing tag; never another account's):
+- Story device and retention device (FORMATS.md 25-28; must differ from the brand's other accounts):
+- Product hold rule (product words only in the last line? `claim_check.py --hold`) and claim bans:
 - Caption + hashtag rule:
 - Approved example videos (paths):
 - Last good build (the folder the next video is copied from):
