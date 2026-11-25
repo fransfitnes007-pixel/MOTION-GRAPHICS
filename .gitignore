@@ -30,3 +30,11 @@ engine/.brand-applied.json
 # showcase film build intermediates
 docs/showcase/clips/
 docs/showcase/frames/
+
+# multi-account pipeline: your accounts, voices and builds stay local
+pipelines/multi-account-content/accounts/*
+!pipelines/multi-account-content/accounts/_TEMPLATE.md
+!pipelines/multi-account-content/accounts/order.example.json
+pipelines/multi-account-content/voices.local.json
+pipelines/multi-account-content/builds/
+**/.voice.lock/

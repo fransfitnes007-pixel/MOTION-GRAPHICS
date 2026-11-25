@@ -1,0 +1,5 @@
+{
+  "_readme": "Copy to voices.local.json (git-ignored) and put the ElevenLabs voice ids your account can use. List them with: curl -s 'https://api.elevenlabs.io/v2/voices?page_size=50' -H \"xi-api-key: $ELEVENLABS_API_KEY\". Only use a cloned voice of a person who gave permission.",
+  "female": { "id": "<voice id>", "name": "<voice name>", "chars_for_37s": 520 },
+  "male":   { "id": "<voice id>", "name": "<voice name>", "chars_for_37s": 580 }
+}
